@@ -10,6 +10,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from '../components/ui/ThemeToggle';
 
 const MerchantLayout = () => {
   const { user, logout } = useAuth();
@@ -59,6 +60,7 @@ const MerchantLayout = () => {
                 <p className="font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
                 <p className="text-gray-500">{user?.role}</p>
               </div>
+              <ThemeToggle />
               <button
                 onClick={handleLogout}
                 className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"

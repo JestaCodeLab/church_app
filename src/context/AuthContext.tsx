@@ -1,16 +1,52 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { authAPI } from '../services/api';
 
-const AuthContext = createContext(null);
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  merchant?: {
+    id: string;
+    name: string;
+    subdomain: string;
+    status: string;
+  };
+}
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState(null);
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (credentials: LoginCredentials) => Promise<LoginResult>;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
+}
+
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface LoginResult {
+  success: boolean;
+  user?: User;
+  requiresOnboarding?: boolean;
+  message?: string;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Check if user is logged in on mount
   useEffect(() => {
     checkAuth();
+    // eslint-disable-next-line
   }, []);
 
   const checkAuth = async () => {
@@ -29,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const login = async (credentials: any) => {
+  const login = async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
       const response = await authAPI.login(credentials);
       const { user, accessToken, refreshToken } = response.data.data;
@@ -41,7 +77,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(user);
       setIsAuthenticated(true);
 
-      return { success: true, user, requiresOnboarding: response.data.data.requiresOnboarding };
+      return { 
+        success: true, 
+        user, 
+        requiresOnboarding: response.data.data.requiresOnboarding 
+      };
     } catch (error: any) {
       console.error('Login failed:', error);
       return {
@@ -65,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     loading,
     isAuthenticated,
@@ -77,7 +117,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');

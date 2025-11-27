@@ -10,6 +10,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import ThemeToggle from '../components/ui/ThemeToggle';
 
 const AdminLayout = () => {
   const { user, logout } = useAuth();
@@ -28,7 +29,7 @@ const AdminLayout = () => {
     { name: 'Users', href: '/admin/users', icon: Users },
   ];
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -59,6 +60,7 @@ const AdminLayout = () => {
                 <p className="font-medium text-white">{user?.firstName} {user?.lastName}</p>
                 <p className="text-primary-200">Platform Owner</p>
               </div>
+              <ThemeToggle />
               <button
                 onClick={handleLogout}
                 className="p-2 rounded-md text-primary-200 hover:text-white hover:bg-primary-800"
