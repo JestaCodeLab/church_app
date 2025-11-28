@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { showToast } from '../../utils/toasts';
 import AuthLayout from '../../components/auth/AuthLayout';
 import PageTransition from '../../components/auth/PageTransition';
+import { verificationStorage } from '../../utils/verificationStorage';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -48,6 +49,9 @@ const Register = () => {
         phone: formData.phone,
         password: formData.password,
       });
+
+       // Save registration data to localStorage for persistence
+      verificationStorage.save(formData.email, formData.churchName);
 
       showToast.success('Registration successful! Please check your email for verification code.');
       

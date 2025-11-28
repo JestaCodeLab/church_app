@@ -2,74 +2,69 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { merchantAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
-import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import { useAuth } from '../../context/AuthContext';
 import PageTransition from '../../components/auth/PageTransition';
 
 // Step Components
 import SubdomainStep from '../../components/onboarding/SubdomainStep';
+import CongregationStep from '../../components/onboarding/CongregationStep';
 import BrandingStep from '../../components/onboarding/BrandingStep';
 import PlanStep from '../../components/onboarding/PlanStep';
 import SuccessStep from '../../components/onboarding/SuccessStep';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, checkAuth } = useAuth();
 
-  const merchantId = location.state?.merchantId || '';
-  const subdomainOptions = location.state?.subdomainOptions || [];
-  const email = location.state?.email || '';
-  const churchName = location.state?.churchName || '';
+  const merchantId = location.state?.merchantId || user?.merchant?.id || user?.merchant?.id || '';
+  const subdomainOptions = ['gracelove','faithlove'] || location.state?.subdomainOptions || user?.merchant?.subdomainOptions || [];
+//   const email = location.state?.email || user?.email || '';
+  const churchName = location.state?.churchName || user?.merchant?.name || '';
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Form data for all steps
   const [formData, setFormData] = useState({
+    churchName: churchName || '',
+    tagline: '',
     subdomain: '',
+    congregationSize: '',
+    congregationSizeRange: '',
     logo: null as File | null,
     logoPreview: '',
     primaryColor: '#4F46E5',
     secondaryColor: '#10B981',
-    tagline: '',
-    expectedMemberCount: '',
     plan: 'free',
+    paymentMethod: 'card' as 'card' | 'mobile_money',
+    cardholderName: '',
+    cardNumber: '',
+    expirationDate: '',
+    cvc: '',
   });
 
-  // Redirect if no merchant ID
   useEffect(() => {
     if (!merchantId) {
-      showToast.error('Please complete registration first');
+      showToast.error('Merchant information missing. Please try registering again.');
       navigate('/register');
     }
   }, [merchantId, navigate]);
 
-  const steps = [
-    { number: 1, title: 'Choose Subdomain', component: SubdomainStep },
-    { number: 2, title: 'Brand Your Church', component: BrandingStep },
-    { number: 3, title: 'Select Plan', component: PlanStep },
-    { number: 4, title: 'Success', component: SuccessStep },
-  ];
-
   const handleNext = async () => {
     // Validate current step
     if (currentStep === 1 && !formData.subdomain) {
-      showToast.error('Please select a subdomain');
+      showToast.error('Please select or enter a subdomain');
       return;
     }
 
-    if (currentStep === 2 && !formData.tagline) {
-      showToast.error('Please enter a tagline for your church');
+    if (currentStep === 2 && !formData.congregationSize && !formData.congregationSizeRange) {
+      showToast.error('Please select your congregation size');
       return;
     }
 
-    if (currentStep === 3 && !formData.expectedMemberCount) {
-      showToast.error('Please enter expected member count');
-      return;
-    }
-
-    // If last step, submit to backend
-    if (currentStep === 3) {
+    // If last step (Plan), submit to backend
+    if (currentStep === 4) {
       await handleSubmit();
     } else {
       setCurrentStep(currentStep + 1);
@@ -82,136 +77,121 @@ const Onboarding = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    setLoading(true);
-
-    try {
-      // Create FormData for file upload
-      const data = new FormData();
-      data.append('subdomain', formData.subdomain);
-      data.append('primaryColor', formData.primaryColor);
-      data.append('secondaryColor', formData.secondaryColor);
-      data.append('tagline', formData.tagline);
-      data.append('expectedMemberCount', formData.expectedMemberCount);
-      data.append('plan', formData.plan);
-
-      if (formData.logo) {
-        data.append('logo', formData.logo);
-      }
-
-      await merchantAPI.completeOnboarding(data);
-
-      showToast.success('Onboarding completed successfully!');
-      setCurrentStep(4); // Success step
-    } catch (error: any) {
-      showToast.error(
-        error?.response?.data?.message || 'Failed to complete onboarding'
-      );
-    } finally {
-      setLoading(false);
+  const handleSkip = () => {
+    if (currentStep === 3) {
+      // Skip branding
+      setCurrentStep(currentStep + 1);
+    } else if (currentStep === 4) {
+      // Skip payment - auto-select free plan
+      setFormData({ ...formData, plan: 'free' });
+      handleSubmit(true);
     }
   };
 
-  const CurrentStepComponent = steps[currentStep - 1].component;
+const handleSubmit = async (skipPayment = false) => {
+  setLoading(true);
 
-  return (
-    <PageTransition direction="right">
-      <AuthLayout 
-        title={currentStep === 4 ? '🎉 Welcome!' : 'Complete Your Setup'}
-        subtitle={currentStep === 4 ? 'Your church is ready to go!' : `Step ${currentStep} of 3`}
-        maxWidth="2xl"
-      >
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
-          {/* Progress Bar */}
-          {currentStep < 4 && (
-            <div className="mb-8">
-              <div className="flex justify-between items-center mb-2">
-                {steps.slice(0, 3).map((step) => (
-                  <div
-                    key={step.number}
-                    className={`flex items-center ${
-                      step.number < steps.length ? 'flex-1' : ''
-                    }`}
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
-                        step.number < currentStep
-                          ? 'bg-primary-600 text-white'
-                          : step.number === currentStep
-                          ? 'bg-primary-600 text-white ring-4 ring-primary-100 dark:ring-primary-900'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                      }`}
-                    >
-                      {step.number < currentStep ? (
-                        <Check className="w-5 h-5" />
-                      ) : (
-                        step.number
-                      )}
-                    </div>
-                    {step.number < 3 && (
-                      <div
-                        className={`flex-1 h-1 mx-2 transition-all duration-300 ${
-                          step.number < currentStep
-                            ? 'bg-primary-600'
-                            : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mt-2">
-                <span>Subdomain</span>
-                <span>Branding</span>
-                <span>Plan</span>
-              </div>
-            </div>
-          )}
+  try {
+    // Create FormData for file upload
+    const data = new FormData();
+    data.append('subdomain', formData.subdomain);
+    data.append('tagline', formData.tagline);
+    data.append('congregationSize', formData.congregationSize || formData.congregationSizeRange);
+    data.append('primaryColor', formData.primaryColor);
+    data.append('secondaryColor', formData.secondaryColor);
+    data.append('plan', formData.plan);
 
-          {/* Current Step Content */}
-          <CurrentStepComponent
+    // Append logo file if exists
+    if (formData.logo) {
+      data.append('logo', formData.logo);
+    }
+
+    if (!skipPayment && formData.plan !== 'free') {
+      data.append('paymentMethod', formData.paymentMethod);
+      data.append('cardholderName', formData.cardholderName);
+    }
+
+    await merchantAPI.completeOnboarding(data);
+    await checkAuth();
+
+    showToast.success('Setup completed successfully! 🎉');
+    setCurrentStep(5);
+  } catch (error: any) {
+    showToast.error(
+      error?.response?.data?.message || 'Failed to complete setup'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <SubdomainStep
             formData={formData}
             setFormData={setFormData}
             subdomainOptions={subdomainOptions}
-            // churchName={'churchName'}
-            // email={email}
+            churchName={churchName}
+            onNext={handleNext}
+            onBack={handleBack}
           />
+        );
+      case 2:
+        return (
+          <CongregationStep
+            formData={formData}
+            setFormData={setFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSkip={handleSkip}
+          />
+        );
+      case 3:
+        return (
+          <BrandingStep
+            formData={formData}
+            setFormData={setFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSkip={handleSkip}
+          />
+        );
+      case 4:
+        return (
+          <PlanStep
+            formData={formData}
+            setFormData={setFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSkip={handleSkip}
+            loading={loading}
+          />
+        );
+      case 5:
+        return (
+          <SuccessStep
+            churchName={formData.churchName}
+            subdomain={formData.subdomain}
+            onContinue={() => navigate('/dashboard')}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
-          {/* Navigation Buttons */}
-          {currentStep < 4 && (
-            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={handleBack}
-                disabled={currentStep === 1}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </button>
-
-              <button
-                onClick={handleNext}
-                disabled={loading}
-                className="px-6 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                {loading ? (
-                  'Saving...'
-                ) : currentStep === 3 ? (
-                  <>
-                    Complete Setup
-                    <Check className="w-4 h-4 ml-2" />
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+  return (
+    <PageTransition direction="right">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors">
+        <div className="fixed top-4 right-4 z-50">
+            <ThemeToggle />
         </div>
-      </AuthLayout>
+        <div className="max-w-2xl w-full">
+          {renderStep()}
+        </div>
+      </div>
     </PageTransition>
   );
 };

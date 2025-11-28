@@ -7,11 +7,23 @@ interface User {
   lastName: string;
   email: string;
   role: string;
+  photo?: string | null;
+  phone?: string | null;
   merchant?: {
     id: string;
     name: string;
     subdomain: string;
     status: string;
+    emailVerified: boolean;
+    onboardingCompleted: boolean;
+    subdomainOptions: string[];
+    branding: {
+      logo: string | null;
+      logoPublicId: string | null;
+      primaryColor: string;
+      secondaryColor: string;
+      tagline: string;
+    };
   };
 }
 

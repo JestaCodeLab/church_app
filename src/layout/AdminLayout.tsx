@@ -1,27 +1,23 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Shield, 
   Building2, 
   Users, 
   BarChart3, 
-  LogOut,
+  Settings,
   Menu,
-  X
+  X,
+  Search,
+  Bell
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
+import UserMenu from '../components/ui/UserMenu';
 
 const AdminLayout = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
+  const [searchQuery, setSearchQuery] = useState('');
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: BarChart3 },
@@ -32,127 +28,122 @@ const AdminLayout = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation */}
-      <nav className="bg-primary-900 shadow-sm fixed w-full z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="md:hidden p-2 rounded-md text-primary-200 hover:text-white hover:bg-primary-800"
-              >
-                {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
-
-              {/* Logo */}
-              <div className="flex items-center ml-4 md:ml-0">
-                <Shield className="h-8 w-8 text-white" />
-                <span className="ml-2 text-xl font-bold text-white">
-                  Super Admin
-                </span>
-              </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors">
+      {/* Sidebar - Dark */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64
+        bg-gray-900 dark:bg-gray-950
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 lg:static
+        flex flex-col
+      `}>
+        {/* Logo */}
+        <div className="h-20 flex items-center px-6 border-b border-gray-800 dark:border-gray-900">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center">
+              <Shield className="w-6 h-6 text-white" />
             </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="text-sm">
-                <p className="font-medium text-white">{user?.firstName} {user?.lastName}</p>
-                <p className="text-primary-200">Platform Owner</p>
-              </div>
-              <ThemeToggle />
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-md text-primary-200 hover:text-white hover:bg-primary-800"
-                title="Logout"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
+            <div>
+              <h2 className="text-white font-semibold text-sm">Super Admin</h2>
+              <p className="text-gray-400 text-xs">Platform Owner</p>
             </div>
           </div>
         </div>
-      </nav>
 
-      {/* Sidebar - Desktop */}
-      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 pt-16">
-        <div className="flex-1 flex flex-col min-h-0 bg-primary-800">
-          <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-            <nav className="mt-5 flex-1 px-2 space-y-1">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`
-                      group flex items-center px-2 py-2 text-sm font-medium rounded-md
-                      ${isActive(item.href)
-                        ? 'bg-primary-900 text-white'
-                        : 'text-primary-100 hover:bg-primary-700 hover:text-white'
-                      }
-                    `}
-                  >
-                    <Icon
-                      className={`
-                        mr-3 flex-shrink-0 h-6 w-6
-                        ${isActive(item.href) ? 'text-white' : 'text-primary-300 group-hover:text-white'}
-                      `}
-                    />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+          {navigation.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`
+                  flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+                  transition-all duration-200
+                  ${isActive(item.href)
+                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/50'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }
+                `}
+              >
+                <Icon className="w-5 h-5 mr-3" />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Links */}
+        <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1">
+          <Link
+            to="/admin/settings"
+            className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200"
+          >
+            <Settings className="w-5 h-5 mr-3" />
+            Settings
+          </Link>
         </div>
-      </div>
+      </aside>
 
-      {/* Sidebar - Mobile */}
+      {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 pt-16">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-primary-800">
-            <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-              <nav className="mt-5 px-2 space-y-1">
-                {navigation.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`
-                        group flex items-center px-2 py-2 text-base font-medium rounded-md
-                        ${isActive(item.href)
-                          ? 'bg-primary-900 text-white'
-                          : 'text-primary-100 hover:bg-primary-700 hover:text-white'
-                        }
-                      `}
-                    >
-                      <Icon
-                        className={`
-                          mr-4 flex-shrink-0 h-6 w-6
-                          ${isActive(item.href) ? 'text-white' : 'text-primary-300 group-hover:text-white'}
-                        `}
-                      />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-          </div>
-        </div>
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      {/* Main content */}
-      <div className="md:pl-64 flex flex-col flex-1 pt-16">
-        <main className="flex-1">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {/* This is where nested routes will render */}
-              <Outlet />
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 transition-colors">
+          <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            {/* Left: Mobile menu + Search */}
+            <div className="flex items-center flex-1 space-x-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+
+              <div className="flex-1 max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search..."
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border-0 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 transition-colors"
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Right: Theme + Notification + User */}
+            <div className="flex items-center space-x-3">
+              <ThemeToggle />
+              
+              <button className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <Bell className="w-6 h-6" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+
+              <div className="pl-3 border-l border-gray-200 dark:border-gray-700">
+                <UserMenu />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
           </div>
         </main>
       </div>

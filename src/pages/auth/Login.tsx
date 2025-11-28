@@ -22,28 +22,33 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); 
     setLoading(true);
 
+  try {
     const result = await login(formData);
 
     if (result.success) {
       showToast.success(`Welcome back, ${result.user?.firstName}!`);
       
+      // Small delay for smooth transition
       setTimeout(() => {
         if (result.user?.role === 'super_admin') {
           navigate('/admin');
         } else {
           navigate('/dashboard');
         }
-      }, 500);
+      }, 300); 
     } else {
       showToast.error(result.message || 'Login failed. Please try again.');
     }
-
+  } catch (error) {
+    showToast.error('An unexpected error occurred');
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   return (
     <PageTransition>
@@ -52,7 +57,7 @@ const Login = () => {
       subtitle="Sign in to your account"
     >
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Email Address

@@ -6,6 +6,7 @@ export const showToast = {
       duration: 4000,
       position: 'top-right',
       style: {
+        fontSize: '14px',
         background: '#059062ff',
         color: '#fff',
         padding: '12px 14px',
@@ -23,9 +24,10 @@ export const showToast = {
       duration: 5000,
       position: 'top-right',
       style: {
+        fontSize: '14px',
         background: '#ef1c1cff',
         color: '#fff',
-        padding: '12px 14px',
+        padding: '10px 14px',
         borderRadius: '8px',
       },
       iconTheme: {
@@ -39,6 +41,7 @@ export const showToast = {
     return toast.loading(message, {
       position: 'top-right',
       style: {
+        fontSize: '14px',
         background: '#3B82F6',
         color: '#fff',
         padding: '12px 14px',

@@ -5,8 +5,8 @@ import { AnimatePresence } from 'framer-motion';
 // Layouts
 import AdminLayout from '../../layout/AdminLayout';
 import MerchantLayout from '../../layout/MerchantLayout';
-import ProtectedRoute from '../../layout/ProtectedRoute';
-import PublicRoute from '../../layout/PublicRoute';
+import ProtectedRoute from '../../routes/ProtectedRoute';
+import PublicRoute from '../../routes/PublicRoute';
 
 // Pages
 import Login from '../../pages/auth/Login';
@@ -18,6 +18,7 @@ import AdminDashboard from '../../pages/admin/AdminDashboard';
 import AdminMerchants from '../../pages/admin/AdminMerchants';
 import AdminUsers from '../../pages/admin/AdminUsers';
 import Onboarding from '../../pages/auth/Onboarding';
+import OnboardingRoute from '../../routes/OnboardingRoute';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -30,6 +31,10 @@ const AnimatedRoutes = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+        </Route>
+
+        {/* Onboarding Route - Requires auth but not completed onboarding */}
+        <Route element={<OnboardingRoute />}>
           <Route path="/onboarding" element={<Onboarding />} />
         </Route>
 
