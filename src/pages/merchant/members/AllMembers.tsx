@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit2, Trash2, Eye, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { memberAPI } from '../../services/api';
-import { showToast } from '../../utils/toasts';
-import AddMemberModal from '../../components/member/AddMemberModal';
-import EditMemberModal from '../../components/member/EditMemberModal';
-import DeleteMemberModal from '../../components/member/DeleteMemberModal';
+import { memberAPI } from '../../../services/api';
+import { showToast } from '../../../utils/toasts';
+import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
 
-const Members = () => {
+const AllMembers = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,9 +25,7 @@ const Members = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
 
-  // Modals
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  // Delete Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
 
@@ -65,7 +61,6 @@ const Members = () => {
       if (filters.membershipType) params.membershipType = filters.membershipType;
 
       const response = await memberAPI.getMembers(params);
-      console.log('Members response:', response);
       setMembers(response.data.data.members);
       setTotalPages(response.data.data.pagination.pages);
       setTotalMembers(response.data.data.pagination.totalItems);
@@ -79,15 +74,30 @@ const Members = () => {
   const fetchStats = async () => {
     try {
       const response = await memberAPI.getStats();
-      setStats(response.data.data.stats);
+      const data = response.data.data;
+      
+      // Process stats from the aggregation
+      const statusMap = data.byStatus.reduce((acc: any, item: any) => {
+        acc[item._id] = item.count;
+        return acc;
+      }, {});
+      
+      const genderMap = data.byGender.reduce((acc: any, item: any) => {
+        acc[item._id] = item.count;
+        return acc;
+      }, {});
+
+      setStats({
+        total: data.total,
+        active: statusMap.active || 0,
+        inactive: statusMap.inactive || 0,
+        visitors: statusMap.visitor || 0,
+        male: genderMap.male || 0,
+        female: genderMap.female || 0,
+      });
     } catch (error) {
       console.error('Failed to load stats');
     }
-  };
-
-  const handleEdit = (member: any) => {
-    setSelectedMember(member);
-    setShowEditModal(true);
   };
 
   const handleDelete = (member: any) => {
@@ -96,10 +106,6 @@ const Members = () => {
       name: member.fullName || `${member.firstName} ${member.lastName}`
     });
     setShowDeleteModal(true);
-  };
-
-  const handleView = (memberId: string) => {
-    navigate(`/members/${memberId}`);
   };
 
   const handleSuccess = () => {
@@ -123,6 +129,7 @@ const Members = () => {
       member: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
       youth: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
       children: 'bg-pink-100 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300',
+      visitor: 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300',
     };
     return colors[role] || colors.member;
   };
@@ -158,7 +165,7 @@ const Members = () => {
             Export
           </button>
           <button 
-            onClick={() => setShowAddModal(true)}
+            onClick={() => navigate('/members/new')}
             className="flex items-center px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5 mr-2" />
@@ -170,108 +177,116 @@ const Members = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Total Members</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
-            {stats?.total}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Members</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.total}</p>
+            </div>
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+              <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+          </div>
         </div>
+
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
-            {stats?.active}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.active}</p>
+            </div>
+            <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
         </div>
+
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">
-            {stats?.male}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.male}</p>
+            </div>
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+          </div>
         </div>
+
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Female</p>
-          <p className="text-3xl font-bold text-pink-600 dark:text-pink-400 mt-2">
-            {stats?.female}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Female</p>
+              <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mt-1">{stats.female}</p>
+            </div>
+            <div className="p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
+              <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Card */}
+      {/* Main Content Card */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        {/* Tabs & Search */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        {/* Tabs and Search */}
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Tabs */}
-            <div className="flex items-center space-x-1">
+            <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
                   }`}
                 >
                   {tab.label}
-                  {tab.count > 0 && (
-                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                      activeTab === tab.id
-                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {tab.count}
-                    </span>
+                  {tab.count !== undefined && (
+                    <span className="ml-2 text-xs">({tab.count})</span>
                   )}
                 </button>
               ))}
             </div>
 
-            {/* Search & Filter */}
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Search members..."
-                  className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 transition-colors w-64"
-                />
-              </div>
-              <button className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search members..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
             </div>
           </div>
         </div>
 
         {/* Table */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
           </div>
         ) : members.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400">No members found</p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium"
-            >
-              Add your first member
-            </button>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Member
                     </th>
@@ -284,9 +299,6 @@ const Members = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Join Date
-                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
@@ -294,73 +306,57 @@ const Members = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {members.map((member) => (
-                    <tr
-                      key={member._id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                    >
+                    <tr key={member._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <img
-                            src={member.photo || `https://ui-avatars.com/api/?name=${member.firstName}+${member.lastName}&background=4F46E5&color=fff`}
-                            alt={member.firstName}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
+                          <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
+                            <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm">
+                              {member.firstName[0]}{member.lastName[0]}
+                            </span>
+                          </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {member.firstName} {member.lastName}
+                              {member.fullName || `${member.firstName} ${member.lastName}`}
                             </div>
-                            {member.age && (
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {member.age} years old
-                              </div>
-                            )}
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {member.gender && member.gender.charAt(0).toUpperCase() + member.gender.slice(1)}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">
-                          {member.email || 'No email'}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {member.phone || 'No phone'}
-                        </div>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{member.email || 'N/A'}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{member.phone || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(member.membershipType)}`}
-                        >
-                          {member.membershipType}
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(member.membershipType)}`}>
+                          {member.membershipType?.charAt(0).toUpperCase() + member.membershipType?.slice(1)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(member.membershipStatus)}`}
-                        >
-                          {member.membershipStatus}
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(member.membershipStatus)}`}>
+                          {member.membershipStatus?.charAt(0).toUpperCase() + member.membershipStatus?.slice(1).replace('_', ' ')}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                        {member.joinDate ? new Date(member.joinDate).toLocaleDateString() : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
                           <button
-                            onClick={() => handleView(member._id)}
-                            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="View"
+                            onClick={() => navigate(`/members/${member._id}`)}
+                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="View Details"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleEdit(member)}
-                            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            onClick={() => navigate(`/members/${member._id}/edit`)}
+                            className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(member)}
-                            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -406,34 +402,18 @@ const Members = () => {
         )}
       </div>
 
-      {/* Modals */}
-      <AddMemberModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={handleSuccess}
-      />
-
-      <EditMemberModal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedMember(null);
-        }}
-        onSuccess={handleSuccess}
-        memberId={selectedMember?._id || ''}
-      />
-
+      {/* Delete Modal (Keep this for confirmations) */}
       <DeleteMemberModal
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
           setSelectedMember(null);
         }}
-        onSuccess={handleSuccess}
-        member={selectedMember}
+        onDelete={handleSuccess}
+        memberName={selectedMember?.name}
       />
     </div>
   );
 };
 
-export default Members;
+export default AllMembers;

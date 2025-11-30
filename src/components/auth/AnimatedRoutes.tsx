@@ -13,12 +13,20 @@ import Login from '../../pages/auth/Login';
 import Register from '../../pages/auth/Register';
 import VerifyEmail from '../../pages/auth/VerifyEmail';
 import Dashboard from '../../pages/merchant/Dashboard';
-import Members from '../../pages/merchant/Members';
+import AllMembers from '../../pages/merchant/members/AllMembers';
+import NewMember from '../../pages/merchant/members/NewMember';
+import EditMember from '../../pages/merchant/members/EditMember';
+import MemberDetails from '../../pages/merchant/members/MemberDetails';
 import AdminDashboard from '../../pages/admin/AdminDashboard';
 import AdminMerchants from '../../pages/admin/AdminMerchants';
 import AdminUsers from '../../pages/admin/AdminUsers';
 import Onboarding from '../../pages/auth/Onboarding';
 import OnboardingRoute from '../../routes/OnboardingRoute';
+import Branches from '../../pages/merchant/branches/AllBranches';
+import NewBranch from '../../pages/merchant/branches/NewBranch';
+import BranchDetails from '../../pages/merchant/branches/BranchDetails';
+import { Edit } from 'lucide-react';
+import EditBranch from '../../pages/merchant/branches/EditBranch';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -42,7 +50,14 @@ const AnimatedRoutes = () => {
         <Route element={<ProtectedRoute />}>
           <Route element={<MerchantLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/members" element={<Members />} />
+            <Route path="/branches" element={<Branches />} />
+            <Route path="/branches/new" element={<NewBranch />} />
+            <Route path="/branches/:id" element={<BranchDetails />} />
+            <Route path="/branches/:id/edit" element={<EditBranch />} />
+            <Route path="/members" element={<AllMembers />} />
+            <Route path="/members/new" element={<NewMember />} />
+            <Route path="/members/:id" element={<MemberDetails />} />
+            <Route path="/members/:id/edit" element={<EditMember />} />
             <Route path="/settings" element={<div>Settings Coming Soon</div>} />
           </Route>
         </Route>

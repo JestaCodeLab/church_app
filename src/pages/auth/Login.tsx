@@ -25,10 +25,8 @@ const Login = () => {
 const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); 
     setLoading(true);
-
   try {
     const result = await login(formData);
-
     if (result.success) {
       showToast.success(`Welcome back, ${result.user?.firstName}!`);
       
@@ -69,8 +67,8 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
-                placeholder="your.email@example.com"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
+                placeholder="youremail@shilohrestoration.org"
             />
             </div>
 
@@ -85,7 +83,7 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                 placeholder="••••••••"
             />
             </div>

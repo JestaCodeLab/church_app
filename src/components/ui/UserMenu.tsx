@@ -38,7 +38,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ showEmail = true }) => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   const languages = [

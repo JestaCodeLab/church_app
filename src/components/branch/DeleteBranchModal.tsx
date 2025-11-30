@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle, Trash2, Archive } from 'lucide-react';
 
-interface DeleteMemberModalProps {
+interface DeleteBranchModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDelete: (permanent: boolean) => void;
-  memberName: string;
+  branchName: string;
+  memberCount: number;
 }
 
-const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
+const DeleteBranchModal: React.FC<DeleteBranchModalProps> = ({
   isOpen,
   onClose,
   onDelete,
-  memberName,
+  branchName,
+  memberCount,
 }) => {
   const [deletePermanently, setDeletePermanently] = useState(false);
 
@@ -20,8 +22,10 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
 
   const handleConfirm = () => {
     onDelete(deletePermanently);
-    onClose();
   };
+
+  // Prevent permanent deletion if there are active members
+  const canDeletePermanently = memberCount === 0;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -52,10 +56,10 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Delete Member
+                  Delete Branch
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  This action will remove <span className="font-medium text-gray-900 dark:text-gray-100">{memberName}</span> from your records.
+                  This action will remove <span className="font-medium text-gray-900 dark:text-gray-100">{branchName}</span> from your locations.
                 </p>
               </div>
             </div>
@@ -63,10 +67,31 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
 
           {/* Content */}
           <div className="p-6 space-y-4">
+            {/* Member Count Warning */}
+            {memberCount > 0 && (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                      Branch has {memberCount} active member{memberCount !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
+                      You can only archive this branch. To delete permanently, please reassign all members to another branch first.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Delete Options */}
             <div className="space-y-3">
               {/* Archive Option (Default) */}
-              <label className="relative flex items-start p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <label className={`relative flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                !deletePermanently
+                  ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              }`}>
                 <input
                   type="radio"
                   name="deleteOption"
@@ -78,26 +103,31 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
                   <div className="flex items-center space-x-2">
                     <Archive className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <span className="font-medium text-gray-900 dark:text-gray-100">
-                      Archive Member
+                      Archive Branch
                     </span>
                     <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-xs font-medium rounded-full">
                       Recommended
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Member will be hidden from the active list but can be restored later if needed.
+                    Branch will be hidden from the active list but can be restored later if needed.
                   </p>
                 </div>
               </label>
 
               {/* Permanent Delete Option */}
-              <label className="relative flex items-start p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <label className={`relative flex items-start p-4 border-2 rounded-lg transition-colors ${
+                deletePermanently
+                  ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              } ${!canDeletePermanently ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                 <input
                   type="radio"
                   name="deleteOption"
                   checked={deletePermanently}
-                  onChange={() => setDeletePermanently(true)}
-                  className="mt-0.5 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 dark:border-gray-600"
+                  onChange={() => canDeletePermanently && setDeletePermanently(true)}
+                  disabled={!canDeletePermanently}
+                  className="mt-0.5 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <div className="ml-3 flex-1">
                   <div className="flex items-center space-x-2">
@@ -105,16 +135,21 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
                     <span className="font-medium text-gray-900 dark:text-gray-100">
                       Delete Permanently
                     </span>
+                    {!canDeletePermanently && (
+                      <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs font-medium rounded-full">
+                        Unavailable
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    All member data will be permanently removed. This action cannot be undone.
+                    All branch data will be permanently removed. This action cannot be undone.
                   </p>
                 </div>
               </label>
             </div>
 
             {/* Warning for Permanent Delete */}
-            {deletePermanently && (
+            {deletePermanently && canDeletePermanently && (
               <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg">
                 <div className="flex items-start space-x-2">
                   <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
@@ -123,7 +158,7 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
                       Warning: This action is permanent
                     </p>
                     <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                      All member information, history, and associated data will be permanently deleted and cannot be recovered.
+                      All branch information, service times, facilities, and associated data will be permanently deleted and cannot be recovered.
                     </p>
                   </div>
                 </div>
@@ -156,7 +191,7 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
                 ) : (
                   <>
                     <Archive className="w-4 h-4 inline mr-2" />
-                    Archive Member
+                    Archive Branch
                   </>
                 )}
               </button>
@@ -168,4 +203,4 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
   );
 };
 
-export default DeleteMemberModal;
+export default DeleteBranchModal;

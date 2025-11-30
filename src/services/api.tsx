@@ -32,6 +32,14 @@ api.interceptors.response.use(
 
     // If token expired, try to refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't attempt token refresh for auth endpoints themselves (login/refresh)
+      // otherwise a failed login attempt would trigger a refresh which may
+      // redirect the user back to /login (causing a page reload).
+      const reqUrl: string | undefined = originalRequest?.url;
+      if (reqUrl && (reqUrl.includes('/auth/login') || reqUrl.includes('/auth/refresh'))) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
@@ -95,6 +103,17 @@ export const adminAPI = {
   updateMerchantStatus: (id: any, status: any) => api.patch(`/admin/merchants/${id}/status`, { status }),
   getAllUsers: (params: any) => api.get('/admin/users', { params }),
   getMerchantUsers: (merchantId: any, params: any) => api.get(`/admin/merchants/${merchantId}/users`, { params }),
+};
+
+// Branch API
+export const branchAPI = {
+  getBranches: (params: any) => api.get('/branches', { params }),
+  getBranch: (id: any) => api.get(`/branches/${id}`),
+  createBranch: (data: any) => api.post('/branches', data),
+  updateBranch: (id: any, data: any) => api.put(`/branches/${id}`, data),
+  deleteBranch: (id: any, permanent = false) => api.delete(`/branches/${id}`, { params: { permanent } }),
+  getStats: (id: any) => api.get(`/branches/${id}/stats`),
+  getSummary: () => api.get('/branches/summary'),
 };
 
 export default api;

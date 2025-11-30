@@ -10,7 +10,8 @@ import {
   Bell,
   Search,
   Menu,
-  X
+  X,
+  Church
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ui/ThemeToggle';
@@ -24,6 +25,7 @@ const MerchantLayout = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Branches', href: '/branches', icon: Church },
     { name: 'Members', href: '/members', icon: Users },
     { name: 'Events', href: '/events', icon: Calendar },
     { name: 'Giving', href: '/giving', icon: DollarSign },

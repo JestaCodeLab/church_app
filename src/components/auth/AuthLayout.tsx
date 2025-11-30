@@ -43,7 +43,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
             {title}
           </h1>
           
-          <p className="text-base text-gray-600 dark:text-gray-400 mt-3 font-medium transition-colors duration-300">
+          <p className="text-base text-gray-600 dark:text-gray-400 mt-1 font-medium transition-colors duration-300">
             {subtitle}
           </p>
         </div>
