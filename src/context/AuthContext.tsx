@@ -1,6 +1,57 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { authAPI } from '../services/api';
 
+interface Plan {
+  _id: string;
+  name: string;
+  slug: string;
+  price: {
+    amount: number;
+    currency: string;
+  };
+  limits: {
+    members: number | null;
+    branches: number | null;
+    events: number | null;
+    sermons: number | null;
+    storage: number | null;
+    users: number | null;
+    smsCredits: number;
+    emailCredits: number;
+  };
+  features: {
+    memberManagement: boolean;
+    branchManagement: boolean;
+    eventManagement: boolean;
+    sermonManagement: boolean;
+    financialManagement: boolean;
+    donationTracking: boolean;
+    emailCommunications: boolean;
+    smsCommunications: boolean;
+    bulkMessaging: boolean;
+    basicReports: boolean;
+    advancedReports: boolean;
+    customReports: boolean;
+    dataExport: boolean;
+    apiAccess: boolean;
+    webhooks: boolean;
+    thirdPartyIntegrations: boolean;
+    emailSupport: boolean;
+    prioritySupport: boolean;
+    dedicatedAccountManager: boolean;
+    phoneSupport: boolean;
+    customBranding: boolean;
+    customDomain: boolean;
+    whiteLabel: boolean;
+    multiLanguage: boolean;
+    mobileApp: boolean;
+    automatedWorkflows: boolean;
+  };
+  isPublic: boolean;
+  isActive: boolean;
+  type: string;
+}
+
 interface User {
   id: string;
   firstName: string;
@@ -23,6 +74,24 @@ interface User {
       primaryColor: string;
       secondaryColor: string;
       tagline: string;
+    };
+    subscription: {
+      plan: string;
+      status: string;
+      startDate: string;
+      endDate?: string;
+      memberLimit: number;
+      currentMemberCount: number;
+      expectedMemberCount: number;
+      paymentMethod?: string;
+      nextBillingDate?: string;
+      features: {
+        financials: boolean;
+        events: boolean;
+        communications: boolean;
+        reports: boolean;
+      };
+      planDetails: Plan; // Add planDetails here
     };
   };
 }

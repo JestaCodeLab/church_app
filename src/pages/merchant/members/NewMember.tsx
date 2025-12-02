@@ -134,9 +134,9 @@ const NewMember = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
-      <div className="w-full dark:bg-gray-800 dark:border-gray-700">
+      <div className="w-full dark:bg-gray-800 rounded-lg dark:border-gray-700">
         <div className="w-full mx-auto px-8 py-6">
           <div className="flex items-start space-x-4">
             <button

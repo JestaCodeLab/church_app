@@ -227,9 +227,9 @@ const NewBranch = () => {
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
-      <div className=" dark:bg-gray-800 border-gray-200 dark:border-gray-700 px-6 py-4">
+      <div className=" dark:bg-gray-800 border-gray-200 rounded-lg dark:border-gray-700 px-6 py-4">
         <div className="flex items-start space-x-4">
           <button
             onClick={() => navigate('/branches')}
@@ -581,7 +581,7 @@ const NewBranch = () => {
                           onChange={() => handleLeaderToggle(member._id)}
                           className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
                         />
-                        <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                        <span className="ml-3 text-sm capitalize text-gray-700 dark:text-gray-300">
                           {member.firstName} {member.lastName} - {member.membershipType}
                         </span>
                       </label>

@@ -194,9 +194,9 @@ const EditMember = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
-      <div className="w-full dark:bg-gray-800 dark:border-gray-700">
+      <div className="w-full dark:bg-gray-800 rounded-lg dark:border-gray-700">
         <div className="w-full mx-auto px-8 py-6">
           <div className="flex items-start space-x-4">
             <button
@@ -218,19 +218,9 @@ const EditMember = () => {
         </div>
       </div>
 
-      {/* Form Content - SAME STRUCTURE AS NewMember */}
+      {/* Form Content*/}
       <div className="w-full mx-auto px-6 py-8">
         <form onSubmit={handleSubmit}>
-          {/* ALL SECTIONS SAME AS NewMember_WITH_BRANCH.tsx */}
-          {/* Just the button text changes from "Save Member" to "Update Member" */}
-          {/* and "Saving..." to "Updating..." */}
-          
-          {/* I'm including the complete form structure here for completeness */}
-          {/* Profile Section - Same as NewMember */}
-          {/* Address Section - Same as NewMember */}
-          {/* Emergency Contact Section - Same as NewMember */}
-          {/* Church Information Section - Same as NewMember */}
-
           {/* Profile Section */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                       <div className="px-6 py-4 border-b border-gray-200 bg-gray-100 dark:bg-gray-700 dark:border-gray-700">

@@ -121,77 +121,74 @@ const Branches = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-              Branches & Locations
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Manage your church locations and campuses
-            </p>
-          </div>
-          <button
-            onClick={() => navigate('/branches/new')}
-            className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Branch
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex items-center space-x-1 mt-6">
-          {tabs.map((tab) => (
+    <div className="min-h-screen dark:bg-gray-900">
+      <div className='rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700'>
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                Branches & Locations
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Manage your church locations and campuses
+              </p>
+            </div>
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
+              onClick={() => navigate('/branches/new')}
+              className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
             >
-              {tab.label}
-              {tab.count !== undefined && (
-                <span className="ml-2 px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs">
-                  {tab.count}
-                </span>
-              )}
+              <Plus className="w-4 h-4 mr-2" />
+              Add Branch
             </button>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Filters & Search */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <div className="flex items-center space-x-4">
-          {/* Search */}
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search branches..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-              />
+        </div>
+
+        {/* Filters & Search */}
+        <div className="bg-white dark:bg-gray-800 dark:border-gray-700 px-6 py-4">
+          <div className="flex justify-between items-center space-x-4">
+          {/* Tabs */}
+          <div className="flex items-center space-x-1 mt-0">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span className="ml-2 px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+            
+            {/* Search */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search branches..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+                />
+              </div>
             </div>
           </div>
-
-          {/* Filters */}
-          <button className="flex items-center px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </button>
         </div>
       </div>
 
       {/* Grid View */}
-      <div className="px-6 py-8">
+      <div className="px-0 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -217,7 +214,7 @@ const Branches = () => {
                 >
                   {/* Branch Header */}
                   <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-0">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                           {branch.name}
@@ -227,10 +224,10 @@ const Branches = () => {
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeBadgeColor(branch.type)}`}>
+                        <span className={`px-2 py-1 text-xs font-medium capitalize rounded-full ${getTypeBadgeColor(branch.type)}`}>
                           {branch.type}
                         </span>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(branch.status)}`}>
+                        <span className={`px-2 py-1 text-xs font-medium capitalize rounded-full ${getStatusBadgeColor(branch.status)}`}>
                           {branch.status}
                         </span>
                       </div>

@@ -16,6 +16,7 @@ import Dashboard from '../../pages/merchant/Dashboard';
 import AllMembers from '../../pages/merchant/members/AllMembers';
 import NewMember from '../../pages/merchant/members/NewMember';
 import EditMember from '../../pages/merchant/members/EditMember';
+import Settings from '../../pages/merchant/Settings';
 import MemberDetails from '../../pages/merchant/members/MemberDetails';
 import AdminDashboard from '../../pages/admin/AdminDashboard';
 import AdminMerchants from '../../pages/admin/AdminMerchants';
@@ -58,7 +59,7 @@ const AnimatedRoutes = () => {
             <Route path="/members/new" element={<NewMember />} />
             <Route path="/members/:id" element={<MemberDetails />} />
             <Route path="/members/:id/edit" element={<EditMember />} />
-            <Route path="/settings" element={<div>Settings Coming Soon</div>} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
 

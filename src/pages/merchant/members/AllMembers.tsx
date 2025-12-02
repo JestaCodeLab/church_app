@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit2, Trash2, Eye, Download } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
 
 const AllMembers = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [members, setMembers] = useState<any[]>([]);
@@ -34,7 +35,16 @@ const AllMembers = () => {
     status: '',
     gender: '',
     membershipType: '',
+    branch: '',
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const branchId = params.get('branchId');
+    if (branchId) {
+      setFilters(f => ({ ...f, branch: branchId }));
+    }
+  }, [location.search]);
 
   useEffect(() => {
     fetchMembers();
@@ -59,10 +69,11 @@ const AllMembers = () => {
       if (filters.status) params.status = filters.status;
       if (filters.gender) params.gender = filters.gender;
       if (filters.membershipType) params.membershipType = filters.membershipType;
+      if (filters.branch) params.branch = filters.branch;
 
       const response = await memberAPI.getMembers(params);
       setMembers(response.data.data.members);
-      setTotalPages(response.data.data.pagination.pages);
+      setTotalPages(response.data.data.pagination.totalPages);
       setTotalMembers(response.data.data.pagination.totalItems);
     } catch (error: any) {
       showToast.error('Failed to load members');
@@ -287,19 +298,22 @@ const AllMembers = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Member
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      Branch
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Role
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -327,6 +341,9 @@ const AllMembers = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 dark:text-gray-100">{member.email || 'N/A'}</div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">{member.phone || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                        {member.branch?.name || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(member.membershipType)}`}>

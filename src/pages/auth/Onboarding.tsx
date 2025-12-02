@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { merchantAPI } from '../../services/api';
+import { merchantAPI, settingsAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { useAuth } from '../../context/AuthContext';
 import PageTransition from '../../components/auth/PageTransition';
@@ -20,11 +20,11 @@ const Onboarding = () => {
 
   const merchantId = location.state?.merchantId || user?.merchant?.id || user?.merchant?.id || '';
   const subdomainOptions = ['gracelove','faithlove'] || location.state?.subdomainOptions || user?.merchant?.subdomainOptions || [];
-//   const email = location.state?.email || user?.email || '';
   const churchName = location.state?.churchName || user?.merchant?.name || '';
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [availablePlans, setAvailablePlans] = useState([]);
 
   const [formData, setFormData] = useState({
     churchName: churchName || '',
@@ -36,12 +36,7 @@ const Onboarding = () => {
     logoPreview: '',
     primaryColor: '#4F46E5',
     secondaryColor: '#10B981',
-    plan: 'free',
-    paymentMethod: 'card' as 'card' | 'mobile_money',
-    cardholderName: '',
-    cardNumber: '',
-    expirationDate: '',
-    cvc: '',
+    plan: 'starter', // Default to starter
   });
 
   useEffect(() => {
@@ -49,7 +44,20 @@ const Onboarding = () => {
       showToast.error('Merchant information missing. Please try registering again.');
       navigate('/register');
     }
+    fetchAvailablePlans();
   }, [merchantId, navigate]);
+
+  const fetchAvailablePlans = async () => {
+    try {
+      const response = await settingsAPI.getSubscription();
+      // Sort available plans by price for consistent display
+      const sortedPlans = response.data.data.availablePlans.sort((a: any, b: any) => a.price.amount - b.price.amount);
+      setAvailablePlans(sortedPlans);
+    } catch (error) {
+      console.error("Failed to fetch available plans:", error);
+      showToast.error("Failed to load plans for onboarding.");
+    }
+  };
 
   const handleNext = async () => {
     // Validate current step
@@ -78,17 +86,11 @@ const Onboarding = () => {
   };
 
   const handleSkip = () => {
-    if (currentStep === 3) {
-      // Skip branding
-      setCurrentStep(currentStep + 1);
-    } else if (currentStep === 4) {
-      // Skip payment - auto-select free plan
-      setFormData({ ...formData, plan: 'free' });
-      handleSubmit(true);
-    }
+    // Skip branding or plan selection directly to next step
+    setCurrentStep(currentStep + 1);
   };
 
-const handleSubmit = async (skipPayment = false) => {
+const handleSubmit = async () => { // Removed skipPayment parameter
   setLoading(true);
 
   try {
@@ -106,10 +108,7 @@ const handleSubmit = async (skipPayment = false) => {
       data.append('logo', formData.logo);
     }
 
-    if (!skipPayment && formData.plan !== 'free') {
-      data.append('paymentMethod', formData.paymentMethod);
-      data.append('cardholderName', formData.cardholderName);
-    }
+    // Payment details are handled by PlanStep before this handleSubmit is called
 
     await merchantAPI.completeOnboarding(data);
     await checkAuth();
@@ -167,6 +166,7 @@ const handleSubmit = async (skipPayment = false) => {
             onBack={handleBack}
             onSkip={handleSkip}
             loading={loading}
+            availablePlans={availablePlans} // Pass available plans
           />
         );
       case 5:

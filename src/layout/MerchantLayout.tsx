@@ -11,7 +11,9 @@ import {
   Search,
   Menu,
   X,
-  Church
+  Church,
+  FileVolume,
+  HandCoins
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ui/ThemeToggle';
@@ -27,12 +29,13 @@ const MerchantLayout = () => {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Branches', href: '/branches', icon: Church },
     { name: 'Members', href: '/members', icon: Users },
+    { name: 'Sermons', href: '/sermons', icon: FileVolume },
     { name: 'Events', href: '/events', icon: Calendar },
-    { name: 'Giving', href: '/giving', icon: DollarSign },
+    { name: 'Finance', href: '/finance', icon: HandCoins },
     { name: 'Messages', href: '/messages', icon: MessageSquare },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors">
@@ -162,7 +165,7 @@ const MerchantLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 bg-gray-100 dark:bg-gray-900 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-full mx-auto">
             <Outlet />
           </div>

@@ -116,4 +116,21 @@ export const branchAPI = {
   getSummary: () => api.get('/branches/summary'),
 };
 
+
+// Settings API
+export const settingsAPI = {
+  getSettings: () => api.get('/settings'),
+  updateProfile: (data: any) => api.put('/settings/profile', data),
+  updateProfilePhoto: (data: any) => api.put('/settings/profile/photo', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  changePassword: (data: any) => api.put('/settings/security/password', data),
+  updateNotifications: (category: string, data: any) => api.put(`/settings/notifications/${category}`, data),
+  getSubscription: () => api.get('/settings/subscription'),
+  changePlan: (plan: any) => api.post('/settings/subscription/change-plan', { plan }),
+  verifyPayment: (reference: any) => api.post('/settings/subscription/verify-payment', { reference }),
+  getBillingHistory: (params: any) => api.get('/settings/subscription/billing-history', { params }),
+  updatePaymentMethod: (data: any) => api.put('/settings/subscription/payment-method', data),
+};
+
 export default api;

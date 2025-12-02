@@ -443,11 +443,19 @@ const BranchDetails = () => {
                 </h2>
               </div>
               <div className="space-y-4">
-                <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Members</p>
-                  <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
-                    {branch.statistics?.memberCount || 0}
-                  </p>
+<div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Members</p>
+                    <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                      {branch.statistics?.memberCount || 0}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/members?branchId=${id}`)}
+                    className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    View All
+                  </button>
                 </div>
                 {branch.statistics?.averageAttendance > 0 && (
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
