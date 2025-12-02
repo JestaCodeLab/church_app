@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { settingsAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { Check, Crown, Users, Zap } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { usePaystackPayment } from '../../hooks/usePaystackPayment';
 
 const BillingSettings = () => {
+  const { user } = useAuth();
   const [subscription, setSubscription] = useState<any>(null);
   const [availablePlans, setAvailablePlans] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const { initializePayment, loading: paymentLoading, scriptLoaded } = usePaystackPayment();
 
   useEffect(() => {
     fetchSubscription();
@@ -27,21 +31,32 @@ const BillingSettings = () => {
   };
 
   const handlePlanChange = async (planSlug: string) => {
-    if (planSlug === subscription.plan) return;
-    setActionLoading(true);
-    try {
-      const response = await settingsAPI.changePlan(planSlug);
-      if (response.data.data.authorization_url) {
-        window.location.href = response.data.data.authorization_url;
-      } else {
+    const selectedPlan = availablePlans.find((p: any) => p.slug === planSlug);
+    
+    if (!selectedPlan) return;
+
+    // Free plan
+    if (selectedPlan.price.amount === 0) {
+      try {
+        await settingsAPI.changePlan(planSlug);
         showToast.success('Plan changed successfully!');
         fetchSubscription();
+      } catch (error: any) {
+        showToast.error(error.response?.data?.message || 'Failed to change plan');
       }
-    } catch (error: any) {
-      showToast.error(error.response?.data?.message || 'Failed to change plan');
-    } finally {
-      setActionLoading(false);
+      return;
     }
+
+    // Paid plan
+    await initializePayment({
+      email: user?.email || '',
+      amount: selectedPlan.price.amount * 100,
+      planSlug: planSlug,
+      onSuccess: () => {
+        showToast.success('Subscription updated!');
+        fetchSubscription();
+      }
+    });
   };
 
   const getPlanIcon = (planId: string) => {
@@ -66,7 +81,7 @@ const BillingSettings = () => {
   if (loading) {
     return (
        <div className="mt-3 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center py-5">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading billing settings...</p>
         </div>

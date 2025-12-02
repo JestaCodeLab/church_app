@@ -18,8 +18,10 @@ const Onboarding = () => {
   const location = useLocation();
   const { user, checkAuth } = useAuth();
 
+  console.log('User', user)
+
   const merchantId = location.state?.merchantId || user?.merchant?.id || user?.merchant?.id || '';
-  const subdomainOptions = ['gracelove','faithlove'] || location.state?.subdomainOptions || user?.merchant?.subdomainOptions || [];
+  const subdomainOptions = location.state?.subdomainOptions || user?.merchant?.subdomainOptions || [];
   const churchName = location.state?.churchName || user?.merchant?.name || '';
 
   const [currentStep, setCurrentStep] = useState(1);

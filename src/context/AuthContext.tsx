@@ -1,5 +1,8 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import useSessionExpiry from '../hooks/useSessionExpiry';
+import SessionExpiryModal from '../components/modals/SessionExpiryModal';
 
 interface Plan {
   _id: string;
@@ -91,7 +94,7 @@ interface User {
         communications: boolean;
         reports: boolean;
       };
-      planDetails: Plan; // Add planDetails here
+      planDetails: Plan;
     };
   };
 }
@@ -123,6 +126,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [extendingSession, setExtendingSession] = useState(false);
+
+  // Session expiry management
+  const {
+    timeUntilExpiry,
+    isWarningActive,
+    extendSession,
+  } = useSessionExpiry({
+    warningTimeBeforeExpiry: 5 * 60 * 1000, // 5 minutes
+    onWarning: () => {
+      console.log('⚠️ Session expiring soon!');
+    },
+    onExpired: () => {
+      console.log('❌ Session expired - logging out');
+      handleSessionExpired();
+    },
+  });
 
   // Check if user is logged in on mount
   useEffect(() => {
@@ -186,6 +206,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  /**
+   * Handle session expiry - auto logout user
+   */
+  const handleSessionExpired = useCallback(async () => {
+    await logout();
+    // Optionally show a toast notification
+    // showToast.error('Your session has expired. Please log in again.');
+  }, []);
+
+  /**
+   * Handle "Stay Logged In" button click
+   */
+  const handleStayLoggedIn = async () => {
+    try {
+      setExtendingSession(true);
+      await extendSession();
+      console.log('✅ Session extended successfully');
+    } catch (error) {
+      console.error('Failed to extend session:', error);
+      await logout();
+    } finally {
+      setExtendingSession(false);
+    }
+  };
+
+  /**
+   * Handle "Sign Out" button click from modal
+   */
+  const handleSignOut = async () => {
+    await logout();
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -195,7 +247,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkAuth,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      
+      {/* Session Expiry Modal - Only show when authenticated and warning is active */}
+      {isAuthenticated && (
+        <SessionExpiryModal
+          isOpen={isWarningActive}
+          timeRemaining={timeUntilExpiry}
+          onStayLoggedIn={handleStayLoggedIn}
+          onSignOut={handleSignOut}
+          loading={extendingSession}
+        />
+      )}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = (): AuthContextType => {

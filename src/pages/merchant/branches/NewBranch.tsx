@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Building2, Users, Clock, Wifi } from 'lucide-react';
+import { ArrowLeft, MapPin, Building2, Users, Clock, Wifi, UserPlus } from 'lucide-react';
 import { branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 
@@ -8,6 +8,7 @@ const NewBranch = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
+  const [hasPastors, setHasPastors] = useState(true);
   const [serviceTimes, setServiceTimes] = useState<any[]>([
     { day: 'Sunday', service: 'Morning Service', startTime: '09:00', endTime: '11:00' }
   ]);
@@ -69,13 +70,24 @@ const NewBranch = () => {
   }, []);
 
   const fetchMembers = async () => {
-    try {
-      const response = await memberAPI.getMembers({ limit: 1000 });
-      setMembers(response.data.data.members);
-    } catch (error) {
-      console.error('Failed to load members');
-    }
-  };
+  try {
+    const response = await memberAPI.getMembers({
+      page: 1,
+      limit: 1000,
+      status: 'active'
+    });
+    setMembers(response.data.data.members);
+    
+    // Check if there are any pastors/leaders
+    const pastorsAndLeaders = response.data.data.members.filter((m: any) => 
+      ['pastor', 'elder', 'leader'].includes(m.membershipType)
+    );
+    setHasPastors(pastorsAndLeaders.length > 0);
+    
+  } catch (error) {
+    console.error('Failed to load members');
+  }
+};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -229,7 +241,7 @@ const NewBranch = () => {
   return (
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
-      <div className=" dark:bg-gray-800 border-gray-200 rounded-lg dark:border-gray-700 px-6 py-4">
+      <div className=" dark:bg-gray-900 border-gray-200 rounded-lg dark:border-gray-700 px-6 py-4">
         <div className="flex items-start space-x-4">
           <button
             onClick={() => navigate('/branches')}
@@ -247,6 +259,42 @@ const NewBranch = () => {
           </div>
         </div>
       </div>
+
+      {/* Alert if no pastors/leaders */}
+      {!hasPastors && (
+        <div className="max-w-8xl mx-auto px-6 mb-0 mt-2">
+          <div className="bg-blue-100 dark:bg-amber-900/20 border border-blue-200 dark:border-amber-800 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-base font-bold text-blue-800 dark:text-blue-200">
+                  No Pastors or Leaders Found
+                </h3>
+                <div className="mt-0 text-sm text-blue-700 dark:text-blue-300">
+                  <p>
+                    You don't have any pastors, elders, or leaders in your member directory yet. 
+                    It's recommended to add leadership before creating a branch.
+                  </p>
+                </div>
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/members/new')}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-600 dark:bg-blue-800 dark:text-blue-100 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Add A Pastor
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="max-w-8xl mx-auto px-6 py-8">
