@@ -4,6 +4,7 @@ import { Plus, Search, Filter, Eye, Edit2, Trash2, MapPin, Users, Phone, Mail } 
 import { branchAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteBranchModal from '../../../components/branch/DeleteBranchModal';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 const Branches = () => {
   const navigate = useNavigate();
@@ -121,6 +122,7 @@ const Branches = () => {
   };
 
   return (
+    <FeatureGate feature={'branchManagement'}>
     <div className="min-h-screen dark:bg-gray-900">
       <div className='rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700'>
         {/* Header */}
@@ -353,6 +355,7 @@ const Branches = () => {
         memberCount={selectedBranch?.memberCount || 0}
       />
     </div>
+    </FeatureGate>
   );
 };
 

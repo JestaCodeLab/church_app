@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Building2, Users, Clock, Wifi, UserPlus } from 'lucide-react';
 import { branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 const NewBranch = () => {
   const navigate = useNavigate();
@@ -239,6 +240,7 @@ const NewBranch = () => {
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   return (
+    <FeatureGate feature={'branchManagement'}>
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
       <div className=" dark:bg-gray-900 border-gray-200 rounded-lg dark:border-gray-700 px-6 py-4">
@@ -1026,6 +1028,7 @@ const NewBranch = () => {
         </div>
       </form>
     </div>
+    </FeatureGate>
   );
 };
 

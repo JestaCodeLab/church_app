@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, Upload, X } from 'lucide-react';
 import { memberAPI, branchAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 const NewMember = () => {
   const navigate = useNavigate();
@@ -134,6 +135,7 @@ const NewMember = () => {
   };
 
   return (
+    <FeatureGate feature={'memberManagement'}>
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
       <div className="w-full dark:bg-gray-800 rounded-lg dark:border-gray-700">
@@ -679,6 +681,7 @@ const NewMember = () => {
         </form>
       </div>
     </div>
+    </FeatureGate>
   );
 };
 

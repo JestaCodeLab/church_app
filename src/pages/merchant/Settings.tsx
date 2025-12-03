@@ -7,6 +7,15 @@ import PreferencesSettings from '../../components/settings/PreferencesSettings';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('profile');
+  // check the URL for a tab query parameter to set the active tab
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
+
 
   const tabs = [
     { id: 'profile', label: 'Account', icon: User, component: <ProfileSettings />, description: 'Manage your profile and personal information.' },

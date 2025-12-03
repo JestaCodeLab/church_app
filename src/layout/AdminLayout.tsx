@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   Search,
-  Bell
+  Bell,
+  Crown
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -23,13 +24,14 @@ const AdminLayout = () => {
     { name: 'Dashboard', href: '/admin', icon: BarChart3 },
     { name: 'Merchants', href: '/admin/merchants', icon: Building2 },
     { name: 'Users', href: '/admin/users', icon: Users },
+    { name: 'Features', href: '/admin/features', icon: Crown },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors">
-      {/* Sidebar - Dark */}
+      {/* Sidebar - Dark - ✅ FIXED: Non-scrolling */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64
         bg-gray-900 dark:bg-gray-950
@@ -38,8 +40,8 @@ const AdminLayout = () => {
         lg:translate-x-0 lg:static
         flex flex-col
       `}>
-        {/* Logo */}
-        <div className="h-20 flex items-center px-6 border-b border-gray-800 dark:border-gray-900">
+        {/* Logo - Fixed at top */}
+        <div className="h-20 flex items-center px-6 border-b border-gray-800 dark:border-gray-900 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
@@ -51,8 +53,8 @@ const AdminLayout = () => {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+        {/* Navigation - ✅ FIXED: Only scrolls if content overflows */}
+        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
@@ -76,8 +78,8 @@ const AdminLayout = () => {
           })}
         </nav>
 
-        {/* Bottom Links */}
-        <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1">
+        {/* Bottom Links - ✅ FIXED: Fixed at bottom */}
+        <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
           <Link
             to="/admin/settings"
             className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200"
@@ -140,7 +142,7 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content - ✅ This is where content scrolls */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <Outlet />

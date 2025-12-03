@@ -28,6 +28,10 @@ import NewBranch from '../../pages/merchant/branches/NewBranch';
 import BranchDetails from '../../pages/merchant/branches/BranchDetails';
 import { Edit } from 'lucide-react';
 import EditBranch from '../../pages/merchant/branches/EditBranch';
+import AdminFeatures from '../../pages/admin/AdminFeatures';
+import AdminBranches from '../../pages/admin/AdminBranches';
+import AdminMerchantDetails from '../../pages/admin/AdminMerchantDetails';
+import AdminUserDetails from '../../pages/admin/AdminUserDetails';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -68,7 +72,11 @@ const AnimatedRoutes = () => {
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/merchants" element={<AdminMerchants />} />
+            <Route path="/admin/merchants/:id" element={<AdminMerchantDetails />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/users/:id" element={<AdminUserDetails />} />
+            <Route path="/admin/branches" element={<AdminBranches />} />
+            <Route path="/admin/features" element={<AdminFeatures />} />
           </Route>
         </Route>
 

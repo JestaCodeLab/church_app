@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 const AllMembers = () => {
   const navigate = useNavigate();
@@ -157,6 +158,7 @@ const AllMembers = () => {
   };
 
   return (
+    <FeatureGate feature={'memberManagement'}>
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
@@ -430,6 +432,7 @@ const AllMembers = () => {
         memberName={selectedMember?.name}
       />
     </div>
+    </FeatureGate>
   );
 };
 

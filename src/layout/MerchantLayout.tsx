@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   Users, 
   Calendar,
-  DollarSign,
   MessageSquare,
   Settings,
   Bell,
@@ -16,40 +15,86 @@ import {
   HandCoins
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
 
 const MerchantLayout = () => {
   const { user } = useAuth();
+  const { hasFeature } = useFeatureFlag();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Branches', href: '/branches', icon: Church },
-    { name: 'Members', href: '/members', icon: Users },
-    { name: 'Sermons', href: '/sermons', icon: FileVolume },
-    { name: 'Events', href: '/events', icon: Calendar },
-    { name: 'Finance', href: '/finance', icon: HandCoins },
-    { name: 'Messages', href: '/messages', icon: MessageSquare },
+  // ✅ Navigation with feature requirements
+  const allNavigation = [
+    { 
+      name: 'Dashboard', 
+      href: '/dashboard', 
+      icon: LayoutDashboard,
+      requiresFeature: null // Always visible
+    },
+    { 
+      name: 'Branches', 
+      href: '/branches', 
+      icon: Church,
+      requiresFeature: 'branchManagement'
+    },
+    { 
+      name: 'Members', 
+      href: '/members', 
+      icon: Users,
+      requiresFeature: 'memberManagement'
+    },
+    { 
+      name: 'Sermons', 
+      href: '/sermons', 
+      icon: FileVolume,
+      requiresFeature: 'sermonManagement'
+    },
+    { 
+      name: 'Events', 
+      href: '/events', 
+      icon: Calendar,
+      requiresFeature: 'eventManagement'
+    },
+    { 
+      name: 'Finance', 
+      href: '/finance', 
+      icon: HandCoins,
+      requiresFeature: 'financialManagement'
+    },
+    { 
+      name: 'Messages', 
+      href: '/messages', 
+      icon: MessageSquare,
+      requiresFeature: 'smsCommunications'
+    },
   ];
+
+  // ✅ Filter navigation based on user's subscription features
+  const navigation = allNavigation.filter(item => {
+    // Always show items without feature requirements
+    if (!item.requiresFeature) return true;
+    
+    // Check if user has the required feature
+    return hasFeature(item.requiresFeature as any);
+  });
 
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors">
-      {/* Sidebar - Dark */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64
         bg-gray-900 dark:bg-gray-950
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static
+        lg:translate-x-0
         flex flex-col
       `}>
-        {/* Logo/Church Name */}
-        <div className="h-20 flex items-center px-6 border-b border-gray-800 dark:border-gray-900">
+        {/* Logo/Church Name - Fixed at top */}
+        <div className="h-20 flex items-center px-6 border-b border-gray-800 dark:border-gray-900 flex-shrink-0">
           <div className="flex items-center space-x-3">
             {user?.merchant?.branding?.logo ? (
               <img 
@@ -71,8 +116,8 @@ const MerchantLayout = () => {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+        {/* Navigation - ✅ Only shows features user has access to */}
+        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
@@ -96,8 +141,8 @@ const MerchantLayout = () => {
           })}
         </nav>
 
-        {/* Bottom Links */}
-        <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1">
+        {/* Bottom Links - Fixed at bottom */}
+        <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
           <Link
             to="/settings"
             className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200"
@@ -116,8 +161,8 @@ const MerchantLayout = () => {
         />
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Content - ✅ ADJUSTED: Add left margin on desktop */}
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
         {/* Header - White with search & user */}
         <header className="h-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 transition-colors">
           <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -164,7 +209,7 @@ const MerchantLayout = () => {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content - This is where content scrolls */}
         <main className="flex-1 bg-gray-100 dark:bg-gray-900 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-full mx-auto">
             <Outlet />

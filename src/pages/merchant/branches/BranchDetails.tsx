@@ -9,6 +9,7 @@ import {
 import { branchAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteBranchModal from '../../../components/branch/DeleteBranchModal';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 const BranchDetails = () => {
   const navigate = useNavigate();
@@ -104,6 +105,7 @@ const BranchDetails = () => {
   }
 
   return (
+    <FeatureGate feature={'branchManagement'}>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header with gradient background */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 h-32"></div>
@@ -516,6 +518,7 @@ const BranchDetails = () => {
         memberCount={branch?.statistics?.memberCount || 0}
       />
     </div>
+    </FeatureGate>
   );
 };
 

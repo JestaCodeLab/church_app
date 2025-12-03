@@ -17,6 +17,7 @@ import {
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 const MemberDetails = () => {
   const navigate = useNavigate();
@@ -116,6 +117,7 @@ const MemberDetails = () => {
   const age = getAge(member.dateOfBirth);
 
   return (
+    <FeatureGate feature={'memberManagement'}>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
@@ -410,6 +412,7 @@ const MemberDetails = () => {
         />
       )}
     </div>
+    </FeatureGate>
   );
 };
 

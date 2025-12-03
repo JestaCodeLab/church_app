@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, MapPin, Building2, Users, Clock, Wifi } from 'lucide-react';
 import { branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 const EditBranch = () => {
   const navigate = useNavigate();
@@ -307,6 +308,7 @@ const EditBranch = () => {
   }
 
   return (
+    <FeatureGate  feature={'branchManagement'}>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
@@ -1058,6 +1060,7 @@ const EditBranch = () => {
         </div>
       </form>
     </div>
+    </FeatureGate>
   );
 };
 

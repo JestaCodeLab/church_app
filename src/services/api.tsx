@@ -103,6 +103,17 @@ export const adminAPI = {
   updateMerchantStatus: (id: any, status: any) => api.patch(`/admin/merchants/${id}/status`, { status }),
   getAllUsers: (params: any) => api.get('/admin/users', { params }),
   getMerchantUsers: (merchantId: any, params: any) => api.get(`/admin/merchants/${merchantId}/users`, { params }),
+  getFeatures: () => api.get('/admin/features'),
+  getFeatureStats: () => api.get('/admin/features/stats'),
+  updatePlanFeatures: (planId: any, data: any) => api.put(`/admin/plans/${planId}/features`, data),
+  overrideMerchantFeatures: (merchantId: any, data: any) => api.put(`/admin/merchants/${merchantId}/features`, data),
+  getAllBranches: (params: any) => api.get('/admin/branches', { params }),
+  getUserById: (id: any) => api.get(`/admin/users/${id}`),
+  lockUser: (id: any, data: any) => api.patch(`/admin/users/${id}/lock`, data),
+  unlockUser: (id: any) => api.patch(`/admin/users/${id}/unlock`),
+  updateUserStatus: (id: any, data: any) => api.patch(`/admin/users/${id}/status`, data),
+  resetUserPassword: (id: any) => api.post(`/admin/users/${id}/reset-password`),
+  deleteUser: (id: any) => api.delete(`/admin/users/${id}`),
 };
 
 // Branch API
