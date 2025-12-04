@@ -8,6 +8,7 @@ interface SubdomainStepProps {
   churchName: string;
   onNext: () => void;
   onBack: () => void;
+  handleLogout: () => void;
 }
 
 const SubdomainStep: React.FC<SubdomainStepProps> = ({
@@ -16,6 +17,7 @@ const SubdomainStep: React.FC<SubdomainStepProps> = ({
   subdomainOptions,
   churchName,
   onNext,
+  handleLogout
 }) => {
   const [customMode, setCustomMode] = React.useState(false);
 
@@ -186,8 +188,8 @@ const SubdomainStep: React.FC<SubdomainStepProps> = ({
 
       {/* Navigation */}
       <div className="flex items-center justify-between mt-8">
-         <p className="text-center text-base text-gray-500 dark:text-gray-400">
-            Need help?
+         <p onClick={handleLogout} className="text-center cursor-pointer text-base text-gray-500 dark:text-gray-400">
+            Logout
         </p>
         <button
           onClick={onNext}

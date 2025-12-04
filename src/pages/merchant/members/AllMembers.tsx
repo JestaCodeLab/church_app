@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, Eye, Download } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
 import FeatureGate from '../../../components/access/FeatureGate';
+import ImportMembersModal from '../../../components/modals/ImportMembersModal';
+import toast from 'react-hot-toast';
 
 const AllMembers = () => {
   const navigate = useNavigate();
@@ -13,6 +15,8 @@ const AllMembers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -20,6 +24,8 @@ const AllMembers = () => {
     visitors: 0,
     male: 0,
     female: 0,
+    leaders: { pastors: 0, elders: 0, deacons: 0, leaders: 0, total: 0},
+    members: 0,
   });
   
   // Pagination
@@ -86,7 +92,8 @@ const AllMembers = () => {
   const fetchStats = async () => {
     try {
       const response = await memberAPI.getStats();
-      const data = response.data.data;
+      const data = response.data.data?.stats;
+
       
       // Process stats from the aggregation
       const statusMap = data.byStatus.reduce((acc: any, item: any) => {
@@ -106,10 +113,39 @@ const AllMembers = () => {
         visitors: statusMap.visitor || 0,
         male: genderMap.male || 0,
         female: genderMap.female || 0,
+        leaders: data?.leaders,
+        members: data?.regularMembers || 0,
       });
     } catch (error) {
       console.error('Failed to load stats');
     }
+  };
+
+  const handleExport = async () => {
+  try {
+    setIsExporting(true);
+    const response = await memberAPI.exportMembers();
+    
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `members_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+    toast.success('Members exported successfully!');
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || 'Failed to export members');
+  } finally {
+    setIsExporting(false);
+  }
+};
+
+  const handleImportComplete = () => {
+    fetchMembers(); // Refresh the list
   };
 
   const handleDelete = (member: any) => {
@@ -127,9 +163,9 @@ const AllMembers = () => {
 
   const tabs = [
     { id: 'all', label: 'All', count: stats?.total },
-    { id: 'member', label: 'Members', count: stats?.total - stats?.visitors },
-    { id: 'leader', label: 'Leaders', count: 0 },
-    { id: 'visitor', label: 'Visitors', count: stats?.visitors },
+    { id: 'leader', label: 'Leaders', count: stats?.leaders?.leaders || 0 },
+    { id: 'pastor', label: 'Pastors', count: stats?.leaders?.pastors || 0 },
+    { id: 'member', label: 'Members', count: stats?.members || 0 },
   ];
 
   const getRoleBadgeColor = (role: string) => {
@@ -171,18 +207,32 @@ const AllMembers = () => {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <button 
-            className="flex items-center px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          {/* Export Button */}
+          <button
+            onClick={handleExport}
+            disabled={isExporting || members.length === 0}
+            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download className="w-5 h-5 mr-2" />
-            Export
+            <Download className="w-4 h-4 mr-2" />
+            {isExporting ? 'Exporting...' : 'Export'}
           </button>
-          <button 
-            onClick={() => navigate('/members/new')}
-            className="flex items-center px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+
+          {/* Import Button */}
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
           >
-            <Plus className="w-5 h-5 mr-2" />
-            Add New Member
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </button>
+
+          {/* Add Member Button */}
+          <button
+            onClick={() => navigate('/members/new')}
+            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Member
           </button>
         </div>
       </div>
@@ -292,6 +342,7 @@ const AllMembers = () => {
           </div>
         ) : members.length === 0 ? (
           <div className="text-center py-12">
+            <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500 dark:text-gray-400">No members found</p>
           </div>
         ) : (
@@ -430,6 +481,12 @@ const AllMembers = () => {
         }}
         onDelete={handleSuccess}
         memberName={selectedMember?.name}
+      />
+      {/* Import Modal */}
+      <ImportMembersModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={handleImportComplete}
       />
     </div>
     </FeatureGate>

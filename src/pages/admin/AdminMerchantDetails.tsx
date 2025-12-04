@@ -30,6 +30,7 @@ import {
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 
 const MerchantDetail = () => {
   const navigate = useNavigate();
@@ -38,6 +39,8 @@ const MerchantDetail = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showActivateModal, setShowActivateModal] = useState(false);
+const [showSuspendModal, setShowSuspendModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -59,21 +62,40 @@ const MerchantDetail = () => {
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    const action = newStatus === 'active' ? 'activate' : 'suspend';
-    // if (!confirm(`Are you sure you want to ${action} this merchant?`)) return;
-    // build a modal to confirm action
-    
-    try {
-      setActionLoading(true);
-      await adminAPI.updateMerchantStatus(id, newStatus);
-      toast.success(`Merchant ${action}d successfully`);
-      await fetchMerchantDetails();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update status');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  if (newStatus === 'active') {
+    setShowActivateModal(true);
+  } else {
+    setShowSuspendModal(true);
+  }
+};
+
+const confirmActivate = async () => {
+  try {
+    setActionLoading(true);
+    await adminAPI.updateMerchantStatus(id, 'active');
+    toast.success('Merchant activated successfully');
+    setShowActivateModal(false);
+    await fetchMerchantDetails();
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || 'Failed to activate merchant');
+  } finally {
+    setActionLoading(false);
+  }
+};
+
+const confirmSuspend = async () => {
+  try {
+    setActionLoading(true);
+    await adminAPI.updateMerchantStatus(id, 'suspended');
+    toast.success('Merchant suspended successfully');
+    setShowSuspendModal(false);
+    await fetchMerchantDetails();
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || 'Failed to suspend merchant');
+  } finally {
+    setActionLoading(false);
+  }
+};
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -673,6 +695,30 @@ const MerchantDetail = () => {
           </div>
         )}
       </div>
+
+       {/* Confirmation Modals */}
+      <ConfirmModal
+        isOpen={showActivateModal}
+        onClose={() => setShowActivateModal(false)}
+        onConfirm={confirmActivate}
+        title="Activate Merchant"
+        message="This will grant full access to the platform for this church."
+        confirmText="Activate Merchant"
+        type="success"
+        isLoading={actionLoading}
+      />
+
+      <ConfirmModal
+        isOpen={showSuspendModal}
+        onClose={() => setShowSuspendModal(false)}
+        onConfirm={confirmSuspend}
+        title="Suspend Merchant"
+        message="This will temporarily block access to the platform for this church. Members will not be able to login until the merchant is reactivated."
+        confirmText="Suspend Merchant"
+        type="danger"
+        isLoading={actionLoading}
+      />
+      
     </div>
   );
 };

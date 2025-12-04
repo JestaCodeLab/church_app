@@ -4,6 +4,7 @@ import { merchantAPI, settingsAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { useAuth } from '../../context/AuthContext';
 import PageTransition from '../../components/auth/PageTransition';
+import { authAPI } from '../../services/api';
 
 // Step Components
 import SubdomainStep from '../../components/onboarding/SubdomainStep';
@@ -12,6 +13,7 @@ import BrandingStep from '../../components/onboarding/BrandingStep';
 import PlanStep from '../../components/onboarding/PlanStep';
 import SuccessStep from '../../components/onboarding/SuccessStep';
 import ThemeToggle from '../../components/ui/ThemeToggle';
+import toast from 'react-hot-toast';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -60,6 +62,19 @@ const Onboarding = () => {
       showToast.error("Failed to load plans for onboarding.");
     }
   };
+
+  const handleLogout = () => {
+  // Clear tokens
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+  
+  // Show message
+  toast.success('Progress saved! You can continue later.');
+  
+  // Redirect to login
+  navigate('/login');
+};
 
   const handleNext = async () => {
     // Validate current step
@@ -137,6 +152,7 @@ const handleSubmit = async () => { // Removed skipPayment parameter
             churchName={churchName}
             onNext={handleNext}
             onBack={handleBack}
+            handleLogout={handleLogout}
           />
         );
       case 2:

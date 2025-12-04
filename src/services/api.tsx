@@ -93,6 +93,21 @@ export const memberAPI = {
   updateMember: (id: any, data: any) => api.put(`/members/${id}`, data),
   deleteMember: (id: any, permanent = false) => api.delete(`/members/${id}`, { params: { permanent } }),
   getStats: () => api.get('/members/stats'),
+  exportMembers: () => api.get('/members/export', { responseType: 'blob' }),
+  previewImport: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/members/import/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  importMembers: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/members/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
 };
 
 // Admin API
@@ -114,6 +129,7 @@ export const adminAPI = {
   updateUserStatus: (id: any, data: any) => api.patch(`/admin/users/${id}/status`, data),
   resetUserPassword: (id: any) => api.post(`/admin/users/${id}/reset-password`),
   deleteUser: (id: any) => api.delete(`/admin/users/${id}`),
+  
 };
 
 // Branch API
