@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Pencil, Trash2, RotateCw, Loader } from 'lucide-react';
+import { Search, UserPlus, Trash2, RotateCw, Loader } from 'lucide-react';
 import { teamAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
-// import InviteUserModal from './InviteUserModal';
+import InviteUserModal from '../modals/InviteUserModal';
 
 interface TeamMember {
   _id: string;
@@ -26,10 +26,10 @@ const TeamManagement = () => {
 
   const roleOptions = [
     { value: 'church_admin', label: 'Admin' },
-    { value: 'pastor', label: 'Pastor' },
-    { value: 'leader', label: 'Leader' },
-    { value: 'elder', label: 'Elder' },
-    { value: 'deacon', label: 'Deacon' },
+    // { value: 'pastor', label: 'Pastor' },
+    // { value: 'leader', label: 'Leader' },
+    // { value: 'elder', label: 'Elder' },
+    // { value: 'deacon', label: 'Deacon' },
   ];
 
   useEffect(() => {
@@ -283,7 +283,7 @@ const TeamManagement = () => {
       )}
 
       {/* Invite Modal */}
-      {/* {showInviteModal && (
+      {showInviteModal && (
         <InviteUserModal
           onClose={() => setShowInviteModal(false)}
           onSuccess={() => {
@@ -291,7 +291,7 @@ const TeamManagement = () => {
             fetchTeamMembers();
           }}
         />
-      )} */}
+      )}
     </div>
   );
 };
