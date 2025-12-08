@@ -107,11 +107,10 @@ const Onboarding = () => {
     setCurrentStep(currentStep + 1);
   };
 
-const handleSubmit = async () => { // Removed skipPayment parameter
+const handleSubmit = async () => {
   setLoading(true);
 
   try {
-    // Create FormData for file upload
     const data = new FormData();
     data.append('subdomain', formData.subdomain);
     data.append('tagline', formData.tagline);
@@ -120,19 +119,37 @@ const handleSubmit = async () => { // Removed skipPayment parameter
     data.append('secondaryColor', formData.secondaryColor);
     data.append('plan', formData.plan);
 
-    // Append logo file if exists
     if (formData.logo) {
       data.append('logo', formData.logo);
     }
+    const response = await merchantAPI.completeOnboarding(data);
 
-    // Payment details are handled by PlanStep before this handleSubmit is called
+    if (response.data.pendingApproval) {
+      const successData = {
+        name: formData.churchName,
+        email: user?.email,
+        subdomain: response.data.data.merchant.subdomain,
+        fullDomain: response.data.data.merchant.fullDomain,
+        status: response.data.data.merchant.status
+      };
+      
+      localStorage.setItem('onboardingComplete', JSON.stringify(successData));
+      showToast.success('Onboarding completed! Awaiting approval.');
+      
+      // ✅ Force full page reload
+      setTimeout(() => {
+        window.location.href = '/onboarding/success';
+      }, 100);
+      
+      return;
+    }
 
-    await merchantAPI.completeOnboarding(data);
     await checkAuth();
-
     showToast.success('Setup completed successfully! 🎉');
     setCurrentStep(5);
+
   } catch (error: any) {
+    console.error('🚀 ERROR:', error);
     showToast.error(
       error?.response?.data?.message || 'Failed to complete setup'
     );
@@ -140,7 +157,6 @@ const handleSubmit = async () => { // Removed skipPayment parameter
     setLoading(false);
   }
 };
-
   const renderStep = () => {
     switch (currentStep) {
       case 1:

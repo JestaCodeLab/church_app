@@ -85,26 +85,28 @@ const AdminMerchants = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const colors: any = {
-      active: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300',
-      pending_verification: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300',
-      pending_onboarding: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
-      suspended: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300',
-      inactive: 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300',
-    };
-    return colors[status] || colors.inactive;
+  const colors: any = {
+    active: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300',
+    pending_verification: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300',
+    pending_onboarding: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
+    pending_approval: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300',
+    suspended: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300',
+    inactive: 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300',
   };
+  return colors[status] || colors.inactive;
+};
 
   const getStatusLabel = (status: string) => {
-    const labels: any = {
-      active: 'Active',
-      pending_verification: 'Pending Verification',
-      pending_onboarding: 'Pending Onboarding',
-      suspended: 'Suspended',
-      inactive: 'Inactive',
-    };
-    return labels[status] || status;
+  const labels: any = {
+    active: 'Active',
+    pending_verification: 'Pending Verification',
+    pending_onboarding: 'Pending Onboarding',
+    pending_approval: 'Pending Approval',
+    suspended: 'Suspended',
+    inactive: 'Inactive',
   };
+  return labels[status] || status;
+};
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -147,6 +149,7 @@ const AdminMerchants = () => {
             <option value="active">Active</option>
             <option value="pending_verification">Pending Verification</option>
             <option value="pending_onboarding">Pending Onboarding</option>
+            <option value="pending_approval">Pending Approval</option>
             <option value="suspended">Suspended</option>
             <option value="inactive">Inactive</option>
           </select>

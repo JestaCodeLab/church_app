@@ -32,6 +32,30 @@ import AdminFeatures from '../../pages/admin/AdminFeatures';
 import AdminBranches from '../../pages/admin/AdminBranches';
 import AdminMerchantDetails from '../../pages/admin/AdminMerchantDetails';
 import AdminUserDetails from '../../pages/admin/AdminUserDetails';
+import OnboardingSuccess from '../onboarding/OnboardingSuccess';
+import PendingApprovalRoute from '../../routes/PendingApprovalRoute';
+import { useMerchant } from '../../context/MerchantContext';
+
+// Add this wrapper component
+const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
+  const { isMainDomain, loading } = useMerchant();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  // Only allow register on main domain
+  if (!isMainDomain) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -42,13 +66,22 @@ const AnimatedRoutes = () => {
         {/* Public Routes */}
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={
+            <RegisterGuard>
+              <Register />
+            </RegisterGuard>
+          } />
           <Route path="/verify-email" element={<VerifyEmail />} />
         </Route>
 
         {/* Onboarding Route - Requires auth but not completed onboarding */}
         <Route element={<OnboardingRoute />}>
           <Route path="/onboarding" element={<Onboarding />} />
+        </Route>
+
+         {/* Pending Approval Route - NEW! */}
+        <Route element={<PendingApprovalRoute />}>
+            <Route path="/onboarding/success" element={<OnboardingSuccess />} />
         </Route>
 
         {/* Protected Routes - Church Dashboard */}

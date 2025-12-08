@@ -24,6 +24,24 @@ code {
     monospace;
 }
 
+:root {
+  --primary-color: #4F46E5;
+  --secondary-color: #10B981;
+}
+
+/* Use merchant colors for primary buttons */
+.bg-primary-600 {
+  background-color: var(--primary-color) !important;
+}
+
+.text-primary-600 {
+  color: var(--primary-color) !important;
+}
+
+.border-primary-600 {
+  border-color: var(--primary-color) !important;
+}
+
 /* Smooth color transitions for theme changes */
 * {
   transition-property: background-color, border-color, color;

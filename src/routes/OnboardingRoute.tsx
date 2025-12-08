@@ -13,17 +13,20 @@ const OnboardingRoute = () => {
     );
   }
 
-  // Must be authenticated to access onboarding
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // If onboarding already completed, redirect to dashboard
+  // If onboarding completed + pending_approval → go to success page
+  if (user?.merchant?.onboardingCompleted && user?.merchant?.status === 'pending_approval') {
+    return <Navigate to="/onboarding/success" replace />;
+  }
+
+  // If onboarding completed + active → go to dashboard
   if (user?.merchant?.onboardingCompleted) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Allow access to onboarding
   return <Outlet />;
 };
 

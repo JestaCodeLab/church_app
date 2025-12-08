@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { User, CreditCard, Lock, Settings as SettingsIcon, Users2, Puzzle, BarChart2 } from 'lucide-react';
+import { User, CreditCard, Lock, Settings as SettingsIcon, Users2, Palette } from 'lucide-react';
 import ProfileSettings from '../../components/settings/ProfileSettings';
 import BillingSettings from '../../components/settings/BillingSettings';
 import SecuritySettings from '../../components/settings/SecuritySettings';
 import PreferencesSettings from '../../components/settings/PreferencesSettings';
+import AppearanceSettings from '../../components/settings/AppearanceSettings';
+import TeamManagement from '../../components/settings/TeamManagement';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -19,11 +21,11 @@ const Settings = () => {
 
   const tabs = [
     { id: 'profile', label: 'Account', icon: User, component: <ProfileSettings />, description: 'Manage your profile and personal information.' },
+    { id: 'appearance', label: 'Appearance', icon: Palette, component: <AppearanceSettings />, description: 'Customize your church branding, logo, and colors.' },  
+    { id: 'team', label: 'Team Management', icon: Users2, component: <TeamManagement />, description: 'Manage your team members and their roles.' },
     { id: 'preferences', label: 'Preferences', icon: SettingsIcon, component: <PreferencesSettings />, description: 'Customize your application experience and notification settings.' },
     { id: 'billing', label: 'Billing & Subscription', icon: CreditCard, component: <BillingSettings />, description: 'View your current plan, upgrade, and manage billing.' },
     { id: 'security', label: 'Security', icon: Lock, component: <SecuritySettings />, description: 'Change your password and manage account security.' },
-    // { id: 'integrations', label: 'Integrations', icon: Puzzle, component: <div>Integrations Coming Soon</div>, description: 'Connect with third-party applications.' },
-    // { id: 'team', label: 'Team Management', icon: Users2, component: <div>Team Management Coming Soon</div>, description: 'Manage your team members and their roles.' },
     // { id: 'reports', label: 'Reports & Analytics', icon: BarChart2, component: <div>Reports & Analytics Coming Soon</div>, description: 'View and export your data.' },
   ];
 

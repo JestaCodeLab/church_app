@@ -99,7 +99,7 @@ const MerchantLayout = () => {
             {user?.merchant?.branding?.logo ? (
               <img 
                 src={user.merchant.branding.logo} 
-                alt="Church logo"
+                alt={user.merchant.name}
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (

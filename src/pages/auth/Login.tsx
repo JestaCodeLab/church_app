@@ -1,13 +1,16 @@
-import React, { useState, FormEvent, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toasts';
 import AuthLayout from '../../components/auth/AuthLayout';
 import PageTransition from '../../components/auth/PageTransition';
+import { useMerchant } from '../../context/MerchantContext';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [error, setError] = useState('');
+  const { isMainDomain } = useMerchant();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -22,27 +25,50 @@ const Login = () => {
     });
   };
 
-const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); 
-    setLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+
   try {
     const result = await login(formData);
-    if (result.success) {
-      showToast.success(`Welcome back, ${result.user?.firstName}!`);
-      
-      // Small delay for smooth transition
-      setTimeout(() => {
-        if (result.user?.role === 'super_admin') {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
-      }, 300); 
+
+    if (result.success && result.user) {
+      showToast.success('Login successful!');
+
+      // Check if requires onboarding
+      if (result.requiresOnboarding) {
+        navigate('/onboarding');
+        return;
+      }
+
+      // Redirect based on role
+      if (result.user.role === 'super_admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
-      showToast.error(result.message || 'Login failed. Please try again.');
+      setError(result.message || 'Login failed');
+      showToast.error(result.message || 'Login failed');
     }
-  } catch (error) {
-    showToast.error('An unexpected error occurred');
+  } catch (error: any) {
+    console.error('Login error:', error);
+    
+    const errorData = error.response?.data;
+    
+    // ✅ Handle pending approval specifically
+    if (errorData?.pendingApproval) {
+      setError(errorData.message);
+      showToast.error(errorData.message);
+    } else if (errorData?.requiresOnboarding) {
+      showToast.error(errorData.message);
+      navigate('/onboarding');
+    } else {
+      const message = errorData?.message || 'Login failed. Please try again.';
+      setError(message);
+      showToast.error(message);
+    }
   } finally {
     setLoading(false);
   }
@@ -50,10 +76,7 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 
   return (
     <PageTransition>
-    <AuthLayout 
-      title={process.env.REACT_APP_PROJECT_NAME || "The Church HQ"}
-      subtitle="Sign in to your account"
-    >
+    <AuthLayout>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
         <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div>
@@ -98,12 +121,14 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         </form>
 
         <div className="mt-6 text-center">
+          {isMainDomain && ( 
             <p className="text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-semibold">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-semibold">
                 Register your church
-            </Link>
+              </Link>
             </p>
+          )}
         </div>
         </div>
     </AuthLayout>

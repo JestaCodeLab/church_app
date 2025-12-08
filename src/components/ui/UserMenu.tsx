@@ -6,7 +6,6 @@ import {
   HelpCircle,
   LogOut,
   CreditCard,
-  Check
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -83,11 +82,18 @@ const UserMenu: React.FC<UserMenuProps> = ({ showEmail = true }) => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
-        <img
-          src={user?.photo || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=4F46E5&color=fff`}
-          alt="User"
-          className="w-10 h-10 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
-        />
+       {/* User Avatar */}
+        {user?.photo ? (
+          <img
+            src={user.photo}
+            alt={`${user.firstName} ${user.lastName}`}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
+            {user?.firstName?.[0]}{user?.lastName?.[0]}
+          </div>
+        )}
         {showEmail && (
           <div className="hidden md:block text-left">
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">

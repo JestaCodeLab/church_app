@@ -71,7 +71,32 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  login: (credentials: any) => api.post('/auth/login', credentials),
+  login: (credentials: any) => {
+  // ✅ Extract subdomain from current URL
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+  
+  let subdomain = null;
+  
+  // Check if we're on a subdomain
+  if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+    // faith.localhost
+    if (parts.length === 2 && parts[0] !== 'localhost') {
+      subdomain = parts[0];
+    }
+  } else if (parts.length >= 3) {
+    // faith.thechurchhq.com
+    subdomain = parts[0];
+  }
+  
+  console.log('🌐 Frontend subdomain:', subdomain);
+  
+  // ✅ Send subdomain in request body
+  return api.post('/auth/login', {
+    ...credentials,
+    subdomain: subdomain
+  });
+},
   logout: () => api.post('/auth/logout'),
   getCurrentUser: () => api.get('/auth/me'),
   refreshToken: (refreshToken: any) => api.post('/auth/refresh', { refreshToken }),
@@ -158,6 +183,15 @@ export const settingsAPI = {
   verifyPayment: (reference: any) => api.post('/settings/subscription/verify-payment', { reference }),
   getBillingHistory: (params: any) => api.get('/settings/subscription/billing-history', { params }),
   updatePaymentMethod: (data: any) => api.put('/settings/subscription/payment-method', data),
+};
+
+// Team API
+export const teamAPI = {
+  getTeamMembers: (params: any) => api.get('/team', { params }),
+  inviteTeamMember: (data: any) => api.post('/team/invite', data),
+  updateMemberRole: (id: string, data: any) => api.patch(`/team/${id}/role`, data),
+  removeTeamMember: (id: string) => api.delete(`/team/${id}`),
+  resendInvitation: (id: string) => api.post(`/team/${id}/resend`),
 };
 
 export default api;

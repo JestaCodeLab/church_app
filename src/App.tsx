@@ -4,9 +4,11 @@ import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
 import AnimatedRoutes from './components/auth/AnimatedRoutes';
 import { LanguageProvider } from './context/LanguageContext';
+import {MerchantProvider} from './context/MerchantContext';
 
 const App = () => {
   return (
+    <MerchantProvider>
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
@@ -43,6 +45,7 @@ const App = () => {
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
+    </MerchantProvider>
 
          
   );

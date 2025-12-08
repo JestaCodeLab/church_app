@@ -1,7 +1,8 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ requiredRole }: { requiredRole?: string }) => {
+const PendingApprovalRoute = () => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
@@ -16,21 +17,19 @@ const ProtectedRoute = ({ requiredRole }: { requiredRole?: string }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user needs to complete onboarding first
   if (user?.merchant && !user.merchant.onboardingCompleted) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // ✅ NEW: If onboarding completed but status is pending_approval
-  if (user?.merchant?.onboardingCompleted && user?.merchant?.status === 'pending_approval') {
-    return <Navigate to="/onboarding/success" replace />;
+  if (user?.merchant?.status === 'pending_approval') {
+    return <Outlet />;
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  if (user?.merchant?.status === 'active') {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Outlet />;
+  return <Navigate to="/dashboard" replace />;
 };
 
-export default ProtectedRoute;
+export default PendingApprovalRoute;
