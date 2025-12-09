@@ -197,7 +197,7 @@ const confirmSuspend = async () => {
                 {data.merchant.name}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
-                {data.merchant.subdomain}.faithconnect.com
+                {data.merchant.subdomain}.The Church HQ.com
               </p>
               <div className="flex items-center space-x-3 mt-3">
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(data.merchant.status)}`}>

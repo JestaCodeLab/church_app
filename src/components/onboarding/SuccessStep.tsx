@@ -50,7 +50,7 @@ const SuccessStep: React.FC<SuccessStepProps> = ({
           🎉 Congratulations!
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400">
-          Your church is now active on FaithConnect!
+          Your church is now active on The Church HQ!
         </p>
       </div>
 
