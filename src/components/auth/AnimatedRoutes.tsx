@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
@@ -59,6 +59,28 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const { merchant, isMainDomain } = useMerchant();
+
+  // Update document title based on subdomain
+  useEffect(() => {
+    if (merchant) {
+      // On church subdomain: "Faith Church - The Church HQ"
+      document.title = `${merchant.name} - The Church HQ`;
+    } else if (isMainDomain) {
+      // On main domain: "The Church HQ - Church Management Platform"
+      document.title = 'The Church HQ - Church Management Platform';
+    }
+  }, [merchant, isMainDomain]);
+
+  // Update favicon based on merchant logo (optional)
+  useEffect(() => {
+    if (merchant?.branding?.logo) {
+      const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      if (link) {
+        link.href = merchant.branding.logo;
+      }
+    }
+  }, [merchant]);
 
   return (
     <AnimatePresence mode="wait">
