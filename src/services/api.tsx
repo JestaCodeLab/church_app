@@ -179,7 +179,11 @@ export const settingsAPI = {
   changePassword: (data: any) => api.put('/settings/security/password', data),
   updateNotifications: (category: string, data: any) => api.put(`/settings/notifications/${category}`, data),
   getSubscription: () => api.get('/settings/subscription'),
-  changePlan: (plan: any) => api.post('/settings/subscription/change-plan', { plan }),
+  changePlan: (plan: any, discountCode?: string | null) => 
+    api.post('/settings/subscription/change-plan', { 
+      plan,
+      ...(discountCode && { discountCode }) // Only include if provided
+    }),
   verifyPayment: (reference: any) => api.post('/settings/subscription/verify-payment', { reference }),
   getBillingHistory: (params: any) => api.get('/settings/subscription/billing-history', { params }),
   updatePaymentMethod: (data: any) => api.put('/settings/subscription/payment-method', data),
@@ -192,6 +196,113 @@ export const teamAPI = {
   updateMemberRole: (id: string, data: any) => api.patch(`/team/${id}/role`, data),
   removeTeamMember: (id: string) => api.delete(`/team/${id}`),
   resendInvitation: (id: string) => api.post(`/team/${id}/resend`),
+};
+
+// Plan API
+export const planAPI = {
+  getPlans: (params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    isPublic?: boolean;
+    isActive?: boolean;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) => api.get('/admin/plans', { params }),
+
+  getPlan: (id: string) => api.get(`/admin/plans/${id}`),
+  createPlan: (data: {
+    name: string;
+    slug: string;
+    description?: string;
+    price: {
+      amount: number;
+      currency: string;
+    };
+    billingCycle: 'monthly' | 'yearly' | 'one-time';
+    trialDays?: number;
+    limits: {
+      members?: number | null;
+      branches?: number | null;
+      events?: number | null;
+      sermons?: number | null;
+      storage?: number | null;
+      users?: number | null;
+      smsCredits?: number | null;
+      emailCredits?: number | null;
+    };
+    features: Record<string, boolean>;
+    highlights?: string[];
+    type?: 'free' | 'basic' | 'pro' | 'enterprise';
+    isPublic?: boolean;
+    isActive?: boolean;
+    displayOrder?: number;
+  }) => api.post('/admin/plans', data),
+
+  updatePlan: (id: string, data: any) => api.put(`/admin/plans/${id}`, data),
+  
+  updatePlanLimits: (id: string, limits: {
+    members?: number | null;
+    branches?: number | null;
+    events?: number | null;
+    sermons?: number | null;
+    storage?: number | null;
+    users?: number | null;
+    smsCredits?: number | null;
+    emailCredits?: number | null;
+  }) => api.patch(`/admin/plans/${id}/limits`, { limits }),
+
+  updatePlanFeatures: (id: string, features: Record<string, boolean>) => api.patch(`/admin/plans/${id}/features`, { features }),
+  togglePlanVisibility: (id: string) => api.patch(`/admin/plans/${id}/visibility`),
+  getPlanStats: (id: string) => api.get(`/admin/plans/${id}/stats`),
+  deletePlan: (id: string, permanent: boolean = false) => api.delete(`/admin/plans/${id}`, { params: { permanent } }),
+};
+
+// Discount API
+export const discountAPI = {
+  // Get all discounts
+  getDiscounts: (params?: {
+    page?: number;
+    limit?: number;
+    status?: 'active' | 'expired' | 'used-up';
+    type?: 'percentage' | 'fixed';
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) => api.get('/admin/discounts', { params }),
+
+  // Get single discount
+  getDiscount: (id: string) => api.get(`/admin/discounts/${id}`),
+
+  // Create discount
+  createDiscount: (data: {
+    code: string;
+    description?: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    applicablePlans?: string[];
+    maxUses?: number | null;
+    maxUsesPerMerchant?: number;
+    validFrom?: Date | string;
+    validUntil?: Date | string | null;
+    isActive?: boolean;
+  }) => api.post('/admin/discounts', data),
+
+  // Update discount
+  updateDiscount: (id: string, data: any) => api.put(`/admin/discounts/${id}`, data),
+
+  // Delete discount
+  deleteDiscount: (id: string, permanent: boolean = false) => 
+    api.delete(`/admin/discounts/${id}`, { params: { permanent } }),
+
+  // Get discount statistics
+  getDiscountStats: (id: string) => api.get(`/admin/discounts/${id}/stats`),
+
+  // Validate discount (public - for checkout)
+  validateDiscount: (data: {
+    code: string;
+    planSlug: string;
+    merchantId: string;
+  }) => api.post('/discounts/validate', data)
 };
 
 export default api;

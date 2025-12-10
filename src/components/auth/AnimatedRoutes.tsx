@@ -35,6 +35,14 @@ import AdminUserDetails from '../../pages/admin/AdminUserDetails';
 import OnboardingSuccess from '../onboarding/OnboardingSuccess';
 import PendingApprovalRoute from '../../routes/PendingApprovalRoute';
 import { useMerchant } from '../../context/MerchantContext';
+import AdminPlans from '../../pages/admin/plans/AdminPlans';
+import AdminPlanEdit from '../../pages/admin/plans/AdminPlanEdit';
+import AdminCreatePlan from '../../pages/admin/plans/AdminCreatePlan';
+import AdminPlanDetails from '../../pages/admin/plans/AdminPlanDetails';
+import AdminDiscounts from '../../pages/admin/discount/AdminDiscount';
+import AdminCreateDiscount from '../../pages/admin/discount/AdminCreateDiscount';
+import AdminDiscountDetails from '../../pages/admin/discount/AdminDiscountDetails';
+import AdminEditDiscount from '../../pages/admin/discount/AdminEditDiscount';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -132,6 +140,18 @@ const AnimatedRoutes = () => {
             <Route path="/admin/users/:id" element={<AdminUserDetails />} />
             <Route path="/admin/branches" element={<AdminBranches />} />
             <Route path="/admin/features" element={<AdminFeatures />} />
+            
+            {/* Plans */}
+            <Route path="/admin/plans" element={<AdminPlans />} />
+            <Route path="/admin/plans/new" element={<AdminCreatePlan />} />
+            <Route path="/admin/plans/:id" element={<AdminPlanDetails />} />
+            <Route path="/admin/plans/:id/edit" element={<AdminPlanEdit />} />
+            
+            {/* Discounts */}
+            <Route path="/admin/discounts" element={<AdminDiscounts />} />
+            <Route path="/admin/discounts/new" element={<AdminCreateDiscount />} />
+            <Route path="/admin/discounts/:id" element={<AdminDiscountDetails />} />
+            <Route path="/admin/discounts/:id/edit" element={<AdminEditDiscount />} />
           </Route>
         </Route>
 

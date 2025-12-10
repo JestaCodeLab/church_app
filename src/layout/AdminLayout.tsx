@@ -10,7 +10,12 @@ import {
   X,
   Search,
   Bell,
-  Crown
+  Crown,
+  ChevronDown,
+  ChevronRight,
+  Percent,
+  Sparkles,
+  GitBranch
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -19,19 +24,29 @@ const AdminLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [plansMenuOpen, setPlansMenuOpen] = useState(true); // Plans submenu open by default
 
+  // Main navigation (no submenus)
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: BarChart3 },
     { name: 'Merchants', href: '/admin/merchants', icon: Building2 },
     { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Features', href: '/admin/features', icon: Crown },
+    { name: 'Branches', href: '/admin/branches', icon: GitBranch },
+  ];
+
+  // Plans submenu items
+  const plansSubmenu = [
+    { name: 'All Plans', href: '/admin/plans', icon: Crown },
+    { name: 'Discounts', href: '/admin/discounts', icon: Percent },
+    { name: 'Features', href: '/admin/features', icon: Sparkles },
   ];
 
   const isActive = (path: string) => location.pathname === path;
+  const isSubmenuActive = (items: any[]) => items.some(item => location.pathname.startsWith(item.href));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors">
-      {/* Sidebar - Dark - ✅ FIXED: Non-scrolling */}
+      {/* Sidebar - Dark */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64
         bg-gray-900 dark:bg-gray-950
@@ -53,8 +68,9 @@ const AdminLayout = () => {
           </div>
         </div>
 
-        {/* Navigation - ✅ FIXED: Only scrolls if content overflows */}
+        {/* Navigation - Scrollable if needed */}
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+          {/* Regular navigation items */}
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
@@ -76,9 +92,61 @@ const AdminLayout = () => {
               </Link>
             );
           })}
+
+          {/* Plans Menu with Submenu */}
+          <div>
+            <button
+              onClick={() => setPlansMenuOpen(!plansMenuOpen)}
+              className={`
+                w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg
+                transition-all duration-200
+                ${isSubmenuActive(plansSubmenu)
+                  ? 'bg-gray-800 text-white'
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }
+              `}
+            >
+              <div className="flex items-center">
+                <Crown className="w-5 h-5 mr-3" />
+                <span>Plans & Billing</span>
+              </div>
+              {plansMenuOpen ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+
+            {/* Submenu Items */}
+            {plansMenuOpen && (
+              <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
+                {plansSubmenu.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`
+                        flex items-center pl-6 pr-3 py-2 text-sm font-medium rounded-r-lg
+                        transition-all duration-200
+                        ${location.pathname.startsWith(item.href)
+                          ? 'bg-primary-600 text-white border-l-2 border-primary-400'
+                          : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200 border-l-2 border-transparent'
+                        }
+                      `}
+                    >
+                      <Icon className="w-4 h-4 mr-3" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
-        {/* Bottom Links - ✅ FIXED: Fixed at bottom */}
+        {/* Bottom Links - Fixed at bottom */}
         <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
           <Link
             to="/admin/settings"
@@ -142,7 +210,7 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        {/* Page Content - ✅ This is where content scrolls */}
+        {/* Page Content - Scrollable */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <Outlet />

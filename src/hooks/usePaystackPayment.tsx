@@ -9,6 +9,7 @@ import { settingsAPI } from '../services/api';
  * ✅ Proper callback handling for PayStack
  * ✅ No async callbacks in PayStack setup
  * ✅ Follows React Hook rules
+ * ✅ UPDATED: Supports discount codes
  * 
  * Usage:
  * const { initializePayment, loading, scriptLoaded } = usePaystackPayment();
@@ -17,6 +18,7 @@ import { settingsAPI } from '../services/api';
  *   email: user.email,
  *   amount: plan.price.amount * 100, // Convert to kobo
  *   planSlug: 'growth',
+ *   discountCode: 'SAVE25', // ✅ NEW: Optional discount code
  *   onSuccess: () => { // handle success },
  *   onClose: () => { // optional close handler }
  * });
@@ -56,6 +58,7 @@ export const usePaystackPayment = () => {
     email: string;
     amount: number; // in kobo (already multiplied by 100)
     planSlug: string;
+    discountCode?: string | null; // ✅ NEW: Discount code support
     onSuccess: () => void;
     onClose?: () => void;
   }) => {
@@ -75,9 +78,14 @@ export const usePaystackPayment = () => {
         throw new Error('PayStack public key not configured. Please add REACT_APP_PAYSTACK_PUBLIC_KEY to your .env file.');
       }
 
-      // Step 1: Initialize transaction on backend
+      // Step 1: Initialize transaction on backend WITH discount code
       console.log('🔄 Initializing PayStack transaction for plan:', config.planSlug);
-      const response = await settingsAPI.changePlan(config.planSlug);
+      if (config.discountCode) {
+        console.log('🎟️ Applying discount code:', config.discountCode);
+      }
+      
+      // ✅ UPDATED: Pass discountCode to backend
+      const response = await settingsAPI.changePlan(config.planSlug, config?.discountCode);
       const { reference: txRef } = response.data.data;
       
       console.log('✅ Transaction initialized with reference:', txRef);
@@ -106,10 +114,10 @@ export const usePaystackPayment = () => {
         ref: paymentReference,
         currency: 'GHS',
         
-        // ✅ FIXED: Non-async callback that PayStack expects
+        // FIXED: Non-async callback that PayStack expects
         callback: function(response: any) {
-          console.log('✅ Payment successful:', response.reference);
-          console.log('🔄 Starting payment verification...');
+          console.log('Payment successful:', response.reference);
+          console.log('Starting payment verification...');
           
           // Handle verification asynchronously OUTSIDE the callback
           (async () => {
@@ -127,9 +135,9 @@ export const usePaystackPayment = () => {
           })();
         },
         
-        // ✅ FIXED: Non-async onClose
+        // FIXED: Non-async onClose
         onClose: function() {
-          console.log('ℹ️ Payment popup closed by user');
+          console.log('Payment popup closed by user');
           showToast.error('Payment cancelled. You can try again when ready.');
           
           if (closeCallback) {
