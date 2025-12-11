@@ -90,7 +90,7 @@ const AdminDashboard = () => {
   const formatPlanData = () => {
     if (!stats?.planDistribution) return [];
     return stats.planDistribution.map(item => ({
-      name: item._id.charAt(0).toUpperCase() + item._id.slice(1),
+      name: item._id?.charAt(0)?.toUpperCase() + item._id?.slice(1),
       value: item.count
     }));
   };
