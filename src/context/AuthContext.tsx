@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { authAPI, settingsAPI } from '../services/api';
 import useSessionExpiry from '../hooks/useSessionExpiry';
 import SessionExpiryModal from '../components/modals/SessionExpiryModal';
 
@@ -95,6 +95,8 @@ interface User {
         reports: boolean;
       };
       planDetails: Plan;
+      usage: any;
+      limits: any;
     };
   };
 }
@@ -106,6 +108,7 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<LoginResult>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  fetchAndUpdateSubscription: () => Promise<void>;
 }
 
 interface LoginCredentials {
@@ -127,6 +130,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [extendingSession, setExtendingSession] = useState(false);
+
+  // ADD: Function to fetch and update subscription data
+  const fetchAndUpdateSubscription = useCallback(async () => {
+    try {
+      const response = await settingsAPI.getSubscription();
+      const subscriptionData = response.data.data.subscription;
+      
+      // Update user state with subscription data
+      setUser(prevUser => {
+        if (!prevUser || !prevUser.merchant) return prevUser;
+        
+        return {
+          ...prevUser,
+          merchant: {
+            ...prevUser.merchant,
+            subscription: {
+              ...prevUser.merchant.subscription,
+              usage: subscriptionData.usage,
+              limits: subscriptionData.limits,
+              planDetails: subscriptionData.planDetails
+            }
+          }
+        };
+      });
+    } catch (error) {
+      console.error('Failed to fetch subscription:', error);
+    }
+  }, []);
 
   // Session expiry management
   const {
@@ -151,20 +182,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        const response = await authAPI.getCurrentUser();
-        setUser(response.data.data.user);
-        setIsAuthenticated(true);
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      const response = await authAPI.getCurrentUser();
+      const userData = response.data.data.user;
+      
+      setUser(userData);
+      setIsAuthenticated(true);
+      
+      // ADD: Fetch subscription data if user has a merchant
+      if (userData.merchant) {
+        await fetchAndUpdateSubscription();
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      logout();
-    } finally {
-      setLoading(false);
     }
-  };
+    
+  } catch (error) {
+    console.error('Auth check failed:', error);
+    logout();
+  } finally {
+    setLoading(false);
+  }
+};
 
   const login = async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
@@ -177,6 +216,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser(user);
       setIsAuthenticated(true);
+
+      // ADD: Fetch subscription data after login
+      if (user.merchant) {
+        await fetchAndUpdateSubscription();
+      }
 
       return { 
         success: true, 
@@ -245,6 +289,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     logout,
     checkAuth,
+    fetchAndUpdateSubscription
   };
 
   return (

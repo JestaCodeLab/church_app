@@ -126,7 +126,7 @@ const TeamManagement = () => {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 bgowhite dark:bg-gray-800 border border-gray-500 rounded-lg text-white placeholder-gray-500 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
 
@@ -140,7 +140,7 @@ const TeamManagement = () => {
       </div>
 
       {/* Team Table */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+      <div className="bg-gray-50 dark:bg-gray-900/50 dark:border-gray-700 rounded-xl border overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader className="w-8 h-8 animate-spin text-primary-500" />
@@ -152,27 +152,27 @@ const TeamManagement = () => {
         ) : (
           <>
             {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-900/50 border-b border-gray-700">
-              <div className="col-span-4 text-sm font-medium text-gray-400 uppercase tracking-wider">
+            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+              <div className="col-span-4 text-sm font-medium text-gray-600 uppercase tracking-wider">
                 Name
               </div>
-              <div className="col-span-2 text-sm font-medium text-gray-400 uppercase tracking-wider">
+              <div className="col-span-2 text-sm font-medium text-gray-600 uppercase tracking-wider">
                 Status
               </div>
-              <div className="col-span-3 text-sm font-medium text-gray-400 uppercase tracking-wider">
+              <div className="col-span-3 text-sm font-medium text-gray-600 uppercase tracking-wider">
                 Role
               </div>
-              <div className="col-span-3 text-sm font-medium text-gray-400 uppercase tracking-wider text-right">
+              <div className="col-span-3 text-sm font-medium text-gray-600 uppercase tracking-wider text-right">
                 Actions
               </div>
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-700">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {members.map((member) => (
                 <div
                   key={member._id}
-                  className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-700/30 transition-colors"
+                  className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
                 >
                   {/* Name */}
                   <div className="col-span-4 flex items-center space-x-3">
@@ -188,7 +188,7 @@ const TeamManagement = () => {
                       </div>
                     )}
                     <div>
-                      <p className="text-white font-medium">
+                      <p className="text-gray-900 dark:text-white font-medium">
                         {member.firstName} {member.lastName}
                       </p>
                       <p className="text-sm text-gray-400">{member.email}</p>
@@ -254,7 +254,7 @@ const TeamManagement = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
@@ -274,7 +274,7 @@ const TeamManagement = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>

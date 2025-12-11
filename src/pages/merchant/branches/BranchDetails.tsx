@@ -40,7 +40,7 @@ const BranchDetails = () => {
   const fetchStats = async () => {
     try {
       const response = await branchAPI.getStats(id);
-      setStats(response.data.data.stats);
+      setStats(response.data.data.statistics);
     } catch (error) {
       console.error('Failed to load stats');
     }

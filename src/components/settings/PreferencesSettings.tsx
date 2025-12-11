@@ -26,7 +26,7 @@ const PreferencesSettings = () => {
       const response = await settingsAPI.getSettings();
       if (response.data.data.settings?.preferences) {
         setLanguage(response.data.data.settings.preferences.language);
-        setTheme(response.data.data.settings.preferences.theme);
+        // setTheme(response.data.data.settings.preferences.theme);
       }
       if (response.data.data.settings?.notifications) {
         setNotifications(response.data.data.settings.notifications);

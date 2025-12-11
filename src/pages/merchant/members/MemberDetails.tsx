@@ -33,7 +33,7 @@ const MemberDetails = () => {
   const fetchMember = async () => {
     try {
       const response = await memberAPI.getMember(id);
-      setMember(response.data.data);
+      setMember(response.data.data?.member);
     } catch (error) {
       showToast.error('Failed to load member details');
       navigate('/members');
@@ -116,6 +116,8 @@ const MemberDetails = () => {
 
   const age = getAge(member.dateOfBirth);
 
+  console.log(member)
+
   return (
     <FeatureGate feature={'memberManagement'}>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -172,15 +174,15 @@ const MemberDetails = () => {
               {/* Profile Photo */}
               <div className="w-32 h-32 rounded-full bg-white dark:bg-gray-800 p-2 shadow-lg">
                 <div className="w-full h-full rounded-full bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center overflow-hidden">
-                  {member.photoUrl ? (
+                  {member?.photo ? (
                     <img 
-                      src={member.photoUrl} 
+                      src={member?.photo} 
                       alt={`${member.firstName} ${member.lastName}`}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="text-4xl font-semibold text-primary-600 dark:text-primary-400">
-                      {member.firstName[0]}{member.lastName[0]}
+                      {member?.firstName}{member?.lastName}
                     </span>
                   )}
                 </div>

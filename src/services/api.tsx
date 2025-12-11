@@ -114,8 +114,115 @@ export const merchantAPI = {
 export const memberAPI = {
   getMembers: (params: any) => api.get('/members', { params }),
   getMember: (id: any) => api.get(`/members/${id}`),
-  createMember: (data: any) => api.post('/members', data),
-  updateMember: (id: any, data: any) => api.put(`/members/${id}`, data),
+  createMember: (data: any) => {
+    const formData = new FormData();
+    
+    // Add all text fields
+    formData.append('firstName', data.firstName);
+    formData.append('lastName', data.lastName);
+    if (data.middleName) formData.append('middleName', data.middleName);
+    if (data.email) formData.append('email', data.email);
+    if (data.phone) formData.append('phone', data.phone);
+    if (data.alternatePhone) formData.append('alternatePhone', data.alternatePhone);
+    if (data.dateOfBirth) formData.append('dateOfBirth', data.dateOfBirth);
+    if (data.gender) formData.append('gender', data.gender);
+    if (data.maritalStatus) formData.append('maritalStatus', data.maritalStatus);
+    if (data.membershipType) formData.append('membershipType', data.membershipType);
+    if (data.membershipStatus) formData.append('membershipStatus', data.membershipStatus);
+    if (data.membershipDate) formData.append('membershipDate', data.membershipDate);
+    if (data.joinDate) formData.append('membershipDate', data.joinDate);
+    if (data.baptismDate) formData.append('baptismDate', data.baptismDate);
+    if (data.salvationDate) formData.append('salvationDate', data.salvationDate);
+    if (data.occupation) formData.append('occupation', data.occupation);
+    if (data.employer) formData.append('employer', data.employer);
+    if (data.notes) formData.append('notes', data.notes);
+    if (data.branch) formData.append('branch', data.branch);
+    
+    // Add address as JSON string
+    if (data.address) {
+      formData.append('address', JSON.stringify(data.address));
+    }
+    
+    // Add emergency contact as JSON string
+    if (data.emergencyContact) {
+      formData.append('emergencyContact', JSON.stringify(data.emergencyContact));
+    }
+    
+    // Add ministries
+    if (data.ministries) {
+      if (typeof data.ministries === 'string') {
+        formData.append('ministries', JSON.stringify(data.ministries.split(',').map(m => m.trim())));
+      } else if (Array.isArray(data.ministries)) {
+        formData.append('ministries', JSON.stringify(data.ministries));
+      }
+    }
+    
+    // ✅ ADD: Photo file if present
+    if (data.photo && data.photo instanceof File) {
+      formData.append('photo', data.photo);
+    }
+    
+    return api.post('/members', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // UPDATED: updateMember to handle FormData with photo
+  updateMember: (id: string, data: any) => {
+    const formData = new FormData();
+    
+    // Add all text fields
+    formData.append('firstName', data.firstName);
+    formData.append('lastName', data.lastName);
+    if (data.middleName) formData.append('middleName', data.middleName);
+    if (data.email) formData.append('email', data.email);
+    if (data.phone) formData.append('phone', data.phone);
+    if (data.alternatePhone) formData.append('alternatePhone', data.alternatePhone);
+    if (data.dateOfBirth) formData.append('dateOfBirth', data.dateOfBirth);
+    if (data.gender) formData.append('gender', data.gender);
+    if (data.maritalStatus) formData.append('maritalStatus', data.maritalStatus);
+    if (data.membershipType) formData.append('membershipType', data.membershipType);
+    if (data.membershipStatus) formData.append('membershipStatus', data.membershipStatus);
+    if (data.membershipDate) formData.append('membershipDate', data.membershipDate);
+    if (data.baptismDate) formData.append('baptismDate', data.baptismDate);
+    if (data.salvationDate) formData.append('salvationDate', data.salvationDate);
+    if (data.occupation) formData.append('occupation', data.occupation);
+    if (data.employer) formData.append('employer', data.employer);
+    if (data.notes) formData.append('notes', data.notes);
+    if (data.branch) formData.append('branch', data.branch);
+    
+    // Add address as JSON string
+    if (data.address) {
+      formData.append('address', JSON.stringify(data.address));
+    }
+    
+    // Add emergency contact as JSON string
+    if (data.emergencyContact) {
+      formData.append('emergencyContact', JSON.stringify(data.emergencyContact));
+    }
+    
+    // Add ministries
+    if (data.ministries) {
+      if (typeof data.ministries === 'string') {
+        formData.append('ministries', JSON.stringify(data.ministries.split(',').map(m => m.trim())));
+      } else if (Array.isArray(data.ministries)) {
+        formData.append('ministries', JSON.stringify(data.ministries));
+      }
+    }
+    
+    // ✅ ADD: Photo file if present
+    if (data.photo && data.photo instanceof File) {
+      formData.append('photo', data.photo);
+    }
+    
+    return api.put(`/members/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   deleteMember: (id: any, permanent = false) => api.delete(`/members/${id}`, { params: { permanent } }),
   getStats: () => api.get('/members/stats'),
   exportMembers: () => api.get('/members/export', { responseType: 'blob' }),

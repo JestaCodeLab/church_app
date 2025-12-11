@@ -6,9 +6,12 @@ import { showToast } from '../../../utils/toasts';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
 import FeatureGate from '../../../components/access/FeatureGate';
 import ImportMembersModal from '../../../components/modals/ImportMembersModal';
-import toast from 'react-hot-toast';
+import { useResourceLimit } from '../../../hooks/useResourceLimit';
+import LimitReachedModal from '../../../components/modals/LimitReachedModal';
+import { useAuth } from '../../../context/AuthContext';
 
 const AllMembers = () => {
+  const plan = useAuth()?.user?.merchant?.subscription?.plan
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('all');
@@ -44,6 +47,10 @@ const AllMembers = () => {
     membershipType: '',
     branch: '',
   });
+
+  // Resource Limits
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const memberLimit = useResourceLimit('members');
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -121,6 +128,15 @@ const AllMembers = () => {
     }
   };
 
+  // ADD: Check limit before navigating
+  const handleAddMemberClick = () => {
+    if (!memberLimit.canCreate) {
+      setShowLimitModal(true);
+      return;
+    }
+    navigate('/members/new');
+  };
+
   const handleExport = async () => {
   try {
     setIsExporting(true);
@@ -136,9 +152,9 @@ const AllMembers = () => {
     link.remove();
     window.URL.revokeObjectURL(url);
     
-    toast.success('Members exported successfully!');
+    showToast.success('Members exported successfully!');
   } catch (error: any) {
-    toast.error(error.response?.data?.message || 'Failed to export members');
+    showToast.error(error.response?.data?.message || 'Failed to export members');
   } finally {
     setIsExporting(false);
   }
@@ -156,7 +172,11 @@ const AllMembers = () => {
     setShowDeleteModal(true);
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = async() => {
+    await memberAPI.deleteMember(selectedMember.id);
+    showToast.success('Member deleted successfully');
+    setShowDeleteModal(false);
+    setSelectedMember(null);
     fetchMembers();
     fetchStats();
   };
@@ -228,11 +248,23 @@ const AllMembers = () => {
 
           {/* Add Member Button */}
           <button
-            onClick={() => navigate('/members/new')}
-            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
+            onClick={handleAddMemberClick} // ✅ CHANGED: from navigate('/members/new')
+            disabled={!memberLimit.canCreate}
+            className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              memberLimit.canCreate
+                ? 'text-white bg-primary-600 hover:bg-primary-700'
+                : 'text-gray-400 bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
+            }`}
+            title={!memberLimit.canCreate ? `Member limit reached (${memberLimit.current}/${memberLimit.limit})` : ''}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Member
+            {/* ADD: Show remaining count when near limit */}
+            {memberLimit.isNearLimit && memberLimit.canCreate && (
+              <span className="ml-2 px-2 py-0.5 text-xs bg-orange-500 text-white rounded-full">
+                {memberLimit.remaining} left
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -487,6 +519,15 @@ const AllMembers = () => {
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImportComplete={handleImportComplete}
+      />
+      {/* Limit modal */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        resourceType="members"
+        planName={plan}
+        current={memberLimit.current}
+        limit={memberLimit.limit || 0}
       />
     </div>
     </FeatureGate>

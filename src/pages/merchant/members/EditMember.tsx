@@ -170,6 +170,7 @@ const EditMember = () => {
     try {
       const dataToSubmit = {
         ...formData,
+        photo: photoFile,
         ministries: formData.ministries ? formData.ministries.split(',').map(m => m.trim()) : []
       };
 

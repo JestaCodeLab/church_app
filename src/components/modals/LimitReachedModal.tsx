@@ -66,7 +66,7 @@ const LimitReachedModal: React.FC<LimitReachedModalProps> = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {resourceDisplayNames[resourceType]} Limit Reached
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm capitalize text-gray-500 dark:text-gray-400 mt-0">
                   {planName} Plan
                 </p>
               </div>

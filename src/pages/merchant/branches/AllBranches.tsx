@@ -5,9 +5,13 @@ import { branchAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteBranchModal from '../../../components/branch/DeleteBranchModal';
 import FeatureGate from '../../../components/access/FeatureGate';
+import { useResourceLimit } from '../../../hooks/useResourceLimit';
+import LimitReachedModal from '../../../components/modals/LimitReachedModal';
+import { useAuth } from '../../../context/AuthContext';
 
 const Branches = () => {
   const navigate = useNavigate();
+  const plan = useAuth()?.user?.merchant?.subscription?.plan
   const [branches, setBranches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,6 +22,16 @@ const Branches = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
   const [summary, setSummary] = useState<any>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const branchLimit = useResourceLimit('branches');
+
+  const handleAddBranchClick = () => {
+    if (!branchLimit.canCreate) {
+      setShowLimitModal(true);
+      return;
+    }
+    navigate('/branches/new');
+  };
 
   const [filters, setFilters] = useState({
     status: '',
@@ -56,7 +70,7 @@ const Branches = () => {
   const fetchSummary = async () => {
     try {
       const response = await branchAPI.getSummary();
-      setSummary(response.data.data.summary);
+      setSummary(response.data.data);
     } catch (error) {
       console.error('Failed to load summary');
     }
@@ -96,9 +110,9 @@ const Branches = () => {
 
   const tabs = [
     { id: 'all', label: 'All Branches', count: summary?.totalBranches },
-    { id: 'main', label: 'Main', count: summary?.branchesByType?.find((t: any) => t._id === 'main')?.count || 0 },
-    { id: 'branch', label: 'Branches', count: summary?.branchesByType?.find((t: any) => t._id === 'branch')?.count || 0 },
-    { id: 'campus', label: 'Campuses', count: summary?.branchesByType?.find((t: any) => t._id === 'campus')?.count || 0 },
+    { id: 'main', label: 'Main', count: summary?.byType?.main || 0 },
+    { id: 'branch', label: 'Branches', count: summary?.byType?.branch || 0 },
+    { id: 'campus', label: 'Campuses', count: summary?.byType?.campus || 0 },
   ];
 
   const getTypeBadgeColor = (type: string) => {
@@ -137,11 +151,17 @@ const Branches = () => {
               </p>
             </div>
             <button
-              onClick={() => navigate('/branches/new')}
+              onClick={handleAddBranchClick}
+              // disabled={!branchLimit.canCreate}
               className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Branch
+              {branchLimit.isNearLimit && branchLimit.canCreate && (
+                <span className="ml-2 px-2 py-0.5 text-xs bg-orange-500 text-white rounded-full">
+                  {branchLimit.remaining} left
+                </span>
+              )}
             </button>
           </div>
 
@@ -269,7 +289,7 @@ const Branches = () => {
                     <div className="flex items-center space-x-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                       <Users className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {branch.statistics?.memberCount || 0} Members
+                        {branch.statistics?.memberCount || 0} Member(s)
                       </p>
                     </div>
 
@@ -353,6 +373,16 @@ const Branches = () => {
         onDelete={handleDeleteSuccess}
         branchName={selectedBranch?.name || ''}
         memberCount={selectedBranch?.memberCount || 0}
+      />
+
+      {/* Limit Modal */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        resourceType="branches"
+        planName={plan}
+        current={branchLimit.current}
+        limit={branchLimit.limit || 0}
       />
     </div>
     </FeatureGate>

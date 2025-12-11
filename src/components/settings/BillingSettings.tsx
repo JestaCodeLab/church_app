@@ -196,7 +196,7 @@ const BillingSettings = () => {
       {/* Plan Selection */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Subscription Planssss
+          Subscription Plans
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {availablePlans?.map((plan: any) => {
