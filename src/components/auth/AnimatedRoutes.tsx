@@ -43,6 +43,7 @@ import AdminDiscounts from '../../pages/admin/discount/AdminDiscount';
 import AdminCreateDiscount from '../../pages/admin/discount/AdminCreateDiscount';
 import AdminDiscountDetails from '../../pages/admin/discount/AdminDiscountDetails';
 import AdminEditDiscount from '../../pages/admin/discount/AdminEditDiscount';
+import NotFound from '../../pages/NotFound';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -157,7 +158,7 @@ const AnimatedRoutes = () => {
 
         {/* Default */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
   );

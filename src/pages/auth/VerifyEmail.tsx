@@ -11,7 +11,7 @@ import PageTransition from '../../components/auth/PageTransition';
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { checkAuth } = useAuth();
+  const { checkAuth, logout } = useAuth();
   
   const storedData = verificationStorage.get();
   const email = location.state?.email || storedData?.email || '';
@@ -225,7 +225,7 @@ const VerifyEmail = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center border-t border-gray-200 dark:border-gray-700 pt-6 flex gap-1 items-center justify-center">
+          <div className="mt-2 text-center pt-2 flex gap-1 items-center justify-center">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-0">
               Didn't receive the email?
             </p>
@@ -239,6 +239,15 @@ const VerifyEmail = () => {
                 : countdown > 0
                 ? `Resend in ${countdown}s`
                 : 'Resend Code'}
+            </button>
+          </div>
+          <div className="mt-4 text-center border-t border-gray-200 dark:border-gray-700 pt-4 flex gap-1 items-center justify-center">
+            <button
+              onClick={logout}
+              disabled={resending || countdown > 0}
+              className="text-red-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Logout
             </button>
           </div>
         </div>

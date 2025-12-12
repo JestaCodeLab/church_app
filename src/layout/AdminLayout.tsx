@@ -29,7 +29,7 @@ const AdminLayout = () => {
   // Main navigation (no submenus)
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: BarChart3 },
-    { name: 'Merchants', href: '/admin/merchants', icon: Building2 },
+    { name: 'Churches', href: '/admin/merchants', icon: Building2 },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Branches', href: '/admin/branches', icon: GitBranch },
   ];
