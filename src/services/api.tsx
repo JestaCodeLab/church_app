@@ -412,4 +412,36 @@ export const discountAPI = {
   }) => api.post('/discounts/validate', data)
 };
 
+// Event API
+export const eventAPI = {
+  // Event CRUD
+  getEvents: (params?: any) => api.get('/events', { params }),
+  getEvent: (id: string) => api.get(`/events/${id}`),
+  createEvent: (data: any) => api.post('/events', data, {
+    headers: {'Content-Type': "multipart/form-data"}
+  }),
+  updateEvent: (id: string, data: any) => api.put(`/events/${id}`, data, {
+    headers: {'Content-Type': "multipart/form-data"}
+  }),
+  deleteEvent: (id: string) => api.delete(`/events/${id}`),
+  
+  // QR Code
+  regenerateQR: (id: string) => api.post(`/events/${id}/regenerate-qr`),
+  
+  // Attendance
+  checkInAttendance: (id: string, data: any) => api.post(`/events/${id}/attendance`, data),
+  getAttendance: (id: string, params?: any) => api.get(`/events/${id}/attendance`, { params }),
+  
+  // Guest Management
+  getUnconvertedGuests: (params?: any) => api.get('/events/guests/unconverted', { params }),
+  convertGuestToMember: (attendanceId: string, data: any) => 
+    api.post(`/events/attendance/${attendanceId}/convert-to-member`, data),
+  
+  // Public endpoints (no auth)
+  getEventByQR: (qrData: string) => 
+    axios.get(`${API_BASE_URL}/public/events/qr/${qrData}`),
+  publicCheckIn: (qrData: string, data: any) => 
+    axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, data),
+};
+
 export default api;

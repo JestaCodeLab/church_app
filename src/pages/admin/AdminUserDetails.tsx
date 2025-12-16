@@ -22,7 +22,7 @@ import {
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
-import ConfirmModal from '../../components/ui/ConfirmModal';
+import ConfirmModal from '../../components/modals/ConfirmModal';
 
 const AdminUserDetails = () => {
   const navigate = useNavigate();

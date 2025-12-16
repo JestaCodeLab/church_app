@@ -44,6 +44,12 @@ import AdminCreateDiscount from '../../pages/admin/discount/AdminCreateDiscount'
 import AdminDiscountDetails from '../../pages/admin/discount/AdminDiscountDetails';
 import AdminEditDiscount from '../../pages/admin/discount/AdminEditDiscount';
 import NotFound from '../../pages/NotFound';
+import AllEvents from '../../pages/merchant/events/AllEvents';
+import NewEvent from '../../pages/merchant/events/NewEvent';
+import EventDetails from '../../pages/merchant/events/EventDetails';
+import EventAttendance from '../../pages/merchant/events/EventAttendance';
+import GuestManagement from '../../pages/merchant/events/GuestManagement';
+import EventCheckIn from '../../pages/public/EventCheckIn';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -103,6 +109,7 @@ const AnimatedRoutes = () => {
             </RegisterGuard>
           } />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
         </Route>
 
         {/* Onboarding Route - Requires auth but not completed onboarding */}
@@ -127,6 +134,13 @@ const AnimatedRoutes = () => {
             <Route path="/members/new" element={<NewMember />} />
             <Route path="/members/:id" element={<MemberDetails />} />
             <Route path="/members/:id/edit" element={<EditMember />} />
+            <Route path="/events" element={<AllEvents />} />
+            <Route path="/events/new" element={<NewEvent />} />
+            <Route path="/events/:id" element={<EventDetails />} />
+            <Route path="/events/:id/edit" element={<NewEvent />} />
+            <Route path="/events/:id/attendance" element={<EventAttendance />} />
+            <Route path="/events/guests" element={<GuestManagement />} />
+
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>

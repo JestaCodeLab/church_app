@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { planAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
-import ConfirmModal from '../../../components/ui/ConfirmModal';
+import ConfirmModal from '../../../components/modals/ConfirmModal';
 
 const AdminPlans = () => {
   const navigate = useNavigate();

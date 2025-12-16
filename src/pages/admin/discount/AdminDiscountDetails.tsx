@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { discountAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
-import ConfirmModal from '../../../components/ui/ConfirmModal';
+import ConfirmModal from '../../../components/modals/ConfirmModal';
 
 const AdminDiscountDetails = () => {
   const { id } = useParams<{ id: string }>();
