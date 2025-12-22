@@ -50,6 +50,7 @@ import EventDetails from '../../pages/merchant/events/EventDetails';
 import EventAttendance from '../../pages/merchant/events/EventAttendance';
 import GuestManagement from '../../pages/merchant/events/GuestManagement';
 import EventCheckIn from '../../pages/public/EventCheckIn';
+import PublicRegistration from '../../pages/public/PublicRegistration';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -110,6 +111,7 @@ const AnimatedRoutes = () => {
           } />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
+          <Route path="/register/:merchantId" element={<PublicRegistration />} />
         </Route>
 
         {/* Onboarding Route - Requires auth but not completed onboarding */}

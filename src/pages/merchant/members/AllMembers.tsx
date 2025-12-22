@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -11,15 +11,20 @@ import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
 
 const AllMembers = () => {
-  const plan = useAuth()?.user?.merchant?.subscription?.plan
+  const { user } = useAuth();
+  const plan = user?.merchant?.subscription?.plan;
+  const merchantId = user?.merchant?.id;
   const navigate = useNavigate();
   const location = useLocation();
+  
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -29,6 +34,7 @@ const AllMembers = () => {
     female: 0,
     leaders: { pastors: 0, elders: 0, deacons: 0, leaders: 0, total: 0},
     members: 0,
+    firstTimers: 0, 
   });
   
   // Pagination
@@ -46,11 +52,15 @@ const AllMembers = () => {
     gender: '',
     membershipType: '',
     branch: '',
+    registrationType: '',
   });
 
   // Resource Limits
   const [showLimitModal, setShowLimitModal] = useState(false);
   const memberLimit = useResourceLimit('members');
+
+  const frontendUrl = process.env.REACT_APP_FRONTEND_URL || window.location.origin;
+  const registrationLink = `${frontendUrl}/register/${merchantId}`;
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -74,16 +84,30 @@ const AllMembers = () => {
         search: searchQuery,
       };
 
-      // Add filters based on active tab
+      // ⭐ FIXED: Handle different tab types correctly
       if (activeTab !== 'all') {
-        params.membershipType = activeTab;
+        // Check if this is the first-timer tab (has registrationType)
+        if (activeTab === 'first-timer') {
+          // Filter by registrationType for first-timers
+          params.registrationType = 'first-timer';
+        } else {
+          // Filter by membershipType for role-based tabs (leader, pastor, member)
+          params.membershipType = activeTab;
+        }
       }
 
-      // Add additional filters
+      // Add additional filters (only if not already set by tab)
       if (filters.status) params.status = filters.status;
       if (filters.gender) params.gender = filters.gender;
-      if (filters.membershipType) params.membershipType = filters.membershipType;
       if (filters.branch) params.branch = filters.branch;
+      
+      // ⭐ FIXED: Only add these filters if they're explicitly set and not from tab
+      if (filters.membershipType && activeTab === 'all') {
+        params.membershipType = filters.membershipType;
+      }
+      if (filters.registrationType && activeTab === 'all') {
+        params.registrationType = filters.registrationType;
+      }
 
       const response = await memberAPI.getMembers(params);
       setMembers(response.data.data.members);
@@ -101,8 +125,6 @@ const AllMembers = () => {
       const response = await memberAPI.getStats();
       const data = response.data.data?.stats;
 
-      
-      // Process stats from the aggregation
       const statusMap = data.byStatus.reduce((acc: any, item: any) => {
         acc[item._id] = item.count;
         return acc;
@@ -122,13 +144,13 @@ const AllMembers = () => {
         female: genderMap.female || 0,
         leaders: data?.leaders,
         members: data?.regularMembers || 0,
+        firstTimers: statusMap.first_timer || 0, 
       });
     } catch (error) {
       console.error('Failed to load stats');
     }
   };
 
-  // ADD: Check limit before navigating
   const handleAddMemberClick = () => {
     if (!memberLimit.canCreate) {
       setShowLimitModal(true);
@@ -138,30 +160,30 @@ const AllMembers = () => {
   };
 
   const handleExport = async () => {
-  try {
-    setIsExporting(true);
-    const response = await memberAPI.exportMembers();
-    
-    // Create download link
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `members_${new Date().getTime()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-    
-    showToast.success('Members exported successfully!');
-  } catch (error: any) {
-    showToast.error(error.response?.data?.message || 'Failed to export members');
-  } finally {
-    setIsExporting(false);
-  }
-};
+    try {
+      setIsExporting(true);
+      const response = await memberAPI.exportMembers();
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `members_${new Date().getTime()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      showToast.success('Members exported successfully!');
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to export members');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleImportComplete = () => {
-    fetchMembers(); // Refresh the list
+    fetchMembers();
+    fetchStats();
   };
 
   const handleDelete = (member: any) => {
@@ -181,12 +203,31 @@ const AllMembers = () => {
     fetchStats();
   };
 
+  const copyRegistrationLink = () => {
+    navigator.clipboard.writeText(registrationLink);
+    showToast.success('Registration link copied to clipboard!');
+  };
+
   const tabs = [
     { id: 'all', label: 'All', count: stats?.total },
     { id: 'leader', label: 'Leaders', count: stats?.leaders?.leaders || 0 },
     { id: 'pastor', label: 'Pastors', count: stats?.leaders?.pastors || 0 },
     { id: 'member', label: 'Members', count: stats?.members || 0 },
+    { id: 'first-timer', label: 'First Timers', count: stats?.firstTimers || 0 }, // ⭐ Removed registrationType property
   ];
+
+  // ⭐ FIXED: Simplified tab click handler
+  const handleTabClick = (tab: any) => {
+    setActiveTab(tab.id);
+    setCurrentPage(1);
+    
+    // Clear filter overrides when switching tabs
+    setFilters(prev => ({
+      ...prev,
+      registrationType: '',
+      membershipType: ''
+    }));
+  };
 
   const getRoleBadgeColor = (role: string) => {
     const colors: any = {
@@ -207,6 +248,7 @@ const AllMembers = () => {
       active: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
       inactive: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
       visitor: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+      first_timer: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300',
       new_convert: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300',
       transferred: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
     };
@@ -248,7 +290,7 @@ const AllMembers = () => {
 
           {/* Add Member Button */}
           <button
-            onClick={handleAddMemberClick} // ✅ CHANGED: from navigate('/members/new')
+            onClick={handleAddMemberClick}
             disabled={!memberLimit.canCreate}
             className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               memberLimit.canCreate
@@ -259,12 +301,36 @@ const AllMembers = () => {
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Member
-            {/* ADD: Show remaining count when near limit */}
             {memberLimit.isNearLimit && memberLimit.canCreate && (
               <span className="ml-2 px-2 py-0.5 text-xs bg-orange-500 text-white rounded-full">
                 {memberLimit.remaining} left
               </span>
             )}
+          </button>
+        </div>
+      </div>
+
+      {/* Public Registration Link Bar */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <Link2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Public Registration Link
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Share this link for members to self-register
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowLinkModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            Get Link
           </button>
         </div>
       </div>
@@ -334,12 +400,12 @@ const AllMembers = () => {
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Tabs */}
-            <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+            <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  onClick={() => handleTabClick(tab)}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
@@ -417,9 +483,9 @@ const AllMembers = () => {
                             <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {member.fullName || `${member.firstName} ${member.lastName}`}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {member.gender && member.gender.charAt(0).toUpperCase() + member.gender.slice(1)}
-                            </div>
+                              <div className="text-xs capitalize text-gray-500 dark:text-gray-400">
+                                {member.gender}
+                              </div>
                           </div>
                         </div>
                       </td>
@@ -504,7 +570,56 @@ const AllMembers = () => {
         )}
       </div>
 
-      {/* Delete Modal (Keep this for confirmations) */}
+      {/* Registration Link Modal */}
+      {showLinkModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Public Registration Link
+              </h3>
+              <button
+                onClick={() => setShowLinkModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Share this link with members so they can register themselves. The link allows them to choose between member registration or first-timer forms.
+            </p>
+
+            <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 mb-4">
+              <code className="text-sm text-gray-800 dark:text-gray-200 break-all">
+                {registrationLink}
+              </code>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={copyRegistrationLink}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Copy className="h-5 w-5" />
+                <span>Copy Link</span>
+              </button>
+              
+              <button
+                onClick={() => window.open(registrationLink, '_blank')}
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
+              >
+                <ExternalLink className="h-5 w-5" />
+                <span>Open</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
       <DeleteMemberModal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -514,13 +629,13 @@ const AllMembers = () => {
         onDelete={handleSuccess}
         memberName={selectedMember?.name}
       />
-      {/* Import Modal */}
+
       <ImportMembersModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImportComplete={handleImportComplete}
       />
-      {/* Limit modal */}
+
       <LimitReachedModal
         isOpen={showLimitModal}
         onClose={() => setShowLimitModal(false)}
