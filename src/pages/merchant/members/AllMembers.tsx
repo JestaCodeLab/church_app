@@ -535,11 +535,9 @@ const AllMembers = () => {
                             <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {member.fullName || `${member.firstName} ${member.lastName}`}
                             </div>
-                            {member.registrationType && member.registrationType !== 'admin-added' && (
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {member.registrationType === 'member' ? '📝 Self-registered' : '👋 First Timer'}
+                              <div className="text-xs capitalize text-gray-500 dark:text-gray-400">
+                                {member.gender}
                               </div>
-                            )}
                           </div>
                         </div>
                       </td>
