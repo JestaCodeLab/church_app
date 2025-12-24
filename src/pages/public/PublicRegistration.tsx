@@ -2,52 +2,72 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { Users, UserPlus, CheckCircle, Mail, Phone, MapPin, Calendar, User, Clock, XCircle, AlertCircle } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
-const PublicRegistration = () => {
+const PublicRegistrationPage = () => {
   const { merchantId } = useParams();
   
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [merchant, setMerchant] = useState(null);
-  const [mainBranch, setMainBranch] = useState(null);
-  const [registrationType, setRegistrationType] = useState(null);
+  // Registration status state
+  const [registrationStatus, setRegistrationStatus] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(true);
   
+  // Merchant info
+  const [merchantInfo, setMerchantInfo] = useState({
+    name: '',
+    logo: null
+  });
+
+  // Form state
+  const [registrationType, setRegistrationType] = useState(null); // 'member' or 'first-timer'
   const [formData, setFormData] = useState({
+    // Common fields
     firstName: '',
     lastName: '',
-    middleName: '',
     phone: '',
+    gender: '',
+    
+    // Member-specific fields
     email: '',
     dateOfBirth: '',
-    gender: '',
     maritalStatus: '',
+    occupation: '',
     address: {
       street: '',
       city: '',
-      state: '',
+      region: '',
       country: 'Ghana'
-    }
+    },
+    
+    // First-timer specific (uses address from common)
   });
 
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  // Check registration status on mount
   useEffect(() => {
-    fetchMerchantInfo();
+    checkRegistrationStatus();
   }, [merchantId]);
 
-  const fetchMerchantInfo = async () => {
+  const checkRegistrationStatus = async () => {
     try {
-      const response = await axios.get(`${API_URL}/public/register/${merchantId}`);
+      setStatusLoading(true);
+      const response = await axios.get(`${API_URL}/public/register/${merchantId}/status`);
       
       if (response.data.success) {
-        setMerchant(response.data.data.merchant);
-        setMainBranch(response.data.data.mainBranch);
+        setRegistrationStatus(response.data.data);
+        setMerchantInfo({
+          name: response.data.data.merchantName,
+          logo: response.data.data.merchantLogo
+        });
       }
     } catch (error) {
-      console.error('Error fetching merchant info:', error);
-      toast.error(error.response?.data?.message || 'Failed to load registration form');
+      console.error('Error checking registration status:', error);
+      toast.error('Failed to load registration information');
     } finally {
-      setLoading(false);
+      setStatusLoading(false);
     }
   };
 
@@ -71,187 +91,337 @@ const PublicRegistration = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    
-    if (!registrationType) {
-      toast.error('Please select registration type');
-      return;
-    }
-
-    setSubmitting(true);
+    setLoading(true);
 
     try {
+      // Prepare submission data based on registration type
+      const submissionData = {
+        registrationType,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        gender: formData.gender,
+        address: formData.address,
+        occupation: formData.occupation,
+        maritalStatus: formData.maritalStatus,
+        dateOfBirth: formData.dateOfBirth
+      };
+
+      // Add member-specific fields
+      if (registrationType === 'member') {
+        if (formData.email) submissionData.email = formData.email;
+        if (formData.dateOfBirth) submissionData.dateOfBirth = formData.dateOfBirth;
+        if (formData.maritalStatus) submissionData.maritalStatus = formData.maritalStatus;
+        if (formData.occupation) submissionData.occupation = formData.occupation;
+      }
+
       const response = await axios.post(
         `${API_URL}/public/register/${merchantId}`,
-        {
-          registrationType,
-          ...formData
-        }
+        submissionData
       );
 
       if (response.data.success) {
-        toast.success(response.data.message);
-        
-        // Reset form
-        setFormData({
-          firstName: '',
-          lastName: '',
-          middleName: '',
-          phone: '',
-          email: '',
-          dateOfBirth: '',
-          gender: '',
-          maritalStatus: '',
-          address: {
-            street: '',
-            city: '',
-            state: '',
-            country: 'Ghana'
-          }
-        });
-        setRegistrationType(null);
+        toast.success('Registration submitted successfully!');
+        setSubmitted(true);
       }
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.response?.data?.message || 'Failed to submit registration');
+      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  const resetForm = () => {
+    setRegistrationType(null);
+    setSubmitted(false);
+    setFormData({
+      firstName: '',
+      lastName: '',
+      phone: '',
+      gender: '',
+      email: '',
+      dateOfBirth: '',
+      maritalStatus: '',
+      occupation: '',
+      address: {
+        street: '',
+        city: '',
+        region: '',
+        country: 'Ghana'
+      }
+    });
+  };
+
+  // Loading state
+  if (statusLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
   }
 
-  if (!merchant) {
+  // Registration not accepting (paused, expired, scheduled, disabled)
+  if (!registrationStatus?.isAcceptingRegistrations) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="bg-red-100 text-red-800 rounded-lg p-4 mb-4">
-            <h2 className="text-xl font-semibold mb-2">Church Not Found</h2>
-            <p>The registration link you're trying to access is invalid or has expired.</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+          {/* Church Logo */}
+          {merchantInfo.logo && (
+            <div className="flex justify-center mb-6">
+              <img 
+                src={merchantInfo.logo} 
+                alt={merchantInfo.name}
+                className="h-20 w-20 object-contain rounded-lg"
+              />
+            </div>
+          )}
+
+          {/* Church Name */}
+          <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-2">
+            {merchantInfo.name}
+          </h1>
+
+          {/* Status Icon */}
+          <div className="flex justify-center mb-6">
+            {registrationStatus?.status === 'paused' && (
+              <div className="p-4 bg-amber-100 dark:bg-amber-900/20 rounded-full">
+                <Clock className="h-12 w-12 text-amber-600 dark:text-amber-400" />
+              </div>
+            )}
+            {registrationStatus?.status === 'expired' && (
+              <div className="p-4 bg-red-100 dark:bg-red-900/20 rounded-full">
+                <XCircle className="h-12 w-12 text-red-600 dark:text-red-400" />
+              </div>
+            )}
+            {registrationStatus?.status === 'scheduled' && (
+              <div className="p-4 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                <Calendar className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+              </div>
+            )}
           </div>
+
+          {/* Status Message */}
+          <div className="text-center mb-6">
+            {registrationStatus?.status === 'paused' && (
+              <>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Registration Temporarily Paused
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  We're not currently accepting new registrations online.
+                </p>
+              </>
+            )}
+            {registrationStatus?.status === 'expired' && (
+              <>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Registration Period Has Ended
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  The registration window for this campaign has closed.
+                </p>
+              </>
+            )}
+            {registrationStatus?.status === 'scheduled' && (
+              <>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Registration Opens Soon
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Registration will be available starting:
+                </p>
+                {registrationStatus?.startDate && (
+                  <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    {new Date(registrationStatus.startDate).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                )}
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  Please check back then!
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Custom Message */}
+          {registrationStatus?.customMessage && (
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6">
+              <p className="text-gray-700 dark:text-gray-300 text-sm">
+                {registrationStatus.customMessage}
+              </p>
+            </div>
+          )}
+
+          {/* Contact Information */}
+          {(registrationStatus?.contactEmail || registrationStatus?.contactPhone) && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                For assistance, please contact:
+              </p>
+              <div className="space-y-2">
+                {registrationStatus?.contactEmail && (
+                  <div className="flex items-center text-gray-600 dark:text-gray-400">
+                    <Mail className="h-4 w-4 mr-2" />
+                    <a href={`mailto:${registrationStatus.contactEmail}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+                      {registrationStatus.contactEmail}
+                    </a>
+                  </div>
+                )}
+                {registrationStatus?.contactPhone && (
+                  <div className="flex items-center text-gray-600 dark:text-gray-400">
+                    <Phone className="h-4 w-4 mr-2" />
+                    <a href={`tel:${registrationStatus.contactPhone}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+                      {registrationStatus.contactPhone}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
+  // Success state
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-green-100 dark:bg-green-900/20 rounded-full">
+              <CheckCircle className="h-16 w-16 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Registration Successful!
+          </h2>
+          
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Thank you for registering with {merchantInfo.name}. We look forward to seeing you!
+          </p>
+          
+          <button
+            onClick={resetForm}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Register Another Person
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Registration active - show forms
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          {merchant.logo && (
-            <img 
-              src={merchant.logo} 
-              alt={merchant.name}
-              className="h-20 mx-auto mb-4"
-            />
+          {merchantInfo.logo && (
+            <div className="flex justify-center mb-4">
+              <img 
+                src={merchantInfo.logo} 
+                alt={merchantInfo.name}
+                className="h-20 w-20 object-contain rounded-lg"
+              />
+            </div>
           )}
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {merchant.name}
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Welcome to {merchantInfo.name}
           </h1>
-          <p className="text-lg text-gray-600">
-            Welcome! Please register below
+          <p className="text-gray-600 dark:text-gray-400">
+            {registrationType 
+              ? `Complete your ${registrationType === 'member' ? 'member' : 'first-timer'} registration below`
+              : 'Please select your registration type'
+            }
           </p>
+          
+          {/* Registration closes info */}
+          {registrationStatus?.endDate && (
+            <div className="mt-4 inline-flex items-center px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 mr-2" />
+              <span className="text-sm text-amber-800 dark:text-amber-300">
+                Registration closes: {new Date(registrationStatus.endDate).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Registration Type Selection */}
         {!registrationType && (
-          <div className="bg-white shadow-lg rounded-lg p-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">
-              Select Registration Type
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Member Registration */}
-              <button
-                onClick={() => setRegistrationType('member')}
-                className="group relative bg-white border-2 border-gray-300 rounded-lg p-6 hover:border-blue-600 hover:shadow-lg transition-all duration-200 text-left"
-              >
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white group-hover:bg-blue-700">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600">
-                      Member Registration
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-600">
-                      Complete registration form for new members joining the church
-                    </p>
-                  </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Member Registration Card */}
+            <button
+              onClick={() => setRegistrationType('member')}
+              className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-blue-500"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="p-4 bg-blue-100 dark:bg-blue-900/20 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                  <Users className="h-12 w-12 text-blue-600 dark:text-blue-400" />
                 </div>
-              </button>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  Member Registration
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  I'm joining as a new member of the church
+                </p>
+              </div>
+            </button>
 
-              {/* First Timer Registration */}
-              <button
-                onClick={() => setRegistrationType('first-timer')}
-                className="group relative bg-white border-2 border-gray-300 rounded-lg p-6 hover:border-green-600 hover:shadow-lg transition-all duration-200 text-left"
-              >
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-green-600 text-white group-hover:bg-green-700">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-gray-900 group-hover:text-green-600">
-                      First Timer
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-600">
-                      Quick registration for first-time visitors
-                    </p>
-                  </div>
+            {/* First-Timer Registration Card */}
+            <button
+              onClick={() => setRegistrationType('first-timer')}
+              className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-500"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="p-4 bg-green-100 dark:bg-green-900/20 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                  <UserPlus className="h-12 w-12 text-green-600 dark:text-green-400" />
                 </div>
-              </button>
-            </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  First-Timer
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  This is my first time visiting the church
+                </p>
+              </div>
+            </button>
           </div>
         )}
 
         {/* Registration Form */}
         {registrationType && (
-          <div className="bg-white shadow-lg rounded-lg p-8">
-            <div className="mb-6">
-              <button
-                onClick={() => setRegistrationType(null)}
-                className="text-blue-600 hover:text-blue-700 flex items-center text-sm font-medium"
-              >
-                <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to selection
-              </button>
-              
-              <h2 className="text-2xl font-semibold text-gray-900 mt-4">
-                {registrationType === 'member' ? 'Member Registration Form' : 'First Timer Registration'}
-              </h2>
-              <p className="text-gray-600 mt-2">
-                {registrationType === 'member' 
-                  ? 'Please fill in your information to complete your membership registration.'
-                  : 'Welcome! Please provide your basic information so we can get to know you better.'}
-              </p>
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            {/* Back Button */}
+            <button
+              onClick={resetForm}
+              className="mb-6 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center"
+            >
+              ← Back to selection
+            </button>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Name Fields */}
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     First Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -260,12 +430,11 @@ const PublicRegistration = () => {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Last Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -274,61 +443,29 @@ const PublicRegistration = () => {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
               </div>
 
-              {registrationType === 'member' && (
+              {/* Contact Fields */}
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Middle Name
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Phone Number <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="text"
-                    name="middleName"
-                    value={formData.middleName}
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                    placeholder="e.g., 0241234567"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., 0241234567"
-                />
-              </div>
-
-              {/* ⭐ CHANGE 3: Email is now optional for member registration */}
-              {registrationType === 'member' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address {/* ⭐ Removed required indicator */}
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              )}
-
-              {/* Gender field for BOTH types now */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Gender <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -336,127 +473,139 @@ const PublicRegistration = () => {
                     value={formData.gender}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="">Select Gender</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                   </select>
                 </div>
-
-                {/* Date of Birth only for member registration */}
-                {registrationType === 'member' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date of Birth <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="dateOfBirth"
-                      value={formData.dateOfBirth}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                )}
               </div>
 
+              {/* Member-Specific Fields */}
               {registrationType === 'member' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Marital Status
-                  </label>
-                  <select
-                    name="maritalStatus"
-                    value={formData.maritalStatus}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select Status</option>
-                    <option value="single">Single</option>
-                    <option value="married">Married</option>
-                    <option value="divorced">Divorced</option>
-                    <option value="widowed">Widowed</option>
-                  </select>
-                </div>
+                <>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        value={formData.dateOfBirth}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Marital Status
+                      </label>
+                      <select
+                        name="maritalStatus"
+                        value={formData.maritalStatus}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="">Select Status</option>
+                        <option value="single">Single</option>
+                        <option value="married">Married</option>
+                        <option value="divorced">Divorced</option>
+                        <option value="widowed">Widowed</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Occupation
+                      </label>
+                      <input
+                        type="text"
+                        name="occupation"
+                        value={formData.occupation}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               {/* Address */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900">Address</h3>
-                
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Street Address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="address.street"
+                  value={formData.address.street}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Street Address <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    City
                   </label>
                   <input
                     type="text"
-                    name="address.street"
-                    value={formData.address.street}
+                    name="address.city"
+                    value={formData.address.city}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
-
-                {registrationType === 'member' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        name="address.city"
-                        value={formData.address.city}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        State/Region
-                      </label>
-                      <input
-                        type="text"
-                        name="address.state"
-                        value={formData.address.state}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Region
+                  </label>
+                  <input
+                    type="text"
+                    name="address.region"
+                    value={formData.address.region}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
               </div>
 
               {/* Submit Button */}
-              <div className="pt-6 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className={`w-full py-3 px-6 rounded-lg text-white font-medium transition-colors ${
-                    submitting
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : registrationType === 'member'
-                      ? 'bg-blue-600 hover:bg-blue-700'
-                      : 'bg-green-600 hover:bg-green-700'
-                  }`}
-                >
-                  {submitting ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Submitting...
-                    </span>
-                  ) : (
-                    'Submit Registration'
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </span>
+                ) : (
+                  'Submit Registration'
+                )}
+              </button>
             </form>
           </div>
         )}
@@ -465,4 +614,4 @@ const PublicRegistration = () => {
   );
 };
 
-export default PublicRegistration;
+export default PublicRegistrationPage;

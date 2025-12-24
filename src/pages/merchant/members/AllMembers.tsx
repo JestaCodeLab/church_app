@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -8,12 +8,14 @@ import FeatureGate from '../../../components/access/FeatureGate';
 import ImportMembersModal from '../../../components/modals/ImportMembersModal';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import LimitReachedModal from '../../../components/modals/LimitReachedModal';
+import RegistrationSettingsPanel from '../../../components/modals/RegistrationSettingsPanel';
 import { useAuth } from '../../../context/AuthContext';
 
 const AllMembers = () => {
   const { user } = useAuth();
   const plan = user?.merchant?.subscription?.plan;
   const merchantId = user?.merchant?.id;
+  const merchantName = user?.merchant?.name || 'Church'; // ⭐ NEW: Get church name
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -24,6 +26,7 @@ const AllMembers = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   const [stats, setStats] = useState({
     total: 0,
@@ -84,24 +87,18 @@ const AllMembers = () => {
         search: searchQuery,
       };
 
-      // ⭐ FIXED: Handle different tab types correctly
       if (activeTab !== 'all') {
-        // Check if this is the first-timer tab (has registrationType)
         if (activeTab === 'first-timer') {
-          // Filter by registrationType for first-timers
           params.registrationType = 'first-timer';
         } else {
-          // Filter by membershipType for role-based tabs (leader, pastor, member)
           params.membershipType = activeTab;
         }
       }
 
-      // Add additional filters (only if not already set by tab)
       if (filters.status) params.status = filters.status;
       if (filters.gender) params.gender = filters.gender;
       if (filters.branch) params.branch = filters.branch;
       
-      // ⭐ FIXED: Only add these filters if they're explicitly set and not from tab
       if (filters.membershipType && activeTab === 'all') {
         params.membershipType = filters.membershipType;
       }
@@ -208,20 +205,62 @@ const AllMembers = () => {
     showToast.success('Registration link copied to clipboard!');
   };
 
+  // ⭐ NEW: Share via WhatsApp
+  const shareViaWhatsApp = () => {
+    const message = `Join ${merchantName}! Register here: ${registrationLink}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  // ⭐ NEW: Share via SMS
+  const shareViaSMS = () => {
+    const message = `Join ${merchantName}! Register here: ${registrationLink}`;
+    const smsUrl = `sms:?body=${encodeURIComponent(message)}`;
+    window.location.href = smsUrl;
+  };
+
+  // ⭐ NEW: Share via Email
+  const shareViaEmail = () => {
+    const subject = `Join ${merchantName}`;
+    const body = `You're invited to register as a member of ${merchantName}!\n\nClick here to register: ${registrationLink}\n\nYou can choose to register as a member or mark yourself as a first-time visitor.`;
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoUrl;
+  };
+
+  // ⭐ NEW: Native Share API (for mobile)
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join ${merchantName}`,
+          text: `Register as a member of ${merchantName}`,
+          url: registrationLink,
+        });
+        showToast.success('Link shared successfully!');
+      } catch (error: any) {
+        // User cancelled or error occurred
+        if (error.name !== 'AbortError') {
+          console.error('Share failed:', error);
+        }
+      }
+    } else {
+      // Fallback: just copy to clipboard
+      copyRegistrationLink();
+    }
+  };
+
   const tabs = [
     { id: 'all', label: 'All', count: stats?.total },
     { id: 'leader', label: 'Leaders', count: stats?.leaders?.leaders || 0 },
     { id: 'pastor', label: 'Pastors', count: stats?.leaders?.pastors || 0 },
     { id: 'member', label: 'Members', count: stats?.members || 0 },
-    { id: 'first-timer', label: 'First Timers', count: stats?.firstTimers || 0 }, // ⭐ Removed registrationType property
+    { id: 'first-timer', label: 'First Timers', count: stats?.firstTimers || 0 },
   ];
 
-  // ⭐ FIXED: Simplified tab click handler
   const handleTabClick = (tab: any) => {
     setActiveTab(tab.id);
     setCurrentPage(1);
     
-    // Clear filter overrides when switching tabs
     setFilters(prev => ({
       ...prev,
       registrationType: '',
@@ -326,12 +365,25 @@ const AllMembers = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setShowLinkModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-          >
-            Get Link
-          </button>
+          <div className="flex items-center space-x-3">
+            {/* Settings Button */}
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center space-x-2"
+              title="Registration Settings"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </button>
+            
+            {/* Get Link Button */}
+            <button
+              onClick={() => setShowLinkModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            >
+              Get Link
+            </button>
+          </div>
         </div>
       </div>
 
@@ -483,9 +535,11 @@ const AllMembers = () => {
                             <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {member.fullName || `${member.firstName} ${member.lastName}`}
                             </div>
-                              <div className="text-xs capitalize text-gray-500 dark:text-gray-400">
-                                {member.gender}
+                            {member.registrationType && member.registrationType !== 'admin-added' && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {member.registrationType === 'member' ? '📝 Self-registered' : '👋 First Timer'}
                               </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -570,13 +624,13 @@ const AllMembers = () => {
         )}
       </div>
 
-      {/* Registration Link Modal */}
+      {/* ⭐ UPDATED: Registration Link Modal with Share Options */}
       {showLinkModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Public Registration Link
+                Share Registration Link
               </h3>
               <button
                 onClick={() => setShowLinkModal(false)}
@@ -589,7 +643,7 @@ const AllMembers = () => {
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Share this link with members so they can register themselves. The link allows them to choose between member registration or first-timer forms.
+              Share this link with members so they can register themselves. They can choose between member registration or first-timer forms.
             </p>
 
             <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 mb-4">
@@ -598,22 +652,77 @@ const AllMembers = () => {
               </code>
             </div>
 
-            <div className="flex space-x-3">
-              <button
-                onClick={copyRegistrationLink}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-              >
-                <Copy className="h-5 w-5" />
-                <span>Copy Link</span>
-              </button>
-              
-              <button
-                onClick={() => window.open(registrationLink, '_blank')}
-                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
-              >
-                <ExternalLink className="h-5 w-5" />
-                <span>Open</span>
-              </button>
+            {/* ⭐ NEW: Action Buttons Grid */}
+            <div className="space-y-3">
+              {/* Copy and Open buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={copyRegistrationLink}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  <span>Copy Link</span>
+                </button>
+                
+                <button
+                  onClick={() => window.open(registrationLink, '_blank')}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>Open</span>
+                </button>
+              </div>
+
+              {/* Share options divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                    Share via
+                  </span>
+                </div>
+              </div>
+
+              {/* ⭐ NEW: Share via buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* WhatsApp */}
+                <button
+                  onClick={shareViaWhatsApp}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span>WhatsApp</span>
+                </button>
+
+                {/* SMS */}
+                <button
+                  onClick={shareViaSMS}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span>SMS</span>
+                </button>
+
+                {/* Email */}
+                <button
+                  onClick={shareViaEmail}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Mail className="h-4 w-4" />
+                  <span>Email</span>
+                </button>
+
+                {/* Native Share (if supported) */}
+                <button
+                  onClick={handleNativeShare}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  <span>More</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -643,6 +752,12 @@ const AllMembers = () => {
         planName={plan}
         current={memberLimit.current}
         limit={memberLimit.limit || 0}
+      />
+
+      {/* Registration Settings Modal */}
+      <RegistrationSettingsPanel
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
       />
     </div>
     </FeatureGate>
