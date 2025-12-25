@@ -27,8 +27,6 @@ const PublicRegistrationPage = () => {
     lastName: '',
     phone: '',
     gender: '',
-    
-    // Member-specific fields
     email: '',
     dateOfBirth: '',
     maritalStatus: '',
@@ -39,8 +37,11 @@ const PublicRegistrationPage = () => {
       region: '',
       country: 'Ghana'
     },
-    
-    // First-timer specific (uses address from common)
+    placeOfWork: '',
+    bornAgain: null,
+    baptismStatus: 'none',
+    howDidYouJoin: '',
+    howDidYouJoinOther: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -107,7 +108,12 @@ const PublicRegistrationPage = () => {
         address: formData.address,
         occupation: formData.occupation,
         maritalStatus: formData.maritalStatus,
-        dateOfBirth: formData.dateOfBirth
+        dateOfBirth: formData.dateOfBirth,
+        placeOfWork: formData.placeOfWork,
+        bornAgain: formData.bornAgain,
+        baptismStatus: formData.baptismStatus,
+        howDidYouJoin: formData.howDidYouJoin,
+        howDidYouJoinOther: formData.howDidYouJoinOther,
       };
 
       // Add member-specific fields
@@ -116,7 +122,12 @@ const PublicRegistrationPage = () => {
         if (formData.dateOfBirth) submissionData.dateOfBirth = formData.dateOfBirth;
         if (formData.maritalStatus) submissionData.maritalStatus = formData.maritalStatus;
         if (formData.occupation) submissionData.occupation = formData.occupation;
+        if (formData.placeOfWork) submissionData.placeOfWork = formData.placeOfWork;  
       }
+      if (formData.bornAgain !== null) submissionData.bornAgain = formData.bornAgain;
+      if (formData.baptismStatus) submissionData.baptismStatus = formData.baptismStatus;
+      if (formData.howDidYouJoin) submissionData.howDidYouJoin = formData.howDidYouJoin;
+      if (formData.howDidYouJoinOther) submissionData.howDidYouJoinOther = formData.howDidYouJoinOther;
 
       const response = await axios.post(
         `${API_URL}/public/register/${merchantId}`,
@@ -152,7 +163,12 @@ const PublicRegistrationPage = () => {
         city: '',
         region: '',
         country: 'Ghana'
-      }
+      },
+      placeOfWork: '',
+      bornAgain: null,
+      baptismStatus: 'none',
+      howDidYouJoin: '',
+      howDidYouJoinOther: '',
     });
   };
 
@@ -512,7 +528,7 @@ const PublicRegistrationPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Marital Status
@@ -542,9 +558,24 @@ const PublicRegistrationPage = () => {
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Place of Work
+                        </label>
+                        <input
+                        type="text"
+                        name="placeOfWork"
+                        value={formData.placeOfWork}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="e.g., ABC School, XYZ Company"
+                        />
+                    </div>
                   </div>
                 </>
               )}
+
+              
 
               {/* Address */}
               <div>
@@ -587,6 +618,91 @@ const PublicRegistrationPage = () => {
                   />
                 </div>
               </div>
+              {registrationType === 'member' && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                        Spiritual Information
+                    </h3>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                        {/* Born Again */}
+                        <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Are you born again?
+                        </label>
+                        <select
+                            name="bornAgain"
+                            value={formData.bornAgain === null ? '' : String(formData.bornAgain)}
+                            onChange={(e) => {
+                            const value = e.target.value === '' ? null : e.target.value === 'true';
+                            setFormData(prev => ({ ...prev, bornAgain: value }));
+                            }}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                            <option value="">Select...</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                        </div>
+
+                        {/* Baptism Status */}
+                        <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Baptism Status
+                        </label>
+                        <select
+                            name="baptismStatus"
+                            value={formData.baptismStatus}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                            <option value="none">None</option>
+                            <option value="water">Water Baptism</option>
+                            <option value="holyGhost">Holy Ghost Baptism</option>
+                            <option value="both">Both</option>
+                        </select>
+                        </div>
+                    </div>
+
+                    {/* How Did You Join */}
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        How did you join Saviours Embassy?
+                        </label>
+                        <select
+                        name="howDidYouJoin"
+                        value={formData.howDidYouJoin}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                        <option value="">Select...</option>
+                        <option value="invitation">Invitation</option>
+                        <option value="social_media">Social Media</option>
+                        <option value="church_event">Church Event</option>
+                        <option value="walk_in">Walk-in</option>
+                        <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    {/* Show "Other" text field */}
+                    {formData.howDidYouJoin === 'other' && (
+                        <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Please specify how you joined
+                        </label>
+                        <input
+                            type="text"
+                            name="howDidYouJoinOther"
+                            value={formData.howDidYouJoinOther}
+                            onChange={handleInputChange}
+                            maxLength={200}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="Please specify..."
+                        />
+                        </div>
+                    )}
+                    </div>
+              )}
 
               {/* Submit Button */}
               <button

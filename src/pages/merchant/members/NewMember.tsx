@@ -4,6 +4,8 @@ import { ArrowLeft, Save, User, Upload, X } from 'lucide-react';
 import { memberAPI, branchAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
+import SpiritualJoiningFields from '../../../components/member/SpiritualJoiningFields';
+import { b } from 'framer-motion/dist/types.d-BJcRxCew';
 
 const NewMember = () => {
   const navigate = useNavigate();
@@ -22,7 +24,9 @@ const NewMember = () => {
     dateOfBirth: '',
     gender: '',
     maritalStatus: '',
-    branch: '', // ADDED: Branch field
+    branch: '',
+    occupation: '',
+    placeOfWork: '',
     address: {
       street: '',
       city: '',
@@ -41,7 +45,11 @@ const NewMember = () => {
     salvationDate: '',
     baptismDate: '',
     ministries: '',
-    notes: ''
+    notes: '',
+    bornAgain: null,
+    baptismStatus: 'none',
+    howDidYouJoin: '',
+    howDidYouJoinOther: ''
   });
 
   // ADDED: Fetch branches on component mount
@@ -354,6 +362,32 @@ const NewMember = () => {
                     <option value="widowed">Widowed</option>
                   </select>
                 </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Occupation
+                    </label>
+                    <input
+                      type="text"
+                      name="occupation"
+                      value={formData.occupation || ''}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="e.g., Teacher, Engineer"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Place of Work
+                    </label>
+                    <input
+                      type="text"
+                      name="placeOfWork"
+                      value={formData.placeOfWork || ''}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="e.g., ABC School, XYZ Company"
+                    />
+                  </div>
               </div>
             </div>
           </div>
@@ -633,6 +667,81 @@ const NewMember = () => {
                     Separate multiple ministries with commas
                   </p>
                 </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Are you born again?
+                    </label>
+                    <select
+                      name="bornAgain"
+                      value={formData.bornAgain === null ? '' : String(formData.bornAgain)}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                      <option value="">Select...</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                </div>
+
+                {/* Baptism Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Baptism Status
+                  </label>
+                  <select
+                    name="baptismStatus"
+                    value={formData.baptismStatus || 'none'}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="none">None</option>
+                    <option value="water">Water Baptism</option>
+                    <option value="holyGhost">Holy Ghost Baptism</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
+
+                {/* How Did You Join */}
+                <div className="mt-0">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    How did you join Saviours Embassy?
+                  </label>
+                  <select
+                    name="howDidYouJoin"
+                    value={formData.howDidYouJoin || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">Select...</option>
+                    <option value="invitation">Invitation</option>
+                    <option value="social_media">Social Media</option>
+                    <option value="church_event">Church Event</option>
+                    <option value="walk_in">Walk-in</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                {/* Show "Other" text field if "Other" is selected */}
+                {formData.howDidYouJoin === 'other' && (
+                  <div className="mt-0">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Please specify how you joined
+                    </label>
+                    <input
+                      type="text"
+                      name="howDidYouJoinOther"
+                      value={formData.howDidYouJoinOther || ''}
+                      onChange={handleChange}
+                      maxLength={200}
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="Please specify..."
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {formData.howDidYouJoinOther?.length || 0}/200 characters
+                    </p>
+                  </div>
+                )}
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

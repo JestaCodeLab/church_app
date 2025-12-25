@@ -137,6 +137,11 @@ export const memberAPI = {
     if (data.employer) formData.append('employer', data.employer);
     if (data.notes) formData.append('notes', data.notes);
     if (data.branch) formData.append('branch', data.branch);
+    if (data.placeOfWork) formData.append('placeOfWork', data.placeOfWork);
+    if (data.bornAgain !== undefined && data.bornAgain !== null) formData.append('bornAgain', String(data.bornAgain));
+    if (data.baptismStatus) formData.append('baptismStatus', data.baptismStatus);
+    if (data.howDidYouJoin) formData.append('howDidYouJoin', data.howDidYouJoin);
+    if (data.howDidYouJoinOther) formData.append('howDidYouJoinOther', data.howDidYouJoinOther);
     
     // Add address as JSON string
     if (data.address) {
@@ -192,6 +197,11 @@ export const memberAPI = {
     if (data.employer) formData.append('employer', data.employer);
     if (data.notes) formData.append('notes', data.notes);
     if (data.branch) formData.append('branch', data.branch);
+    if (data.placeOfWork) formData.append('placeOfWork', data.placeOfWork);
+    if (data.bornAgain !== undefined && data.bornAgain !== null) formData.append('bornAgain', String(data.bornAgain));
+    if (data.baptismStatus) formData.append('baptismStatus', data.baptismStatus);
+    if (data.howDidYouJoin) formData.append('howDidYouJoin', data.howDidYouJoin);
+    if (data.howDidYouJoinOther) formData.append('howDidYouJoinOther', data.howDidYouJoinOther);
     
     // Add address as JSON string
     if (data.address) {
