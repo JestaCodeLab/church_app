@@ -397,7 +397,7 @@ const PublicRegistrationPage = () => {
                   Member Registration
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  I'm joining as a new member of the church
+                  I'm joining as a member of the church
                 </p>
               </div>
             </button>
@@ -619,11 +619,7 @@ const PublicRegistrationPage = () => {
                 </div>
               </div>
               {registrationType === 'member' && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                        Spiritual Information
-                    </h3>
-
+                <div className="dark:border-gray-700 mb-4">
                     <div className="grid md:grid-cols-2 gap-4">
                         {/* Born Again */}
                         <div>
@@ -637,7 +633,7 @@ const PublicRegistrationPage = () => {
                             const value = e.target.value === '' ? null : e.target.value === 'true';
                             setFormData(prev => ({ ...prev, bornAgain: value }));
                             }}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                             <option value="">Select...</option>
                             <option value="true">Yes</option>
@@ -654,7 +650,7 @@ const PublicRegistrationPage = () => {
                             name="baptismStatus"
                             value={formData.baptismStatus}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                             <option value="none">None</option>
                             <option value="water">Water Baptism</option>
@@ -667,13 +663,13 @@ const PublicRegistrationPage = () => {
                     {/* How Did You Join */}
                     <div className="mt-4">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        How did you join Saviours Embassy?
+                        How did you join {merchantInfo?.name || 'this church'}?
                         </label>
                         <select
                         name="howDidYouJoin"
                         value={formData.howDidYouJoin}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                         <option value="">Select...</option>
                         <option value="invitation">Invitation</option>
@@ -696,7 +692,7 @@ const PublicRegistrationPage = () => {
                             value={formData.howDidYouJoinOther}
                             onChange={handleInputChange}
                             maxLength={200}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             placeholder="Please specify..."
                         />
                         </div>
