@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Users, UserPlus, CheckCircle, Mail, Phone, MapPin, Calendar, User, Clock, XCircle, AlertCircle } from 'lucide-react';
+import api from '../../services/api';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
@@ -12,6 +13,8 @@ const PublicRegistrationPage = () => {
   // Registration status state
   const [registrationStatus, setRegistrationStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [availableDepartments, setAvailableDepartments] = useState([]);
+const [selectedDepartments, setSelectedDepartments] = useState([]);
   
   // Merchant info
   const [merchantInfo, setMerchantInfo] = useState({
@@ -42,6 +45,9 @@ const PublicRegistrationPage = () => {
     baptismStatus: 'none',
     howDidYouJoin: '',
     howDidYouJoinOther: '',
+    departments: [],
+    primaryDepartment: null,
+    
   });
 
   const [loading, setLoading] = useState(false);
@@ -71,6 +77,75 @@ const PublicRegistrationPage = () => {
       setStatusLoading(false);
     }
   };
+
+  // Fetch departments on mount
+useEffect(() => {
+  fetchAvailableDepartments();
+}, [merchantId]);
+
+const fetchAvailableDepartments = async () => {
+  try {
+    const response = await api.get(`${API_URL}/public/register/${merchantId}/departments`);
+    if (response.data.success) {
+      setAvailableDepartments(response.data.data.departments);
+    }
+  } catch (error) {
+    console.error('Error fetching departments:', error);
+  }
+};
+
+const handleDepartmentToggle = (deptId) => {
+  setSelectedDepartments(prev => {
+    if (prev.includes(deptId)) {
+      // Remove department
+      const newDepts = prev.filter(id => id !== deptId);
+      
+      // If removing primary department, set new primary
+      if (formData.primaryDepartment === deptId) {
+        setFormData(prev => ({
+          ...prev,
+          primaryDepartment: newDepts[0] || null,
+          departments: newDepts
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          departments: newDepts
+        }));
+      }
+      
+      return newDepts;
+    } else {
+      // Add department
+      const newDepts = [...prev, deptId];
+      
+      // Set as primary if it's the first one
+      if (newDepts.length === 1) {
+        setFormData(prev => ({
+          ...prev,
+          primaryDepartment: deptId,
+          departments: newDepts
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          departments: newDepts
+        }));
+      }
+      
+      return newDepts;
+    }
+  });
+};
+
+const handleSetPrimaryDepartment = (deptId) => {
+  if (selectedDepartments.includes(deptId)) {
+    setFormData(prev => ({
+      ...prev,
+      primaryDepartment: deptId
+    }));
+  }
+};
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -114,6 +189,8 @@ const PublicRegistrationPage = () => {
         baptismStatus: formData.baptismStatus,
         howDidYouJoin: formData.howDidYouJoin,
         howDidYouJoinOther: formData.howDidYouJoinOther,
+        departments: formData.departments || [],
+        primaryDepartment: formData.primaryDepartment || null,
       };
 
       // Add member-specific fields
@@ -169,6 +246,8 @@ const PublicRegistrationPage = () => {
       baptismStatus: 'none',
       howDidYouJoin: '',
       howDidYouJoinOther: '',
+      departments: [],
+      primaryDepartment: null,
     });
   };
 
@@ -446,7 +525,7 @@ const PublicRegistrationPage = () => {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div>
@@ -459,7 +538,7 @@ const PublicRegistrationPage = () => {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
               </div>
@@ -477,7 +556,7 @@ const PublicRegistrationPage = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="e.g., 0241234567"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div>
@@ -489,7 +568,7 @@ const PublicRegistrationPage = () => {
                     value={formData.gender}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="">Select Gender</option>
                     <option value="male">Male</option>
@@ -511,7 +590,7 @@ const PublicRegistrationPage = () => {
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                     </div>
                     <div>
@@ -523,7 +602,7 @@ const PublicRegistrationPage = () => {
                         name="dateOfBirth"
                         value={formData.dateOfBirth}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                     </div>
                   </div>
@@ -537,7 +616,7 @@ const PublicRegistrationPage = () => {
                         name="maritalStatus"
                         value={formData.maritalStatus}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         <option value="">Select Status</option>
                         <option value="single">Single</option>
@@ -555,7 +634,7 @@ const PublicRegistrationPage = () => {
                         name="occupation"
                         value={formData.occupation}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                     </div>
                     <div>
@@ -567,11 +646,123 @@ const PublicRegistrationPage = () => {
                         name="placeOfWork"
                         value={formData.placeOfWork}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         placeholder="e.g., ABC School, XYZ Company"
                         />
                     </div>
                   </div>
+
+                  {/* Department Selection - Only for member registration */}
+                {registrationType === 'member' && availableDepartments.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 dark:bg-gray-700 dark:border-gray-600">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center dark:text-gray-100">
+                    <Users className="w-5 h-5 mr-2 text-blue-600" />
+                    Select Departments (Optional)
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 dark:text-gray-300">
+                    Choose the departments or ministries you'd like to join
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {availableDepartments.map((dept) => {
+                        const isSelected = selectedDepartments.includes(dept._id);
+                        const isPrimary = formData.primaryDepartment === dept._id;
+                        
+                        return (
+                        <div
+                            key={dept._id}
+                            className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                            isSelected
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            onClick={() => handleDepartmentToggle(dept._id)}
+                        >
+                            {/* Selection checkbox */}
+                            <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0 mt-1">
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                isSelected
+                                    ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+                                    : 'border-gray-300 dark:border-gray-600'
+                                }`}>
+                                {isSelected && (
+                                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                )}
+                                </div>
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2">
+                                <span className="text-xl">{dept.icon}</span>
+                                <h4 className="text-sm font-semibold text-gray-900">
+                                    {dept.name}
+                                </h4>
+                                </div>
+                                
+                                {dept.description && (
+                                <p className="text-xs text-gray-600 mt-1">
+                                    {dept.description}
+                                </p>
+                                )}
+                                
+                                {dept.meetingSchedule && dept.meetingSchedule.day !== 'None' && (
+                                <p className="text-xs text-gray-500 mt-2 flex items-center">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    {dept.meetingSchedule.day}s at {dept.meetingSchedule.time}
+                                </p>
+                                )}
+                            </div>
+                            </div>
+                            
+                            {/* Primary department indicator */}
+                            {isSelected && selectedDepartments.length > 1 && (
+                            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                <label className="flex items-center space-x-2 text-xs">
+                                <input
+                                    type="radio"
+                                    name="primaryDepartment"
+                                    checked={isPrimary}
+                                    onChange={(e) => {
+                                    e.stopPropagation();
+                                    handleSetPrimaryDepartment(dept._id);
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-4 h-4 text-blue-600"
+                                />
+                                <span className="text-gray-700">Set as primary department</span>
+                                </label>
+                            </div>
+                            )}
+                            
+                            {isPrimary && (
+                            <div className="absolute top-2 right-2">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Primary
+                                </span>
+                            </div>
+                            )}
+                        </div>
+                        );
+                    })}
+                    </div>
+                    
+                    {selectedDepartments.length > 0 && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                        <strong>{selectedDepartments.length}</strong> department{selectedDepartments.length !== 1 ? 's' : ''} selected
+                        {formData.primaryDepartment && (
+                            <span className="ml-2">
+                            • Primary: <strong>{availableDepartments.find(d => d._id === formData.primaryDepartment)?.name}</strong>
+                            </span>
+                        )}
+                        </p>
+                    </div>
+                    )}
+                </div>
+                )}
                 </>
               )}
 
@@ -588,7 +779,7 @@ const PublicRegistrationPage = () => {
                   value={formData.address.street}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
 
@@ -602,7 +793,7 @@ const PublicRegistrationPage = () => {
                     name="address.city"
                     value={formData.address.city}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div>
@@ -614,7 +805,7 @@ const PublicRegistrationPage = () => {
                     name="address.region"
                     value={formData.address.region}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
               </div>
@@ -633,7 +824,7 @@ const PublicRegistrationPage = () => {
                             const value = e.target.value === '' ? null : e.target.value === 'true';
                             setFormData(prev => ({ ...prev, bornAgain: value }));
                             }}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                             <option value="">Select...</option>
                             <option value="true">Yes</option>
@@ -650,7 +841,7 @@ const PublicRegistrationPage = () => {
                             name="baptismStatus"
                             value={formData.baptismStatus}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                             <option value="none">None</option>
                             <option value="water">Water Baptism</option>
@@ -669,7 +860,7 @@ const PublicRegistrationPage = () => {
                         name="howDidYouJoin"
                         value={formData.howDidYouJoin}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                         <option value="">Select...</option>
                         <option value="invitation">Invitation</option>
@@ -692,7 +883,7 @@ const PublicRegistrationPage = () => {
                             value={formData.howDidYouJoinOther}
                             onChange={handleInputChange}
                             maxLength={200}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             placeholder="Please specify..."
                         />
                         </div>

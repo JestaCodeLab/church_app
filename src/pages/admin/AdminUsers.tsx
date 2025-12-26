@@ -23,7 +23,7 @@ interface User {
   lastName: string;
   email: string;
   phone: string;
-  role: string;
+  role: any;
   status: string;
   createdAt: string;
   accountLocked: boolean;
@@ -71,7 +71,7 @@ const AdminUsers = () => {
       
       // ✅ Filter out regular members on frontend too
       const filteredUsers = response.data.data.users.filter((user: User) => 
-        ['super_admin', 'church_admin', 'pastor', 'leader'].includes(user.role)
+        ['super_admin', 'church_admin', 'pastor', 'leader'].includes(user.role?.slug)
       );
       
       setUsers(filteredUsers);
@@ -122,7 +122,7 @@ const AdminUsers = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Users (Admins & Staff)
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -284,8 +284,8 @@ const AdminUsers = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadge(user.role).color}`}>
-                          {getRoleBadge(user.role).label}
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadge(user.role?.slug).color}`}>
+                          {getRoleBadge(user.role?.slug).label}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

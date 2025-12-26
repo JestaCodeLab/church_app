@@ -26,7 +26,7 @@ const ProtectedRoute = ({ requiredRole }: { requiredRole?: string }) => {
     return <Navigate to="/onboarding/success" replace />;
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  if (requiredRole && user?.role?.slug !== requiredRole) {
     return <Navigate to="/dashboard" replace />;
   }
 

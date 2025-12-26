@@ -43,7 +43,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       }
 
       // Redirect based on role
-      if (result.user.role === 'super_admin') {
+      if (result.user.role?.slug === 'super_admin') {
         navigate('/admin');
       } else {
         navigate('/dashboard');

@@ -6,10 +6,7 @@ import { settingsAPI } from '../services/api';
  * Custom hook for PayStack payment integration
  * Uses PayStack Inline (loads script automatically)
  * 
- * ✅ Proper callback handling for PayStack
- * ✅ No async callbacks in PayStack setup
- * ✅ Follows React Hook rules
- * ✅ UPDATED: Supports discount codes
+
  * 
  * Usage:
  * const { initializePayment, loading, scriptLoaded } = usePaystackPayment();
@@ -57,7 +54,8 @@ export const usePaystackPayment = () => {
   const initializePayment = useCallback(async (config: {
     email: string;
     amount: number; // in kobo (already multiplied by 100)
-    planSlug: string;
+    planSlug?: string;
+    metadata?: any;
     discountCode?: string | null; // ✅ NEW: Discount code support
     onSuccess: () => void;
     onClose?: () => void;

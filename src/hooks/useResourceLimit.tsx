@@ -16,7 +16,7 @@ export const useResourceLimit = (resourceType: ResourceType): ResourceLimitResul
   const { user } = useAuth();
 
   // Super admin has unlimited access
-  if (user?.role === 'super_admin') {
+  if (user?.role?.slug === 'super_admin') {
     return {
       canCreate: true,
       current: 0,

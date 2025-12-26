@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, User, Upload, X } from 'lucide-react';
-import { memberAPI, branchAPI } from '../../../services/api';
+import { ArrowLeft, Save, User, Upload, X, Users } from 'lucide-react';
+import api, { memberAPI, branchAPI, departmentAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
-import SpiritualJoiningFields from '../../../components/member/SpiritualJoiningFields';
-import { b } from 'framer-motion/dist/types.d-BJcRxCew';
+import { useAuth } from '../../../context/AuthContext';
+
 
 const NewMember = () => {
+  const { merchant } = useAuth()?.user
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [branches, setBranches] = useState<any[]>([]);
+  const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
+const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -49,8 +52,26 @@ const NewMember = () => {
     bornAgain: null,
     baptismStatus: 'none',
     howDidYouJoin: '',
-    howDidYouJoinOther: ''
+    howDidYouJoinOther: '',
+    departments: [] as string[],
+  primaryDepartment: '',
   });
+
+  // Fetch departments on mount
+useEffect(() => {
+  fetchDepartments();
+}, []);
+
+const fetchDepartments = async () => {
+  try {
+    const response = await departmentAPI.getDepartments();
+    if (response.data.success) {
+      setAvailableDepartments(response.data.data.departments);
+    }
+  } catch (error) {
+    console.error('Error fetching departments:', error);
+  }
+};
 
   // ADDED: Fetch branches on component mount
   useEffect(() => {
@@ -65,6 +86,50 @@ const NewMember = () => {
       console.error('Failed to load branches:', error);
       showToast.error('Failed to load branches');
     }
+  };
+
+  const handleDepartmentToggle = (deptId: string) => {
+    setSelectedDepartments(prev => {
+      if (prev.includes(deptId)) {
+        // Remove department
+        const newDepts = prev.filter(id => id !== deptId);
+        
+        // If removing primary department, set new primary
+        if (formData.primaryDepartment === deptId) {
+          setFormData(prev => ({
+            ...prev,
+            primaryDepartment: newDepts[0] || '',
+            departments: newDepts
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            departments: newDepts
+          }));
+        }
+        
+        return newDepts;
+      } else {
+        // Add department
+        const newDepts = [...prev, deptId];
+        
+        // Set as primary if it's the first one
+        if (newDepts.length === 1) {
+          setFormData(prev => ({
+            ...prev,
+            primaryDepartment: deptId,
+            departments: newDepts
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            departments: newDepts
+          }));
+        }
+        
+        return newDepts;
+      }
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -651,21 +716,108 @@ const NewMember = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Ministries
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Departments/Ministries
                   </label>
-                  <input
-                    type="text"
-                    name="ministries"
-                    value={formData.ministries}
-                    onChange={handleChange}
-                    placeholder="e.g., Choir, Usher, Youth"
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-colors"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Separate multiple ministries with commas
-                  </p>
+                  
+                  {availableDepartments.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {availableDepartments.map((dept) => {
+                          const isSelected = selectedDepartments.includes(dept._id);
+                          const isPrimary = formData.primaryDepartment === dept._id;
+                          
+                          return (
+                            <div
+                              key={dept._id}
+                              className={`relative border-2 rounded-lg p-3 cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                              }`}
+                              onClick={() => handleDepartmentToggle(dept._id)}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className="flex-shrink-0 mt-0.5">
+                                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                    isSelected
+                                      ? 'bg-blue-600 border-blue-600'
+                                      : 'border-gray-300 dark:border-gray-600'
+                                  }`}>
+                                    {isSelected && (
+                                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-lg">{dept.icon}</span>
+                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                      {dept.name}
+                                    </h4>
+                                  </div>
+                                  
+                                  {dept.description && (
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {dept.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Primary department radio */}
+                              {isSelected && selectedDepartments.length > 1 && (
+                                <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                                  <label 
+                                    className="flex items-center space-x-2 text-xs cursor-pointer"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name="primaryDepartment"
+                                      checked={isPrimary}
+                                      onChange={() => {
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          primaryDepartment: dept._id
+                                        }));
+                                      }}
+                                      className="w-3 h-3 text-blue-600"
+                                    />
+                                    <span className="text-gray-700 dark:text-gray-300">Primary department</span>
+                                  </label>
+                                </div>
+                              )}
+                              
+                              {isPrimary && (
+                                <div className="absolute top-2 right-2">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    Primary
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {selectedDepartments.length > 0 && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <strong>{selectedDepartments.length}</strong> department{selectedDepartments.length !== 1 ? 's' : ''} selected
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                      No departments available. Admins can create departments under Departments section.
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -705,7 +857,7 @@ const NewMember = () => {
                 {/* How Did You Join */}
                 <div className="mt-0">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    How did you join Saviours Embassy?
+                    How did you join {merchant?.name || 'the church'}?
                   </label>
                   <select
                     name="howDidYouJoin"

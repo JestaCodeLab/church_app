@@ -588,7 +588,7 @@ const confirmSuspend = async () => {
                       </div>
                       <div className="text-right space-y-2">
                         <span className="block px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 capitalize">
-                          {user.role.replace('_', ' ')}
+                          {user.role?.slug?.replace('_', ' ')}
                         </span>
                         <span className={`block px-3 py-1 text-xs font-medium rounded-full ${
                           user.status === 'active'

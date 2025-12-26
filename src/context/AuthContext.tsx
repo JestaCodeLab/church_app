@@ -4,6 +4,28 @@ import { authAPI, settingsAPI } from '../services/api';
 import useSessionExpiry from '../hooks/useSessionExpiry';
 import SessionExpiryModal from '../components/modals/SessionExpiryModal';
 
+interface Role {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  type: 'system' | 'custom';
+  level: number;
+  permissions: {
+    members?: Record<string, boolean>;
+    departments?: Record<string, boolean>;
+    branches?: Record<string, boolean>;
+    events?: Record<string, boolean>;
+    finance?: Record<string, boolean>;
+    sermons?: Record<string, boolean>;
+    communications?: Record<string, boolean>;
+    reports?: Record<string, boolean>;
+    users?: Record<string, boolean>;
+    settings?: Record<string, boolean>;
+  };
+  isActive: boolean;
+}
+
 interface Plan {
   _id: string;
   name: string;
@@ -60,7 +82,7 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
-  role: string;
+  role: Role;
   photo?: string | null;
   phone?: string | null;
   merchant?: {

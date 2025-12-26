@@ -153,14 +153,15 @@ export const memberAPI = {
       formData.append('emergencyContact', JSON.stringify(data.emergencyContact));
     }
     
-    // Add ministries
-    if (data.ministries) {
-      if (typeof data.ministries === 'string') {
-        formData.append('ministries', JSON.stringify(data.ministries.split(',').map(m => m.trim())));
-      } else if (Array.isArray(data.ministries)) {
-        formData.append('ministries', JSON.stringify(data.ministries));
-      }
+    if (data.departments) {
+    if (Array.isArray(data.departments)) {
+      formData.append('departments', JSON.stringify(data.departments));
     }
+  }
+  
+  if (data.primaryDepartment) {
+    formData.append('primaryDepartment', data.primaryDepartment);
+  }
     
     // ✅ ADD: Photo file if present
     if (data.photo && data.photo instanceof File) {
@@ -220,6 +221,13 @@ export const memberAPI = {
       } else if (Array.isArray(data.ministries)) {
         formData.append('ministries', JSON.stringify(data.ministries));
       }
+    }
+      if (data.departments && Array.isArray(data.departments)) {
+      formData.append('departments', JSON.stringify(data.departments));
+    }
+  
+    if (data.primaryDepartment) {
+      formData.append('primaryDepartment', data.primaryDepartment);
     }
     
     // ✅ ADD: Photo file if present
@@ -452,6 +460,110 @@ export const eventAPI = {
     axios.get(`${API_BASE_URL}/public/events/qr/${qrData}`),
   publicCheckIn: (qrData: string, data: any) => 
     axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, data),
+};
+
+// Department API
+export const departmentAPI = {
+  // Get all departments
+  getDepartments: (params?: {
+    isActive?: boolean;
+    branchId?: string;
+  }) => api.get('/departments', { params }),
+
+  // Get departments for registration
+  getDepartmentsForRegistration: (branchId?: string) => 
+    api.get('/departments/registration', { 
+      params: branchId ? { branchId } : undefined 
+    }),
+
+  // Get single department
+  getDepartment: (id: string) => api.get(`/departments/${id}`),
+
+  // Create department
+  createDepartment: (data: {
+    name: string;
+    description?: string;
+    branchId?: string;
+    leaderId?: string;
+    assistantLeaderIds?: string[];
+    contactEmail?: string;
+    contactPhone?: string;
+    meetingSchedule?: {
+      day: string;
+      time: string;
+      location: string;
+      frequency: string;
+    };
+    isActive?: boolean;
+    allowSelfRegistration?: boolean;
+    color?: string;
+    icon?: string;
+  }) => api.post('/departments', data),
+
+  // Update department
+  updateDepartment: (id: string, data: any) => 
+    api.put(`/departments/${id}`, data),
+
+  // Delete department
+  deleteDepartment: (id: string) => 
+    api.delete(`/departments/${id}`),
+
+  // Get department members
+  getDepartmentMembers: (id: string, params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) => api.get(`/departments/${id}/members`, { params }),
+
+  // Get department statistics
+  getDepartmentStatistics: (id: string) => 
+    api.get(`/departments/${id}/statistics`),
+};
+
+// Messaging API
+export const messagingAPI = {
+  // SMS Methods
+  sms: {
+    send: (data: any) => api.post('/sms/send', data),
+    sendBulk: (data: any) => api.post('/sms/send-bulk', data),
+    sendToDepartment: (data: any) => api.post('/sms/send-to-department', data),
+    sendToBranch: (data: any) => api.post('/sms/send-to-branch', data),
+    sendToAll: (data: any) => api.post('/sms/send-to-all', data),
+    getHistory: (params?: any) => api.get('/sms/history', { params }),
+    getStatistics: (params?: any) => api.get('/sms/statistics', { params }),
+  },
+
+  // Credits
+  credits: {
+    get: () => api.get('/sms/credits'),
+    getPackages: () => api.get('/sms/credit-packages'),
+    purchase: (data: any) => api.post('/sms/purchase-credits', data),
+    verify: (reference: string) => api.get(`/sms/verify-purchase/${reference}`),
+    getHistory: (params?: any) => api.get('/sms/purchase-history', { params }),
+  },
+
+  // Templates
+  templates: {
+    getAll: (params?: any) => api.get('/sms/templates', { params }),
+    getOne: (id: string) => api.get(`/sms/templates/${id}`),
+    create: (data: any) => api.post('/sms/templates', data),
+    update: (id: string, data: any) => api.put(`/sms/templates/${id}`, data),
+    delete: (id: string) => api.delete(`/sms/templates/${id}`),
+    getVariables: () => api.get('/sms/templates/variables'),
+  },
+
+  // WhatsApp Methods (Coming Soon)
+  whatsapp: {
+    send: (data: any) => {
+      // TODO: Implement when WhatsApp is ready
+      throw new Error('WhatsApp messaging coming soon!');
+    },
+  },
+
+  // Balance
+  balance: {
+    check: () => api.get('/sms/balance'),
+  },
 };
 
 export default api;

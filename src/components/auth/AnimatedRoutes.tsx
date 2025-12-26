@@ -51,6 +51,18 @@ import EventAttendance from '../../pages/merchant/events/EventAttendance';
 import GuestManagement from '../../pages/merchant/events/GuestManagement';
 import EventCheckIn from '../../pages/public/EventCheckIn';
 import PublicRegistration from '../../pages/public/PublicRegistration';
+import AllDepartments from '../../pages/merchant/departments/AllDepartments';
+import DepartmentForm from '../../pages/merchant/departments/DepartmentForm';
+import DepartmentDetails from '../../pages/merchant/departments/DepartmentDetails';
+import DepartmentAdminDashboard from '../../pages/merchant/departments/DepartmentAdminDashboard';
+import { useAuth } from '../../context/AuthContext';
+import SMSDashboard from '../../pages/merchant/messaging/SMSDashboard';
+import SendSMS from '../../pages/merchant/messaging/SendSMS';
+import SMSTemplates from '../../pages/merchant/messaging/SMSTemplates';
+import SMSHistory from '../../pages/merchant/messaging/SMSHistory';
+import SMSCredits from '../../pages/merchant/messaging/SMSCredits';
+import SMSStatistics from '../../pages/admin/sms/AdminSMSStatistics';
+import SMSPackages from '../../pages/admin/sms/AdminSMSPackages';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -74,6 +86,7 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
 
 
 const AnimatedRoutes = () => {
+  const { user } = useAuth();
   const location = useLocation();
   const { merchant, isMainDomain } = useMerchant();
 
@@ -142,6 +155,24 @@ const AnimatedRoutes = () => {
             <Route path="/events/:id/edit" element={<NewEvent />} />
             <Route path="/events/:id/attendance" element={<EventAttendance />} />
             <Route path="/events/guests" element={<GuestManagement />} />
+            <Route 
+              path="/departments" 
+              element={
+                user?.role?.slug === 'dept_admin' 
+                  ? <DepartmentAdminDashboard /> 
+                  : <AllDepartments />
+              } 
+            />
+            <Route path="/departments/new" element={<DepartmentForm />} />
+            <Route path="/departments/:id" element={<DepartmentDetails />} />
+            <Route path="/departments/:id/edit" element={<DepartmentForm />} />
+
+            {/* SMS Routes */}
+          <Route path="/messaging/dashboard" element={<SMSDashboard />} />
+          <Route path="/messaging/send" element={<SendSMS />} />
+          <Route path="/messaging/templates" element={<SMSTemplates />} />
+          <Route path="/messaging/history" element={<SMSHistory />} />
+          <Route path="/messaging/credits" element={<SMSCredits />} />
 
             <Route path="/settings" element={<Settings />} />
           </Route>
@@ -169,6 +200,10 @@ const AnimatedRoutes = () => {
             <Route path="/admin/discounts/new" element={<AdminCreateDiscount />} />
             <Route path="/admin/discounts/:id" element={<AdminDiscountDetails />} />
             <Route path="/admin/discounts/:id/edit" element={<AdminEditDiscount />} />
+
+            {/* ✅ NEW: Messaging Routes */}
+            <Route path="/admin/sms-packages" element={<SMSPackages />} />
+            <Route path="/admin/sms-statistics" element={<SMSStatistics />} />
           </Route>
         </Route>
 

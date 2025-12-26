@@ -45,7 +45,7 @@ const PublicRoute = () => {
   }
 
   // Onboarding done or no merchant (super_admin) → Redirect to appropriate dashboard
-  if (user?.role === 'super_admin') {
+  if (user?.role?.slug === 'super_admin') {
     return <Navigate to="/admin" replace />;
   }
 

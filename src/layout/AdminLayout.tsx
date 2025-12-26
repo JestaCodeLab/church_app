@@ -15,7 +15,10 @@ import {
   ChevronRight,
   Percent,
   Sparkles,
-  GitBranch
+  GitBranch,
+  MessageSquare,
+  CreditCard,
+  TrendingUp
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -25,6 +28,7 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [plansMenuOpen, setPlansMenuOpen] = useState(true); // Plans submenu open by default
+  const [messagingMenuOpen, setMessagingMenuOpen] = useState(false); // ✅ NEW: Messaging submenu
 
   // Main navigation (no submenus)
   const navigation = [
@@ -32,6 +36,11 @@ const AdminLayout = () => {
     { name: 'Churches', href: '/admin/merchants', icon: Building2 },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Branches', href: '/admin/branches', icon: GitBranch },
+    {
+      name: 'Departments',
+      icon: Users,
+      href: '/admin/departments',
+    }
   ];
 
   // Plans submenu items
@@ -41,8 +50,21 @@ const AdminLayout = () => {
     { name: 'Features', href: '/admin/features', icon: Sparkles },
   ];
 
+  // ✅ NEW: Messaging submenu items
+  const messagingSubmenu = [
+    { name: 'SMS Packages', href: '/admin/sms-packages', icon: CreditCard },
+    { name: 'SMS Statistics', href: '/admin/sms-statistics', icon: TrendingUp },
+  ];
+
   const isActive = (path: string) => location.pathname === path;
   const isSubmenuActive = (items: any[]) => items.some(item => location.pathname.startsWith(item.href));
+
+  // ✅ Auto-expand messaging menu if on messaging pages
+  React.useEffect(() => {
+    if (isSubmenuActive(messagingSubmenu)) {
+      setMessagingMenuOpen(true);
+    }
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors">
@@ -117,10 +139,62 @@ const AdminLayout = () => {
               )}
             </button>
 
-            {/* Submenu Items */}
+            {/* Plans Submenu Items */}
             {plansMenuOpen && (
               <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
                 {plansSubmenu.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`
+                        flex items-center pl-6 pr-3 py-2 text-sm font-medium rounded-r-lg
+                        transition-all duration-200
+                        ${location.pathname.startsWith(item.href)
+                          ? 'bg-primary-600 text-white border-l-2 border-primary-400'
+                          : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200 border-l-2 border-transparent'
+                        }
+                      `}
+                    >
+                      <Icon className="w-4 h-4 mr-3" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* ✅ NEW: Messaging Menu with Submenu */}
+          <div>
+            <button
+              onClick={() => setMessagingMenuOpen(!messagingMenuOpen)}
+              className={`
+                w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg
+                transition-all duration-200
+                ${isSubmenuActive(messagingSubmenu)
+                  ? 'bg-gray-800 text-white'
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }
+              `}
+            >
+              <div className="flex items-center">
+                <MessageSquare className="w-5 h-5 mr-3" />
+                <span>Messaging</span>
+              </div>
+              {messagingMenuOpen ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+
+            {/* Messaging Submenu Items */}
+            {messagingMenuOpen && (
+              <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
+                {messagingSubmenu.map((item) => {
                   const Icon = item.icon;
                   return (
                     <Link

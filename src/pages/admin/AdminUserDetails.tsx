@@ -193,6 +193,8 @@ const confirmStatusChange = async () => {
     );
   }
 
+  console.log(data)
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -216,8 +218,8 @@ const confirmStatusChange = async () => {
                 {data.user.email}
               </p>
               <div className="flex items-center space-x-3 mt-3">
-                <span className={`px-3 py-1 text-sm font-medium rounded-full ${getRoleBadge(data.user.role).color}`}>
-                  {getRoleBadge(data.user.role).label}
+                <span className={`px-3 py-1 text-sm font-medium rounded-full ${getRoleBadge(data.user.role?.slug).color}`}>
+                  {getRoleBadge(data.user.role?.slug).label}
                 </span>
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(data.user.status)}`}>
                   {data.user.status.charAt(0).toUpperCase() + data.user.status.slice(1)}

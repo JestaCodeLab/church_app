@@ -12,12 +12,28 @@ import {
   X,
   Church,
   FileVolume,
-  HandCoins
+  HandCoins,
+  FolderKanban,
+  ChevronDown,
+  ChevronRight,
+  Mail,
+  FileText,
+  History,
+  CreditCard,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
+
+interface NavigationItem {
+  name: string;
+  href?: string;
+  icon: any;
+  requiresFeature: string | null;
+  children?: NavigationItem[];
+}
 
 const MerchantLayout = () => {
   const { user } = useAuth();
@@ -25,63 +41,267 @@ const MerchantLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
-  // ✅ Navigation with feature requirements
-  const allNavigation = [
-    { 
-      name: 'Dashboard', 
-      href: '/dashboard', 
-      icon: LayoutDashboard,
-      requiresFeature: null // Always visible
-    },
-    { 
-      name: 'Branches', 
-      href: '/branches', 
-      icon: Church,
-      requiresFeature: 'branchManagement'
-    },
-    { 
-      name: 'Members', 
-      href: '/members', 
-      icon: Users,
-      requiresFeature: 'memberManagement'
-    },
-    { 
-      name: 'Sermons', 
-      href: '/sermons', 
-      icon: FileVolume,
-      requiresFeature: 'sermonManagement'
-    },
-    { 
-      name: 'Events', 
-      href: '/events', 
-      icon: Calendar,
-      requiresFeature: 'eventManagement'
-    },
-    { 
-      name: 'Finance', 
-      href: '/finance', 
-      icon: HandCoins,
-      requiresFeature: 'financialManagement'
-    },
-    { 
-      name: 'Messages', 
-      href: '/messages', 
-      icon: MessageSquare,
-      requiresFeature: 'smsCommunications'
-    },
-  ];
+  // ✅ Navigation with nested items and feature requirements
+  const allNavigation: NavigationItem[] = user?.role?.slug === 'dept_admin' 
+  ? [
+      // Department Admin Navigation (Limited)
+      { 
+        name: 'My Departments', 
+        href: '/departments', 
+        icon: FolderKanban,
+        requiresFeature: null
+      },
+      { 
+        name: 'Members', 
+        href: '/members', 
+        icon: Users,
+        requiresFeature: 'memberManagement'
+      },
+      { 
+        name: 'SMS', 
+        icon: MessageSquare,
+        requiresFeature: 'smsCommunications',
+        children: [
+          {
+            name: 'Send SMS',
+            href: '/messaging/send',
+            icon: Mail,
+            requiresFeature: 'smsCommunications'
+          },
+          {
+            name: 'History',
+            href: '/messaging/history',
+            icon: History,
+            requiresFeature: 'smsCommunications'
+          }
+        ]
+      },
+      { 
+        name: 'Events', 
+        href: '/events', 
+        icon: Calendar,
+        requiresFeature: 'eventManagement'
+      },
+    ]
+  : [
+      { 
+        name: 'Dashboard', 
+        href: '/dashboard', 
+        icon: LayoutDashboard,
+        requiresFeature: null // Always visible
+      },
+      { 
+        name: 'Branches', 
+        href: '/branches', 
+        icon: Church,
+        requiresFeature: 'branchManagement'
+      },
+      { 
+        name: 'Members', 
+        href: '/members', 
+        icon: Users,
+        requiresFeature: 'memberManagement'
+      },
+      { 
+        name: 'Departments', 
+        href: '/departments', 
+        icon: FolderKanban,
+        requiresFeature: 'memberManagement'
+      },
+      { 
+        name: 'Sermons', 
+        href: '/sermons', 
+        icon: FileVolume,
+        requiresFeature: 'sermonManagement'
+      },
+      { 
+        name: 'Events', 
+        href: '/events', 
+        icon: Calendar,
+        requiresFeature: 'eventManagement'
+      },
+      { 
+        name: 'Finance', 
+        href: '/finance', 
+        icon: HandCoins,
+        requiresFeature: 'financialManagement'
+      },
+      { 
+        name: 'Messaging', 
+        icon: MessageSquare,
+        requiresFeature: 'smsCommunications',
+        children: [
+          {
+            name: 'Dashboard',
+            href: '/messaging/dashboard',
+            icon: BarChart3,
+            requiresFeature: 'smsCommunications'
+          },
+          {
+            name: 'Send SMS',
+            href: '/messaging/send',
+            icon: Mail,
+            requiresFeature: 'smsCommunications'
+          },
+          {
+            name: 'Templates',
+            href: '/messaging/templates',
+            icon: FileText,
+            requiresFeature: 'smsCommunications'
+          },
+          {
+            name: 'History',
+            href: '/messaging/history',
+            icon: History,
+            requiresFeature: 'smsCommunications'
+          },
+          {
+            name: 'Credits',
+            href: '/messaging/credits',
+            icon: CreditCard,
+            requiresFeature: 'smsCommunications'
+          }
+        ]
+      },
+    ];
 
-  // ✅ Filter navigation based on user's subscription features
-  const navigation = allNavigation.filter(item => {
-    // Always show items without feature requirements
-    if (!item.requiresFeature) return true;
-    
-    // Check if user has the required feature
-    return hasFeature(item.requiresFeature as any);
-  });
+  // ✅ Filter navigation based on user's subscription features (including children)
+  const filterNavigation = (items: NavigationItem[]): NavigationItem[] => {
+    return items
+      .filter(item => {
+        // Always show items without feature requirements
+        if (!item.requiresFeature) return true;
+        
+        // Check if user has the required feature
+        return hasFeature(item.requiresFeature as any);
+      })
+      .map(item => {
+        // If item has children, filter them too
+        if (item.children) {
+          return {
+            ...item,
+            children: filterNavigation(item.children)
+          };
+        }
+        return item;
+      });
+  };
 
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const navigation = filterNavigation(allNavigation);
+
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
+
+  const isParentActive = (item: NavigationItem) => {
+    if (item.href && isActive(item.href)) return true;
+    if (item.children) {
+      return item.children.some(child => child.href && isActive(child.href));
+    }
+    return false;
+  };
+
+  const toggleMenu = (menuName: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(menuName) 
+        ? prev.filter(name => name !== menuName)
+        : [...prev, menuName]
+    );
+  };
+
+  // Auto-expand menu if a child is active
+  React.useEffect(() => {
+    navigation.forEach(item => {
+      if (item.children && isParentActive(item) && !expandedMenus.includes(item.name)) {
+        setExpandedMenus(prev => [...prev, item.name]);
+      }
+    });
+  }, [location.pathname]);
+
+  const renderNavigationItem = (item: NavigationItem) => {
+    const Icon = item.icon;
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedMenus.includes(item.name);
+    const parentActive = isParentActive(item);
+
+    if (hasChildren) {
+      return (
+        <div key={item.name}>
+          {/* Parent Menu Item */}
+          <button
+            onClick={() => toggleMenu(item.name)}
+            className={`
+              w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg
+              transition-all duration-200
+              ${parentActive
+                ? 'bg-primary-600/10 text-primary-400'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }
+            `}
+          >
+            <div className="flex items-center">
+              <Icon className="w-5 h-5 mr-3" />
+              {item.name}
+            </div>
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Submenu Items */}
+          {isExpanded && (
+            <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-700 pl-4">
+              {item.children?.map(child => {
+                const ChildIcon = child.icon;
+                const childActive = child.href && isActive(child.href);
+
+                return (
+                  <Link
+                    key={child.name}
+                    to={child.href || '#'}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`
+                      flex items-center px-3 py-2 text-sm font-medium rounded-lg
+                      transition-all duration-200
+                      ${childActive
+                        ? 'bg-primary-600 text-white shadow-primary-600/50'
+                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                      }
+                    `}
+                  >
+                    <ChildIcon className="w-4 h-4 mr-3" />
+                    {child.name}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Single Menu Item (no children)
+    return (
+      <Link
+        key={item.name}
+        to={item.href || '#'}
+        onClick={() => setSidebarOpen(false)}
+        className={`
+          flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+          transition-all duration-200
+          ${isActive(item.href || '')
+            ? 'bg-primary-600 text-white shadow-primary-600/50'
+            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+          }
+        `}
+      >
+        <Icon className="w-5 h-5 mr-3" />
+        {item.name}
+      </Link>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -116,36 +336,24 @@ const MerchantLayout = () => {
           </div>
         </div>
 
-        {/* Navigation - ✅ Only shows features user has access to */}
+        {/* Navigation - ✅ With dropdown support */}
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`
-                  flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
-                  transition-all duration-200
-                  ${isActive(item.href)
-                    ? 'bg-primary-600 text-white shadow-primary-600/50'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }
-                `}
-              >
-                <Icon className="w-5 h-5 mr-3" />
-                {item.name}
-              </Link>
-            );
-          })}
+          {navigation.map(item => renderNavigationItem(item))}
         </nav>
 
         {/* Bottom Links - Fixed at bottom */}
         <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
           <Link
             to="/settings"
-            className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200"
+            onClick={() => setSidebarOpen(false)}
+            className={`
+              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+              transition-all duration-200
+              ${isActive('/settings')
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }
+            `}
           >
             <Settings className="w-5 h-5 mr-3" />
             Settings
@@ -161,7 +369,7 @@ const MerchantLayout = () => {
         />
       )}
 
-      {/* Main Content - ✅ ADJUSTED: Add left margin on desktop */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
         {/* Header - White with search & user */}
         <header className="h-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 transition-colors">
@@ -209,8 +417,8 @@ const MerchantLayout = () => {
           </div>
         </header>
 
-        {/* Page Content - This is where content scrolls */}
-        <main className="flex-1 bg-gray-100 dark:bg-gray-900 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        {/* Page Content */}
+        <main className="flex-1 bg-gray-100 min-h-screen dark:bg-gray-900 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-full mx-auto">
             <Outlet />
           </div>

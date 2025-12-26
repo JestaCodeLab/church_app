@@ -48,7 +48,7 @@ export const useFeatureFlag = (): FeatureAccess => {
 
   const hasFeature = (feature: Feature): boolean => {
     // Super admin has all features
-    if (user?.role === 'super_admin') {
+    if (user?.role?.slug === 'super_admin') {
       return true;
     }
 
@@ -61,7 +61,7 @@ export const useFeatureFlag = (): FeatureAccess => {
 
   const getLimit = (limit: Limit): number | null => {
     // Super admin has unlimited limits
-    if (user?.role === 'super_admin') {
+    if (user?.role?.slug === 'super_admin') {
       return Infinity; // Represent unlimited as Infinity
     }
 

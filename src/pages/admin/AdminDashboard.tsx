@@ -1,65 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Building2, 
-  Users, 
-  UserCheck, 
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Crown,
-  MapPin,
-  Calendar,
-  Loader,
-  ArrowUpRight,
-  ArrowDownRight
-} from 'lucide-react';
-import { 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
-import { adminAPI } from '../../services/api';
-import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import {
+  Users,
+  Building2,
+  TrendingUp,
+  DollarSign,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  XCircle,
+  ArrowUpRight,
+  ArrowDownRight,
+  UserCog
+} from 'lucide-react';
+import { adminAPI } from '../../services/api';
+import { showToast } from '../../utils/toasts';
 
-interface DashboardStats {
-  current: {
-    merchants: { total: number; active: number; pending: number; suspended: number };
-    users: { total: number; active: number; churchAdmins: number; pastors: number; leaders: number; members: number };
-    members: { total: number };
+interface PlatformStats {
+  overview: {
+    totalMerchants: number;
+    activeMerchants: number;
+    pendingMerchants: number;
+    suspendedMerchants: number;
+    totalUsers: number;
+    totalMembers: number;
+    recentMerchants: number;
+    totalRevenue: number;
   };
-  growth: {
-    merchants: string;
-    users: string;
-    members: string;
-  };
-  monthlyGrowth: Array<{ _id: { year: number; month: number }; count: number }>;
-  planDistribution: Array<{ _id: string; count: number }>;
-  regionalDistribution: Array<{ _id: string; count: number }>;
-  topChurches: Array<{ _id: string; name: string; subdomain: string; memberCount: number }>;
-  recentMerchants: any[];
-  recentUsers: any[];
-  weeklyActivity: {
-    newMerchants: number;
-    newUsers: number;
-    newMembers: number;
-  };
+  planDistribution: Array<{
+    _id: string | null;
+    count: number;
+  }>;
+  merchantGrowth: Array<{
+    _id: {
+      year: number;
+      month: number;
+    };
+    count: number;
+  }>;
+  topMerchants: Array<{
+    _id: string;
+    name: string;
+    subdomain: string;
+    memberCount: number;
+    subscription?: any;
+    createdAt: string;
+  }>;
+  userRoleDistribution: Array<{
+    _id: string;
+    name: string;
+    count: number;
+  }>;
 }
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -69,355 +66,467 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const response = await adminAPI.getStats();
-      setStats(response.data.data);
+      
+      if (response.data.success) {
+        setStats(response.data.data);
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to load statistics');
+      showToast.error('Failed to load platform statistics');
+      console.error('Stats error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatGrowthData = () => {
-    if (!stats?.monthlyGrowth) return [];
-    
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return stats.monthlyGrowth.map(item => ({
-      name: `${monthNames[item._id.month - 1]} ${item._id.year}`,
-      merchants: item.count
-    }));
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-GH', {
+      style: 'currency',
+      currency: 'GHS',
+      minimumFractionDigits: 0
+    }).format(amount);
   };
 
-  const formatPlanData = () => {
-    if (!stats?.planDistribution) return [];
-    return stats.planDistribution.map(item => ({
-      name: item._id?.charAt(0)?.toUpperCase() + item._id?.slice(1),
-      value: item.count
-    }));
-  };
-
-  const formatRoleData = () => {
-    if (!stats?.current.users) return [];
-    return [
-      { name: 'Church Admins', value: stats.current.users.churchAdmins },
-      { name: 'Pastors', value: stats.current.users.pastors },
-      { name: 'Leaders', value: stats.current.users.leaders },
-      { name: 'Members', value: stats.current.users.members }
-    ];
-  };
-
-  const formatRegionalData = () => {
-    if (!stats?.regionalDistribution) return [];
-    return stats.regionalDistribution.map(item => ({
-      name: item._id || 'Unknown',
-      churches: item.count
-    }));
-  };
-
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const StatCard = ({ 
-    title, 
-    value, 
-    growth, 
-    icon: Icon, 
-    color, 
-    onClick 
-  }: { 
-    title: string; 
-    value: number; 
-    growth: string; 
-    icon: any; 
-    color: string;
-    onClick?: () => void;
-  }) => {
-    const isPositive = parseFloat(growth) >= 0;
-    
-    return (
-      <div 
-        className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
-        onClick={onClick}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
-          <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center`}>
-            <Icon className="w-6 h-6 text-white" />
-          </div>
-        </div>
-        <div className="flex items-end justify-between">
-          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            {value.toLocaleString()}
-          </p>
-          <div className={`flex items-center ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-            {isPositive ? (
-              <ArrowUpRight className="w-4 h-4 mr-1" />
-            ) : (
-              <ArrowDownRight className="w-4 h-4 mr-1" />
-            )}
-            <span className="text-sm font-semibold">{Math.abs(parseFloat(growth))}%</span>
-          </div>
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">vs last month</p>
-      </div>
-    );
+  const getMonthName = (month: number) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader className="w-8 h-8 animate-spin text-primary-600" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
+  if (!stats) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600 dark:text-gray-400">Failed to load statistics</p>
+      </div>
+    );
+  }
+
+  const { overview, planDistribution, merchantGrowth, topMerchants, userRoleDistribution } = stats;
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Welcome Admin!!
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Monitor your platform's performance and growth
-          </p>
-        </div>
-        <button
-          onClick={fetchStats}
-          className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-        >
-          <Activity className="w-5 h-5 mr-2" />
-          Refresh
-        </button>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          Platform Dashboard
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          Overview of all churches and platform activity
+        </p>
       </div>
 
-      {/* KPI Cards */}
+      {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Merchants"
-          value={stats?.current.merchants.total || 0}
-          growth={stats?.growth.merchants || '0'}
-          icon={Building2}
-          color="bg-blue-500"
-          onClick={() => navigate('/admin/merchants')}
-        />
-        <StatCard
-          title="Total Users"
-          value={stats?.current.users.total || 0}
-          growth={stats?.growth.users || '0'}
-          icon={Users}
-          color="bg-green-500"
-          onClick={() => navigate('/admin/users')}
-        />
-        <StatCard
-          title="Total Members"
-          value={stats?.current.members.total || 0}
-          growth={stats?.growth.members || '0'}
-          icon={UserCheck}
-          color="bg-purple-500"
-        />
-        <StatCard
-          title="Active This Week"
-          value={stats?.weeklyActivity.newMerchants || 0}
-          growth="0"
-          icon={TrendingUp}
-          color="bg-orange-500"
-        />
-      </div>
-
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Growth Chart */}
+        {/* Total Merchants */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Merchant Growth
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={formatGrowthData()}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1f2937', 
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#fff'
-                }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="merchants" 
-                stroke="#3b82f6" 
-                strokeWidth={2}
-                dot={{ fill: '#3b82f6', r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Plan Distribution */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Plan Distribution
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={formatPlanData()}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {formatPlanData().map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1f2937', 
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#fff'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* User Roles */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            User Distribution by Role
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={formatRoleData()}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1f2937', 
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#fff'
-                }}
-              />
-              <Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Regional Distribution */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Regional Distribution
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={formatRegionalData()}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1f2937', 
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#fff'
-                }}
-              />
-              <Bar dataKey="churches" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top Churches */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Top Churches
-            </h3>
-            <Crown className="w-5 h-5 text-yellow-500" />
-          </div>
-          <div className="space-y-3">
-            {stats?.topChurches && stats.topChurches.length > 0 ? (
-              stats.topChurches.map((church, index) => (
-                <div key={church._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
-                      #{index + 1}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {church.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {church.subdomain}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {church.memberCount}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">members</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                No data available
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                Total Churches
               </p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                {overview.totalMerchants}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                {overview.recentMerchants} new this month
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Active Merchants */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                Active Churches
+              </p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                {overview.activeMerchants}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                {overview.pendingMerchants} pending approval
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Total Users */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                Total Users
+              </p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                {overview.totalUsers}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                Church administrators
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+              <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Total Members */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                Total Members
+              </p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                {overview.totalMembers.toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                Across all churches
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
+              <UserCog className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Status Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Pending Approval */}
+        <div 
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/admin/merchants?status=pending_approval')}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center space-x-2 mb-2">
+                <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Pending Approval
+                </p>
+              </div>
+              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                {overview.pendingMerchants}
+              </p>
+            </div>
+            <ArrowUpRight className="w-5 h-5 text-gray-400" />
+          </div>
+        </div>
+
+        {/* Suspended */}
+        <div 
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/admin/merchants?status=suspended')}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center space-x-2 mb-2">
+                <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Suspended
+                </p>
+              </div>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                {overview.suspendedMerchants}
+              </p>
+            </div>
+            <ArrowUpRight className="w-5 h-5 text-gray-400" />
+          </div>
+        </div>
+
+        {/* Total Revenue */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center space-x-2 mb-2">
+                <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Monthly Revenue
+                </p>
+              </div>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {formatCurrency(overview.totalRevenue)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* User Role Distribution */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              User Role Distribution
+            </h2>
+          </div>
+          <div className="p-6">
+            {userRoleDistribution.length === 0 ? (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                No users yet
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {userRoleDistribution.map((role) => (
+                  <div key={role._id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        role._id === 'super_admin' 
+                          ? 'bg-purple-100 dark:bg-purple-900/20' 
+                          : role._id === 'church_admin'
+                          ? 'bg-blue-100 dark:bg-blue-900/20'
+                          : role._id === 'dept_admin'
+                          ? 'bg-cyan-100 dark:bg-cyan-900/20'
+                          : role._id === 'finance_admin'
+                          ? 'bg-green-100 dark:bg-green-900/20'
+                          : 'bg-gray-100 dark:bg-gray-900/20'
+                      }`}>
+                        <UserCog className={`w-5 h-5 ${
+                          role._id === 'super_admin' 
+                            ? 'text-purple-600 dark:text-purple-400' 
+                            : role._id === 'church_admin'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : role._id === 'dept_admin'
+                            ? 'text-cyan-600 dark:text-cyan-400'
+                            : role._id === 'finance_admin'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-gray-600 dark:text-gray-400'
+                        }`} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                          {role.name}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {role._id}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        {role.count}
+                      </span>
+                      <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${
+                            role._id === 'super_admin' 
+                              ? 'bg-purple-600' 
+                              : role._id === 'church_admin'
+                              ? 'bg-blue-600'
+                              : role._id === 'dept_admin'
+                              ? 'bg-cyan-600'
+                              : 'bg-green-600'
+                          }`}
+                          style={{ 
+                            width: `${(role.count / overview.totalUsers) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Recent Activity
-            </h3>
-            <Calendar className="w-5 h-5 text-gray-400" />
+        {/* Plan Distribution */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Subscription Plans
+            </h2>
           </div>
-          <div className="space-y-3">
-            {stats?.recentMerchants && stats.recentMerchants.slice(0, 5).map((merchant) => (
-              <div key={merchant._id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    New church registered
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {merchant.name} • {merchant.subdomain}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {formatDate(merchant.createdAt)}
-                  </p>
-                </div>
+          <div className="p-6">
+            {planDistribution.length === 0 ? (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                No subscriptions yet
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {planDistribution.map((plan, index) => (
+                  <div key={plan._id || 'no-plan'} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        plan._id === 'free' 
+                          ? 'bg-gray-100 dark:bg-gray-900/20' 
+                          : plan._id === 'basic'
+                          ? 'bg-blue-100 dark:bg-blue-900/20'
+                          : plan._id === 'pro'
+                          ? 'bg-purple-100 dark:bg-purple-900/20'
+                          : plan._id === 'enterprise'
+                          ? 'bg-orange-100 dark:bg-orange-900/20'
+                          : 'bg-yellow-100 dark:bg-yellow-900/20'
+                      }`}>
+                        <TrendingUp className={`w-5 h-5 ${
+                          plan._id === 'free' 
+                            ? 'text-gray-600 dark:text-gray-400' 
+                            : plan._id === 'basic'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : plan._id === 'pro'
+                            ? 'text-purple-600 dark:text-purple-400'
+                            : plan._id === 'enterprise'
+                            ? 'text-orange-600 dark:text-orange-400'
+                            : 'text-yellow-600 dark:text-yellow-400'
+                        }`} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100 capitalize">
+                          {plan._id || 'No Plan Assigned'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        {plan.count}
+                      </span>
+                      <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${
+                            plan._id === 'free' 
+                              ? 'bg-gray-600' 
+                              : plan._id === 'basic'
+                              ? 'bg-blue-600'
+                              : plan._id === 'pro'
+                              ? 'bg-purple-600'
+                              : 'bg-orange-600'
+                          }`}
+                          style={{ 
+                            width: `${(plan.count / overview.totalMerchants) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
+
+      {/* Merchant Growth Chart */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Church Registration Trend (Last 6 Months)
+          </h2>
+        </div>
+        <div className="p-6">
+          {merchantGrowth.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              No data available
+            </p>
+          ) : (
+            <div className="flex items-end justify-between space-x-2 h-64">
+              {merchantGrowth.map((month, index) => {
+                const maxCount = Math.max(...merchantGrowth.map(m => m.count));
+                const height = (month.count / maxCount) * 100;
+                
+                return (
+                  <div key={index} className="flex-1 flex flex-col items-center">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t-lg relative" style={{ height: '100%' }}>
+                      <div
+                        className="w-full bg-primary-600 dark:bg-primary-500 rounded-t-lg absolute bottom-0 transition-all duration-300 hover:bg-primary-700 dark:hover:bg-primary-600"
+                        style={{ height: `${height}%` }}
+                      >
+                        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {month.count}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                      {getMonthName(month._id.month)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Top Merchants */}
+      {topMerchants.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Top Churches by Member Count
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Church
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Subdomain
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Members
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Joined
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {topMerchants.map((merchant) => (
+                  <tr key={merchant._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {merchant.name}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {merchant.subdomain}.thechurchhq.com
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {merchant.memberCount.toLocaleString()}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(merchant.createdAt).toLocaleDateString()}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button
+                        onClick={() => navigate(`/admin/merchants/${merchant._id}`)}
+                        className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
