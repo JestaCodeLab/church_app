@@ -134,17 +134,18 @@ const MerchantLayout = () => {
         requiresFeature: 'branchManagement'
       },
       { 
-        name: 'Members', 
-        href: '/members', 
-        icon: Users,
-        requiresFeature: 'memberManagement'
-      },
-      { 
         name: 'Departments', 
         href: '/departments', 
         icon: FolderKanban,
         requiresFeature: 'memberManagement'
       },
+      { 
+        name: 'Members', 
+        href: '/members', 
+        icon: Users,
+        requiresFeature: 'memberManagement'
+      },
+      
       { 
         name: 'Sermons', 
         href: '/sermons', 
