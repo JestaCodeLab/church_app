@@ -31,7 +31,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
 
   // Use merchant branding if on subdomain, otherwise use provided title
   const displayTitle = merchant?.name || title || process.env.REACT_APP_PROJECT_NAME || "The Church HQ";
-  const displaySubtitle = merchant?.branding?.tagline || subtitle || "Sign in to your account";
+  const displaySubtitle = merchant?.branding?.tagline || subtitle || "Your Church, Organized and Connected";
   const displayLogo = merchant?.branding?.logo;
 
   // SHOW LOADING SCREEN WHILE FETCHING MERCHANT DATA ON SUBDOMAIN
