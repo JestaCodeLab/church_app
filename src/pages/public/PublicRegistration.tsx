@@ -46,7 +46,7 @@ const [availableBranches, setAvailableBranches] = useState([]);
     bornAgain: null,
     baptismStatus: 'none',
     howDidYouJoin: '',
-    howDidYouJoinOther: '',
+    howDidYouJoinOther: 'invitation',
     departments: [],
     primaryDepartment: null,
     
@@ -176,6 +176,14 @@ const handleSetPrimaryDepartment = (deptId) => {
     e.preventDefault();
     if (!formData.branch) {
         toast.error('Please select a branch');
+        return;
+    }
+    if (!formData.maritalStatus) {
+        toast.error('Please select a marital status');
+        return;
+    }
+    if (!formData.howDidYouJoin) {
+        toast.error('Please tell us how you joined');
         return;
     }
     setLoading(true);
@@ -540,6 +548,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     required
                     className="w-full px-4 py-3 dark:border-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium"
                     >
+                    <option value="">Select</option>
                     {availableBranches?.map((branch: any) => (
                         <option key={branch._id} value={branch._id}>
                         {branch.name}
@@ -636,7 +645,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Date of Birth
+                        Date of Birth <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
@@ -651,7 +660,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                   <div className="grid md:grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Marital Status
+                        Marital Status <span className="text-red-500">*</span>
                       </label>
                       <select
                         name="maritalStatus"
@@ -895,7 +904,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     {/* How Did You Join */}
                     <div className="mt-4">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        How did you join {merchantInfo?.name || 'this church'}?
+                        How did you join {merchantInfo?.name || 'this church'}? <span className="text-red-500">*</span>
                         </label>
                         <select
                         name="howDidYouJoin"
