@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Users, UserPlus, CheckCircle, Mail, Phone, MapPin, Calendar, User, Clock, XCircle, AlertCircle } from 'lucide-react';
-import api from '../../services/api';
+import api, { branchAPI } from '../../services/api';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
@@ -15,6 +15,7 @@ const PublicRegistrationPage = () => {
   const [statusLoading, setStatusLoading] = useState(true);
   const [availableDepartments, setAvailableDepartments] = useState([]);
 const [selectedDepartments, setSelectedDepartments] = useState([]);
+const [availableBranches, setAvailableBranches] = useState([]);
   
   // Merchant info
   const [merchantInfo, setMerchantInfo] = useState({
@@ -40,6 +41,7 @@ const [selectedDepartments, setSelectedDepartments] = useState([]);
       region: '',
       country: 'Ghana'
     },
+    branch: '',
     placeOfWork: '',
     bornAgain: null,
     baptismStatus: 'none',
@@ -62,7 +64,7 @@ const [selectedDepartments, setSelectedDepartments] = useState([]);
     try {
       setStatusLoading(true);
       const response = await axios.get(`${API_URL}/public/register/${merchantId}/status`);
-      
+      console.log('MERCHANT DATA ===>',response.data)
       if (response.data.success) {
         setRegistrationStatus(response.data.data);
         setMerchantInfo({
@@ -70,6 +72,9 @@ const [selectedDepartments, setSelectedDepartments] = useState([]);
           logo: response.data.data.merchantLogo
         });
       }
+      const merchantResponse = await axios.get(`${API_URL}/public/register/${merchantId}`);
+      console.log('MERCHAT BRNCH ==>', merchantResponse?.data)  
+      setAvailableBranches(merchantResponse.data.data.branches);
     } catch (error) {
       console.error('Error checking registration status:', error);
       toast.error('Failed to load registration information');
@@ -169,12 +174,17 @@ const handleSetPrimaryDepartment = (deptId) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    if (!formData.branch) {
+        toast.error('Please select a branch');
+        return;
+    }
     setLoading(true);
 
     try {
       // Prepare submission data based on registration type
       const submissionData = {
         registrationType,
+        branch: formData.branch,
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -241,6 +251,7 @@ const handleSetPrimaryDepartment = (deptId) => {
         region: '',
         country: 'Ghana'
       },
+      branch: '',
       placeOfWork: '',
       bornAgain: null,
       baptismStatus: 'none',
@@ -249,6 +260,7 @@ const handleSetPrimaryDepartment = (deptId) => {
       departments: [],
       primaryDepartment: null,
     });
+    setSelectedDepartments([]);
   };
 
   // Loading state
@@ -513,6 +525,35 @@ const handleSetPrimaryDepartment = (deptId) => {
             </button>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Branch Selection - REQUIRED */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span>Select a Branch <span className="text-red-500">*</span></span>
+                    </div>
+                    </label>
+                    <select
+                    name="branch"
+                    value={formData.branch}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 dark:border-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium"
+                    >
+                    {availableBranches?.map((branch: any) => (
+                        <option key={branch._id} value={branch._id}>
+                        {branch.name}
+                        {branch.type === 'main' && ' (Main Campus)'}
+                        {branch.address?.city && ` - ${branch.address.city}`}
+                        </option>
+                    ))}
+                    </select>
+                    {availableBranches?.length > 1 && (
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                        Please select the branch you'll be attending
+                    </p>
+                    )}
+                </div>
               {/* Name Fields */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>

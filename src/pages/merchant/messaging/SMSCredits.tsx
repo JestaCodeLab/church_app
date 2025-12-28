@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../../services/api';
-import toast from 'react-hot-toast';
-import { usePaystackPayment } from '../../../hooks/usePaystackPayment';
+import { usePaystackSMS } from '../../../hooks/usePaystackSMS';
 import { 
   CreditCard, 
   TrendingUp, 
@@ -15,6 +14,7 @@ import {
   Zap,
   Award
 } from 'lucide-react';
+import { showToast } from '../../../utils/toasts';
 
 interface Credits {
   balance: number;
@@ -71,7 +71,7 @@ interface Purchase {
 const MessagingCredits: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { initializePayment } =   usePaystackPayment();
+  const { initializePayment } =   usePaystackSMS();
 
   const [credits, setCredits] = useState<Credits | null>(null);
   const [packages, setPackages] = useState<CreditPackage[]>([]);
@@ -104,7 +104,7 @@ const MessagingCredits: React.FC = () => {
       setPackages(packagesRes.data.data.packages);
       setPurchases(purchasesRes.data.data.purchases);
     } catch (error: any) {
-      toast.error('Failed to load credits data');
+      showToast.error('Failed to load credits data');
       console.error(error);
     } finally {
       setLoading(false);
@@ -116,17 +116,17 @@ const MessagingCredits: React.FC = () => {
       const response = await api.get(`/sms/verify-purchase/${reference}`);
       
       if (response.data.success) {
-        toast.success(response.data.message);
+        showToast.success(response.data.message);
         fetchData();
         navigate('/messaging/credits', { replace: true });
       }
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Payment verification failed';
-      toast.error(errorMsg);
+      showToast.error(errorMsg);
     }
   };
 
-  const handlePurchase = async (pkg: CreditPackage) => {
+const handlePurchase = async (pkg: CreditPackage) => {
     setPurchasing(true);
     setSelectedPackage(pkg.slug);
 
@@ -140,11 +140,15 @@ const MessagingCredits: React.FC = () => {
       if (response.data.success) {
         const { reference, amount, email } = response.data.data;
         
-        // Use the usePaystack hook to open popup
+        // ✅ Use SMS-specific PayStack hook
         initializePayment({
+          reference, // ✅ Pass pre-generated reference
           email,
           amount,
           metadata: {
+            purchaseType: 'sms_credits', // ✅ Explicitly mark type
+            packageName: pkg.name,
+            credits: pkg.credits,
             custom_fields: [
               {
                 display_name: "Package",
@@ -163,21 +167,24 @@ const MessagingCredits: React.FC = () => {
               }
             ]
           },
-          onSuccess: () => handlePaymentSuccess(reference?.reference),
+          onSuccess: (paymentReference) => {
+            // ✅ Now verify SMS purchase (not subscription)
+            handlePaymentSuccess(paymentReference);
+          },
           onClose: () => {
+            showToast.error('Payment cancelled');
             setPurchasing(false);
             setSelectedPackage(null);
-            toast.error('Payment cancelled');
           }
         });
       } else {
-        toast.error('Failed to initiate payment');
+        showToast.error('Failed to initiate payment');
         setPurchasing(false);
         setSelectedPackage(null);
       }
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Failed to initiate purchase';
-      toast.error(errorMsg);
+      showToast.error(errorMsg);
       setPurchasing(false);
       setSelectedPackage(null);
     }
@@ -185,12 +192,13 @@ const MessagingCredits: React.FC = () => {
 
   const handlePaymentSuccess = async (reference: string) => {
     try {
-      toast.loading('Verifying payment...', { id: 'verify-payment' });
+      showToast.loading('Verifying payment...');
       
+      // ✅ This ONLY adds SMS credits, doesn't touch subscription
       const response = await api.get(`/sms/verify-purchase/${reference}`);
       
       if (response.data.success) {
-        toast.success(response.data.message, { id: 'verify-payment' });
+        showToast.success(response.data.message);
         
         // Refresh data
         await fetchData();
@@ -200,11 +208,12 @@ const MessagingCredits: React.FC = () => {
         setSelectedPackage(null);
       }
     } catch (error: any) {
-      toast.error('Payment verification failed', { id: 'verify-payment' });
+      showToast.error('Payment verification failed');
       setPurchasing(false);
       setSelectedPackage(null);
     }
   };
+
 
   const getPackageGradient = (index: number) => {
     const gradients = [

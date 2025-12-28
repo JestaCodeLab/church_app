@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -348,6 +348,38 @@ const AllMembers = () => {
           </button>
         </div>
       </div>
+
+      {/* Member Limit Alert - Add after header, before Public Registration Link */}
+      {!memberLimit.canCreate && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <TriangleAlert className="h-6 w-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-bold text-red-800 dark:text-red-200">
+                Member Limit Reached
+              </h3>
+              <div className="mt-0 text-sm text-red-700 dark:text-red-300">
+                <p className="mb-2">
+                  You've reached your member limit of <strong>{memberLimit.limit}</strong> members on the <strong className="capitalize">{plan}</strong> plan.
+                </p>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => navigate('/settings?tab=billing')}
+                  className="inline-flex items-center px-2 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                  Upgrade Plan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Public Registration Link Bar */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">

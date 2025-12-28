@@ -260,7 +260,7 @@ const SendSMS: React.FC = () => {
       setCredits(creditsRes.data.data.credits);
 
       // Navigate to history
-      setTimeout(() => navigate('/sms/history'), 1500);
+      setTimeout(() => navigate('/messaging/history'), 1500);
 
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Failed to send SMS';

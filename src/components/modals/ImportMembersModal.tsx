@@ -101,8 +101,8 @@ const ImportMembersModal: React.FC<ImportMembersModalProps> = ({
       toast.success(response.data.message);
       
       if (response.data.data.imported > 0) {
-        setTimeout(() => {
-          onImportComplete();
+        setTimeout(async () => {
+          await onImportComplete();
           handleClose();
         }, 2000);
       }
@@ -122,9 +122,9 @@ const ImportMembersModal: React.FC<ImportMembersModalProps> = ({
   };
 
   const downloadTemplate = () => {
-    const csvContent = `First Name,Last Name,Email,Phone,Date of Birth (YYYY-MM-DD),Gender,Marital Status,Membership Status,Branch,Address,City,Region,Country,Occupation,Emergency Contact Name,Emergency Contact Phone,Notes,Join Date (YYYY-MM-DD)
+    const csvContent = `First Name,Last Name,Email,Phone,Date of Birth (YYYY-MM-DD),Gender,Marital Status,Membership Type,Branch,Address,City,Region,Country,Occupation,Emergency Contact Name,Emergency Contact Phone,Notes,Join Date (YYYY-MM-DD)
 John,Doe,john.doe@example.com,+1234567890,1990-01-15,Male,Married,Member,Main Branch,123 Main St,Accra,Greater Accra,Ghana,Engineer,Jane Doe,+1234567891,Sample notes,2024-01-01
-Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Leader,Youth Branch,456 Oak Ave,Kumasi,Ashanti,Ghana,Teacher,John Smith,+1234567893,,2024-01-15`;
+Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Pastor,Youth Branch,456 Oak Ave,Kumasi,Ashanti,Ghana,Teacher,John Smith,+1234567893,,2024-01-15`;
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -137,6 +137,8 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Leader,Yo
     window.URL.revokeObjectURL(url);
     toast.success('Template downloaded!');
   };
+
+  console.log('Preview Data ==>', previewData)
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -282,6 +284,9 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Leader,Yo
                           Email
                         </th>
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                          Membership
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                           Status
                         </th>
                       </tr>
@@ -297,6 +302,10 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Leader,Yo
                           </td>
                           <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
                             {row.data.email}
+                          </td>
+
+                          <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
+                            {row.data.membershipType}
                           </td>
                           <td className="px-4 py-2">
                             {row.isValid ? (

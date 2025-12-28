@@ -91,13 +91,13 @@ const TeamManagement = () => {
   const getStatusBadge = (member: TeamMember) => {
     if (member.status === 'pending' || !member.isEmailVerified) {
       return (
-        <span className="px-3 py-1 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+        <span className="px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-500/30">
           Pending
         </span>
       );
     }
     return (
-      <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+      <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400 border border-green-300 dark:border-green-500/30">
         Active
       </span>
     );
@@ -117,7 +117,7 @@ const TeamManagement = () => {
       {/* Search and Actions */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Search team members..."
@@ -126,7 +126,7 @@ const TeamManagement = () => {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2.5 bgowhite dark:bg-gray-800 border border-gray-500 rounded-lg text-white placeholder-gray-500 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
 
@@ -140,29 +140,29 @@ const TeamManagement = () => {
       </div>
 
       {/* Team Table */}
-      <div className="bg-gray-50 dark:bg-gray-900/50 dark:border-gray-700 rounded-xl border overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader className="w-8 h-8 animate-spin text-primary-500" />
           </div>
         ) : members.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400">No team members found</p>
+            <p className="text-gray-600 dark:text-gray-400">No team members found</p>
           </div>
         ) : (
           <>
             {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-              <div className="col-span-4 text-sm font-medium text-gray-600 uppercase tracking-wider">
+            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <div className="col-span-4 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Name
               </div>
-              <div className="col-span-2 text-sm font-medium text-gray-600 uppercase tracking-wider">
+              <div className="col-span-2 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Status
               </div>
-              <div className="col-span-3 text-sm font-medium text-gray-600 uppercase tracking-wider">
+              <div className="col-span-3 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Role
               </div>
-              <div className="col-span-3 text-sm font-medium text-gray-600 uppercase tracking-wider text-right">
+              <div className="col-span-3 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider text-right">
                 Actions
               </div>
             </div>
@@ -183,17 +183,17 @@ const TeamManagement = () => {
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 font-medium">
+                      <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-gray-600 flex items-center justify-center text-primary-700 dark:text-gray-300 font-medium">
                         {getInitials(member.firstName, member.lastName)}
                       </div>
                     )}
                     <div>
-                      <p className="text-gray-900 dark:text-white font-medium">
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">
                         {member.firstName} {member.lastName}
                       </p>
-                      <p className="text-sm text-gray-400">{member.email}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{member.email}</p>
                       {member.status === 'pending' && (
-                        <p className="text-xs text-gray-500 mt-1">Invitation sent</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Invitation sent</p>
                       )}
                     </div>
                   </div>
@@ -208,7 +208,7 @@ const TeamManagement = () => {
                     <select
                       value={member.role}
                       onChange={(e) => handleRoleChange(member._id, e.target.value)}
-                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       {roleOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -223,7 +223,7 @@ const TeamManagement = () => {
                     {member.status === 'pending' && (
                       <button
                         onClick={() => handleResendInvitation(member._id)}
-                        className="p-2 text-blue-400 hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         title="Resend invitation"
                       >
                         <RotateCw className="w-5 h-5" />
@@ -231,7 +231,7 @@ const TeamManagement = () => {
                     )}
                     <button
                       onClick={() => handleRemoveMember(member._id, `${member.firstName} ${member.lastName}`)}
-                      className="p-2 text-red-400 hover:bg-gray-700 rounded-lg transition-colors"
+                      className="p-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                       title="Remove member"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -246,15 +246,15 @@ const TeamManagement = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-gray-800 rounded-xl px-6 py-4 border border-gray-700">
-          <p className="text-sm text-gray-400">
+        <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-6 py-4 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Showing page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
@@ -265,7 +265,7 @@ const TeamManagement = () => {
                 className={`w-10 h-10 rounded-lg font-medium transition-colors ${
                   currentPage === page
                     ? 'bg-primary-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 {page}
@@ -274,7 +274,7 @@ const TeamManagement = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>

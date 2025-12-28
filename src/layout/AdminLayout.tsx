@@ -18,7 +18,8 @@ import {
   GitBranch,
   MessageSquare,
   CreditCard,
-  TrendingUp
+  TrendingUp,
+  Wallet
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -54,6 +55,7 @@ const AdminLayout = () => {
   const messagingSubmenu = [
     { name: 'SMS Packages', href: '/admin/sms-packages', icon: CreditCard },
     { name: 'SMS Statistics', href: '/admin/sms-statistics', icon: TrendingUp },
+    { name: 'SMS Balance', href: '/admin/sms-balance', icon: Wallet },
   ];
 
   const isActive = (path: string) => location.pathname === path;

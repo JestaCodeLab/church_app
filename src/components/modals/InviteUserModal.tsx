@@ -55,13 +55,13 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h3 className="text-xl font-bold text-white">Invite Team Member</h3>
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Invite Team Member</h3>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -71,17 +71,17 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* First Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               First Name
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="John"
               />
             </div>
@@ -89,17 +89,17 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
 
           {/* Last Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Last Name
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Doe"
               />
             </div>
@@ -107,18 +107,18 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Email Address <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email Address <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="john.doe@example.com"
               />
             </div>
@@ -126,17 +126,17 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
 
           {/* Role */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Role <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Role <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <div className="relative">
-              <UserCog className="absolute left-3 top-3.5 w-5 h-5 text-gray-500" />
+              <UserCog className="absolute left-3 top-3.5 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none cursor-pointer"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none cursor-pointer"
               >
                 {roleOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -148,8 +148,8 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
           </div>
 
           {/* Info Box */}
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-            <p className="text-sm text-blue-300">
+          <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
               An invitation email will be sent to the user with login credentials.
             </p>
           </div>
@@ -159,7 +159,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-colors"
+              className="px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
             >
               Cancel
             </button>

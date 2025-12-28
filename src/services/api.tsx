@@ -177,11 +177,12 @@ export const memberAPI = {
 
   // UPDATED: updateMember to handle FormData with photo
   updateMember: (id: string, data: any) => {
+    console.log('update data ==>', data)
     const formData = new FormData();
     
     // Add all text fields
-    formData.append('firstName', data.firstName);
-    formData.append('lastName', data.lastName);
+    if (data.firstName) formData.append('firstName', data.firstName);
+    if (data.lastName) formData.append('lastName', data.lastName);
     if (data.middleName) formData.append('middleName', data.middleName);
     if (data.email) formData.append('email', data.email);
     if (data.phone) formData.append('phone', data.phone);
@@ -223,8 +224,10 @@ export const memberAPI = {
       }
     }
       if (data.departments && Array.isArray(data.departments)) {
-      formData.append('departments', JSON.stringify(data.departments));
-    }
+        data.departments.forEach((deptId: string) => {
+          formData.append('departments[]', deptId); 
+        });
+      }
   
     if (data.primaryDepartment) {
       formData.append('primaryDepartment', data.primaryDepartment);
@@ -358,7 +361,7 @@ export const planAPI = {
     };
     features: Record<string, boolean>;
     highlights?: string[];
-    type?: 'free' | 'basic' | 'pro' | 'enterprise';
+    type?: 'free' | 'paid' | 'enterprise' | 'custom';
     isPublic?: boolean;
     isActive?: boolean;
     displayOrder?: number;

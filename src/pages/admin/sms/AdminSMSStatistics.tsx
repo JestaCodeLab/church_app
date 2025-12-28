@@ -17,23 +17,24 @@ interface Stats {
 const SMSStatistics: React.FC = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState('30'); // days
+  const [timeRange, setTimeRange] = useState(30); // days
 
   useEffect(() => {
-    fetchStatistics();
+    fetchStats(timeRange);
   }, [timeRange]);
 
-  const fetchStatistics = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get(`/admin/sms-statistics?days=${timeRange}`);
-      setStats(response.data.data);
-    } catch (error: any) {
-      toast.error('Failed to load statistics');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchStats = async (period: number) => {
+  try {
+    setLoading(true);
+    const response = await api.get(`/sms/admin/sms-statistics?days=${period}`);
+    setStats(response.data.data);
+  } catch (error: any) {
+    toast.error('Failed to load statistics');
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="p-6">
@@ -49,7 +50,7 @@ const SMSStatistics: React.FC = () => {
         
         <select
           value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
+          onChange={(e) => setTimeRange(+e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
         >
           <option value="7">Last 7 days</option>
@@ -70,28 +71,28 @@ const SMSStatistics: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Credits Issued</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                {stats.totalCreditsIssued.toLocaleString()}
+                {stats.totalCreditsIssued || 0}
               </p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">Credits Used</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                {stats.totalCreditsUsed.toLocaleString()}
+                {stats.totalCreditsUsed || 0}
               </p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">Messages Sent</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                {stats.totalMessagesSent.toLocaleString()}
+                {stats.totalMessagesSent || 0}
               </p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</p>
               <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
-                GHS {stats.totalRevenue.toLocaleString()}
+                GHS {stats.totalRevenue || 0}
               </p>
             </div>
           </div>
@@ -117,10 +118,10 @@ const SMSStatistics: React.FC = () => {
                     <tr key={index} className="border-b border-gray-100 dark:border-gray-800">
                       <td className="py-3 text-sm text-gray-900 dark:text-white">{church.name}</td>
                       <td className="py-3 text-sm text-right text-gray-900 dark:text-white">
-                        {church.creditsUsed.toLocaleString()}
+                        {church.creditsUsed || 0}
                       </td>
                       <td className="py-3 text-sm text-right text-gray-900 dark:text-white">
-                        {church.messagesSent.toLocaleString()}
+                        {church.messagesSent || 0}
                       </td>
                     </tr>
                   ))}

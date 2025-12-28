@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -26,6 +26,7 @@ import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
+import SubscriptionAlert from '../components/ui/SubscriptionAlert';
 
 interface NavigationItem {
   name: string;
@@ -42,6 +43,40 @@ const MerchantLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+    const [showAlert, setShowAlert] = useState(true);
+
+  // Get subscription details
+  const subscription = user?.merchant?.subscription;
+  const subscriptionStatus = subscription?.status;
+  const planName = subscription?.planDetails?.name || subscription?.plan;
+  const expiryDate = subscription?.currentPeriodEnd;
+
+  // Calculate days until renewal
+  const getDaysUntilRenewal = (): number => {
+    if (!expiryDate) return 0;
+    const now = new Date();
+    const renewalDate = new Date(expiryDate);
+    const diffTime = renewalDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const daysUntilRenewal = getDaysUntilRenewal();
+
+  // Determine which alert to show
+  const getAlertStatus = (): 'expired' | 'cancelled' | 'expiring_soon' | null => {
+    if (subscriptionStatus === 'expired') return 'expired';
+    if (subscriptionStatus === 'cancelled') return 'cancelled';
+    if (daysUntilRenewal <= 7 && daysUntilRenewal > 0) return 'expiring_soon';
+    return null;
+  };
+
+  const alertStatus = getAlertStatus();
+
+  // Reset alert visibility when status changes
+  useEffect(() => {
+    setShowAlert(true);
+  }, [subscriptionStatus]);
 
   // ✅ Navigation with nested items and feature requirements
   const allNavigation: NavigationItem[] = user?.role?.slug === 'dept_admin' 
@@ -134,8 +169,8 @@ const MerchantLayout = () => {
         requiresFeature: 'smsCommunications',
         children: [
           {
-            name: 'Dashboard',
-            href: '/messaging/dashboard',
+            name: 'Analytics',
+            href: '/messaging/analytics',
             icon: BarChart3,
             requiresFeature: 'smsCommunications'
           },
@@ -420,6 +455,16 @@ const MerchantLayout = () => {
         {/* Page Content */}
         <main className="flex-1 bg-gray-100 min-h-screen dark:bg-gray-900 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-full mx-auto">
+            {/* ✅ SUBSCRIPTION ALERT - Shows at top of page */}
+            {alertStatus && showAlert && (
+              <SubscriptionAlert
+                status={alertStatus}
+                planName={planName}
+                expiryDate={expiryDate}
+                daysUntilRenewal={daysUntilRenewal}
+                onDismiss={() => setShowAlert(false)}
+              />
+            )}
             <Outlet />
           </div>
         </main>

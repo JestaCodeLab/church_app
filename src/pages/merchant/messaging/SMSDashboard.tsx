@@ -67,14 +67,14 @@ const SMSDashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            SMS Communications
+            SMS Analytics
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Send SMS messages to your members
+            Overview of your SMS messaging performance
           </p>
         </div>
         <Link
-          to="/sms/send"
+          to="/messaging/send"
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
         >
           Send SMS
@@ -94,7 +94,7 @@ const SMSDashboard: React.FC = () => {
             </div>
             <div className="text-right">
               <Link
-                to="/sms/credits"
+                to="/messaging/credits"
                 className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 font-medium inline-block"
               >
                 Buy Credits

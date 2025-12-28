@@ -110,6 +110,8 @@ interface User {
       expectedMemberCount: number;
       paymentMethod?: string;
       nextBillingDate?: string;
+      currentPeriodEnd?: string;
+      currentPeriodStart?: string;
       features: {
         financials: boolean;
         events: boolean;

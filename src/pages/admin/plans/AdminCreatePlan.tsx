@@ -30,7 +30,7 @@ const AdminCreatePlan = () => {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState({ amount: 0, currency: 'GHS' });
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | 'one-time'>('monthly');
-  const [type, setType] = useState<'free' | 'basic' | 'pro' | 'enterprise'>('basic');
+  const [type, setType] = useState<'free' | 'paid' | 'enterprise' | 'custom'>('paid');
   const [trialDays, setTrialDays] = useState(0);
   const [isPublic, setIsPublic] = useState(true);
   const [isActive, setIsActive] = useState(true);
@@ -40,14 +40,14 @@ const AdminCreatePlan = () => {
 
   // Limits
   const [limits, setLimits] = useState<PlanLimits>({
-    members: 100,
-    branches: 2,
+    members: null,
+    branches: null,
     events: null,
     sermons: null,
-    storage: 5,
-    users: 5,
-    smsCredits: 100,
-    emailCredits: 1000
+    storage: null,
+    users: null,
+    smsCredits: null,
+    emailCredits: null
   });
 
   // Features
@@ -395,9 +395,9 @@ const AdminCreatePlan = () => {
                   className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="free">Free</option>
-                  <option value="basic">Basic</option>
-                  <option value="pro">Pro</option>
+                  <option value="paid">Paid</option>
                   <option value="enterprise">Enterprise</option>
+                  <option value="custom">Custom</option>
                 </select>
               </div>
 
