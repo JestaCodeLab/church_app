@@ -152,12 +152,12 @@ export const memberAPI = {
     if (data.emergencyContact) {
       formData.append('emergencyContact', JSON.stringify(data.emergencyContact));
     }
-    
-    if (data.departments) {
-    if (Array.isArray(data.departments)) {
-      formData.append('departments', JSON.stringify(data.departments));
-    }
-  }
+
+    if (data.departments && Array.isArray(data.departments)) {
+        data.departments.forEach((deptId: string) => {
+          formData.append('departments[]', deptId); 
+        });
+      }
   
   if (data.primaryDepartment) {
     formData.append('primaryDepartment', data.primaryDepartment);
