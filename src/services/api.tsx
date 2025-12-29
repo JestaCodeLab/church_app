@@ -529,10 +529,13 @@ export const messagingAPI = {
   sms: {
     send: (data: any) => api.post('/sms/send', data),
     sendBulk: (data: any) => api.post('/sms/send-bulk', data),
+    sendToMembers: (data: any) => api.post('/sms/send-to-members', data),
     sendToDepartment: (data: any) => api.post('/sms/send-to-department', data),
     sendToBranch: (data: any) => api.post('/sms/send-to-branch', data),
     sendToAll: (data: any) => api.post('/sms/send-to-all', data),
     getHistory: (params?: any) => api.get('/sms/history', { params }),
+    getLogs: (params?: any) => api.get('/sms/logs', { params }),
+    getLog: (id: string) => api.get(`/sms/logs/${id}`),
     getStatistics: (params?: any) => api.get('/sms/statistics', { params }),
   },
 

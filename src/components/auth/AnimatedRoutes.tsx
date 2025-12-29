@@ -64,6 +64,7 @@ import SMSCredits from '../../pages/merchant/messaging/SMSCredits';
 import SMSStatistics from '../../pages/admin/sms/AdminSMSStatistics';
 import SMSPackages from '../../pages/admin/sms/AdminSMSPackages';
 import AdminSMSBalance from '../../pages/admin/sms/AdminSMSBalance';
+import Birthdays from '../../pages/merchant/members/Birthdays';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -146,10 +147,13 @@ const AnimatedRoutes = () => {
             <Route path="/branches/new" element={<NewBranch />} />
             <Route path="/branches/:id" element={<BranchDetails />} />
             <Route path="/branches/:id/edit" element={<EditBranch />} />
-            <Route path="/members" element={<AllMembers />} />
+
+            <Route path="/members/all" element={<AllMembers />} />
             <Route path="/members/new" element={<NewMember />} />
             <Route path="/members/:id" element={<MemberDetails />} />
             <Route path="/members/:id/edit" element={<EditMember />} />
+            <Route path="/members/birthdays" element={<Birthdays />} />
+
             <Route path="/events" element={<AllEvents />} />
             <Route path="/events/new" element={<NewEvent />} />
             <Route path="/events/:id" element={<EventDetails />} />

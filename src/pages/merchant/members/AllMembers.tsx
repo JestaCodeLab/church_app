@@ -196,8 +196,7 @@ const AllMembers = () => {
     showToast.success('Member deleted successfully');
     setShowDeleteModal(false);
     setSelectedMember(null);
-    fetchMembers();
-    fetchStats();
+    window.location.reload();
   };
 
   const copyRegistrationLink = () => {

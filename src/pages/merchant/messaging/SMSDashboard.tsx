@@ -171,7 +171,7 @@ const SMSDashboard: React.FC = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link
-          to="/sms/send"
+          to="/messaging/send"
           className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center space-x-4">
@@ -188,7 +188,7 @@ const SMSDashboard: React.FC = () => {
         </Link>
 
         <Link
-          to="/sms/templates"
+          to="/messaging/templates"
           className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center space-x-4">
@@ -205,7 +205,7 @@ const SMSDashboard: React.FC = () => {
         </Link>
 
         <Link
-          to="/sms/history"
+          to="/messaging/history"
           className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center space-x-4">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { settingsAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
-import { Check, Crown, Users, Zap, TrendingUp, AlertCircle } from 'lucide-react';
+import { Check, Crown, Users, Zap, TrendingUp, AlertCircle, Church } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usePaystackPayment } from '../../hooks/usePaystackPayment';
 import DiscountCodeInput from '../ui/DiscountCodeInput';
@@ -49,8 +49,9 @@ const BillingSettings = () => {
         setActionLoading(true);
         await settingsAPI.changePlan(planSlug);
         showToast.success('Plan changed successfully!');
-        fetchSubscription();
-        setAppliedDiscount(null);
+        setTimeout(() => {
+        window.location.reload();
+        }, 2000);
       } catch (error: any) {
         showToast.error(error.response?.data?.message || 'Failed to change plan');
       } finally {
@@ -81,7 +82,7 @@ const BillingSettings = () => {
         setShowUpgradeModal(false);
         setSelectedPlan(null);
         setAppliedDiscount(null);
-        fetchSubscription();
+        window.location.reload();
       },
       onClose: () => {
         setShowUpgradeModal(false);
@@ -92,17 +93,19 @@ const BillingSettings = () => {
   const getPlanIcon = (planSlug: string) => {
     switch (planSlug) {
       case 'starter': return <Users className="w-6 h-6 text-gray-500" />;
+      case 'basic': return <Church className="w-6 h-6 text-orange-500" />;
       case 'growth': return <Zap className="w-6 h-6 text-blue-500" />;
-      case 'pro': return <Crown className="w-6 h-6 text-purple-500" />;
+      case 'enterprise': return <Crown className="w-6 h-6 text-purple-500" />;
       default: return <Users className="w-6 h-6 text-gray-500" />;
     }
   };
 
   const getPlanSubText = (planSlug: string) => {
     switch (planSlug) {
-      case 'starter': return 'Ideal for small churches starting out.';
+      case 'starter': return 'Perfect for new churches getting started';
+      case 'basic': return 'Ideal for small churches starting out.';
       case 'growth': return 'Perfect for growing congregations.';
-      case 'pro': return 'Best for large churches with advanced needs.';
+      case 'enterprise': return 'Best for large churches with advanced needs.';
       default: return '';
     }
   };
