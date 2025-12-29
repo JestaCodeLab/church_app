@@ -36,7 +36,7 @@ const MemberDetails = () => {
       setMember(response.data.data?.member);
     } catch (error) {
       showToast.error('Failed to load member details');
-      navigate('/members');
+      navigate('/members/all');
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ const MemberDetails = () => {
       await memberAPI.deleteMember(id, permanent);
       showToast.success(permanent ? 'Member deleted permanently' : 'Member archived');
       setShowDeleteModal(false);
-      navigate('/members');
+      navigate('/members/all');
     } catch (error) {
       showToast.error('Failed to delete member');
       setShowDeleteModal(false);
@@ -127,7 +127,7 @@ const MemberDetails = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/members')}
+                onClick={() => navigate('/members/all')}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Back to Members"
               >

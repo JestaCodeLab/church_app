@@ -106,7 +106,7 @@ const EditMember = () => {
       }
     } catch (error: any) {
       showToast.error('Failed to load member');
-      navigate('/members');
+      navigate('/members/all');
     } finally {
       setFetching(false);
     }
@@ -188,7 +188,7 @@ const EditMember = () => {
 
       await memberAPI.updateMember(id, dataToSubmit);
       showToast.success('Member updated successfully!');
-      navigate('/members');
+      navigate('/members/all');
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to update member');
     } finally {
@@ -215,7 +215,7 @@ const EditMember = () => {
         <div className="w-full mx-auto px-8 py-6">
           <div className="flex items-start space-x-4">
             <button
-              onClick={() => navigate('/members')}
+              onClick={() => navigate('/members/all')}
               className="bg-blue-600 p-2 hover:bg-blue-700 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Back to Members"
             >
@@ -828,7 +828,7 @@ const EditMember = () => {
           <div className="flex items-center justify-end space-x-4">
             <button
               type="button"
-              onClick={() => navigate('/members')}
+              onClick={() => navigate('/members/all')}
               className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Cancel
