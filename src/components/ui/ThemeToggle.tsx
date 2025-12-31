@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon, Monitor, SunMoon } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 const ThemeToggle = () => {
@@ -22,7 +22,7 @@ const ThemeToggle = () => {
   const themes = [
     { value: 'light' as const, label: 'Light', icon: Sun },
     { value: 'dark' as const, label: 'Dark', icon: Moon },
-    { value: 'system' as const, label: 'System', icon: Monitor },
+    { value: 'system' as const, label: 'System', icon: SunMoon },
   ];
 
   const currentTheme = themes.find(t => t.value === theme) || themes[0];

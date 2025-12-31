@@ -5,6 +5,7 @@ import { showToast } from '../../utils/toasts';
 import AuthLayout from '../../components/auth/AuthLayout';
 import PageTransition from '../../components/auth/PageTransition';
 import { useMerchant } from '../../context/MerchantContext';
+import { validateEmail } from '../../utils/validators';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,6 +28,12 @@ const Login = () => {
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+
+  // Validation
+  if (!validateEmail(formData.email).valid) {
+    showToast.error('Please enter a valid email address');
+    return;
+  }
   setLoading(true);
   setError('');
 

@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Calendar, Clock, MapPin, Users, Edit, Trash2,
   MoreVertical, UserCircle, Mic, Image as ImageIcon,
-  ExternalLink, X
+  ExternalLink, X, Repeat2, Copy, CheckCircle, Code,
+  Trash
 } from 'lucide-react';
 import { eventAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -22,6 +23,8 @@ const EventDetails: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [regeneratingQR, setRegeneratingQR] = useState(false);
+  const [todayServiceCode, setTodayServiceCode] = useState<any>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   useEffect(() => {
     fetchEvent();
@@ -32,11 +35,33 @@ const EventDetails: React.FC = () => {
       setLoading(true);
       const response = await eventAPI.getEvent(id!);
       setEvent(response.data.data.event);
+      
+      // If recurring event, fetch today's service code
+      if (response.data.data.event.isRecurring) {
+        fetchTodayServiceCode(response.data.data.event._id);
+      }
     } catch (error: any) {
       showToast.error('Failed to load event details');
       navigate('/events');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTodayServiceCode = async (eventId: string) => {
+    try {
+      // This would call the public endpoint that returns today's service code
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1'}/attendance/public/event/${eventId}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data?.serviceCode) {
+          setTodayServiceCode(data.data.serviceCode);
+        }
+      }
+    } catch (error) {
+      // Silently fail - service code might not be available yet
     }
   };
 
@@ -64,6 +89,21 @@ const EventDetails: React.FC = () => {
       showToast.error('Failed to regenerate QR code');
     } finally {
       setRegeneratingQR(false);
+    }
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    showToast.success('Code copied to clipboard');
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const getCheckInUrl = () => {
+    if (event.isRecurring) {
+      return `${window.location.origin}/attend/${event._id}`;
+    } else {
+      return `${window.location.origin}/events/attend/${event.qrCode?.data}`;
     }
   };
 
@@ -140,52 +180,28 @@ const EventDetails: React.FC = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => navigate(`/events/${id}/edit`)}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
               >
                 <Edit className="w-4 h-4" />
                 <span>Edit</span>
               </button>
-
-              <div className="relative">
+              <button
+                onClick={() => navigate(`/events/${id}/attendance`)}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                <span>Attendance</span>
+              </button>
                 <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                </button>
-
-                {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
-                    <button
-                      onClick={() => {
-                        navigate(`/events/${id}/attendance`);
-                        setShowDropdown(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg"
-                    >
-                      View Attendance
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate(`/events/${id}/check-in`);
-                        setShowDropdown(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Check-In
-                    </button>
-                    <button
-                      onClick={() => {
+                  onClick={() => {
                         setShowDeleteModal(true);
                         setShowDropdown(false);
                       }}
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-lg"
-                    >
-                      Delete Event
-                    </button>
-                  </div>
-                )}
-              </div>
+                  className="p-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                >
+                  <Trash className="w-5 h-5 text-white dark:text-gray-400" />
+                </button>
+
             </div>
           </div>
         </div>
@@ -367,6 +383,86 @@ const EventDetails: React.FC = () => {
               />
             )}
 
+            {/* Service Code & Check-In Link (Recurring Events) */}
+            {event.isRecurring && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                  <Code className="w-5 h-5 text-primary-600" />
+                  <span>Check-In Code</span>
+                </h2>
+
+                {todayServiceCode ? (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Today's Service Code</p>
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            value={todayServiceCode.code || 'N/A'}
+                            readOnly
+                            className="w-full px-4 py-3 text-center text-2xl font-mono font-bold bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-700 rounded-lg text-primary-700 dark:text-primary-300 focus:outline-none"
+                          />
+                        </div>
+                        <button
+                          onClick={() => handleCopyCode(todayServiceCode.code)}
+                          className="p-3 bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 rounded-lg transition-colors"
+                          title="Copy code"
+                        >
+                          {copiedCode ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <Copy className="w-5 h-5 text-primary-600" />
+                          )}
+                        </button>
+                      </div>
+                      {todayServiceCode.validFrom && todayServiceCode.validUntil && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Valid: {format(new Date(todayServiceCode.validFrom), 'HH:mm')} - {format(new Date(todayServiceCode.validUntil), 'HH:mm')}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Check-In Link</p>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="text"
+                          value={getCheckInUrl()}
+                          readOnly
+                          className="flex-1 px-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 focus:outline-none truncate"
+                        />
+                        <button
+                          onClick={() => handleCopyCode(getCheckInUrl())}
+                          className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                          title="Copy link"
+                        >
+                          <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        </button>
+                        {navigator.share && (
+                          <button
+                            onClick={() => navigator.share({
+                              title: event.title,
+                              text: `Check in to ${event.title}`,
+                              url: getCheckInUrl()
+                            })}
+                            className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                            title="Share"
+                          >
+                            <ExternalLink className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Service code will be generated daily at 11 PM for tomorrow's service.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Date & Time */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -393,6 +489,61 @@ const EventDetails: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Recurrence (if recurring) */}
+            {event.isRecurring && event.recurrence && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 border-l-4 border-l-primary-600">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                  <Repeat2 className="w-5 h-5 text-primary-600" />
+                  <span>Recurring Pattern</span>
+                </h2>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Frequency</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium capitalize">
+                      {event.recurrence.frequency}
+                    </p>
+                  </div>
+                  {event.recurrence.daysOfWeek && event.recurrence.daysOfWeek.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Days</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {event.recurrence.daysOfWeek.map((day: string) => (
+                          <span
+                            key={day}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                          >
+                            {day}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Base Time</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium">
+                      {event.recurrence.baseTime}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Start Date</p>
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">
+                        {format(new Date(event.recurrence.startDate), 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                    {event.recurrence.endDate && (
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">End Date</p>
+                        <p className="text-gray-900 dark:text-gray-100 font-medium">
+                          {format(new Date(event.recurrence.endDate), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Location */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">

@@ -53,6 +53,7 @@ const SMSHistory = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       delivered: { icon: CheckCircle, color: 'text-green-600 bg-green-100', label: 'Delivered' },
+      completed: { icon: CheckCircle, color: 'text-green-600 bg-green-100', label: 'Delivered' },
       submitted: { icon: Clock, color: 'text-yellow-600 bg-yellow-100', label: 'Submitted' },
       sent: { icon: Clock, color: 'text-blue-600 bg-blue-100', label: 'Sent' },
       failed: { icon: XCircle, color: 'text-red-600 bg-red-100', label: 'Failed' },
@@ -64,8 +65,8 @@ const SMSHistory = () => {
     const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-        <Icon className="w-3 h-3 mr-1" />
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium ${config.color}`}>
+        <Icon className="w-3.5 h-3.5 mr-1" />
         {config.label}
       </span>
     );
@@ -140,12 +141,12 @@ const SMSHistory = () => {
               {logs.map((log) => (
                 <tr key={log._id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50">
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    {new Date(log.createdAt).toLocaleString()}
+                    {new Date(log.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 capitalize">
                     {log.messageType}
                   </td>
-                  <td className="px-6 py-4 text-sm font-mono text-primary-600 dark:text-primary-400">
+                  <td className="px-6 py-4 text-sm text-primary-600 dark:text-primary-400">
                     {log.senderID}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">

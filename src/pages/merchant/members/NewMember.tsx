@@ -5,6 +5,7 @@ import api, { memberAPI, branchAPI, departmentAPI } from '../../../services/api'
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
 import { useAuth } from '../../../context/AuthContext';
+import { validateEmail, validatePhone } from '../../../utils/validators';
 
 
 const NewMember = () => {
@@ -187,6 +188,24 @@ const fetchDepartments = async () => {
     if (!formData.firstName || !formData.lastName || !formData.gender || !formData.branch) {
       showToast.error('Please fill in all required fields');
       return;
+    }
+
+    // Validate email if provided
+    if (formData.email) {
+      const emailValidation = validateEmail(formData.email);
+      if (!emailValidation.valid) {
+        showToast.error(emailValidation.error || 'Please enter a valid email address');
+        return;
+      }
+    }
+
+    // Validate phone if provided
+    if (formData.phone) {
+      const phoneValidation = validatePhone(formData.phone);
+      if (!phoneValidation.valid) {
+        showToast.error(phoneValidation.error || 'Please enter a valid phone number');
+        return;
+      }
     }
 
     setLoading(true);

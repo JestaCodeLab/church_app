@@ -26,7 +26,8 @@ import {
   TrendingUp,
   Wallet,
   Receipt,
-  PieChart
+  PieChart,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -143,6 +144,12 @@ const MerchantLayout = () => {
           name: 'Events', 
           href: '/events', 
           icon: Calendar,
+          requiresFeature: 'eventManagement'
+        },
+        { 
+          name: 'Attendance', 
+          href: '/attendance', 
+          icon: CheckCircle2,
           requiresFeature: 'eventManagement'
         },
       ];
@@ -269,6 +276,12 @@ const MerchantLayout = () => {
           name: 'Events', 
           href: '/events', 
           icon: Calendar,
+          requiresFeature: 'eventManagement'
+        },
+        { 
+          name: 'Attendance', 
+          href: '/attendance', 
+          icon: CheckCircle2,
           requiresFeature: 'eventManagement'
         },
         { 

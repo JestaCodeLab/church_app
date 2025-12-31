@@ -86,7 +86,7 @@ const AllDepartments = () => {
     try {
       setDeleteLoading(true);
       const token = localStorage.getItem('token');
-      
+
       await departmentAPI.deleteDepartment(departmentToDelete._id);
 
       showToast.success('Department deleted successfully');
@@ -297,7 +297,7 @@ const AllDepartments = () => {
                 <div className="flex items-center space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={() => navigate(`/departments/${dept._id}`)}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center justify-center px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     <Eye className="w-4 h-4 mr-1" />
                     View

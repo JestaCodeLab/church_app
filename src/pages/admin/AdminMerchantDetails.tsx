@@ -55,7 +55,7 @@ const [showSuspendModal, setShowSuspendModal] = useState(false);
       setData(response.data.data);
     } catch (error: any) {
       toast.error('Failed to load merchant details');
-      navigate('/admin/merchants');
+      navigate('/admin/churches');
     } finally {
       setLoading(false);
     }
@@ -183,7 +183,7 @@ const confirmSuspend = async () => {
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-4">
           <button
-            onClick={() => navigate('/admin/merchants')}
+            onClick={() => navigate('/admin/churches')}
             className="mt-1 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

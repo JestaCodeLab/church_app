@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -16,13 +16,12 @@ import {
   Calendar,
   Search,
   UserPlus,
-  X
+  X,
+  UserMinus,
+  Trash
 } from 'lucide-react';
-import axios from 'axios';
 import { showToast } from '../../../utils/toasts';
 import { departmentAPI, memberAPI } from '../../../services/api';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
 interface Member {
   _id: string;
@@ -48,20 +47,80 @@ const DepartmentDetails = () => {
   const [statistics, setStatistics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [membersLoading, setMembersLoading] = useState(false);
+  
+  // ✅ Member List Search
   const [searchTerm, setSearchTerm] = useState('');
+  const [searching, setSearching] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>(null);
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  
+  // Add Members Modal
   const [showAddMembersModal, setShowAddMembersModal] = useState(false);
-    const [availableMembers, setAvailableMembers] = useState<Member[]>([]);
-    const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-    const [addingMembers, setAddingMembers] = useState(false);
-    const [memberSearchTerm, setMemberSearchTerm] = useState('');
+  const [availableMembers, setAvailableMembers] = useState<Member[]>([]);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [addingMembers, setAddingMembers] = useState(false);
+  
+  // ✅ Modal Search
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
+  const [modalSearching, setModalSearching] = useState(false);
+  const modalSearchTimeoutRef = useRef<NodeJS.Timeout>(null);
+
+  // Remove Member Confirmation
+  const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
+  const [removingMember, setRemovingMember] = useState(false);
 
   useEffect(() => {
     fetchDepartmentDetails();
-    fetchDepartmentMembers();
     fetchDepartmentStatistics();
+  }, [id]);
+
+  // ✅ Fetch members when page or search changes
+  useEffect(() => {
+    fetchDepartmentMembers();
   }, [id, currentPage]);
+
+  // ✅ Debounced search for member list
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchTerm) {
+      searchTimeoutRef.current = setTimeout(() => {
+        setCurrentPage(1); // Reset to page 1 on new search
+        fetchDepartmentMembers();
+      }, 300);
+    } else {
+      fetchDepartmentMembers();
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
+
+  // ✅ Debounced search for modal
+  useEffect(() => {
+    if (!showAddMembersModal) return;
+
+    if (modalSearchTimeoutRef.current) {
+      clearTimeout(modalSearchTimeoutRef.current);
+    }
+
+    modalSearchTimeoutRef.current = setTimeout(() => {
+      fetchAvailableMembers();
+    }, 300);
+
+    return () => {
+      if (modalSearchTimeoutRef.current) {
+        clearTimeout(modalSearchTimeoutRef.current);
+      }
+    };
+  }, [memberSearchTerm, showAddMembersModal]);
 
   const fetchDepartmentDetails = async () => {
     try {
@@ -79,6 +138,7 @@ const DepartmentDetails = () => {
     }
   };
 
+  // ✅ FIXED: API search for department members
   const fetchDepartmentMembers = async () => {
     try {
       setMembersLoading(true);
@@ -111,78 +171,102 @@ const DepartmentDetails = () => {
     }
   };
 
+  // ✅ FIXED: Fetch available members with API search + filter out current department members
   const fetchAvailableMembers = async () => {
-  try {
-    const response = await memberAPI.getMembers({ status: 'active', limit: 1000 }) 
+    try {
+      setModalSearching(true);
+      
+      const response = await memberAPI.getMembers({ 
+        status: 'active', 
+        limit: 50,
+        search: memberSearchTerm || undefined
+      });
 
-    if (response.data.success) {
-      // Filter out members already in this department
-      const currentMemberIds = members.map(m => m._id);
-      const available = response.data.data.members.filter(
-        (m: Member) => !currentMemberIds.includes(m._id)
-      );
-      setAvailableMembers(available);
-    }
-  } catch (error: any) {
-    showToast.error('Failed to load available members');
-  }
-};
-
-
-const handleAddMembers = async () => {
-  if (selectedMemberIds.length === 0) {
-    showToast.error('Please select at least one member');
-    return;
-  }
-
-  try {
-    setAddingMembers(true);
-
-    // Add each selected member to the department
-    const promises = selectedMemberIds.map(memberId => {
-        const mem = availableMembers.find(m => m._id === memberId);
-        return (
-            memberAPI.updateMember(memberId, {
-                // firstName: mem?.firstName,
-                // lastName: mem?.lastName,
-                departments: [...(mem?.departments || []), id]
-              })
+      if (response.data.success) {
+        // ✅ Filter out members already in this department
+        const currentMemberIds = members.map(m => m._id);
+        const available = response.data.data.members.filter(
+          (m: Member) => !currentMemberIds.includes(m._id) && !m.departments?.includes(id!)
         );
-    });
+        setAvailableMembers(available);
+      }
+    } catch (error: any) {
+      showToast.error('Failed to load available members');
+    } finally {
+      setModalSearching(false);
+    }
+  };
 
-    await Promise.all(promises);
+  // ✅ Add members to department
+  const handleAddMembers = async () => {
+    if (selectedMemberIds.length === 0) {
+      showToast.error('Please select at least one member');
+      return;
+    }
 
-    showToast.success(`${selectedMemberIds.length} member(s) added successfully`);
-    setShowAddMembersModal(false);
-    setSelectedMemberIds([]);
-    fetchDepartmentMembers(); // Refresh the members list
-    fetchDepartmentStatistics(); // Refresh stats
+    try {
+      setAddingMembers(true);
 
-  } catch (error: any) {
-    showToast.error(error.response?.data?.message || 'Failed to add members');
-  } finally {
-    setAddingMembers(false);
-  }
-};
+      // Add each selected member to the department
+      const promises = selectedMemberIds.map(memberId => {
+        const member = availableMembers.find(m => m._id === memberId);
+        const currentDepartments = member?.departments || [];
+        
+        return memberAPI.updateMember(memberId, {
+          departments: [...currentDepartments, id]
+        });
+      });
 
-const toggleMemberSelection = (memberId: string) => {
-  setSelectedMemberIds(prev =>
-    prev.includes(memberId)
-      ? prev.filter(id => id !== memberId)
-      : [...prev, memberId]
-  );
-};
+      await Promise.all(promises);
 
-const filteredAvailableMembers = availableMembers.filter(member =>
-  `${member.firstName} ${member.lastName}`.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
-  member.email.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
-  member.phone.includes(memberSearchTerm)
-);
+      showToast.success(`${selectedMemberIds.length} member(s) added successfully`);
+      setShowAddMembersModal(false);
+      setSelectedMemberIds([]);
+      setMemberSearchTerm('');
+      fetchDepartmentMembers(); // Refresh the members list
+      fetchDepartmentStatistics(); // Refresh stats
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    fetchDepartmentMembers();
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to add members');
+    } finally {
+      setAddingMembers(false);
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+
+    try {
+      setRemovingMember(true);
+      // Remove department from member's departments array
+      console.log(memberToRemove)
+      const updatedDepartments = memberToRemove?.departments.filter(
+        (dept: any) => dept?.id !== id
+      );
+      console.log('here 2 ==>', updatedDepartments)
+
+      await memberAPI.updateMember(memberToRemove._id, {
+        departments: updatedDepartments
+      });
+
+      showToast.success('Member removed from department');
+      setMemberToRemove(null);
+      fetchDepartmentMembers(); // Refresh the members list
+      fetchDepartmentStatistics(); // Refresh stats
+
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to remove member');
+    } finally {
+      setRemovingMember(false);
+    }
+  };
+
+  const toggleMemberSelection = (memberId: string) => {
+    setSelectedMemberIds(prev =>
+      prev.includes(memberId)
+        ? prev.filter(id => id !== memberId)
+        : [...prev, memberId]
+    );
   };
 
   if (loading) {
@@ -218,7 +302,7 @@ const filteredAvailableMembers = availableMembers.filter(member =>
             </div>
             
             <div>
-              <div className="space-x-0">
+              <div className="flex items-center space-x-3">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {department.name}
                 </h1>
@@ -241,18 +325,19 @@ const filteredAvailableMembers = availableMembers.filter(member =>
 
         <div className="flex items-center space-x-3">
           <button
-                onClick={() => {
-                    fetchAvailableMembers();
-                    setShowAddMembersModal(true);
-                }}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-                >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Add Members
-            </button>
+            onClick={() => {
+              setMemberSearchTerm('');
+              setShowAddMembersModal(true);
+              fetchAvailableMembers();
+            }}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Add Members
+          </button>
           <button
             onClick={() => navigate(`/departments/${id}/edit`)}
-            className="inline-flex border-1 items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors"
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit
@@ -326,7 +411,7 @@ const filteredAvailableMembers = availableMembers.filter(member =>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Details Card */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-20">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Department Details
             </h2>
@@ -455,19 +540,22 @@ const filteredAvailableMembers = availableMembers.filter(member =>
                 </h2>
               </div>
 
-              {/* Search */}
-              <form onSubmit={handleSearch}>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search members..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-              </form>
+              {/* ✅ Search with API */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                />
+                {membersLoading && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader className="w-4 h-4 text-primary-500 animate-spin" />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -484,14 +572,16 @@ const filteredAvailableMembers = availableMembers.filter(member =>
                 </div>
               ) : (
                 <>
-                  {members.map((member) => (
+                  {members?.map((member) => (
                     <div
                       key={member._id}
-                      onClick={() => navigate(`/members/${member._id}`)}
-                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     >
                       <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
+                        <div 
+                          className="flex-shrink-0 cursor-pointer"
+                          onClick={() => navigate(`/members/${member._id}`)}
+                        >
                           {member.photo ? (
                             <img
                               src={member.photo}
@@ -507,7 +597,10 @@ const filteredAvailableMembers = availableMembers.filter(member =>
                           )}
                         </div>
                         
-                        <div className="flex-1 min-w-0">
+                        <div 
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => navigate(`/members/${member._id}`)}
+                        >
                           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             {member.firstName} {member.lastName}
                           </p>
@@ -525,7 +618,7 @@ const filteredAvailableMembers = availableMembers.filter(member =>
                           </div>
                         </div>
 
-                        <div>
+                        <div className="flex items-center space-x-2">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             member.membershipStatus === 'active'
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
@@ -533,6 +626,15 @@ const filteredAvailableMembers = availableMembers.filter(member =>
                           }`}>
                             {member.membershipStatus}
                           </span>
+
+                          {/* ✅ Remove Member Button */}
+                          <button
+                            onClick={() => setMemberToRemove(member)}
+                            className="p-1.5 text-white bg-red-600 hover:bg-red-500 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Remove from department"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -569,137 +671,187 @@ const filteredAvailableMembers = availableMembers.filter(member =>
         </div>
       </div>
 
-      {/* Add Members Modal */}
-        {showAddMembersModal && (
+      {/* ✅ Add Members Modal with API Search */}
+      {showAddMembersModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
             {/* Modal Header */}
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                    Add Members to {department?.name} Department
+                  Add Members to {department?.name}
                 </h3>
                 <button
-                    onClick={() => {
+                  onClick={() => {
                     setShowAddMembersModal(false);
                     setSelectedMemberIds([]);
                     setMemberSearchTerm('');
-                    }}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                    <X className="w-6 h-6" />
+                  <X className="w-6 h-6" />
                 </button>
-                </div>
+              </div>
 
-                {/* Search */}
-                <div className="mt-4">
+              {/* Search */}
+              <div className="mt-4">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
                     type="text"
-                    placeholder="Search members..."
+                    placeholder="Search members by name, email, or phone..."
                     value={memberSearchTerm}
                     onChange={(e) => setMemberSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
-                    />
+                    className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                  />
+                  {modalSearching && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader className="w-4 h-4 text-primary-500 animate-spin" />
+                    </div>
+                  )}
                 </div>
-                </div>
+              </div>
 
-                {/* Selected count */}
-                {selectedMemberIds.length > 0 && (
+              {/* Selected count */}
+              {selectedMemberIds.length > 0 && (
                 <div className="mt-3 text-sm text-blue-600 dark:text-blue-400">
-                    {selectedMemberIds.length} member(s) selected
+                  {selectedMemberIds.length} member(s) selected
                 </div>
-                )}
+              )}
             </div>
 
             {/* Modal Body - Members List */}
             <div className="flex-1 overflow-y-auto p-6">
-                {filteredAvailableMembers.length === 0 ? (
-                <div className="text-center py-12">
-                    <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">
-                    {memberSearchTerm
-                        ? 'No members found matching your search'
-                        : 'All members are already in this department'}
-                    </p>
+              {modalSearching ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader className="w-8 h-8 animate-spin text-primary-600" />
                 </div>
-                ) : (
+              ) : availableMembers.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {memberSearchTerm
+                      ? 'No members found matching your search'
+                      : 'All active members are already in this department'}
+                  </p>
+                </div>
+              ) : (
                 <div className="space-y-2">
-                    {filteredAvailableMembers.map((member) => (
+                  {availableMembers.map((member) => (
                     <label
-                        key={member._id}
-                        className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                      key={member._id}
+                      className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                     >
-                        <input
+                      <input
                         type="checkbox"
                         checked={selectedMemberIds.includes(member._id)}
                         onChange={() => toggleMemberSelection(member._id)}
                         className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                        />
-                        <div className="ml-3 flex items-center flex-1">
+                      />
+                      <div className="ml-3 flex items-center flex-1">
                         {member.photo ? (
-                            <img
+                          <img
                             src={member.photo}
                             alt={`${member.firstName} ${member.lastName}`}
                             className="w-10 h-10 rounded-full object-cover"
-                            />
+                          />
                         ) : (
-                            <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            </div>
+                          <div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-gray-600 flex items-center justify-center">
+                            <span className="text-white dark:text-gray-300 font-semibold">
+                              {member.firstName[0]}{member.lastName[0]}
+                            </span>
+                          </div>
                         )}
                         <div className="ml-3">
-                            <p className="font-medium text-gray-900 dark:text-gray-100">
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
                             {member.firstName} {member.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {member.email} • {member.phone}
-                            </p>
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {member.email || member.phone}
+                          </p>
                         </div>
-                        </div>
+                      </div>
                     </label>
-                    ))}
+                  ))}
                 </div>
-                )}
+              )}
             </div>
 
             {/* Modal Footer */}
             <div className="p-6 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-end space-x-3">
+              <div className="flex items-center justify-end space-x-3">
                 <button
-                    onClick={() => {
+                  onClick={() => {
                     setShowAddMembersModal(false);
                     setSelectedMemberIds([]);
                     setMemberSearchTerm('');
-                    }}
-                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    disabled={addingMembers}
+                  }}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  disabled={addingMembers}
                 >
-                    Cancel
+                  Cancel
                 </button>
                 <button
-                    onClick={handleAddMembers}
-                    disabled={selectedMemberIds.length === 0 || addingMembers}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                  onClick={handleAddMembers}
+                  disabled={selectedMemberIds.length === 0 || addingMembers}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                 >
-                    {addingMembers ? (
+                  {addingMembers ? (
                     <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        Adding...
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      Adding...
                     </>
-                    ) : (
+                  ) : (
                     <>
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Add {selectedMemberIds.length > 0 ? `(${selectedMemberIds.length})` : 'Members'}
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Add {selectedMemberIds.length > 0 ? `(${selectedMemberIds.length})` : 'Members'}
                     </>
-                    )}
+                  )}
                 </button>
-                </div>
+              </div>
             </div>
-            </div>
+          </div>
         </div>
-        )}
+      )}
+
+      {/* ✅ Remove Member Confirmation Modal */}
+      {memberToRemove && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Remove Member from Department?
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to remove <strong>{memberToRemove.firstName} {memberToRemove.lastName}</strong> from {department.name}?
+            </p>
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={() => setMemberToRemove(null)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                disabled={removingMember}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRemoveMember}
+                disabled={removingMember}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 inline-flex items-center"
+              >
+                {removingMember ? (
+                  <>
+                    <Loader className="w-4 h-4 mr-2 animate-spin" />
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    Remove
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -15,7 +15,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Loader
+  Loader,
+  Repeat2
 } from 'lucide-react';
 import { eventAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -204,6 +205,9 @@ const AllEvents = () => {
                       Location
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Attendance
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -256,6 +260,22 @@ const AllEvents = () => {
                           <span className="line-clamp-2">
                             {event.location?.venue || event.branch?.name || 'Not specified'}
                           </span>
+                        </div>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          {event.isRecurring ? (
+                            <>
+                              <Repeat2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
+                                Recurring
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">One-time</span>
+                          )}
                         </div>
                       </td>
 

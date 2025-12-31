@@ -280,27 +280,6 @@ const Dashboard = () => {
 
             {stats.membersByBranch.length > 0 ? (
               <>
-                {/* Summary Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-1">Branches</p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {stats.membersByBranch.length}
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4">
-                    <p className="text-sm font-medium text-green-900 dark:text-green-300 mb-1">Members</p>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {stats.totalMembers}
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4">
-                    <p className="text-sm font-medium text-purple-900 dark:text-purple-300 mb-1">Average</p>
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      {Math.round(stats.totalMembers / stats.membersByBranch.length)}
-                    </p>
-                  </div>
-                </div>
 
                 {/* Branch Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -310,10 +289,11 @@ const Dashboard = () => {
                       : 0;
 
                     const colors = [
-                      { bg: 'bg-blue-50 dark:bg-blue-900/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
-                      { bg: 'bg-green-50 dark:bg-green-900/10', text: 'text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
                       { bg: 'bg-purple-50 dark:bg-purple-900/10', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800' },
+                      { bg: 'bg-blue-50 dark:bg-blue-900/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
                       { bg: 'bg-orange-50 dark:bg-orange-900/10', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800' },
+                      { bg: 'bg-green-50 dark:bg-green-900/10', text: 'text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
+                      { bg: 'bg-teal-50 dark:bg-teal-900/10', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-800' },
                     ];
                     
                     const colorScheme = colors[index % colors.length];
@@ -321,7 +301,7 @@ const Dashboard = () => {
                     return (
                       <div
                         key={branch._id}
-                        onClick={() => navigate(`/branches/${branch._id}`)}
+                        onClick={() => navigate(`/branches/${branch._id}/members`)}
                         className={`relative ${colorScheme.bg} ${colorScheme.border} border-2 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer group`}
                       >
                         <div className="flex items-start justify-between mb-3">

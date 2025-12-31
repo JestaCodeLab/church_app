@@ -155,6 +155,13 @@ const BranchDetails = () => {
             {/* Action Buttons */}
             <div className="flex items-center space-x-3">
               <button
+                onClick={() => navigate(`/branches/${id}/members`)}
+                className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                View Members
+              </button>
+              <button
                 onClick={() => navigate(`/branches/${id}/edit`)}
                 className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
               >
@@ -453,7 +460,7 @@ const BranchDetails = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() => navigate(`/members?branchId=${id}`)}
+                    onClick={() => navigate(`/branches/${id}/members`)}
                     className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                   >
                     View All

@@ -65,10 +65,16 @@ import SMSStatistics from '../../pages/admin/sms/AdminSMSStatistics';
 import SMSPackages from '../../pages/admin/sms/AdminSMSPackages';
 import AdminSMSBalance from '../../pages/admin/sms/AdminSMSBalance';
 import Birthdays from '../../pages/merchant/members/Birthdays';
+import BranchMembers from '../../pages/merchant/branches/BranchMembers';
+import BirthdaySettings from '../../pages/merchant/members/BirthdaySettings';
+import AdminLogs from '../../pages/admin/logs/AdminLogs';
+import AdminAttendance from '../../pages/admin/AdminAttendance';
+import MerchantAttendance from '../../pages/merchant/attendance/MerchantAttendance';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
   const { isMainDomain, loading } = useMerchant();
+
 
   if (loading) {
     return (
@@ -126,6 +132,7 @@ const AnimatedRoutes = () => {
           } />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
+          <Route path="/attend/:eventId" element={<EventCheckIn />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
         </Route>
 
@@ -147,12 +154,14 @@ const AnimatedRoutes = () => {
             <Route path="/branches/new" element={<NewBranch />} />
             <Route path="/branches/:id" element={<BranchDetails />} />
             <Route path="/branches/:id/edit" element={<EditBranch />} />
+            <Route path="/branches/:id/members" element={<BranchMembers />} />
 
             <Route path="/members/all" element={<AllMembers />} />
             <Route path="/members/new" element={<NewMember />} />
             <Route path="/members/:id" element={<MemberDetails />} />
             <Route path="/members/:id/edit" element={<EditMember />} />
             <Route path="/members/birthdays" element={<Birthdays />} />
+            <Route path="/members/birthdays/settings" element={<BirthdaySettings />} />
 
             <Route path="/events" element={<AllEvents />} />
             <Route path="/events/new" element={<NewEvent />} />
@@ -160,6 +169,10 @@ const AnimatedRoutes = () => {
             <Route path="/events/:id/edit" element={<NewEvent />} />
             <Route path="/events/:id/attendance" element={<EventAttendance />} />
             <Route path="/events/guests" element={<GuestManagement />} />
+            
+            {/* Attendance Routes */}
+            <Route path="/attendance" element={<MerchantAttendance />} />
+            
             <Route 
               path="/departments" 
               element={
@@ -187,8 +200,8 @@ const AnimatedRoutes = () => {
         <Route element={<ProtectedRoute requiredRole="super_admin" />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/merchants" element={<AdminMerchants />} />
-            <Route path="/admin/merchants/:id" element={<AdminMerchantDetails />} />
+            <Route path="/admin/churches" element={<AdminMerchants />} />
+            <Route path="/admin/churches/:id" element={<AdminMerchantDetails />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/users/:id" element={<AdminUserDetails />} />
             <Route path="/admin/branches" element={<AdminBranches />} />
@@ -210,6 +223,9 @@ const AnimatedRoutes = () => {
             <Route path="/admin/sms-packages" element={<SMSPackages />} />
             <Route path="/admin/sms-statistics" element={<SMSStatistics />} />
             <Route path="/admin/sms-balance" element={<AdminSMSBalance />} />
+
+            <Route path="/admin/logs" element={<AdminLogs />} />
+            <Route path="/admin/attendance" element={<AdminAttendance />} />
           </Route>
         </Route>
 

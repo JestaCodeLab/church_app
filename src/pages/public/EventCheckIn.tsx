@@ -1,38 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Calendar, MapPin, Users, CheckCircle, Loader, AlertCircle, Clock } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Calendar, MapPin, CheckCircle, Loader, AlertCircle, Clock, ArrowLeft, Phone, Mail, User } from 'lucide-react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 
 const EventCheckIn = () => {
-  const { qrData } = useParams();
+  // Support both old (qrData) and new (eventId) params
+  const { qrData, eventId } = useParams();
+  const navigate = useNavigate();
+  const isNewSystem = !!eventId;
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+
+  // State
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [checkinData, setCheckinData] = useState<any>(null);
+
+  // Form state - unified for both systems
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
     phone: '',
+    code: '', // For new system: service code
+    firstName: '', // For old system: guest first name
+    lastName: '', // For old system: guest last name
     email: ''
   });
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
-
   useEffect(() => {
     fetchEvent();
-  }, [qrData]);
+  }, [qrData, eventId]);
 
   const fetchEvent = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/public/events/qr/${qrData}`);
-      setEvent(response.data.data.event);
+      let response;
+
+      if (isNewSystem) {
+        // New system: fetch event info with service code
+        response = await axios.get(`${API_BASE_URL}/attendance/public/event/${eventId}`);
+        if (response.data.success) {
+          setEvent(response.data.data.event);
+        }
+      } else {
+        // Old system: fetch via QR data
+        response = await axios.get(`${API_BASE_URL}/public/events/qr/${qrData}`);
+        setEvent(response.data.data.event);
+      }
     } catch (error: any) {
-      setError(error.response?.data?.message || 'Event not found');
+      const message = error.response?.data?.message || 'Event not found';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,11 +72,71 @@ const EventCheckIn = () => {
     setError('');
 
     try {
-      await axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, formData);
-      setSuccess(true);
-      setFormData({ firstName: '', lastName: '', phone: '', email: '' });
+      if (isNewSystem) {
+        // New system: check-in with service code
+        if (!formData.code.trim()) {
+          toast.error('Please enter the service code');
+          setSubmitting(false);
+          return;
+        }
+
+        if (formData.code.length !== 4 || !/^\d{4}$/.test(formData.code)) {
+          toast.error('Service code must be 4 digits');
+          setSubmitting(false);
+          return;
+        }
+
+        const deviceId = localStorage.getItem('deviceId') || 'web-' + Date.now();
+        localStorage.setItem('deviceId', deviceId);
+
+        const response = await axios.post(`${API_BASE_URL}/attendance/public/checkin`, {
+          eventId,
+          code: formData.code,
+          phone: formData.phone || undefined,
+          email: formData.email || undefined,
+          deviceId,
+          ipAddress: 'web'
+        });
+
+        if (response.data.success) {
+          setSuccess(true);
+          setCheckinData(response.data.data.attendance);
+          toast.success('Successfully checked in!');
+          setFormData({ phone: '', code: '', firstName: '', lastName: '', email: '' });
+        }
+      } else {
+        // Old system: check-in with guest details
+        if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.phone.trim()) {
+          toast.error('Please fill in all required fields');
+          setSubmitting(false);
+          return;
+        }
+
+        const response = await axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          email: formData.email
+        });
+
+        if (response.data.success) {
+          setSuccess(true);
+          setCheckinData(response.data.data?.attendance);
+          toast.success('Successfully checked in!');
+          setFormData({ phone: '', code: '', firstName: '', lastName: '', email: '' });
+        }
+      }
     } catch (error: any) {
-      setError(error.response?.data?.message || 'Check-in failed. Please try again.');
+      const errorCode = error.response?.data?.error;
+      let message = error.response?.data?.message || 'Check-in failed. Please try again.';
+      
+      // Provide clearer message for duplicate check-ins
+      if (errorCode === 'ALREADY_CHECKED_IN') {
+        message = 'You have already checked in to this event. Thank you for attending!';
+      }
+      
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -54,12 +145,21 @@ const EventCheckIn = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
+      weekday: 'short', 
       year: 'numeric', 
-      month: 'long', 
+      month: 'short', 
       day: 'numeric' 
     });
   };
+
+  const getTime = (time: string) => {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+}
+   
+
 
   // Loading state
   if (loading) {
@@ -88,6 +188,13 @@ const EventCheckIn = () => {
           <p className="text-sm text-gray-500 dark:text-gray-500">
             Please check the QR code or contact the event organizer
           </p>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-6 inline-flex items-center space-x-2 text-primary-600 hover:text-primary-700"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Go back</span>
+          </button>
         </div>
       </div>
     );
@@ -98,243 +205,273 @@ const EventCheckIn = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          <div className="mb-6">
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Check-in Successful!
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              You're all set for
-            </p>
-            <h3 className="text-xl font-semibold text-primary-600 dark:text-primary-400 mb-4">
-              {event?.title}
-            </h3>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6">
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center justify-center">
-                <Calendar className="w-4 h-4 mr-2" />
-                {event && formatDate(event.eventDate)}
-              </div>
-              <div className="flex items-center justify-center">
-                <Clock className="w-4 h-4 mr-2" />
-                {event?.startTime}
-              </div>
-              <div className="flex items-center justify-center">
-                <MapPin className="w-4 h-4 mr-2" />
-                {event?.location?.venue || event?.branch?.name}
-              </div>
-            </div>
-          </div>
-
-          <p className="text-lg text-gray-900 dark:text-gray-100 font-medium mb-2">
-            See you at the event! 🎉
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Please arrive a few minutes early
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Event at capacity
-  if (event?.isFull) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          <AlertCircle className="w-20 h-20 mx-auto text-orange-600 mb-4" />
+          <CheckCircle className="w-20 h-20 mx-auto text-green-600 mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Event at Capacity
+            Welcome!
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
-            {event.title}
-          </p>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Unfortunately, this event has reached maximum capacity and is no longer accepting check-ins.
+            You've successfully checked in to
           </p>
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Please contact the event organizer for more information
+          <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4 mb-6">
+            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              {event.title}
             </p>
+            {checkinData && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                {new Date(checkinData.checkedInAt).toLocaleTimeString()}
+              </p>
+            )}
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+            >
+              Done
+            </button>
+            {isNewSystem && (
+              <button
+                onClick={() => {
+                  setSuccess(false);
+                  setFormData({ phone: '', code: '', firstName: '', lastName: '', email: '' });
+                }}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Check In Another Person
+              </button>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // Main check-in form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        {/* Event Header */}
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Calendar className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            {event?.title}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Quick event check-in
-          </p>
-        </div>
-
-        {/* Event Details */}
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6">
-          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-start">
-              <Calendar className="w-4 h-4 mr-3 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {event && formatDate(event.eventDate)}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <Clock className="w-4 h-4 mr-3 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {event?.startTime}
-                  {event?.endTime && ` - ${event.endTime}`}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <MapPin className="w-4 h-4 mr-3 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {event?.location?.venue || event?.branch?.name || 'Venue TBA'}
-                </p>
-                {event?.location?.address?.city && (
-                  <p className="text-xs mt-1">
-                    {event.location.address.street && `${event.location.address.street}, `}
-                    {event.location.address.city}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {event?.capacity?.enabled && (
-              <div className="flex items-start">
-                <Users className="w-4 h-4 mr-3 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                      {event.availableSpots} spots remaining
-                    </p>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                    <div
-                      className="bg-primary-600 h-2 rounded-full transition-all"
-                      style={{ 
-                        width: `${100 - (event.availableSpots / event.capacity.maxAttendees * 100)}%` 
-                      }}
-                    />
-                  </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 py-8">
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Event Banner Card with Image */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden mb-8">
+          {/* Event Image/Banner */}
+          
+          <div className="relative h-72 sm:h-80 bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-900 dark:to-blue-950 overflow-hidden">
+            {event?.coverImage ? (
+              <img 
+                src={event?.image || event.coverImage?.url} 
+                alt={event?.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-900 dark:to-blue-950"></div>
+                <div className="absolute inset-0 opacity-20">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,transparent_10%,rgba(0,0,0,0.5)_100%)]"></div>
                 </div>
               </div>
             )}
+            
+            {/* Black Gradient Overlay - Bottom to Top */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+            
+            {/* Title Overlay */}
+            <div className="absolute inset-0 bg-black/20 dark:bg-black/40 flex items-end">
+              <div className="w-full p-6 sm:p-8 text-white">
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2">{event?.title}</h1>
+                
+                {/* Event Details */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-sm font-medium mb-1">
+                  {event?.eventDate && (
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>{formatDate(event.eventDate)}</span>
+                    </div>
+                  )}
+                  {event?.startTime && (
+                        <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4" />
+                        <span>{getTime(event?.startTime)} {event?.endTime ? `- ${getTime(event.endTime)}` : ''}</span>
+                        </div>
+                    )}
+                
+                </div>
+                {event?.location?.venue && (
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>{event.location.venue}</span>
+                    </div>
+                  )}
+              </div>
+            </div>
+          </div>
+
+          {/* Form Card */}
+          <div className="p-6 sm:p-10">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {isNewSystem ? (
+                // New System: Service Code Check-in
+                <>
+                  {/* Service Code Field - Prominent */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Service Code <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="code"
+                      maxLength={4}
+                      value={formData.code}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        setFormData(prev => ({ ...prev, code: value }));
+                      }}
+                      placeholder="1234"
+                      className="w-full px-6 py-4 text-center text-4xl tracking-widest font-mono border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-bold transition-all"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                      Enter the 4-digit code provided at the event
+                    </p>
+                  </div>
+
+                  {/* Phone Number Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Phone Number
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder="+233 50 123 4567"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="your@email.com"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                // Old System: Guest Registration
+                <>
+                  {/* First Name & Last Name */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        First Name <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          placeholder="John"
+                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        Last Name <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          placeholder="Doe"
+                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder="+233 50 123 4567"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="your@email.com"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full mt-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:bg-blue-700 dark:hover:bg-blue-800 dark:disabled:bg-gray-600 text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center space-x-2 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+              >
+                {submitting ? (
+                  <>
+                    <Loader className="w-5 h-5 animate-spin" />
+                    <span>Checking in...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Check In</span>
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-            <p className="text-sm text-red-800 dark:text-red-300 flex items-start">
-              <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-              {error}
-            </p>
-          </div>
-        )}
-
-        {/* Check-in Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              First Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.firstName}
-              onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-              placeholder="John"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Last Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.lastName}
-              onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-              placeholder="Doe"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Phone Number *
-            </label>
-            <input
-              type="tel"
-              required
-              value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              placeholder="+233XXXXXXXXX"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Required for attendance tracking
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email (Optional)
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-              placeholder="john@example.com"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-lg transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-          >
-            {submitting ? (
-              <>
-                <Loader className="w-5 h-5 mr-2 animate-spin" />
-                Checking in...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Check In to Event
-              </>
-            )}
-          </button>
-        </form>
-
-        <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-6">
-          By checking in, you confirm your attendance at this event
-        </p>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Building2, Users, Clock, Wifi, UserPlus } from 'luci
 import { branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
+import { validatePhone, validateEmail } from '../../../utils/validators';
 
 const NewBranch = () => {
   const navigate = useNavigate();
@@ -202,6 +203,19 @@ const NewBranch = () => {
       showToast.error('Please fill in all required fields');
       return;
     }
+
+    // validate email and phone
+    const emailValidation = validateEmail(formData.email);
+    if (formData.email && !emailValidation.valid) {
+      showToast.error('Please enter a valid email address');
+      return;
+    }
+    const phoneValidation = validatePhone(formData.phone);
+    if (formData.phone && !phoneValidation.valid) {
+      showToast.error('Please enter a valid phone number');
+      return;
+    }
+
 
     setLoading(true);
 

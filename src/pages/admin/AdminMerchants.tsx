@@ -226,7 +226,7 @@ const AdminMerchants = () => {
                         <div>
                           {/* ✅ CLICKABLE MERCHANT NAME */}
                           <button
-                            onClick={() => navigate(`/admin/merchants/${merchant._id}`)}
+                            onClick={() => navigate(`/admin/churches/${merchant._id}`)}
                             className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 text-left transition-colors"
                           >
                             {merchant.name}
@@ -269,7 +269,7 @@ const AdminMerchants = () => {
                                 {/* ✅ VIEW DETAILS BUTTON */}
                                 <button
                                   onClick={() => {
-                                    navigate(`/admin/merchants/${merchant._id}`);
+                                    navigate(`/admin/churches/${merchant._id}`);
                                     setSelectedMerchant(null);
                                   }}
                                   className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
@@ -312,7 +312,7 @@ const AdminMerchants = () => {
                 <div 
                   key={merchant._id} 
                   className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/admin/merchants/${merchant._id}`)}
+                  onClick={() => navigate(`/admin/churches/${merchant._id}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">

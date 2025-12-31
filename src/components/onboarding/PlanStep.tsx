@@ -205,13 +205,13 @@ const PlanStep: React.FC<PlanStepProps> = ({
         </button>
 
         <div className="flex items-center space-x-3">
-          <button
+          {/* <button
             onClick={onSkip}
             disabled={loading || paymentLoading}
             className="px-4 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Skip for now
-          </button>
+          </button> */}
           <button
             onClick={handleFinishSetup}
             disabled={loading || paymentLoading }

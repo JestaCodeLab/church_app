@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Loader } from 'lucide-react';
+import { ArrowLeft, Save, Loader, Search } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
-import api, { adminAPI, departmentAPI } from '../../../services/api';
+import { adminAPI, branchAPI, departmentAPI, memberAPI } from '../../../services/api';
+import SearchableSelect from '../../../components/ui/SearchableSelect';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
 const DAYS = ['None', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const FREQUENCIES = ['Weekly', 'Bi-weekly', 'Monthly', 'As Needed'];
@@ -21,7 +21,7 @@ const DepartmentForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
-  const [users, setUsers] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
@@ -45,7 +45,7 @@ const DepartmentForm = () => {
   });
 
   useEffect(() => {
-    fetchUsers();
+    fetchMembers();
     fetchBranches();
     if (isEdit) {
       fetchDepartment();
@@ -87,26 +87,24 @@ const DepartmentForm = () => {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-     const response = await adminAPI.getAllUsers({ limit: 100, status: 'active' });
-
-      if (response.data.success) {
-        setUsers(response.data.data.users);
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
+  const fetchMembers = async () => {
+  try {
+    const response = await memberAPI.getMembers({ 
+      limit: 20, 
+      status: 'active' 
+    });
+    
+    if (response.data.success) {
+      setMembers(response.data.data.members);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching members:', error);
+  }
+};
 
   const fetchBranches = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await api.get(`${API_URL}/branches`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { status: 'active' }
-      });
-
+      const response = await branchAPI.getBranches({limit: 10, status: 'active'});
       if (response.data.success) {
         setBranches(response.data.data.branches);
       }
@@ -177,6 +175,16 @@ const DepartmentForm = () => {
       setLoading(false);
     }
   };
+
+  const searchMembers = async (searchTerm: string): Promise<any[]> => {
+    const response = await memberAPI.getMembers({
+        page: 1,
+        limit: 20,
+        search: searchTerm, // Backend searches by name/email/phone
+        status: 'active'
+    });
+    return response.data.data.members;
+    };
 
   if (fetching) {
     return (
@@ -251,7 +259,7 @@ const DepartmentForm = () => {
                 name="branchId"
                 value={formData.branchId}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="">All Branches</option>
                 {branches.map(branch => (
@@ -312,55 +320,117 @@ const DepartmentForm = () => {
 
         {/* Leadership */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Leadership
-          </h2>
+        </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Department Leader - Searchable */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Department Leader
-              </label>
-              <select
-                name="leaderId"
+            <SearchableSelect
+                label="Department Leader"
+                placeholder="Search for a member..."
                 value={formData.leaderId}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="">No Leader Assigned</option>
-                {users.map(user => (
-                  <option key={user._id} value={user._id}>
-                    {user.firstName} {user.lastName} ({user.email})
-                  </option>
-                ))}
-              </select>
+                options={members} 
+                onSearch={searchMembers}
+                onChange={(value) => setFormData(prev => ({ ...prev, leaderId: value }))}
+                helperText="Select a member to lead this department (user account will be auto-created)"
+            />
             </div>
 
+            {/* Assistant Leaders - Multi-select */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Assistant Leaders
-              </label>
-              <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-60 overflow-y-auto">
-                {users.filter(u => u._id !== formData.leaderId).map(user => (
-                  <label
-                    key={user._id}
-                    className="flex items-center space-x-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.assistantLeaderIds.includes(user._id)}
-                      onChange={() => handleAssistantLeaderToggle(user._id)}
-                      className="w-4 h-4 text-primary-600 rounded"
-                    />
-                    <span className="text-sm text-gray-900 dark:text-gray-100">
-                      {user.firstName} {user.lastName}
+            </label>
+
+            {/* Selected Assistants Display */}
+            {formData.assistantLeaderIds.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                {formData.assistantLeaderIds.map(assistantId => {
+                    const assistant = members.find(m => m._id === assistantId);
+                    return assistant ? (
+                    <span
+                        key={assistantId}
+                        className="px-3 py-1.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-full text-sm flex items-center space-x-2"
+                    >
+                        <span>{assistant.firstName} {assistant.lastName}</span>
+                        <button
+                        type="button"
+                        onClick={() => handleAssistantLeaderToggle(assistantId)}
+                        className="hover:text-primary-900 dark:hover:text-primary-200 font-bold"
+                        >
+                        ×
+                        </button>
                     </span>
-                    <span className="text-xs text-gray-500">({user.email})</span>
-                  </label>
-                ))}
-              </div>
+                    ) : null;
+                })}
+                </div>
+            )}
+
+            {/* Assistant Leaders List with Search */}
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                {/* Search Bar */}
+                <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                    // on input change, we will call the onSearch prop to fetch members
+                    onChange={async (e) => {
+                        const searchTerm = e.target.value;
+                        if (searchTerm.trim() === '') {
+                        setMembers(members); // Reset to initial members if search is empty
+                        return;
+                        }
+                        const results = await searchMembers(searchTerm);
+                        setMembers(results);
+                    }}
+                    type="text"
+                    placeholder="Search members..."
+                    className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 text-gray-900 dark:text-gray-100"
+                    />
+                </div>
+                </div>
+
+                {/* Available Assistants */}
+                <div className="p-4 max-h-60 overflow-y-auto">
+                {members.filter(m => m._id !== formData.leaderId).length > 0 ? (
+                    members.filter(m => m._id !== formData.leaderId).map(member => (
+                    <label
+                        key={member._id}
+                        className="flex items-start space-x-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-2 cursor-pointer transition-colors"
+                    >
+                        <input
+                        type="checkbox"
+                        checked={formData.assistantLeaderIds.includes(member._id)}
+                        onChange={() => handleAssistantLeaderToggle(member._id)}
+                        className="w-4 h-4 mt-0.5 text-primary-600 rounded border-gray-300 dark:border-gray-600 focus:ring-primary-500"
+                        />
+                        <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {member.firstName} {member.lastName}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {member.email || member.phone}
+                        </div>
+                        </div>
+                    </label>
+                    ))
+                ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                    {formData.leaderId 
+                        ? 'No other members available as assistants'
+                        : 'Select a leader first to see available assistants'
+                    }
+                    </p>
+                )}
+                </div>
             </div>
-          </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                User accounts will be automatically created for selected members
+            </p>
+            </div>
+        </div>
         </div>
 
         {/* Contact Information */}
@@ -415,7 +485,7 @@ const DepartmentForm = () => {
                 name="meetingSchedule.day"
                 value={formData.meetingSchedule.day}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
               >
                 {DAYS.map(day => (
                   <option key={day} value={day}>{day}</option>
@@ -444,7 +514,7 @@ const DepartmentForm = () => {
                 name="meetingSchedule.frequency"
                 value={formData.meetingSchedule.frequency}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
               >
                 {FREQUENCIES.map(freq => (
                   <option key={freq} value={freq}>{freq}</option>

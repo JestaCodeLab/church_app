@@ -19,7 +19,8 @@ import {
   MessageSquare,
   CreditCard,
   TrendingUp,
-  Wallet
+  Wallet,
+  FileText // Added FileText icon
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -34,14 +35,15 @@ const AdminLayout = () => {
   // Main navigation (no submenus)
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: BarChart3 },
-    { name: 'Churches', href: '/admin/merchants', icon: Building2 },
+    { name: 'Churches', href: '/admin/churches', icon: Building2 },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Branches', href: '/admin/branches', icon: GitBranch },
     {
       name: 'Departments',
       icon: Users,
       href: '/admin/departments',
-    }
+    },
+    { name: 'Attendance', href: '/admin/attendance', icon: Users },
   ];
 
   // Plans submenu items
@@ -224,6 +226,22 @@ const AdminLayout = () => {
 
         {/* Bottom Links - Fixed at bottom */}
         <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
+          {/* New Logs Link */}
+          <Link
+            to="/admin/logs"
+            onClick={() => setSidebarOpen(false)}
+            className={`
+              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+              transition-all duration-200
+              ${isActive('/admin/logs')
+                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/50'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }
+            `}
+          >
+            <FileText className="w-5 h-5 mr-3" />
+            System Logs
+          </Link>
           <Link
             to="/admin/settings"
             className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200"

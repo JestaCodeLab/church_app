@@ -4,6 +4,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Users, UserPlus, CheckCircle, Mail, Phone, MapPin, Calendar, User, Clock, XCircle, AlertCircle } from 'lucide-react';
 import api, { branchAPI } from '../../services/api';
+import { validateEmail, validatePhone } from '../../utils/validators';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
@@ -14,8 +15,12 @@ const PublicRegistrationPage = () => {
   const [registrationStatus, setRegistrationStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [availableDepartments, setAvailableDepartments] = useState([]);
-const [selectedDepartments, setSelectedDepartments] = useState([]);
-const [availableBranches, setAvailableBranches] = useState([]);
+    const [selectedDepartments, setSelectedDepartments] = useState([]);
+    const [availableBranches, setAvailableBranches] = useState([]);
+    const [errors, setErrors] = useState<{
+        email?: string;
+        phone?: string;
+    }>({});
   
   // Merchant info
   const [merchantInfo, setMerchantInfo] = useState({
@@ -155,6 +160,26 @@ const handleSetPrimaryDepartment = (deptId) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
+    // Clear error when user types
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+
+    // Real-time validation
+    if (name === 'email' && value) {
+      const validation = validateEmail(value);
+      if (!validation.valid) {
+        setErrors(prev => ({ ...prev, email: validation.error || undefined }));
+      }
+    }
+
+    if (name === 'phone' && value) {
+      const validation = validatePhone(value);
+      if (!validation.valid) {
+        setErrors(prev => ({ ...prev, phone: validation.error || undefined }));
+      }
+    }
+
     if (name.startsWith('address.')) {
       const addressField = name.split('.')[1];
       setFormData(prev => ({
@@ -174,6 +199,39 @@ const handleSetPrimaryDepartment = (deptId) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+
+    // ✅ Validate before submission
+    const newErrors: { email?: string; phone?: string } = {};
+
+    // Validate email (if provided)
+    if (formData.email) {
+      const emailValidation = validateEmail(formData.email);
+      if (!emailValidation.valid) {
+        newErrors.email = emailValidation.error || undefined;
+      }
+    }
+
+    // Validate phone (required)
+    if (!formData.phone) {
+      newErrors.phone = 'Phone number is required';
+    } else {
+      const phoneValidation = validatePhone(formData.phone);
+      if (!phoneValidation.valid) {
+        newErrors.phone = phoneValidation.error || undefined;
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      if (newErrors.phone) {
+        toast.error('Please provide a valid phone number');
+        return;
+      }
+      if (newErrors.email) {
+        toast.error('Please provide a valid email address');
+        return;
+      }
+    }
     if (!formData.branch) {
         toast.error('Please select a branch');
         return;
@@ -595,19 +653,27 @@ const handleSetPrimaryDepartment = (deptId) => {
 
               {/* Contact Fields */}
               <div className="grid md:grid-cols-2 gap-4">
+                {/* Phone Input with Validation */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
+                </label>
+                <input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
                     required
-                    placeholder="e.g., 0241234567"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
+                    placeholder="0241234567 or 233241234567"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500 
+                    ${errors.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
+                />
+                {errors.phone && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                    {errors.phone}
+                    </p>
+                )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -632,16 +698,24 @@ const handleSetPrimaryDepartment = (deptId) => {
                 <>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Email
-                      </label>
-                      <input
+                        </label>
+                        <input
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
+                        placeholder="example@email.com"
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500
+                            ${errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
+                            bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
+                        />
+                        {errors.email && (
+                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                            {errors.email}
+                        </p>
+                        )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

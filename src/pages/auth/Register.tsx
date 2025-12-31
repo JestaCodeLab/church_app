@@ -6,6 +6,7 @@ import { showToast } from '../../utils/toasts';
 import AuthLayout from '../../components/auth/AuthLayout';
 import PageTransition from '../../components/auth/PageTransition';
 import { verificationStorage } from '../../utils/verificationStorage';
+import { validateEmail, validatePhone } from '../../utils/validators';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -28,6 +29,17 @@ const Register = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validation Email & Phone
+    if (!validateEmail(formData.email).valid) {
+      showToast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (formData.phone && !validatePhone(formData.phone).valid) {
+      showToast.error('Please enter a valid phone number');
+      return;
+    }
 
     // Validation
     if (formData.password !== formData.confirmPassword) {

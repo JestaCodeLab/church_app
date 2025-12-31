@@ -1,6 +1,4 @@
-// src/pages/merchant/messaging/SendSMS.tsx - COMPLETE WITH HUBTEL INTEGRATION
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, 
   Users, 
@@ -13,7 +11,8 @@ import {
   RefreshCw,
   MessageSquare,
   CreditCard,
-  Info
+  Info,
+  Search
 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
 import api from '../../../services/api';
@@ -73,6 +72,11 @@ const SendSMS = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
 
+  // ✅ Member search state
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
+  const [searchingMembers, setSearchingMembers] = useState(false);
+  const memberSearchTimeoutRef = useRef<NodeJS.Timeout>(null);
+
   // Message
   const [message, setMessage] = useState('');
   const [category, setCategory] = useState('general');
@@ -97,18 +101,35 @@ const SendSMS = () => {
     fetchSenderIdStatus();
   }, []);
 
+  // ✅ Debounced member search
+  useEffect(() => {
+    if (sendType !== 'members') return;
+
+    if (memberSearchTimeoutRef.current) {
+      clearTimeout(memberSearchTimeoutRef.current);
+    }
+
+    memberSearchTimeoutRef.current = setTimeout(() => {
+      fetchMembers();
+    }, 300);
+
+    return () => {
+      if (memberSearchTimeoutRef.current) {
+        clearTimeout(memberSearchTimeoutRef.current);
+      }
+    };
+  }, [memberSearchTerm, sendType]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [membersRes, deptsRes, branchesRes, templatesRes, creditsRes] = await Promise.all([
-        memberAPI.getMembers({ limit: 1000 }),
+      const [deptsRes, branchesRes, templatesRes, creditsRes] = await Promise.all([
         departmentAPI.getDepartments(),
         branchAPI.getBranches({ limit: 100 }),
         messagingAPI.templates.getAll(),
         messagingAPI.credits.get()
       ]);
 
-      setMembers(membersRes.data.data.members || []);
       setDepartments(deptsRes.data.data.departments || []);
       setBranches(branchesRes.data.data.branches || []);
       setTemplates(templatesRes.data.data.templates || []);
@@ -121,12 +142,29 @@ const SendSMS = () => {
     }
   };
 
+  // ✅ Fetch members with API search
+  const fetchMembers = async () => {
+    try {
+      setSearchingMembers(true);
+      const response = await memberAPI.getMembers({ 
+        limit: 100,
+        search: memberSearchTerm || undefined,
+        status: 'active'
+      });
+      setMembers(response.data.data.members || []);
+    } catch (error: any) {
+      showToast.error('Failed to load members');
+      console.error(error);
+    } finally {
+      setSearchingMembers(false);
+    }
+  };
+
   const fetchSenderIdStatus = async () => {
     try {
       const response = await api.get('/merchant/sender-id/status');
       setSenderIdStatus(response.data.data);
     } catch (error) {
-      // Sender ID is optional, ignore error
       console.log('Sender ID not configured');
     }
   };
@@ -137,6 +175,24 @@ const SendSMS = () => {
     if (template) {
       setMessage(template.message);
       setCategory(template.category);
+    }
+  };
+
+  // ✅ Clear states when send type changes
+  const handleSendTypeChange = (newType: SendType) => {
+    setSendType(newType);
+    
+    // Clear all recipient-specific states
+    setPhone('');
+    setPhones('');
+    setSelectedMembers([]);
+    setSelectedDepartment('');
+    setSelectedBranch('');
+    setMemberSearchTerm('');
+    
+    // Load members if switching to members type
+    if (newType === 'members') {
+      fetchMembers();
     }
   };
 
@@ -152,7 +208,7 @@ const SendSMS = () => {
         const dept = departments.find(d => d._id === selectedDepartment);
         return dept?.memberCount || 0;
       case 'branch':
-        return members.filter(m => m).length; // Would need branch filtering
+        return members.filter(m => m).length;
       case 'all':
         return members.length;
       default:
@@ -174,6 +230,7 @@ const SendSMS = () => {
   };
 
   const creditsNeeded = calculateCredits(message, getRecipientCount());
+  const hasInsufficientCredits = credits ? creditsNeeded > credits.balance : false;
 
   const handleSendSMS = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,13 +240,11 @@ const SendSMS = () => {
       return;
     }
 
-    // Check credits
-    if (credits && creditsNeeded > credits.balance) {
-      showToast.error(`Insufficient credits. You need ${creditsNeeded} but have ${credits.balance}`);
+    if (hasInsufficientCredits) {
+      showToast.error(`Insufficient credits. You need ${creditsNeeded} but have ${credits?.balance || 0}`);
       return;
     }
 
-    // Show confirmation for 'all' send type
     if (sendType === 'all') {
       setConfirmData({
         title: 'Send to All Members',
@@ -311,6 +366,7 @@ const SendSMS = () => {
         setSelectedDepartment('');
         setSelectedBranch('');
         setSelectedTemplate('');
+        setMemberSearchTerm('');
         setSendType('single');
 
         // Refresh credits
@@ -419,7 +475,7 @@ const SendSMS = () => {
                     <button
                       key={type.value}
                       type="button"
-                      onClick={() => setSendType(type.value as SendType)}
+                      onClick={() => handleSendTypeChange(type.value as SendType)}
                       className={`p-3 rounded-lg border-2 transition-all ${
                         sendType === type.value
                           ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
@@ -479,10 +535,34 @@ const SendSMS = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Select Members
                   </label>
+                  
+                  {/* ✅ Search Input */}
+                  <div className="mb-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search members by name, email, or phone..."
+                        value={memberSearchTerm}
+                        onChange={(e) => setMemberSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
+                      />
+                      {searchingMembers && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader className="w-4 h-4 text-primary-500 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-64 overflow-y-auto bg-white dark:bg-gray-700">
-                    {members.length === 0 ? (
+                    {searchingMembers ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader className="w-6 h-6 animate-spin text-primary-600" />
+                      </div>
+                    ) : members.length === 0 ? (
                       <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                        No members available
+                        {memberSearchTerm ? 'No members found matching your search' : 'No members available'}
                       </p>
                     ) : (
                       <div className="space-y-2">
@@ -582,7 +662,7 @@ const SendSMS = () => {
                   <div className="flex items-start space-x-3">
                     <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">
+                      <p className="text-sm font-bold text-yellow-900 dark:text-yellow-100">
                         Send to All Members
                       </p>
                       <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
@@ -595,38 +675,40 @@ const SendSMS = () => {
               )}
             </div>
 
-            {/* Template Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Use Template (Optional)
-              </label>
-              <select
-                value={selectedTemplate}
-                onChange={(e) => handleTemplateSelect(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
-              >
-                <option value="">Select a template</option>
-                {templates.map((template) => (
-                  <option key={template._id} value={template._id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-            
-              {selectedTemplate && (
-                <div className="bg-blue-50 p-3 rounded">
-                  <p className="text-sm">
-                    Variables will be auto-filled: 
-                    {templates?.find(t => t._id === selectedTemplate)?.variables?.join(', ')}
+            {/* ✅ Template Selection - Hide for 'single' send type */}
+            {sendType !== 'single' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Use Template (Optional)
+                </label>
+                <select
+                  value={selectedTemplate}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
+                >
+                  <option value="">Select a template</option>
+                  {templates.map((template) => (
+                    <option key={template._id} value={template._id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              
+                {selectedTemplate && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded mt-2">
+                    <p className="text-sm text-blue-900 dark:text-blue-100">
+                      Variables will be auto-filled: 
+                      {templates?.find(t => t._id === selectedTemplate)?.variables?.join(', ')}
+                    </p>
+                  </div>
+                )}
+                {templates.length === 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    No templates available. <Link to="/messaging/templates" className="text-primary-600 hover:underline">Create one</Link>
                   </p>
-                </div>
-              )}
-              {templates.length === 0 && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  No templates available. <Link to="/messaging/templates" className="text-primary-600 hover:underline">Create one</Link>
-                </p>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Message */}
             <div>
@@ -673,13 +755,13 @@ const SendSMS = () => {
             </div>
 
             {/* Credits Summary */}
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <div className={`${hasInsufficientCredits ? 'bg-red-100 dark:bg-red-900' : 'bg-blue-50 dark:bg-gray-900'} rounded-lg p-4 border border-gray-200 dark:border-gray-700`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                  <p className="text-base font-bold text-gray-700 dark:text-gray-300">
                     Credits Required
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0">
                     {getRecipientCount()} recipient(s) × {message.length > 160 ? Math.ceil(message.length / 153) : 1} SMS part(s)
                   </p>
                 </div>
@@ -687,7 +769,7 @@ const SendSMS = () => {
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {creditsNeeded}
                   </p>
-                  {credits && creditsNeeded > credits.balance && (
+                  {hasInsufficientCredits && (
                     <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                       Insufficient credits
                     </p>
@@ -708,16 +790,22 @@ const SendSMS = () => {
                   setSelectedDepartment('');
                   setSelectedBranch('');
                   setSelectedTemplate('');
+                  setMemberSearchTerm('');
                 }}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
               >
                 Clear
               </button>
 
+              {/* ✅ Updated button styling for disabled state */}
               <button
                 type="submit"
-                disabled={sending || !message.trim() || (credits && creditsNeeded > credits.balance)}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center space-x-2"
+                disabled={sending || !message.trim() || hasInsufficientCredits}
+                className={`px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors ${
+                  sending || !message.trim() || hasInsufficientCredits
+                    ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    : 'bg-primary-600 hover:bg-primary-700 text-white'
+                }`}
               >
                 {sending ? (
                   <>

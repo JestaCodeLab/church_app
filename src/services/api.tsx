@@ -223,11 +223,19 @@ export const memberAPI = {
         formData.append('ministries', JSON.stringify(data.ministries));
       }
     }
-      if (data.departments && Array.isArray(data.departments)) {
+    if (data.departments !== undefined && Array.isArray(data.departments)) {
+      console.log('Department is available and array');
+      
+      if (data.departments.length === 0) {
+        // Empty array - clear all departments
+        formData.append('departments', JSON.stringify([]));
+      } else {
+        // Has departments - send each one
         data.departments.forEach((deptId: string) => {
           formData.append('departments[]', deptId); 
         });
       }
+    }
   
     if (data.primaryDepartment) {
       formData.append('primaryDepartment', data.primaryDepartment);
@@ -570,6 +578,35 @@ export const messagingAPI = {
   balance: {
     check: () => api.get('/sms/balance'),
   },
+};
+
+
+// Services API
+export const servicesAPI = {
+  getServices: (params?: any) => api.get('/services', { params }),
+  getService: (id: string) => api.get(`/services/${id}`),
+  createService: (data: any) => api.post('/services', data),
+  updateService: (id: string, data: any) => api.put(`/services/${id}`, data),
+  deleteService: (id: string) => api.delete(`/services/${id}`),
+};
+
+// Attendance API
+export const attendanceAPI = {
+  recordAttendance: (records: any[]) => api.post('/attendance/record', { records }),
+  getAttendance: (attendableType: string, attendableId: string, attendanceDate?: string) => {
+    const url = attendanceDate
+      ? `/attendance/${attendableType}/${attendableId}?attendanceDate=${attendanceDate}`
+      : `/attendance/${attendableType}/${attendableId}`;
+    return api.get(url);
+  },
+  updateAttendance: (id: string, data: any) => api.put(`/attendance/${id}`, data),
+  deleteAttendance: (id: string) => api.delete(`/attendance/${id}`),
+  
+  // ✅ NEW: Merchant-specific attendance methods
+  getMerchantStats: () => api.get('/attendance/stats/merchant'),
+  getAttendanceList: (params: any) => api.get('/attendance/list', { params }),
+  exportAttendance: (params: any) => api.get('/attendance/export', { params, responseType: 'blob' }),
+  getMemberHistory: (memberId: string, params?: any) => api.get(`/attendance/member/${memberId}`, { params }),
 };
 
 export default api;
