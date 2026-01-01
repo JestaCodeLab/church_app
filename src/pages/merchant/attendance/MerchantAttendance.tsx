@@ -18,15 +18,17 @@ import {
 import { attendanceAPI } from '../../../services/api';
 import toast from 'react-hot-toast';
 
+interface GuestInfo {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+}
+
 interface AttendanceRecord {
   _id: string;
-  member: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-  };
+  member: MemberInfo;
+  guest?: GuestInfo | null;
   attendableType: string;
   status: string;
   attendanceDate: string;
@@ -56,6 +58,40 @@ interface AttendanceStats {
   recentAttendance: number;
 }
 
+interface MemberInfo {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+}
+
+interface MemberAttendanceStats {
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  attendanceRate: string;
+}
+
+interface MemberAttendanceRecord {
+  _id: string;
+  member: MemberInfo;
+  attendableType: 'Event' | 'Service';
+  status: 'present' | 'absent' | 'checked-in';
+  attendanceDate: string;
+  checkInMethod: 'admin' | 'self-checkin-link' | 'qr-code';
+  recordedBy?: {
+    firstName: string;
+    lastName: string;
+  };
+}
+
+interface MemberHistory {
+  member: MemberInfo | null;
+  statistics: MemberAttendanceStats;
+  records: MemberAttendanceRecord[];
+}
+
 const MerchantAttendance = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'records' | 'member'>('overview');
   const [loading, setLoading] = useState(true);
@@ -72,7 +108,7 @@ const MerchantAttendance = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
-  const [memberHistory, setMemberHistory] = useState<any>(null);
+  const [memberHistory, setMemberHistory] = useState<MemberHistory | null>(null);
   const [showMemberDetails, setShowMemberDetails] = useState(false);
 
   const recordsPerPage = 20;
@@ -123,6 +159,26 @@ const MerchantAttendance = () => {
     }
   };
 
+  // Helper to display attendee name (member or guest)
+  const getAttendeeName = (record: AttendanceRecord) => {
+    if (record.member) {
+      return `${record.member.firstName} ${record.member.lastName}`;
+    } else if (record.guest) {
+      return `${record.guest.firstName} ${record.guest.lastName}`;
+    }
+    return 'Unknown';
+  };
+
+  // Helper to display attendee contact (member or guest)
+  const getAttendeeContact = (record: AttendanceRecord) => {
+    if (record.member) {
+      return record.member.email || record.member.phoneNumber;
+    } else if (record.guest) {
+      return record.guest.email || record.guest.phone;
+    }
+    return '';
+  };
+
   const fetchMemberHistory = async (memberId: string) => {
     try {
       const response = await attendanceAPI.getMemberHistory(memberId);
@@ -168,15 +224,6 @@ const MerchantAttendance = () => {
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       case 'absent':
         return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
-    }
-  };
-
-  const getMethodBadgeColor = (method: string) => {
-    switch (method) {
-      case 'admin':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
       case 'self-checkin-link':
         return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
       case 'qr-code':
@@ -185,6 +232,19 @@ const MerchantAttendance = () => {
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
     }
   };
+
+  const getMethodBadgeColor = (method: string) => {
+  switch (method) {
+    case 'admin':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+    case 'self-checkin-link':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+    case 'qr-code':
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+  }
+};
 
   if (loading && activeTab === 'overview') {
     return (
@@ -313,7 +373,7 @@ const MerchantAttendance = () => {
             {/* By Type */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                By Type
+                By Types
               </h2>
               <div className="space-y-3">
                 {Object.entries(stats.typeStats).map(([type, count]: [string, any]) => (
@@ -480,10 +540,10 @@ const MerchantAttendance = () => {
                       <td className="px-6 py-4 text-sm">
                         <div>
                           <p className="font-medium text-gray-900 dark:text-gray-100">
-                            {record.member.firstName} {record.member.lastName}
+                            {getAttendeeName(record)}
                           </p>
                           <p className="text-gray-500 dark:text-gray-400 text-xs">
-                            {record.member.email}
+                            {getAttendeeContact(record)}
                           </p>
                         </div>
                       </td>
@@ -504,16 +564,18 @@ const MerchantAttendance = () => {
                         {new Date(record.attendanceDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <button
-                          onClick={() => {
-                            setSelectedMember(record.member._id);
-                            setActiveTab('member');
-                            fetchMemberHistory(record.member._id);
-                          }}
-                          className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                        {record.member ? (
+                          <button
+                            onClick={() => {
+                              setSelectedMember(record.member!._id);
+                              setActiveTab('member');
+                              fetchMemberHistory(record.member!._id);
+                            }}
+                            className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   ))}

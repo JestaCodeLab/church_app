@@ -236,14 +236,16 @@ const handleSetPrimaryDepartment = (deptId) => {
         toast.error('Please select a branch');
         return;
     }
-    if (!formData.maritalStatus) {
-        toast.error('Please select a marital status');
-        return;
-    }
-    if (!formData.howDidYouJoin) {
-        toast.error('Please tell us how you joined');
-        return;
-    }
+     if (registrationType === 'member'){
+         if (!formData.maritalStatus) {
+             toast.error('Please select a marital status');
+             return;
+         }
+         if (!formData.howDidYouJoin) {
+             toast.error('Please tell us how you joined');
+             return;
+         }
+     }
     setLoading(true);
 
     try {
@@ -258,12 +260,12 @@ const handleSetPrimaryDepartment = (deptId) => {
         gender: formData.gender,
         address: formData.address,
         occupation: formData.occupation,
-        maritalStatus: formData.maritalStatus,
+        maritalStatus: formData.maritalStatus === '' ? null : formData.maritalStatus,
         dateOfBirth: formData.dateOfBirth,
         placeOfWork: formData.placeOfWork,
         bornAgain: formData.bornAgain,
         baptismStatus: formData.baptismStatus,
-        howDidYouJoin: formData.howDidYouJoin,
+        howDidYouJoin: formData.howDidYouJoin === '' ? null : formData.howDidYouJoin,
         howDidYouJoinOther: formData.howDidYouJoinOther,
         departments: formData.departments || [],
         primaryDepartment: formData.primaryDepartment || null,
