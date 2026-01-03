@@ -4,12 +4,14 @@ import {
   ArrowLeft, Calendar, Clock, MapPin, Users, Edit, Trash2,
   MoreVertical, UserCircle, Mic, Image as ImageIcon,
   ExternalLink, X, Repeat2, Copy, CheckCircle, Code,
-  Trash
+  Trash, RotateCw, MessageSquare, DollarSign, Save
 } from 'lucide-react';
-import { eventAPI } from '../../../services/api';
+import { eventAPI, eventCodeAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import QRCodeDisplay from '../../../components/events/QRCodeDisplay';
+import SmsAutomationSettings from '../../../components/events/SmsAutomationSettings';
+import DonationSettings from '../../../components/events/DonationSettings';
 import { format } from 'date-fns';
 
 const EventDetails: React.FC = () => {
@@ -23,8 +25,30 @@ const EventDetails: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [regeneratingQR, setRegeneratingQR] = useState(false);
-  const [todayServiceCode, setTodayServiceCode] = useState<any>(null);
+  const [todayEventCode, setTodayEventCode] = useState<any>(null);
+  const [allEventCodes, setAllEventCodes] = useState<any[]>([]);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [regeneratingCodes, setRegeneratingCodes] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+
+  // SMS Automation & Donation Settings
+  const [smsAutomation, setSmsAutomation] = useState({
+    enabled: false,
+    notifications: [],
+    externalRecipients: []
+  });
+  const [donations, setDonations] = useState<{
+    enabled: boolean;
+    goal?: { amount: number; currency: string };
+    allowAnonymous: boolean;
+    description: string;
+    publicUrl?: string;
+  }>({
+    enabled: false,
+    allowAnonymous: true,
+    description: ''
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     fetchEvent();
@@ -34,11 +58,40 @@ const EventDetails: React.FC = () => {
     try {
       setLoading(true);
       const response = await eventAPI.getEvent(id!);
-      setEvent(response.data.data.event);
-      
-      // If recurring event, fetch today's service code
-      if (response.data.data.event.isRecurring) {
-        fetchTodayServiceCode(response.data.data.event._id);
+      const eventData = response.data.data.event;
+      setEvent(eventData);
+
+      // Load SMS automation settings
+      if (eventData.smsAutomation) {
+        setSmsAutomation({
+          enabled: eventData.smsAutomation.enabled || false,
+          notifications: eventData.smsAutomation.notifications || [],
+          externalRecipients: eventData.smsAutomation.externalRecipients || []
+        });
+      }
+
+      // Load donation settings
+      if (eventData.donations) {
+        setDonations({
+          enabled: eventData.donations.enabled || false,
+          ...(eventData.donations.goal && eventData.donations.goal.amount > 0 && { goal: eventData.donations.goal }),
+          allowAnonymous: eventData.donations.allowAnonymous ?? true,
+          description: eventData.donations.description || '',
+          ...(eventData.donations.publicUrl && { publicUrl: eventData.donations.publicUrl })
+        });
+      } else {
+        // Initialize with default values if no donation settings exist
+        setDonations({
+          enabled: false,
+          allowAnonymous: true,
+          description: ''
+        });
+      }
+
+      // If recurring event, fetch today's event code
+      if (eventData.isRecurring) {
+        fetchTodayEventCode(eventData._id);
+        fetchAllEventCodes(eventData._id);
       }
     } catch (error: any) {
       showToast.error('Failed to load event details');
@@ -48,20 +101,30 @@ const EventDetails: React.FC = () => {
     }
   };
 
-  const fetchTodayServiceCode = async (eventId: string) => {
+  const fetchTodayEventCode = async (eventId: string) => {
     try {
-      // This would call the public endpoint that returns today's service code
       const response = await fetch(
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1'}/attendance/public/event/${eventId}`
       );
       if (response.ok) {
         const data = await response.json();
-        if (data.data?.serviceCode) {
-          setTodayServiceCode(data.data.serviceCode);
+        if (data.data?.eventCode) {
+          setTodayEventCode(data.data.eventCode);
         }
       }
     } catch (error) {
-      // Silently fail - service code might not be available yet
+      // Silently fail
+    }
+  };
+
+  const fetchAllEventCodes = async (eventId: string) => {
+    try {
+      const response = await eventCodeAPI.getCodesForEvent(eventId);
+      if (response.status === 200 && response.data.success) {
+        setAllEventCodes(response.data.data || []);
+      }
+    } catch (error) {
+      // Silently fail
     }
   };
 
@@ -92,11 +155,43 @@ const EventDetails: React.FC = () => {
     }
   };
 
+  const handleRegenerateEventCodes = async () => {
+    try {
+      setRegeneratingCodes(true);
+      setShowRegenerateModal(false);
+      const response = await eventCodeAPI.regenerateCodes(id!);
+      await fetchAllEventCodes(id!);
+      showToast.success(response.data.message || 'Event codes regenerated successfully');
+    } catch (error: any) {
+      showToast.error('Failed to regenerate event codes');
+    } finally {
+      setRegeneratingCodes(false);
+    }
+  };
+
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
     showToast.success('Code copied to clipboard');
     setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      setSavingSettings(true);
+
+      await eventAPI.updateEvent(id!, {
+        smsAutomation,
+        donations
+      });
+
+      showToast.success('Settings updated successfully');
+      await fetchEvent(); // Reload event data to get any backend-generated fields like publicUrl
+    } catch (error: any) {
+      showToast.error('Failed to update settings');
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   const getCheckInUrl = () => {
@@ -192,15 +287,24 @@ const EventDetails: React.FC = () => {
                 <Users className="w-4 h-4" />
                 <span>Attendance</span>
               </button>
+              {event.donations?.enabled && (
                 <button
-                  onClick={() => {
-                        setShowDeleteModal(true);
-                        setShowDropdown(false);
-                      }}
-                  className="p-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                  onClick={() => navigate(`/events/${id}/donations`)}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
                 >
-                  <Trash className="w-5 h-5 text-white dark:text-gray-400" />
+                  <DollarSign className="w-4 h-4" />
+                  <span>Donations</span>
                 </button>
+              )}
+              <button
+                onClick={() => {
+                  setShowDeleteModal(true);
+                  setShowDropdown(false);
+                }}
+                className="p-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                <Trash className="w-5 h-5 text-white dark:text-gray-400" />
+              </button>
 
             </div>
           </div>
@@ -368,6 +472,159 @@ const EventDetails: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Event Codes & Check-In Link (Recurring Events) */}
+            {event.isRecurring && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
+                    <Code className="w-5 h-5 text-primary-600" />
+                    <span>Check-In Codes</span>
+                  </h2>
+                  <button
+                    onClick={() => setShowRegenerateModal(true)}
+                    disabled={regeneratingCodes}
+                    className="p-2 bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={regeneratingCodes ? 'Regenerating...' : 'Regenerate all event codes'}
+                  >
+                    <RotateCw className={`w-5 h-5 text-orange-600 ${regeneratingCodes ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+
+                {allEventCodes.length > 0 ? (
+                  <div className="space-y-4">
+                    <div>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full text-sm">
+                          <thead>
+                            <tr className="bg-primary-50 dark:bg-primary-900/20">
+                              <th className="px-4 py-3 text-left font-semibold">Date</th>
+                              <th className="px-4 py-3 text-left font-semibold">Code</th>
+                              <th className="px-4 py-3 text-left font-semibold">Opens</th>
+                              <th className="px-4 py-3 text-left font-semibold">Closes</th>
+                              <th className="px-4 py-3 text-left font-semibold">Status</th>
+                              <th className="px-4 py-3 text-left font-semibold">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {allEventCodes.map((codeObj: any) => {
+                              const now = new Date();
+                              const validFrom = new Date(codeObj.validFrom);
+                              const validUntil = new Date(codeObj.validUntil);
+                              const isActive = now >= validFrom && now <= validUntil;
+                              const isPast = now > validUntil;
+                              
+                              return (
+                                <tr key={codeObj._id} className="border-b border-gray-200 dark:border-gray-700">
+                                  <td className="px-4 py-3">{format(new Date(codeObj.serviceDate), 'MMM d, yyyy')}</td>
+                                  <td className="px-4 py-3 font-mono font-bold text-lg">{codeObj.code}</td>
+                                  <td className="px-4 py-3">{format(validFrom, 'h:mm a')}</td>
+                                  <td className="px-4 py-3">{format(validUntil, 'h:mm a')}</td>
+                                  <td className="px-4 py-3">
+                                    {isActive ? (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                                        Active
+                                      </span>
+                                    ) : isPast ? (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                        Expired
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                        Upcoming
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <button
+                                      onClick={() => handleCopyCode(codeObj.code)}
+                                      className="p-2 bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 rounded-lg transition-colors"
+                                      title="Copy code"
+                                    >
+                                      {copiedCode ? (
+                                        <CheckCircle className="w-5 h-5 text-green-600" />
+                                      ) : (
+                                        <Copy className="w-5 h-5 text-primary-600" />
+                                      )}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No event codes have been generated for this event yet.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* SMS Automation Settings */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <span>SMS Automation</span>
+                </h2>
+                <button
+                  onClick={handleSaveSettings}
+                  disabled={savingSettings}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center space-x-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {savingSettings ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Settings</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <SmsAutomationSettings
+                value={smsAutomation}
+                onChange={setSmsAutomation}
+              />
+            </div>
+
+            {/* Donation Settings */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <span>Event Donations</span>
+                </h2>
+                <button
+                  onClick={handleSaveSettings}
+                  disabled={savingSettings}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {savingSettings ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Settings</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <DonationSettings
+                value={donations}
+                onChange={setDonations}
+              />
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -379,120 +636,45 @@ const EventDetails: React.FC = () => {
                 eventTitle={event.title}
                 eventId={event._id}
                 qrData={event.qrCode.data}
+                qrUrl={getCheckInUrl()}
                 onRegenerate={handleRegenerateQR}
               />
             )}
 
-            {/* Service Code & Check-In Link (Recurring Events) */}
-            {event.isRecurring && (
+            {/* Date & Time */}
+            {!event.isRecurring && (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
-                  <Code className="w-5 h-5 text-primary-600" />
-                  <span>Check-In Code</span>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  Date & Time
                 </h2>
-
-                {todayServiceCode ? (
-                  <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Today's Service Code</p>
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-1">
-                          <input
-                            type="text"
-                            value={todayServiceCode.code || 'N/A'}
-                            readOnly
-                            className="w-full px-4 py-3 text-center text-2xl font-mono font-bold bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-700 rounded-lg text-primary-700 dark:text-primary-300 focus:outline-none"
-                          />
-                        </div>
-                        <button
-                          onClick={() => handleCopyCode(todayServiceCode.code)}
-                          className="p-3 bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 rounded-lg transition-colors"
-                          title="Copy code"
-                        >
-                          {copiedCode ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <Copy className="w-5 h-5 text-primary-600" />
-                          )}
-                        </button>
-                      </div>
-                      {todayServiceCode.validFrom && todayServiceCode.validUntil && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                          Valid: {format(new Date(todayServiceCode.validFrom), 'HH:mm')} - {format(new Date(todayServiceCode.validUntil), 'HH:mm')}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Check-In Link</p>
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="text"
-                          value={getCheckInUrl()}
-                          readOnly
-                          className="flex-1 px-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 focus:outline-none truncate"
-                        />
-                        <button
-                          onClick={() => handleCopyCode(getCheckInUrl())}
-                          className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                          title="Copy link"
-                        >
-                          <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        </button>
-                        {navigator.share && (
-                          <button
-                            onClick={() => navigator.share({
-                              title: event.title,
-                              text: `Check in to ${event.title}`,
-                              url: getCheckInUrl()
-                            })}
-                            className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                            title="Share"
-                          >
-                            <ExternalLink className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          </button>
-                        )}
-                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Date</p>
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">
+                        {event.eventDate && !isNaN(new Date(event.eventDate).getTime())
+                          ? format(new Date(event.eventDate), 'EEEE, MMMM d, yyyy')
+                          : 'N/A'}
+                      </p>
                     </div>
                   </div>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Service code will be generated daily at 11 PM for tomorrow's service.
-                  </p>
-                )}
+                  <div className="flex items-center space-x-3">
+                    <Clock className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Time</p>
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">
+                        {event.startTime || 'N/A'} {event.endTime && event.endTime !== 'Invalid date' ? `- ${event.endTime}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Date & Time */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Date & Time
-              </h2>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Calendar className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Date</p>
-                    <p className="text-gray-900 dark:text-gray-100 font-medium">
-                      {format(new Date(event.eventDate), 'EEEE, MMMM d, yyyy')}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Time</p>
-                    <p className="text-gray-900 dark:text-gray-100 font-medium">
-                      {event.startTime} {event.endTime && `- ${event.endTime}`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Recurrence (if recurring) */}
             {event.isRecurring && event.recurrence && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 border-l-4 border-l-primary-600">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 border-t-4 border-t-primary-600">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
                   <Repeat2 className="w-5 h-5 text-primary-600" />
                   <span>Recurring Pattern</span>
@@ -508,35 +690,64 @@ const EventDetails: React.FC = () => {
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Days</p>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {event.recurrence.daysOfWeek.map((day: string) => (
-                          <span
-                            key={day}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
-                          >
-                            {day}
-                          </span>
-                        ))}
+                        {event.recurrence.daysOfWeek.map((day: number) => {
+                          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                          return (
+                            <span
+                              key={day}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                            >
+                              {dayNames[day]}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Base Time</p>
-                    <p className="text-gray-900 dark:text-gray-100 font-medium">
-                      {event.recurrence.baseTime}
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Start Time</p>
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">
+                        {event.recurrence.baseTime ? (() => {
+                          const [hours, minutes] = event.recurrence.baseTime.split(':');
+                          const hour = parseInt(hours);
+                          const ampm = hour >= 12 ? 'PM' : 'AM';
+                          const displayHour = hour % 12 || 12;
+                          return `${displayHour}:${minutes} ${ampm}`;
+                        })() : 'N/A'}
+                      </p>
+                    </div>
+                    {event.recurrence.baseEndTime && (
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">End Time</p>
+                        <p className="text-gray-900 dark:text-gray-100 font-medium">
+                          {(() => {
+                            const [hours, minutes] = event.recurrence.baseEndTime.split(':');
+                            const hour = parseInt(hours);
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            const displayHour = hour % 12 || 12;
+                            return `${displayHour}:${minutes} ${ampm}`;
+                          })()}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Start Date</p>
                       <p className="text-gray-900 dark:text-gray-100 font-medium">
-                        {format(new Date(event.recurrence.startDate), 'MMM d, yyyy')}
+                        {event.recurrence.startDate && !isNaN(new Date(event.recurrence.startDate).getTime())
+                          ? format(new Date(event.recurrence.startDate), 'MMM d, yyyy')
+                          : 'N/A'}
                       </p>
                     </div>
                     {event.recurrence.endDate && (
                       <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">End Date</p>
                         <p className="text-gray-900 dark:text-gray-100 font-medium">
-                          {format(new Date(event.recurrence.endDate), 'MMM d, yyyy')}
+                          {event.recurrence.endDate && !isNaN(new Date(event.recurrence.endDate).getTime())
+                            ? format(new Date(event.recurrence.endDate), 'MMM d, yyyy')
+                            : 'N/A'}
                         </p>
                       </div>
                     )}
@@ -642,6 +853,17 @@ const EventDetails: React.FC = () => {
         message={`Are you sure you want to delete "${event.title}"? This action cannot be undone and will also delete all attendance records.`}
         type="danger"
         isLoading={deleting}
+      />
+
+      {/* Regenerate Event Codes Modal */}
+      <ConfirmModal
+        isOpen={showRegenerateModal}
+        onClose={() => setShowRegenerateModal(false)}
+        onConfirm={handleRegenerateEventCodes}
+        title="Regenerate Event Codes"
+        message={`Are you sure you want to regenerate event codes for "${event.title}"? This will delete all existing codes for upcoming dates and generate new ones. Anyone with old codes will need the new codes to check in.`}
+        type="warning"
+        isLoading={regeneratingCodes}
       />
     </div>
   );

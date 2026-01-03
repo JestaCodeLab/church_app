@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { QrCode, Download, RotateCw, Share2, Printer } from 'lucide-react';
+import { QrCode, Download, RotateCw, Copy, Printer, CheckCircle } from 'lucide-react';
 import { showToast } from '../../utils/toasts';
 
 interface QRCodeDisplayProps {
@@ -7,6 +7,7 @@ interface QRCodeDisplayProps {
   eventTitle: string;
   eventId: string;
   qrData: string;
+  qrUrl: string;
   onRegenerate?: () => void;
 }
 
@@ -15,9 +16,11 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   eventTitle,
   eventId,
   qrData,
+    qrUrl,
   onRegenerate
 }) => {
   const [regenerating, setRegenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleDownload = async () => {
     try {
@@ -89,28 +92,14 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/events/attend/${qrData}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: eventTitle,
-          text: `Check in to ${eventTitle}`,
-          url: shareUrl
-        });
-        showToast.success('Share link copied');
-      } catch (error) {
-        // User cancelled share
-      }
-    } else {
-      // Fallback: Copy to clipboard
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        showToast.success('Check-in link copied to clipboard');
-      } catch (error) {
-        showToast.error('Failed to copy link');
-      }
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(qrUrl);
+      setCopied(true);
+      showToast.success('Check-in link copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      showToast.error('Failed to copy link');
     }
   };
 
@@ -173,13 +162,13 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           Print
         </button>
 
-        <button
+        {/* <button
           onClick={handleShare}
           className="flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
         >
           <Share2 className="w-4 h-4 mr-2" />
           Share Link
-        </button>
+        </button> */}
 
         {onRegenerate && (
           <button
@@ -202,15 +191,19 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           <input
             type="text"
             readOnly
-            value={`${window.location.origin}/events/attend/${qrData}`}
+            value={`${qrUrl}`}
             className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400"
           />
           <button
-            onClick={handleShare}
+            onClick={handleCopyUrl}
             className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             title="Copy URL"
           >
-            <Share2 className="w-5 h-5" />
+            {copied ? (
+              <CheckCircle className="w-5 h-5 text-green-600" />
+            ) : (
+              <Copy className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>

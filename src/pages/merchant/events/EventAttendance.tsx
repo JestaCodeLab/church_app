@@ -31,6 +31,10 @@ const EventAttendance = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  // Recurring event support
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [instances, setInstances] = useState<any[]>([]); // For recurring event dates/instances
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
   
   // Convert guest modal
   const [showConvertModal, setShowConvertModal] = useState(false);
@@ -65,6 +69,17 @@ const EventAttendance = () => {
     try {
       const response = await eventAPI.getEvent(id!);
       setEvent(response.data.data.event);
+      // Detect recurring event
+      if (response.data.data.event?.isRecurring || response.data.data.event?.recurrence) {
+        setIsRecurring(true);
+        // Fetch instances for recurring event (API should provide this or add endpoint)
+        if (response.data.data.event.instances) {
+          setInstances(response.data.data.event.instances);
+        }
+      } else {
+        setIsRecurring(false);
+        setInstances([]);
+      }
     } catch (error: any) {
       showToast.error('Failed to load event details');
     }
@@ -73,12 +88,22 @@ const EventAttendance = () => {
   const fetchAttendance = async () => {
     try {
       setLoading(true);
-      const response = await eventAPI.getAttendance(id!, {
-        attendeeType: activeTab !== 'all' ? activeTab.slice(0, -1) : undefined,
-        page: currentPage,
-        limit: 20
-      });
-
+      let response;
+      if (isRecurring && selectedInstanceId) {
+        // Fetch attendance for selected instance of recurring event
+        response = await eventAPI.getAttendance(selectedInstanceId, {
+          attendeeType: activeTab !== 'all' ? activeTab.slice(0, -1) : undefined,
+          page: currentPage,
+          limit: 20
+        });
+      } else {
+        // One-time event or all instances
+        response = await eventAPI.getAttendance(id!, {
+          attendeeType: activeTab !== 'all' ? activeTab.slice(0, -1) : undefined,
+          page: currentPage,
+          limit: 20
+        });
+      }
       setAttendance(response.data.data.attendance);
       setFilteredAttendance(response.data.data.attendance);
       setTotalPages(response.data.data.pagination?.pages || 1);
@@ -179,6 +204,29 @@ const EventAttendance = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Recurring event instance selector */}
+      {isRecurring && instances.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Event Instance</label>
+            <select
+              value={selectedInstanceId || ''}
+              onChange={e => {
+                setSelectedInstanceId(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            >
+              <option value="">All Instances</option>
+              {instances.map(inst => (
+                <option key={inst._id} value={inst._id}>
+                  {inst.title || event.title} - {format(new Date(inst.date), 'MMM dd, yyyy')}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -380,13 +428,13 @@ const EventAttendance = () => {
                           </div>
 
                           <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-500">
-                            <span>Checked in at {formatCheckInTimeShort(record.checkIn.timestamp)}</span>
+                            <span>Checked in at {formatCheckInTimeShort(record.createdAt)}</span>
                             <span className={`px-2 py-0.5 rounded font-medium ${
-                              record.checkIn.method === 'qr'
+                              record.checkInMethod === 'qr-code'
                                 ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                             }`}>
-                              {record.checkIn.method.toUpperCase()}
+                              {record.checkInMethod ? record.checkInMethod.toUpperCase() : 'UNKNOWN'}
                             </span>
                           </div>
                         </div>

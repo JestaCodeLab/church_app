@@ -408,10 +408,7 @@ const Dashboard = () => {
                             year: 'numeric'
                           })}
                         </div>
-                        <div className="flex items-center mt-1 text-sm text-gray-600 dark:text-gray-400">
-                          <Users className="w-4 h-4 mr-1" />
-                          {event.attendanceCount || 0} registered
-                        </div>
+                        {/* Attendance count now handled per event, not centralized. */}
                       </div>
                     </div>
                   </div>

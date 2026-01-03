@@ -150,19 +150,19 @@ const Branches = () => {
                 Manage your church locations and campuses
               </p>
             </div>
-            <button
-              onClick={handleAddBranchClick}
-              // disabled={!branchLimit.canCreate}
-              className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Branch
-              {branchLimit.isNearLimit && branchLimit.canCreate && (
-                <span className="ml-2 px-2 py-0.5 text-xs bg-orange-500 text-white rounded-full">
-                  {branchLimit.remaining} left
-                </span>
-              )}
-            </button>
+            <div className="flex flex-col items-end">
+              <button
+                onClick={handleAddBranchClick}
+                disabled={!branchLimit.canCreate}
+                className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Branch
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {branchLimit.current} / {branchLimit.limit || '∞'} used
+              </span>
+            </div>
           </div>
 
         </div>

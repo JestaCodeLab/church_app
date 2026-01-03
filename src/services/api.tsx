@@ -1,6 +1,16 @@
+
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+
+// Module-level network status for axios interceptor
+let isOnlineGlobal = navigator.onLine;
+
+// Export function to update network status from NetworkContext
+export const updateNetworkStatus = (status: boolean) => {
+  isOnlineGlobal = status;
+};
 
 // Create axios instance
 const api = axios.create({
@@ -10,9 +20,15 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Check network and add auth token
 api.interceptors.request.use(
   (config) => {
+    // Check network status before making request
+    if (!isOnlineGlobal) {
+      toast.error('No internet connection. Please check your network.');
+      return Promise.reject(new Error('No internet connection'));
+    }
+
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -321,7 +337,11 @@ export const settingsAPI = {
       ...(discountCode && { discountCode }) // Only include if provided
     }),
   verifyPayment: (reference: any) => api.post('/settings/subscription/verify-payment', { reference }),
-  getBillingHistory: (params: any) => api.get('/settings/subscription/billing-history', { params }),
+  getBillingHistory: (params?: any) => api.get('/settings/billing-history', { params }),
+  downloadInvoice: (transactionId: string) => 
+    api.get(`/settings/invoice/${transactionId}`, { 
+      responseType: 'blob' // Important for PDF download
+    }),
   updatePaymentMethod: (data: any) => api.put('/settings/subscription/payment-method', data),
 };
 
@@ -471,6 +491,11 @@ export const eventAPI = {
     axios.get(`${API_BASE_URL}/public/events/qr/${qrData}`),
   publicCheckIn: (qrData: string, data: any) => 
     axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, data),
+
+  //donations
+  getDonations: (eventId: string, params?: any) => api.get(`/events/${eventId}/donations`, { params }),
+  exportDonations: (eventId: string) => api.post(`/events/${eventId}/donations/export`, {}, { responseType: 'blob' }),  
+
 };
 
 // Department API
@@ -590,23 +615,10 @@ export const servicesAPI = {
   deleteService: (id: string) => api.delete(`/services/${id}`),
 };
 
-// Attendance API
-export const attendanceAPI = {
-  recordAttendance: (records: any[]) => api.post('/attendance/record', { records }),
-  getAttendance: (attendableType: string, attendableId: string, attendanceDate?: string) => {
-    const url = attendanceDate
-      ? `/attendance/${attendableType}/${attendableId}?attendanceDate=${attendanceDate}`
-      : `/attendance/${attendableType}/${attendableId}`;
-    return api.get(url);
-  },
-  updateAttendance: (id: string, data: any) => api.put(`/attendance/${id}`, data),
-  deleteAttendance: (id: string) => api.delete(`/attendance/${id}`),
-  
-  // ✅ NEW: Merchant-specific attendance methods
-  getMerchantStats: () => api.get('/attendance/stats/merchant'),
-  getAttendanceList: (params: any) => api.get('/attendance/list', { params }),
-  exportAttendance: (params: any) => api.get('/attendance/export', { params, responseType: 'blob' }),
-  getMemberHistory: (memberId: string, params?: any) => api.get(`/attendance/member/${memberId}`, { params }),
+// Event Code API
+export const eventCodeAPI = {
+  getCodesForEvent: (eventId?: any) => api.get(`/event-codes/event/${eventId}`),
+  regenerateCodes: (eventId: string) => api.post(`/event-codes/regenerate`, { eventId }),
 };
 
 export default api;

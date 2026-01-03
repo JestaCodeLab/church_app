@@ -80,6 +80,7 @@ const MessagingCredits: React.FC = () => {
   const [purchasing, setPurchasing] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'buy' | 'history'>('buy');
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -193,16 +194,16 @@ const handlePurchase = async (pkg: CreditPackage) => {
   const handlePaymentSuccess = async (reference: string) => {
     try {
       showToast.loading('Verifying payment...');
-      
+
       // ✅ This ONLY adds SMS credits, doesn't touch subscription
       const response = await api.get(`/sms/verify-purchase/${reference}`);
-      
+
       if (response.data.success) {
         showToast.success(response.data.message);
-        
+
         // Refresh data
         await fetchData();
-        
+
         // Reset state
         setPurchasing(false);
         setSelectedPackage(null);
@@ -211,6 +212,26 @@ const handlePurchase = async (pkg: CreditPackage) => {
       showToast.error('Payment verification failed');
       setPurchasing(false);
       setSelectedPackage(null);
+    }
+  };
+
+  const handleSyncCredits = async () => {
+    try {
+      setSyncing(true);
+      showToast.loading('Syncing plan credits...');
+
+      const response = await api.post('/settings/subscription/sync-credits');
+
+      if (response.data.success) {
+        showToast.success(response.data.message);
+        // Refresh credits data
+        await fetchData();
+      }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Failed to sync credits';
+      showToast.error(errorMsg);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -278,12 +299,24 @@ const handlePurchase = async (pkg: CreditPackage) => {
             Purchase and manage your messaging credits
           </p>
         </div>
-        <button
-          onClick={() => fetchData()}
-          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <RefreshCw className="w-5 h-5" />
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleSyncCredits}
+            disabled={syncing}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+            title="Sync credits from your current subscription plan"
+          >
+            <RefreshCw className={`w-5 h-5 ${syncing ? 'animate-spin' : ''}`} />
+            <span>{syncing ? 'Syncing...' : 'Sync Plan Credits'}</span>
+          </button>
+          <button
+            onClick={() => fetchData()}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            title="Refresh data"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Balance Cards */}

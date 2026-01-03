@@ -19,6 +19,7 @@ import {
   Repeat2
 } from 'lucide-react';
 import { eventAPI } from '../../../services/api';
+import api from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { format } from 'date-fns';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
@@ -36,10 +37,12 @@ const AllEvents = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [usageData, setUsageData] = useState<any>(null);
  
 
   useEffect(() => {
     fetchEvents();
+    fetchUsageData();
   }, [currentPage, statusFilter, eventTypeFilter, searchQuery]);
 
   const fetchEvents = async () => {
@@ -60,6 +63,17 @@ const AllEvents = () => {
       showToast.error(error.response?.data?.message || 'Failed to fetch events');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsageData = async () => {
+    try {
+      const response = await api.get('/merchants/usage');
+      if (response.data.success) {
+        setUsageData(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch usage data:', error);
     }
   };
 
@@ -90,6 +104,7 @@ const AllEvents = () => {
   };
 
   const formatEventDate = (date: string) => {
+    if (!date || isNaN(Date.parse(date))) return 'Invalid date';
     return format(new Date(date), 'MMM dd, yyyy');
   };
 
@@ -109,13 +124,21 @@ const AllEvents = () => {
             Manage your church events and track attendance
           </p>
         </div>
-        <button
-          onClick={() => navigate('/events/new')}
-          className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors flex items-center shadow-md"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Create Event
-        </button>
+        <div className="flex flex-col items-end space-y-2">
+          <button
+            onClick={() => navigate('/events/new')}
+            disabled={usageData?.events?.limit && usageData?.events?.current >= usageData?.events?.limit}
+            className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center shadow-md"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Create Event
+          </button>
+          {usageData?.events && (
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {usageData.events.current} / {usageData.events.limit || '∞'} used
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
@@ -244,12 +267,14 @@ const AllEvents = () => {
                       {/* Date & Time */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 dark:text-gray-100">
-                          {formatEventDate(event.eventDate)}
+                            
+                           { event?.isRecurring ? formatEventDate(event.recurrence?.startDate) : formatEventDate(event.eventDate)}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
                           <Clock className="w-3 h-3 mr-1" />
-                          {formatEventTime(event.startTime)}
-                          {event.endTime && ` - ${formatEventTime(event.endTime)}`}
+                          { event?.isRecurring ? formatEventTime(event.recurrence?.baseTime || event.startTime) : formatEventTime(event.startTime)}
+                          {((event.isRecurring && event.recurrence?.baseEndTime) || event.endTime) && 
+                            ` - ${formatEventTime(event.isRecurring ? event.recurrence?.baseEndTime : event.endTime)}`}
                         </div>
                       </td>
 

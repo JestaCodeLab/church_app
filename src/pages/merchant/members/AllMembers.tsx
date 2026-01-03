@@ -83,7 +83,7 @@ const AllMembers = () => {
     try {
       const params: any = {
         page: currentPage,
-        limit: 10,
+        limit: 20,
         search: searchQuery,
       };
 
@@ -380,40 +380,139 @@ const AllMembers = () => {
         </div>
       )}
 
-      {/* Public Registration Link Bar */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="flex-shrink-0">
-              <Link2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Public Registration Link
-              </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                Share this link for members to self-register
-              </p>
+      {/* Member Usage Card - Progressive status with visual feedback */}
+      <div className={`rounded-xl p-6 border-[1px] transition-all ${
+        !memberLimit.canCreate 
+          ? 'bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800' 
+          : memberLimit.isNearLimit 
+          ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-300 dark:border-orange-800'
+          : 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800'
+      }`}>
+        {/* Top Section: Registration Link and Usage Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left: Public Registration */}
+          <div>
+            <div className="flex items-start space-x-3 mb-4">
+              <div className="flex-shrink-0 mt-1">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <Link2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Public Registration
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Share this link for members to self-register online. They can choose to register as members or mark themselves as first-time visitors.
+                </p>
+                <div className="flex items-start gap-3 mt-4">
+                  <button
+                    onClick={() => setShowLinkModal(true)}
+                    className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center space-x-2"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    <span>Get Link</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowSettingsModal(true)}
+                    className="px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center space-x-2"
+                    title="Registration Settings"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            {/* Settings Button */}
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center space-x-2"
-              title="Registration Settings"
-            >
-              <Settings className="h-4 w-4" />
-              <span>Settings</span>
-            </button>
+
+          {/* Right: Member Usage */}
+          <div className="lg:border-l lg:border-gray-300 dark:lg:border-gray-600 lg:pl-6">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className={`p-3 rounded-lg ${
+                !memberLimit.canCreate 
+                  ? 'bg-red-100 dark:bg-red-900/30' 
+                  : memberLimit.isNearLimit 
+                  ? 'bg-orange-100 dark:bg-orange-900/30'
+                  : 'bg-blue-100 dark:bg-blue-900/30'
+              }`}>
+                <Users className={`h-6 w-6 ${
+                  !memberLimit.canCreate 
+                    ? 'text-red-600 dark:text-red-400' 
+                    : memberLimit.isNearLimit 
+                    ? 'text-orange-600 dark:text-orange-400'
+                    : 'text-blue-600 dark:text-blue-400'
+                }`} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Member Usage
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {memberLimit.limit === null || memberLimit.limit === undefined ? 'Unlimited' : `${memberLimit.current} of ${memberLimit.limit} members used`}
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  {memberLimit.current}
+                  {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
+                    <span className="text-lg text-gray-500 dark:text-gray-400">/{memberLimit.limit}</span>
+                  )}
+                </div>
+                {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
+                  <div className="text-sm mt-1">
+                    {!memberLimit.canCreate ? (
+                      <span className="text-red-600 dark:text-red-400 font-semibold">
+                        Limit Reached
+                      </span>
+                    ) : memberLimit.isNearLimit ? (
+                      <span className="text-orange-600 dark:text-orange-400 font-semibold">
+                        {memberLimit.remaining} remaining
+                      </span>
+                    ) : (
+                      <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                        {memberLimit.remaining} remaining
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
             
-            {/* Get Link Button */}
-            <button
-              onClick={() => setShowLinkModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              Get Link
-            </button>
+            {/* Progress Bar */}
+            {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
+              <div className="space-y-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      !memberLimit.canCreate
+                        ? 'bg-gradient-to-r from-red-500 to-red-600'
+                        : memberLimit.isNearLimit
+                        ? 'bg-gradient-to-r from-orange-400 to-orange-500'
+                        : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                    }`}
+                    style={{ width: `${Math.min((memberLimit.current / memberLimit.limit) * 100, 100)}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {((memberLimit.current / memberLimit.limit) * 100).toFixed(1)}% used
+                  </span>
+                  {!memberLimit.canCreate && (
+                    <button
+                      onClick={() => navigate('/settings?tab=billing')}
+                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold flex items-center space-x-1"
+                    >
+                      <span>Upgrade Plan</span>
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

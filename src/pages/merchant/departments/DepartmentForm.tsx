@@ -334,7 +334,7 @@ const DepartmentForm = () => {
                 options={members} 
                 onSearch={searchMembers}
                 onChange={(value) => setFormData(prev => ({ ...prev, leaderId: value }))}
-                helperText="Select a member to lead this department (user account will be auto-created)"
+                helperText="Select a member from your church to lead this department"
             />
             </div>
 
@@ -427,7 +427,7 @@ const DepartmentForm = () => {
                 </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                User accounts will be automatically created for selected members
+                Selected members will be assigned as leaders. Manage user accounts for these members in the Team Management settings.
             </p>
             </div>
         </div>

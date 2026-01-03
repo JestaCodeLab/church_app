@@ -466,14 +466,7 @@ const BranchDetails = () => {
                     View All
                   </button>
                 </div>
-                {branch.statistics?.averageAttendance > 0 && (
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Avg. Attendance</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                      {branch.statistics.averageAttendance}
-                    </p>
-                  </div>
-                )}
+                {/* Average attendance stat removed. Use event-based attendance instead. */}
               </div>
             </div>
 

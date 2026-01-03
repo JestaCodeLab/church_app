@@ -146,12 +146,7 @@ const MerchantLayout = () => {
           icon: Calendar,
           requiresFeature: 'eventManagement'
         },
-        { 
-          name: 'Attendance', 
-          href: '/attendance', 
-          icon: CheckCircle2,
-          requiresFeature: 'eventManagement'
-        },
+
       ];
     } 
     // Finance Admin Navigation
@@ -278,12 +273,7 @@ const MerchantLayout = () => {
           icon: Calendar,
           requiresFeature: 'eventManagement'
         },
-        { 
-          name: 'Attendance', 
-          href: '/attendance', 
-          icon: CheckCircle2,
-          requiresFeature: 'eventManagement'
-        },
+
         { 
           name: 'Finance', 
           icon: HandCoins,

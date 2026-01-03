@@ -40,6 +40,7 @@ interface FormData {
     frequency: 'daily' | 'weekly' | 'monthly';
     daysOfWeek: number[];
     baseTime: string;
+    baseEndTime?: string;
     startDate: string;
     endDate: string;
   };
@@ -81,6 +82,7 @@ const NewEvent: React.FC = () => {
       frequency: 'weekly',
       daysOfWeek: [0], // Sunday
       baseTime: '09:00',
+      baseEndTime: '',
       startDate: '',
       endDate: ''
     },
@@ -502,6 +504,180 @@ const NewEvent: React.FC = () => {
                 />
               </div>
 
+              {/* Recurring Event */}
+              <div>
+                <div className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    id="isRecurring"
+                    checked={formData.isRecurring}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      isRecurring: e.target.checked
+                    }))}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <label htmlFor="isRecurring" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Recurring Event (e.g., Sunday Services)
+                  </label>
+                </div>
+
+                {formData.isRecurring && (
+                  <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    {/* Frequency */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Recurrence Pattern
+                      </label>
+                      <select
+                        value={formData.recurrence?.frequency || 'weekly'}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          recurrence: { ...prev.recurrence!, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' }
+                        }))}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                    </div>
+
+                    {/* Days of Week (for weekly) */}
+                    {formData.recurrence?.frequency === 'weekly' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Days of Week
+                        </label>
+                        <div className="grid grid-cols-7 gap-2">
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => {
+                                const days = formData.recurrence?.daysOfWeek || [];
+                                const updated = days.includes(index)
+                                  ? days.filter(d => d !== index)
+                                  : [...days, index];
+                                setFormData(prev => ({
+                                  ...prev,
+                                  recurrence: { ...prev.recurrence!, daysOfWeek: updated }
+                                }));
+                              }}
+                              className={`py-2 rounded-lg font-medium text-sm transition-colors ${
+                                (formData.recurrence?.daysOfWeek || []).includes(index)
+                                  ? 'bg-primary-600 text-white'
+                                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                              }`}
+                            >
+                              {day}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Service Time */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Service Start Time *
+                        </label>
+                        <input
+                          type="time"
+                          value={formData.recurrence?.baseTime || '09:00'}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            recurrence: { ...prev.recurrence!, baseTime: e.target.value }
+                          }))}
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Service End Time (Optional)
+                        </label>
+                        <input
+                          type="time"
+                          value={formData.recurrence?.baseEndTime || ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            recurrence: { ...prev.recurrence!, baseEndTime: e.target.value }
+                          }))}
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Start Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Start Date *
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.recurrence?.startDate || ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          recurrence: { ...prev.recurrence!, startDate: e.target.value }
+                        }))}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+
+                    {/* End Date (Optional) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        End Date (Optional - leave empty for ongoing)
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.recurrence?.endDate || ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          recurrence: { ...prev.recurrence!, endDate: e.target.value }
+                        }))}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+
+                    {/* Self Check-in */}
+                    <div className="flex items-center pt-2">
+                      <input
+                        type="checkbox"
+                        id="allowSelfCheckin"
+                        checked={formData.allowSelfCheckin || false}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          allowSelfCheckin: e.target.checked
+                        }))}
+                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      />
+                      <label htmlFor="allowSelfCheckin" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Allow members to self check-in via QR code or event code
+                      </label>
+                    </div>
+
+                    {/* Recurrence Pattern Display */}
+                    <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Pattern: {formData.recurrence?.frequency === 'weekly'
+                          ? `Every ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                              .filter((_, i) => (formData.recurrence?.daysOfWeek || []).includes(i))
+                              .join(', ')} at ${formData.recurrence?.baseTime || '09:00'}${formData.recurrence?.baseEndTime ? ` - ${formData.recurrence.baseEndTime}` : ''}`
+                          : `${formData.recurrence?.frequency === 'daily' ? 'Daily' : 'Monthly'} at ${formData.recurrence?.baseTime || '09:00'}${formData.recurrence?.baseEndTime ? ` - ${formData.recurrence.baseEndTime}` : ''}`
+                        }
+                      </p>
+                      {formData.recurrence?.startDate && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Starting {new Date(formData.recurrence.startDate).toLocaleDateString()} {formData.recurrence?.endDate ? `until ${new Date(formData.recurrence.endDate).toLocaleDateString()}` : '(ongoing)'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Event Type & Category */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -647,164 +823,6 @@ const NewEvent: React.FC = () => {
                     Public Event (visible to non-members)
                   </label>
                 </div>
-              </div>
-
-              {/* Recurring Event */}
-              <div>
-                <div className="flex items-center mb-4">
-                  <input
-                    type="checkbox"
-                    id="isRecurring"
-                    checked={formData.isRecurring}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      isRecurring: e.target.checked
-                    }))}
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                  />
-                  <label htmlFor="isRecurring" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Recurring Event (e.g., Sunday Services)
-                  </label>
-                </div>
-
-                {formData.isRecurring && (
-                  <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    {/* Frequency */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Recurrence Pattern
-                      </label>
-                      <select
-                        value={formData.recurrence?.frequency || 'weekly'}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          recurrence: { ...prev.recurrence!, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' }
-                        }))}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                      </select>
-                    </div>
-
-                    {/* Days of Week (for weekly) */}
-                    {formData.recurrence?.frequency === 'weekly' && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Days of Week
-                        </label>
-                        <div className="grid grid-cols-7 gap-2">
-                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => {
-                                const days = formData.recurrence?.daysOfWeek || [];
-                                const updated = days.includes(index)
-                                  ? days.filter(d => d !== index)
-                                  : [...days, index];
-                                setFormData(prev => ({
-                                  ...prev,
-                                  recurrence: { ...prev.recurrence!, daysOfWeek: updated }
-                                }));
-                              }}
-                              className={`py-2 rounded-lg font-medium text-sm transition-colors ${
-                                (formData.recurrence?.daysOfWeek || []).includes(index)
-                                  ? 'bg-primary-600 text-white'
-                                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                              }`}
-                            >
-                              {day}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Service Time */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Service Time (HH:mm)
-                      </label>
-                      <input
-                        type="time"
-                        value={formData.recurrence?.baseTime || '09:00'}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          recurrence: { ...prev.recurrence!, baseTime: e.target.value }
-                        }))}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-
-                    {/* Start Date */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Start Date *
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.recurrence?.startDate || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          recurrence: { ...prev.recurrence!, startDate: e.target.value }
-                        }))}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-
-                    {/* End Date (Optional) */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        End Date (Optional - leave empty for ongoing)
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.recurrence?.endDate || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          recurrence: { ...prev.recurrence!, endDate: e.target.value }
-                        }))}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-
-                    {/* Self Check-in */}
-                    <div className="flex items-center pt-2">
-                      <input
-                        type="checkbox"
-                        id="allowSelfCheckin"
-                        checked={formData.allowSelfCheckin || false}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          allowSelfCheckin: e.target.checked
-                        }))}
-                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                      />
-                      <label htmlFor="allowSelfCheckin" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Allow members to self check-in via QR code or service code
-                      </label>
-                    </div>
-
-                    {/* Recurrence Pattern Display */}
-                    <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Pattern: {formData.recurrence?.frequency === 'weekly' 
-                          ? `Every ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                              .filter((_, i) => (formData.recurrence?.daysOfWeek || []).includes(i))
-                              .join(', ')} at ${formData.recurrence?.baseTime || '09:00'}`
-                          : `${formData.recurrence?.frequency === 'daily' ? 'Daily' : 'Monthly'} at ${formData.recurrence?.baseTime || '09:00'}`
-                        }
-                      </p>
-                      {formData.recurrence?.startDate && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Starting {new Date(formData.recurrence.startDate).toLocaleDateString()} {formData.recurrence?.endDate ? `until ${new Date(formData.recurrence.endDate).toLocaleDateString()}` : '(ongoing)'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>

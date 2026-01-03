@@ -159,7 +159,10 @@ const handleSubmit = async (e: React.FormEvent) => {
                     </button>
                     </div>
                 ) : (
-                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                    <div 
+                        onClick={() => document.getElementById('logo-upload')?.click()}
+                        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary-500 dark:hover:border-primary-400 transition-colors"
+                    >
                     <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-base font-bold text-gray-900 dark:text-gray-400 mb-1">
                         Upload your church logo
@@ -171,6 +174,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 )}
 
                 <input
+                    id="logo-upload"
                     type="file"
                     accept="image/*"
                     onChange={handleLogoChange}
@@ -178,9 +182,10 @@ const handleSubmit = async (e: React.FormEvent) => {
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-lg file:border-0
                     file:text-sm file:font-semibold
-                    file:bg-primary-50 file:text-primary-700
-                    hover:file:bg-primary-100
-                    dark:file:bg-primary-900/20 dark:file:text-primary-400"
+                    file:bg-primary-600 file:text-white
+                    hover:file:bg-primary-700
+                    file:cursor-pointer
+                    dark:file:bg-primary-600 dark:file:text-white dark:hover:file:bg-primary-700"
                 />
                 </div>
             </div>

@@ -17,6 +17,8 @@ const NewMember = () => {
   const [branches, setBranches] = useState<any[]>([]);
   const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
 const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [emailError, setEmailError] = useState<string>('');
+  const [phoneError, setPhoneError] = useState<string>('');
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -136,6 +138,26 @@ const fetchDepartments = async () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
+    // Real-time email validation
+    if (name === 'email') {
+      if (value) {
+        const validation = validateEmail(value);
+        setEmailError(validation.valid ? '' : validation.error || '');
+      } else {
+        setEmailError('');
+      }
+    }
+    
+    // Real-time phone validation
+    if (name === 'phone') {
+      if (value) {
+        const validation = validatePhone(value);
+        setPhoneError(validation.valid ? '' : validation.error || '');
+      } else {
+        setPhoneError('Phone number is required');
+      }
+    }
+    
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData(prev => ({
@@ -190,20 +212,23 @@ const fetchDepartments = async () => {
       return;
     }
 
+    // Validate phone (required)
+    if (!formData.phone) {
+      showToast.error('Phone number is required');
+      return;
+    }
+
+    const phoneValidation = validatePhone(formData.phone);
+    if (!phoneValidation.valid) {
+      showToast.error(phoneValidation.error || 'Please enter a valid phone number');
+      return;
+    }
+
     // Validate email if provided
     if (formData.email) {
       const emailValidation = validateEmail(formData.email);
       if (!emailValidation.valid) {
         showToast.error(emailValidation.error || 'Please enter a valid email address');
-        return;
-      }
-    }
-
-    // Validate phone if provided
-    if (formData.phone) {
-      const phoneValidation = validatePhone(formData.phone);
-      if (!phoneValidation.valid) {
-        showToast.error(phoneValidation.error || 'Please enter a valid phone number');
         return;
       }
     }
@@ -397,23 +422,34 @@ const fetchDepartments = async () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-colors"
+                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-colors ${
+                      emailError ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    }`}
                     placeholder="email@example.com"
                   />
+                  {emailError && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Phone
+                    Phone <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-colors"
-                    placeholder="+233-XXX-XXXX"
+                    required
+                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-colors ${
+                      phoneError ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    placeholder="0241234567 or 233241234567"
                   />
+                  {phoneError && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{phoneError}</p>
+                  )}
                 </div>
 
                 <div>

@@ -3,7 +3,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { messagingAPI } from '../../../services/api';
 import { Link } from 'react-router-dom';
 import { showToast } from '../../../utils/toasts';
-import { ChartArea, CheckCircle, ClipboardClock, CreditCard, FilePen, FilePenLine, Mail, Users } from 'lucide-react';
+import { ChartArea, CheckCircle, ClipboardClock, CreditCard, FilePen, FilePenLine, Mail, Users, RefreshCcw } from 'lucide-react';
 
 interface SMSStats {
   totalSent: number;

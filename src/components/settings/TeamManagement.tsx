@@ -3,6 +3,7 @@ import { Search, UserPlus, Trash2, RotateCw, Loader } from 'lucide-react';
 import { teamAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import InviteUserModal from '../modals/InviteUserModal';
+import ConfirmModal from '../modals/ConfirmModal';
 
 interface TeamMember {
   _id: string;
@@ -23,6 +24,9 @@ const TeamManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const roleOptions = [
     { value: 'church_admin', label: 'Admin' },
@@ -65,17 +69,25 @@ const TeamManagement = () => {
     }
   };
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!window.confirm(`Are you sure you want to remove ${memberName}?`)) {
-      return;
-    }
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    setMemberToDelete({ id: memberId, name: memberName });
+    setShowDeleteModal(true);
+  };
+
+  const confirmRemoveMember = async () => {
+    if (!memberToDelete) return;
 
     try {
-      await teamAPI.removeTeamMember(memberId);
+      setDeleting(true);
+      await teamAPI.removeTeamMember(memberToDelete.id);
       showToast.success('Team member removed successfully');
+      setShowDeleteModal(false);
+      setMemberToDelete(null);
       fetchTeamMembers();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to remove member');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -292,6 +304,20 @@ const TeamManagement = () => {
           }}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setMemberToDelete(null);
+        }}
+        onConfirm={confirmRemoveMember}
+        title="Remove Team Member"
+        message={`Are you sure you want to remove ${memberToDelete?.name || 'this team member'} from your team? This action cannot be undone.`}
+        type="danger"
+        isLoading={deleting}
+      />
     </div>
   );
 };

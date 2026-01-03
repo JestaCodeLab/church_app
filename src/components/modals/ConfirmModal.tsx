@@ -97,7 +97,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             </h3>
 
             {/* Message */}
-            <p className="text-sm text-center text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-base text-center text-gray-600 dark:text-gray-400 mb-6">
               {message}
             </p>
 

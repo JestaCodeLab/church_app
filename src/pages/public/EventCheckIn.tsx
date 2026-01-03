@@ -23,7 +23,7 @@ const EventCheckIn = () => {
   // Form state - unified for both systems
   const [formData, setFormData] = useState({
     phone: '',
-    code: '', // For new system: service code
+    code: '', // For new system: event code
     firstName: '', // For old system: guest first name
     lastName: '', // For old system: guest last name
     email: ''
@@ -39,7 +39,7 @@ const EventCheckIn = () => {
       let response;
 
       if (isNewSystem) {
-        // New system: fetch event info with service code
+        // New system: fetch event info with event code
         response = await axios.get(`${API_BASE_URL}/attendance/public/event/${eventId}`);
         if (response.data.success) {
           setEvent(response.data.data.event);
@@ -73,9 +73,9 @@ const EventCheckIn = () => {
 
     try {
       if (isNewSystem) {
-        // New system: check-in with service code
+        // New system: check-in with event code
         if (!formData.code.trim()) {
-          toast.error('Please enter the service code');
+          toast.error('Please enter the event code');
           setSubmitting(false);
           return;
         }
@@ -86,14 +86,19 @@ const EventCheckIn = () => {
           return;
         }
 
+        if (!formData.phone.trim()) {
+          toast.error('Please enter your phone number');
+          setSubmitting(false);
+          return;
+        }
+
         const deviceId = localStorage.getItem('deviceId') || 'web-' + Date.now();
         localStorage.setItem('deviceId', deviceId);
 
         const response = await axios.post(`${API_BASE_URL}/attendance/public/checkin`, {
           eventId,
           code: formData.code,
-          phone: formData.phone || undefined,
-          email: formData.email || undefined,
+          phone: formData.phone,
           deviceId,
           ipAddress: 'web'
         });
@@ -218,7 +223,7 @@ const EventCheckIn = () => {
             </p>
             {checkinData && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                {new Date(checkinData.checkedInAt).toLocaleTimeString()}
+                {new Date(checkinData.checkInTime).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </p>
             )}
           </div>
@@ -310,12 +315,12 @@ const EventCheckIn = () => {
           <div className="p-6 sm:p-10">
             <form onSubmit={handleSubmit} className="space-y-6">
               {isNewSystem ? (
-                // New System: Service Code Check-in
+                // New System: Event Code Check-in
                 <>
-                  {/* Service Code Field - Prominent */}
+                  {/* Event Code Field - Prominent */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Service Code <span className="text-red-500">*</span>
+                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-3">
+                      Event Code <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -326,7 +331,7 @@ const EventCheckIn = () => {
                         const value = e.target.value.replace(/\D/g, '');
                         setFormData(prev => ({ ...prev, code: value }));
                       }}
-                      placeholder="1234"
+                      placeholder="0000"
                       className="w-full px-6 py-4 text-center text-4xl tracking-widest font-mono border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-bold transition-all"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
@@ -336,8 +341,8 @@ const EventCheckIn = () => {
 
                   {/* Phone Number Field */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Phone Number
+                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-3">
+                      Phone Number <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
@@ -348,24 +353,7 @@ const EventCheckIn = () => {
                         onChange={handleInputChange}
                         placeholder="+233 50 123 4567"
                         className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Email Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Email
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        placeholder="your@email.com"
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                        
                       />
                     </div>
                   </div>
@@ -374,9 +362,9 @@ const EventCheckIn = () => {
                 // Old System: Guest Registration
                 <>
                   {/* First Name & Last Name */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">
                         First Name <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -393,7 +381,7 @@ const EventCheckIn = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">
                         Last Name <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -413,7 +401,7 @@ const EventCheckIn = () => {
 
                   {/* Phone Number */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">
                       Phone Number <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -432,7 +420,7 @@ const EventCheckIn = () => {
 
                   {/* Email */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">
                       Email <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">

@@ -53,9 +53,11 @@ const AllDepartments = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [usageData, setUsageData] = useState<any>(null);
 
   useEffect(() => {
     fetchDepartments();
+    fetchUsageData();
   }, [filterActive]);
 
   const fetchDepartments = async () => {
@@ -77,6 +79,17 @@ const AllDepartments = () => {
       showToast.error(error.response?.data?.message || 'Failed to load departments');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsageData = async () => {
+    try {
+      const response = await api.get('/merchants/usage');
+      if (response.data.success) {
+        setUsageData(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch usage data:', error);
     }
   };
 
@@ -125,13 +138,21 @@ const AllDepartments = () => {
             Manage church departments and ministries
           </p>
         </div>
-        <button
-          onClick={() => navigate('/departments/new')}
-          className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Department
-        </button>
+        <div className="flex flex-col items-end space-y-2">
+          <button
+            onClick={() => navigate('/departments/new')}
+            disabled={usageData?.departments?.limit && usageData?.departments?.current >= usageData?.departments?.limit}
+            className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Department
+          </button>
+          {usageData?.departments && (
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {usageData.departments.current} / {usageData.departments.limit || '∞'} used
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Filters & Search */}

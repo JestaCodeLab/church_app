@@ -51,6 +51,7 @@ import EventAttendance from '../../pages/merchant/events/EventAttendance';
 import GuestManagement from '../../pages/merchant/events/GuestManagement';
 import EventCheckIn from '../../pages/public/EventCheckIn';
 import PublicRegistration from '../../pages/public/PublicRegistration';
+import EventDonations from '../../pages/merchant/events/EventDonations';
 import AllDepartments from '../../pages/merchant/departments/AllDepartments';
 import DepartmentForm from '../../pages/merchant/departments/DepartmentForm';
 import DepartmentDetails from '../../pages/merchant/departments/DepartmentDetails';
@@ -68,8 +69,8 @@ import Birthdays from '../../pages/merchant/members/Birthdays';
 import BranchMembers from '../../pages/merchant/branches/BranchMembers';
 import BirthdaySettings from '../../pages/merchant/members/BirthdaySettings';
 import AdminLogs from '../../pages/admin/logs/AdminLogs';
-import AdminAttendance from '../../pages/admin/AdminAttendance';
-import MerchantAttendance from '../../pages/merchant/attendance/MerchantAttendance';
+import PublicEventDonation from '../../pages/public/PublicEventDonation';
+import DonationStatus from '../../pages/public/DonationStatus';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -134,6 +135,8 @@ const AnimatedRoutes = () => {
           <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
           <Route path="/attend/:eventId" element={<EventCheckIn />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
+          <Route path="/donate/:uniqueId" element={<PublicEventDonation />} />
+          <Route path="/donate/:uniqueId/status" element={<DonationStatus />} />
         </Route>
 
         {/* Onboarding Route - Requires auth but not completed onboarding */}
@@ -168,10 +171,9 @@ const AnimatedRoutes = () => {
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/events/:id/edit" element={<NewEvent />} />
             <Route path="/events/:id/attendance" element={<EventAttendance />} />
+            <Route path="/events/:id/donations" element={<EventDonations />} />
             <Route path="/events/guests" element={<GuestManagement />} />
             
-            {/* Attendance Routes */}
-            <Route path="/attendance" element={<MerchantAttendance />} />
             
             <Route 
               path="/departments" 
@@ -225,7 +227,6 @@ const AnimatedRoutes = () => {
             <Route path="/admin/sms-balance" element={<AdminSMSBalance />} />
 
             <Route path="/admin/logs" element={<AdminLogs />} />
-            <Route path="/admin/attendance" element={<AdminAttendance />} />
           </Route>
         </Route>
 
