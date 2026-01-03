@@ -57,6 +57,11 @@ interface AutomationSettings {
   sendDaysBefore: number;
   customMessage?: string;
   sendTime: string;
+  automationStatus?: {
+    hasRunToday: boolean;
+    lastRun?: string;
+    nextScheduledRun?: string;
+  };
 }
 
 const Birthdays: React.FC = () => {
@@ -282,19 +287,59 @@ const Birthdays: React.FC = () => {
 
       {/* Automation Status Banner */}
       {automationSettings?.enabled && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+        <div className={`rounded-xl p-4 border ${
+          automationSettings.automationStatus?.hasRunToday
+            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+            : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+        }`}>
           <div className="flex items-start space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
+            {automationSettings.automationStatus?.hasRunToday ? (
+              <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+            ) : (
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
+            )}
             <div className="flex-1">
-              <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                Birthday Automation Active
+              <p className={`text-sm font-bold ${
+                automationSettings.automationStatus?.hasRunToday
+                  ? 'text-blue-900 dark:text-blue-100'
+                  : 'text-green-900 dark:text-green-100'
+              }`}>
+                {automationSettings.automationStatus?.hasRunToday
+                  ? 'Automation Already Ran Today'
+                  : 'Birthday Automation Active'}
               </p>
-              <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                Birthday messages will be sent automatically {automationSettings.sendDaysBefore} day(s) before 
-                at {automationSettings.sendTime}. {' '}
-                <Link to="/members/birthdays/settings" className="underline font-medium">
-                  Configure settings
-                </Link>
+              <p className={`text-sm mt-1 ${
+                automationSettings.automationStatus?.hasRunToday
+                  ? 'text-blue-700 dark:text-blue-300'
+                  : 'text-green-700 dark:text-green-300'
+              }`}>
+                {automationSettings.automationStatus?.hasRunToday ? (
+                  <>
+                    Messages were sent at{' '}
+                    <span className="font-semibold uppercase">
+                      {automationSettings.automationStatus.lastRun 
+                        ? new Date(automationSettings.automationStatus.lastRun).toLocaleString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true
+                          }) 
+                        : 'today'}
+                    </span>
+                    . 
+                    {' '}
+                    <span className="font-medium">
+                      If you've added new birthday automations, you'll need to manually trigger them.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Birthday messages will be sent automatically {automationSettings.sendDaysBefore} day(s) before 
+                    at <span className="font-semibold">{automationSettings.sendTime}</span>. {' '}
+                    <Link to="/members/birthdays/settings" className="underline font-medium">
+                      Configure settings
+                    </Link>
+                  </>
+                )}
               </p>
             </div>
           </div>

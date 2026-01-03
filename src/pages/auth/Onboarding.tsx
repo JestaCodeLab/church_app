@@ -20,7 +20,6 @@ const Onboarding = () => {
   const location = useLocation();
   const { user, checkAuth } = useAuth();
 
-  console.log('User', user)
 
   const merchantId = location.state?.merchantId || user?.merchant?.id || user?.merchant?.id || '';
   const subdomainOptions = location.state?.subdomainOptions || user?.merchant?.subdomainOptions || [];
