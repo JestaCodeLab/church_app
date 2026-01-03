@@ -43,12 +43,22 @@ const EventDetails: React.FC = () => {
     allowAnonymous: boolean;
     description: string;
     publicUrl?: string;
+    thankYouSms?: string;
   }>({
     enabled: false,
     allowAnonymous: true,
     description: ''
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [smsAutomationStatus, setSmsAutomationStatus] = useState<{
+    hasRunToday: boolean;
+    lastRun?: string;
+    nextScheduledRun?: string;
+  } | null>(null);
+  const [donationAutomationStatus, setDonationAutomationStatus] = useState<{
+    hasRunToday: boolean;
+    lastRun?: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchEvent();
@@ -77,7 +87,8 @@ const EventDetails: React.FC = () => {
           ...(eventData.donations.goal && eventData.donations.goal.amount > 0 && { goal: eventData.donations.goal }),
           allowAnonymous: eventData.donations.allowAnonymous ?? true,
           description: eventData.donations.description || '',
-          ...(eventData.donations.publicUrl && { publicUrl: eventData.donations.publicUrl })
+          ...(eventData.donations.publicUrl && { publicUrl: eventData.donations.publicUrl }),
+          ...(eventData.donations.thankYouSms && { thankYouSms: eventData.donations.thankYouSms })
         });
       } else {
         // Initialize with default values if no donation settings exist
@@ -92,6 +103,35 @@ const EventDetails: React.FC = () => {
       if (eventData.isRecurring) {
         fetchTodayEventCode(eventData._id);
         fetchAllEventCodes(eventData._id);
+      }
+
+      // Check SMS Automation Status
+      if (eventData.smsAutomation?.enabled && eventData.smsAutomation?.notifications?.length > 0) {
+        // Determine if automation has run today by checking if any notification was sent
+        const today = new Date().toDateString();
+        const lastNotificationDate = eventData.smsAutomation.lastNotificationSent 
+          ? new Date(eventData.smsAutomation.lastNotificationSent).toDateString()
+          : null;
+        
+        setSmsAutomationStatus({
+          hasRunToday: lastNotificationDate === today,
+          lastRun: eventData.smsAutomation.lastNotificationSent,
+          nextScheduledRun: eventData.smsAutomation.nextScheduledRun
+        });
+      }
+
+      // Check Donation Thank You SMS Status
+      if (eventData.donations?.enabled && eventData.donations?.thankYouSms) {
+        // Determine if any donation thank you SMS was sent today
+        const today = new Date().toDateString();
+        const lastThankYouDate = eventData.donations.lastThankYouSmsSent
+          ? new Date(eventData.donations.lastThankYouSmsSent).toDateString()
+          : null;
+        
+        setDonationAutomationStatus({
+          hasRunToday: lastThankYouDate === today,
+          lastRun: eventData.donations.lastThankYouSmsSent
+        });
       }
     } catch (error: any) {
       showToast.error('Failed to load event details');
@@ -566,6 +606,77 @@ const EventDetails: React.FC = () => {
 
             {/* SMS Automation Settings */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              {/* SMS Automation Status Banner */}
+              {smsAutomation?.enabled && smsAutomationStatus && (
+                <div className={`rounded-lg p-4 border mb-6 ${
+                  smsAutomationStatus.hasRunToday
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                }`}>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className={`w-5 h-5 mt-0.5 ${
+                      smsAutomationStatus.hasRunToday
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-green-600 dark:text-green-400'
+                    }`} />
+                    <div className="flex-1">
+                      <p className={`text-sm font-bold ${
+                        smsAutomationStatus.hasRunToday
+                          ? 'text-blue-900 dark:text-blue-100'
+                          : 'text-green-900 dark:text-green-100'
+                      }`}>
+                        {smsAutomationStatus.hasRunToday
+                          ? 'SMS Automation Already Ran Today'
+                          : 'SMS Automation Active'}
+                      </p>
+                      <p className={`text-sm mt-1 ${
+                        smsAutomationStatus.hasRunToday
+                          ? 'text-blue-700 dark:text-blue-300'
+                          : 'text-green-700 dark:text-green-300'
+                      }`}>
+                        {smsAutomationStatus.hasRunToday ? (
+                          <>
+                            Messages were sent at{' '}
+                            <span className="font-semibold uppercase">
+                              {smsAutomationStatus.lastRun 
+                                ? new Date(smsAutomationStatus.lastRun).toLocaleString([], { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: true
+                                  }) 
+                                : 'today'}
+                            </span>
+                            . 
+                            {' '}
+                            <span className="font-medium">
+                              If you've made changes to automations, you'll need to manually trigger new messages.
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            SMS messages will be sent automatically based on configured notifications. {' '}
+                            {smsAutomationStatus.nextScheduledRun && (
+                              <>
+                                Next scheduled run:{' '}
+                                <span className="font-semibold">
+                                  {new Date(smsAutomationStatus.nextScheduledRun).toLocaleString([], { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                  })}
+                                </span>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
                   <MessageSquare className="w-5 h-5 text-blue-600" />
@@ -597,6 +708,59 @@ const EventDetails: React.FC = () => {
 
             {/* Donation Settings */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              {/* Donation Thank You SMS Status Banner */}
+              {donations?.enabled && donations?.thankYouSms && donationAutomationStatus && (
+                <div className={`rounded-lg p-4 border mb-6 ${
+                  donationAutomationStatus.hasRunToday
+                    ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
+                    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                }`}>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className={`w-5 h-5 mt-0.5 ${
+                      donationAutomationStatus.hasRunToday
+                        ? 'text-purple-600 dark:text-purple-400'
+                        : 'text-green-600 dark:text-green-400'
+                    }`} />
+                    <div className="flex-1">
+                      <p className={`text-sm font-bold ${
+                        donationAutomationStatus.hasRunToday
+                          ? 'text-purple-900 dark:text-purple-100'
+                          : 'text-green-900 dark:text-green-100'
+                      }`}>
+                        {donationAutomationStatus.hasRunToday
+                          ? 'Thank You SMS Already Sent Today'
+                          : 'Thank You SMS Automation Active'}
+                      </p>
+                      <p className={`text-sm mt-1 ${
+                        donationAutomationStatus.hasRunToday
+                          ? 'text-purple-700 dark:text-purple-300'
+                          : 'text-green-700 dark:text-green-300'
+                      }`}>
+                        {donationAutomationStatus.hasRunToday ? (
+                          <>
+                            Thank you SMS was sent to donors at{' '}
+                            <span className="font-semibold uppercase">
+                              {donationAutomationStatus.lastRun 
+                                ? new Date(donationAutomationStatus.lastRun).toLocaleString([], { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: true
+                                  }) 
+                                : 'today'}
+                            </span>
+                            .
+                          </>
+                        ) : (
+                          <>
+                            Thank you SMS will be automatically sent to donors after they complete their donation payment.
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
                   <DollarSign className="w-5 h-5 text-green-600" />

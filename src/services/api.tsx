@@ -293,6 +293,7 @@ export const adminAPI = {
   getAllMerchants: (params: any) => api.get('/admin/merchants', { params }),
   getMerchant: (id: any) => api.get(`/admin/merchants/${id}`),
   updateMerchantStatus: (id: any, status: any) => api.patch(`/admin/merchants/${id}/status`, { status }),
+  deleteMerchant: (id: any) => api.delete(`/admin/merchants/${id}`),
   getAllUsers: (params: any) => api.get('/admin/users', { params }),
   getMerchantUsers: (merchantId: any, params: any) => api.get(`/admin/merchants/${merchantId}/users`, { params }),
   getFeatures: () => api.get('/admin/features'),

@@ -12,7 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  UserCheck
+  UserCheck,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -41,6 +43,13 @@ const AdminMerchants = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalMerchants, setTotalMerchants] = useState(0);
   const [selectedMerchant, setSelectedMerchant] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; merchantId: string | null; merchantName: string }>({
+    show: false,
+    merchantId: null,
+    merchantName: ''
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteInputValue, setDeleteInputValue] = useState('');
 
   useEffect(() => {
     fetchMerchants();
@@ -81,6 +90,33 @@ const AdminMerchants = () => {
       setSelectedMerchant(null);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to update status');
+    }
+  };
+
+  const openDeleteConfirmation = (merchantId: string, merchantName: string) => {
+    setDeleteConfirmation({
+      show: true,
+      merchantId,
+      merchantName
+    });
+    setDeleteInputValue('');
+    setSelectedMerchant(null);
+  };
+
+  const handleDeleteMerchant = async () => {
+    if (!deleteConfirmation.merchantId) return;
+
+    try {
+      setIsDeleting(true);
+      await adminAPI.deleteMerchant(deleteConfirmation.merchantId);
+      toast.success(`Merchant "${deleteConfirmation.merchantName}" and all associated records deleted successfully`);
+      setDeleteConfirmation({ show: false, merchantId: null, merchantName: '' });
+      setDeleteInputValue('');
+      fetchMerchants();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete merchant');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -295,6 +331,14 @@ const AdminMerchants = () => {
                                     Suspend
                                   </button>
                                 )}
+                                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                                <button
+                                  onClick={() => openDeleteConfirmation(merchant._id, merchant.name)}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Merchant
+                                </button>
                               </div>
                             </div>
                           )}
@@ -370,6 +414,90 @@ const AdminMerchants = () => {
           </>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation.show && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-3">
+              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Delete Merchant?
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  This action cannot be undone
+                </p>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <p className="text-sm text-red-800 dark:text-red-300">
+                  <strong>Warning:</strong> Deleting "{deleteConfirmation.merchantName}" will permanently remove:
+                </p>
+                <ul className="mt-3 space-y-2 text-xs text-red-700 dark:text-red-400 ml-4">
+                  <li>• All members and families</li>
+                  <li>• All events and registrations</li>
+                  <li>• All departments and branches</li>
+                  <li>• All users and team members</li>
+                  <li>• All donations and transactions</li>
+                  <li>• All SMS templates and settings</li>
+                  <li>• The custom subdomain (thechurchhq.com)</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Type the merchant name to confirm:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter merchant name..."
+                  value={deleteInputValue}
+                  onChange={(e) => setDeleteInputValue(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setDeleteConfirmation({ show: false, merchantId: null, merchantName: '' });
+                  setDeleteInputValue('');
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteMerchant}
+                disabled={isDeleting || deleteInputValue !== deleteConfirmation.merchantName}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

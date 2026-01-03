@@ -10,6 +10,7 @@ interface DonationData {
   allowAnonymous: boolean;
   description: string;
   publicUrl?: string;
+  thankYouSms?: string;
 }
 
 interface Props {
@@ -112,6 +113,23 @@ const DonationSettings: React.FC<Props> = ({ value, onChange }) => {
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
             />
+          </div>
+
+          {/* Thank You SMS */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Thank You SMS Message
+            </label>
+            <textarea
+              value={value.thankYouSms || ''}
+              onChange={(e) => onChange({ ...value, thankYouSms: e.target.value })}
+              placeholder="Message sent to donors after successful payment (optional)"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              This SMS will be automatically sent to donors after their payment is confirmed
+            </p>
           </div>
 
           {/* Allow Anonymous */}
