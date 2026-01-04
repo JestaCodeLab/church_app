@@ -924,35 +924,6 @@ const EventDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Capacity */}
-            {event.capacity?.enabled && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
-                  <Users className="w-5 h-5" />
-                  <span>Attendance</span>
-                </h2>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Current / Maximum</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {event.capacity.currentAttendees} / {event.capacity.maxAttendees}
-                    </p>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className="bg-primary-600 h-2 rounded-full transition-all"
-                      style={{
-                        width: `${Math.min((event.capacity.currentAttendees / event.capacity.maxAttendees) * 100, 100)}%`
-                      }}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {event.capacity.maxAttendees - event.capacity.currentAttendees} spots remaining
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* Branch */}
             {event.branch && (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">

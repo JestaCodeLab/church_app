@@ -27,10 +27,6 @@ interface FormData {
       country: string;
     };
   };
-  capacity: {
-    enabled: boolean;
-    maxAttendees: number;
-  };
   branch: string;
   isPublic: boolean;
   status: string;
@@ -69,10 +65,6 @@ const NewEvent: React.FC = () => {
         state: '',
         country: ''
       }
-    },
-    capacity: {
-      enabled: false,
-      maxAttendees: 50
     },
     branch: '',
     isPublic: true,
@@ -147,7 +139,6 @@ const NewEvent: React.FC = () => {
             venue: '',
             address: { street: '', city: '', state: '', country: '' }
           },
-          capacity: event.capacity || { enabled: false, maxAttendees: 200 },
           branch: event.branch?._id || event.branch || '',
           isPublic: event.isPublic !== false,
           status: event.status || 'draft',
@@ -369,9 +360,8 @@ const NewEvent: React.FC = () => {
       submitData.append('isPublic', String(formData.isPublic));
       submitData.append('status', formData.status);
       
-      // Add location and capacity as JSON strings
+      // Add location as JSON string
       submitData.append('location', JSON.stringify(formData.location));
-      submitData.append('capacity', JSON.stringify(formData.capacity));
       
       // Add recurring event data
       submitData.append('isRecurring', String(formData.isRecurring));
@@ -892,47 +882,6 @@ const NewEvent: React.FC = () => {
                   />
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Capacity */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
-              <Users className="w-5 h-5" />
-              <span>Capacity</span>
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.capacity.enabled}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    capacity: { ...prev.capacity, enabled: e.target.checked }
-                  }))}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                />
-                <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Enable attendance capacity limit
-                </label>
-              </div>
-
-              {formData.capacity.enabled && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Maximum Attendees
-                  </label>
-                  <input
-                    type="number"
-                    name="capacity.maxAttendees"
-                    value={formData.capacity.maxAttendees}
-                    onChange={handleChange}
-                    min="1"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
-                </div>
-              )}
             </div>
           </div>
 
