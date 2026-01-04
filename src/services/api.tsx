@@ -307,7 +307,31 @@ export const adminAPI = {
   updateUserStatus: (id: any, data: any) => api.patch(`/admin/users/${id}/status`, data),
   resetUserPassword: (id: any) => api.post(`/admin/users/${id}/reset-password`),
   deleteUser: (id: any) => api.delete(`/admin/users/${id}`),
-  
+
+  // Merchant-specific resource creation
+  getMerchantBranches: (merchantId: string, params?: any) =>
+    api.get(`/admin/merchants/${merchantId}/branches`, { params }),
+
+  createMemberForMerchant: (merchantId: string, data: any) => {
+    const formData = new FormData();
+    Object.keys(data).forEach((key) => {
+      if (key === 'photo' && data[key]) {
+        formData.append('photo', data[key]);
+      } else if (key === 'address' || key === 'emergencyContact') {
+        formData.append(key, JSON.stringify(data[key]));
+      } else if (key === 'departments' && Array.isArray(data[key])) {
+        data[key].forEach((dept: string) => formData.append('departments[]', dept));
+      } else if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
+        formData.append(key, data[key]);
+      }
+    });
+    return api.post(`/admin/merchants/${merchantId}/members`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+
+  createBranchForMerchant: (merchantId: string, data: any) =>
+    api.post(`/admin/merchants/${merchantId}/branches`, data),
 };
 
 // Branch API

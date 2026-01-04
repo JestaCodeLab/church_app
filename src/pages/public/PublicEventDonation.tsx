@@ -322,8 +322,8 @@ const PublicEventDonation: React.FC = () => {
                 </div>
                 <input
                   type="number"
-                  min="1"
-                  step="0.01"
+                  min="10"
+                  step="10"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="Enter custom amount"

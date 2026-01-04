@@ -59,7 +59,6 @@ const EventDetails: React.FC = () => {
     hasRunToday: boolean;
     lastRun?: string;
   } | null>(null);
-
   useEffect(() => {
     fetchEvent();
   }, [id]);
@@ -607,46 +606,27 @@ const EventDetails: React.FC = () => {
             {/* SMS Automation Settings */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
               {/* SMS Automation Status Banner */}
-              {smsAutomation?.enabled && smsAutomationStatus && (
-                <div className={`rounded-lg p-4 border mb-6 ${
-                  smsAutomationStatus.hasRunToday
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                }`}>
+              {smsAutomation?.enabled && smsAutomationStatus?.hasRunToday && (
+                <div className={`rounded-lg p-4 border mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800`}>
                   <div className="flex items-start space-x-3">
-                    <CheckCircle className={`w-5 h-5 mt-0.5 ${
-                      smsAutomationStatus.hasRunToday
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : 'text-green-600 dark:text-green-400'
-                    }`} />
+                    <CheckCircle className={`w-5 h-5 mt-0.5 text-blue-600 dark:text-blue-400`} />
                     <div className="flex-1">
-                      <p className={`text-sm font-bold ${
-                        smsAutomationStatus.hasRunToday
-                          ? 'text-blue-900 dark:text-blue-100'
-                          : 'text-green-900 dark:text-green-100'
-                      }`}>
-                        {smsAutomationStatus.hasRunToday
-                          ? 'SMS Automation Already Ran Today'
-                          : 'SMS Automation Active'}
+                      <p className={`text-sm font-bold text-blue-900 dark:text-blue-100`}>
+                        Automation Already Ran Today
                       </p>
-                      <p className={`text-sm mt-1 ${
-                        smsAutomationStatus.hasRunToday
-                          ? 'text-blue-700 dark:text-blue-300'
-                          : 'text-green-700 dark:text-green-300'
-                      }`}>
-                        {smsAutomationStatus.hasRunToday ? (
+                      <p className={`text-sm mt-1 text-blue-700 dark:text-blue-300`}>
+                        {smsAutomationStatus.lastRun ? (
                           <>
-                            Messages were sent at{' '}
+                            Last run:{' '}
                             <span className="font-semibold uppercase">
-                              {smsAutomationStatus.lastRun 
-                                ? new Date(smsAutomationStatus.lastRun).toLocaleString([], { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    hour12: true
-                                  }) 
-                                : 'today'}
+                              {new Date(smsAutomationStatus.lastRun).toLocaleString([], { 
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: true
+                              })}
                             </span>
-                            . 
                             {' '}
                             <span className="font-medium">
                               If you've made changes to automations, you'll need to manually trigger new messages.
@@ -654,21 +634,7 @@ const EventDetails: React.FC = () => {
                           </>
                         ) : (
                           <>
-                            SMS messages will be sent automatically based on configured notifications. {' '}
-                            {smsAutomationStatus.nextScheduledRun && (
-                              <>
-                                Next scheduled run:{' '}
-                                <span className="font-semibold">
-                                  {new Date(smsAutomationStatus.nextScheduledRun).toLocaleString([], { 
-                                    month: 'short', 
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                  })}
-                                </span>
-                              </>
-                            )}
+                            SMS notifications were sent today.
                           </>
                         )}
                       </p>
@@ -695,7 +661,7 @@ const EventDetails: React.FC = () => {
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>Save Settings</span>
+                      <span>Save</span>
                     </>
                   )}
                 </button>
@@ -779,7 +745,7 @@ const EventDetails: React.FC = () => {
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>Save Settings</span>
+                      <span>Save</span>
                     </>
                   )}
                 </button>
@@ -828,7 +794,22 @@ const EventDetails: React.FC = () => {
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Time</p>
                       <p className="text-gray-900 dark:text-gray-100 font-medium">
-                        {event.startTime || 'N/A'} {event.endTime && event.endTime !== 'Invalid date' ? `- ${event.endTime}` : ''}
+                        {event.startTime ? (() => {
+                          const [hours, minutes] = event.startTime.split(':');
+                          const hour = parseInt(hours);
+                          const ampm = hour >= 12 ? 'PM' : 'AM';
+                          const displayHour = hour % 12 || 12;
+                          const startTimeFormatted = `${displayHour}:${minutes} ${ampm}`;
+                          if (event.endTime && event.endTime !== 'Invalid date') {
+                            const [endHours, endMinutes] = event.endTime.split(':');
+                            const endHour = parseInt(endHours);
+                            const endAmpm = endHour >= 12 ? 'PM' : 'AM';
+                            const endDisplayHour = endHour % 12 || 12;
+                            const endTimeFormatted = `${endDisplayHour}:${endMinutes} ${endAmpm}`;
+                            return `${startTimeFormatted} - ${endTimeFormatted}`;
+                          }
+                          return startTimeFormatted;
+                        })() : 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -928,9 +909,9 @@ const EventDetails: React.FC = () => {
               </h2>
               <div className="space-y-2">
                 <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {event.location.venue}
+                  {event.location?.venue}
                 </p>
-                {event.location.address && (
+                {event.location?.address && (
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {[
                       event.location.address.street,

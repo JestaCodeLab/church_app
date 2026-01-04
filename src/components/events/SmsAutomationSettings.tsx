@@ -204,7 +204,19 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                             Send {notification.timeValue} {notification.timeUnit === 'hours' ? 'hour' : notification.timeUnit === 'days' ? 'day' : 'week'}{notification.timeValue !== 1 ? 's' : ''} before
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                            At <span className="font-medium">{notification.sendTime}</span> • 
+                            {notification.timeUnit !== 'hours' && notification.sendTime && (
+                              <>
+                                At <span className="font-medium">
+                                  {(() => {
+                                    const [hours, minutes] = notification.sendTime.split(':');
+                                    const hour = parseInt(hours);
+                                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                                    const displayHour = hour % 12 || 12;
+                                    return `${displayHour}:${minutes} ${ampm}`;
+                                  })()}
+                                </span> • 
+                              </>
+                            )}
                             {notification.recipientFilter.type === 'all_members' 
                               ? ' All members' 
                               : ` ${(notification.recipientFilter.departments?.length || 0) + (notification.recipientFilter.branches?.length || 0)} filter(s)`}
@@ -252,18 +264,26 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                 <option value="weeks">Weeks</option>
                               </select>
                             </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
-                                Send Time
-                              </label>
-                              <input
-                                type="time"
-                                value={notification.sendTime || '09:00'}
-                                onChange={(e) => updateNotification(index, { sendTime: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              />
-                            </div>
+                            {/* Send Time - Only show for days/weeks, not for hours */}
+                            {notification.timeUnit !== 'hours' && (
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                                  Send Time *
+                                </label>
+                                <input
+                                  type="time"
+                                  value={notification.sendTime || '09:00'}
+                                  onChange={(e) => updateNotification(index, { sendTime: e.target.value })}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                              </div>
+                            )}
                           </div>
+                          {notification.timeUnit === 'hours' && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                              💡 For hourly reminders, the message will be sent immediately after the specified hours.
+                            </p>
+                          )}
                         </div>
 
                         {/* Message Configuration */}

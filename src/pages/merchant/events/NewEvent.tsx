@@ -72,7 +72,7 @@ const NewEvent: React.FC = () => {
     },
     capacity: {
       enabled: false,
-      maxAttendees: 200
+      maxAttendees: 50
     },
     branch: '',
     isPublic: true,
@@ -152,11 +152,19 @@ const NewEvent: React.FC = () => {
           isPublic: event.isPublic !== false,
           status: event.status || 'draft',
           isRecurring: event.isRecurring || false,
-          recurrence: event.recurrence || {
+          recurrence: event.isRecurring && event.recurrence ? {
+            frequency: event.recurrence.frequency || 'weekly',
+            daysOfWeek: event.recurrence.daysOfWeek || [0],
+            baseTime: event.recurrence.baseTime || '09:00',
+            baseEndTime: event.recurrence.baseEndTime || '',
+            startDate: event.recurrence.startDate ? event.recurrence.startDate.split('T')[0] : '',
+            endDate: event.recurrence.endDate ? event.recurrence.endDate.split('T')[0] : ''
+          } : {
             frequency: 'weekly',
             daysOfWeek: [0],
-            baseTime: event.startTime || '09:00',
-            startDate: event.eventDate ? event.eventDate.split('T')[0] : '',
+            baseTime: '09:00',
+            baseEndTime: '',
+            startDate: '',
             endDate: ''
           },
           allowSelfCheckin: event.allowSelfCheckin || false
@@ -348,6 +356,11 @@ const NewEvent: React.FC = () => {
         submitData.append('eventDate', formData.eventDate);
         submitData.append('startTime', formData.startTime);
         submitData.append('endTime', formData.endTime);
+      } else {
+        // For recurring events, explicitly set these to null to clear them if updating
+        submitData.append('eventDate', '');
+        submitData.append('startTime', '');
+        submitData.append('endTime', '');
       }
       
       submitData.append('eventType', formData.eventType);

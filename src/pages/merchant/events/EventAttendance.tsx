@@ -206,7 +206,7 @@ const EventAttendance = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Recurring event instance selector */}
       {isRecurring && instances.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Event Instance</label>
             <select
@@ -229,7 +229,7 @@ const EventAttendance = () => {
       )}
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
@@ -268,7 +268,7 @@ const EventAttendance = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
@@ -382,101 +382,118 @@ const EventAttendance = () => {
             </div>
           ) : (
             <>
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredAttendance.map((record) => {
-                  const isGuest = record.attendeeType === 'guest';
-                  const name = isGuest
-                    ? `${record.guest?.firstName} ${record.guest?.lastName}`
-                    : `${record.member?.firstName} ${record.member?.lastName}`;
-                  const phone = isGuest ? record.guest?.phone : record.member?.phone;
-                  const email = isGuest ? record.guest?.email : record.member?.email;
-                  
-                  return (
-                    <div key={record._id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                      <div className="flex items-start justify-between gap-4">
-                        {/* Left content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className={`w-2 h-2 rounded-full ${isGuest ? 'bg-purple-500' : 'bg-green-500'}`}></div>
-                            <h4 className="font-semibold text-gray-900 dark:text-white truncate">{name}</h4>
-                            {isGuest && record.guest?.convertedToMember && (
-                              <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-full font-medium">
-                                Converted
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{phone}</span>
-                            </div>
-                            {email && (
+              {/* Attendance Table */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Name</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Phone</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Email</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Type</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Check-in Time</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Method</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Status</th>
+                        <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAttendance.map((record) => {
+                        const isGuest = record.attendeeType === 'guest';
+                        const name = isGuest
+                          ? `${record.guest?.firstName} ${record.guest?.lastName}`
+                          : `${record.member?.firstName} ${record.member?.lastName}`;
+                        const phone = isGuest ? record.guest?.phone : record.member?.phone;
+                        const email = isGuest ? record.guest?.email : record.member?.email;
+                        
+                        return (
+                          <tr key={record._id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                            <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">
                               <div className="flex items-center gap-2">
-                                <Mail className="w-4 h-4" />
-                                <span className="truncate">{email}</span>
+                                <div className={`w-2 h-2 rounded-full ${isGuest ? 'bg-purple-500' : 'bg-green-500'}`}></div>
+                                {name}
                               </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                              {phone || '-'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                              {email ? <a href={`mailto:${email}`} className="text-blue-600 dark:text-blue-400 hover:underline">{email}</a> : '-'}
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                                 isGuest
                                   ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
                                   : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                               }`}>
                                 {isGuest ? 'Guest' : 'Member'}
                               </span>
-                            </div>
-                          </div>
-
-                          <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-500">
-                            <span>Checked in at {formatCheckInTimeShort(record.createdAt)}</span>
-                            <span className={`px-2 py-0.5 rounded font-medium ${
-                              record.checkInMethod === 'qr-code'
-                                ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                            }`}>
-                              {record.checkInMethod ? record.checkInMethod.toUpperCase() : 'UNKNOWN'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="relative" ref={menuRef}>
-                          <button
-                            onClick={() => setOpenMenuId(openMenuId === record._id ? null : record._id)}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                          >
-                            <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                          </button>
-
-                          {openMenuId === record._id && (
-                            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 min-w-max">
-                              {isGuest && !record.guest?.convertedToMember && (
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                              {format(new Date(record.checkIn?.timestamp || record.createdAt), 'MMM dd, yyyy HH:mm')}
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                              <span className={`px-3 py-1 rounded text-xs font-medium ${
+                                record.checkIn?.method === 'qr'
+                                  ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                              }`}>
+                                {record.checkIn?.method ? record.checkIn.method.toUpperCase() : 'UNKNOWN'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                              {isGuest && record.guest?.convertedToMember ? (
+                                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-full font-medium">
+                                  Converted
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full font-medium">
+                                  Checked In
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="relative" ref={menuRef}>
                                 <button
-                                  onClick={() => handleConvertGuest(record)}
-                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 first:rounded-t-lg"
+                                  onClick={() => setOpenMenuId(openMenuId === record._id ? null : record._id)}
+                                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
                                 >
-                                  <ArrowUpCircle className="w-4 h-4" />
-                                  Convert to Member
+                                  <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                                 </button>
-                              )}
-                              {isGuest && record.guest?.convertedToMember && (
-                                <div className="px-4 py-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-                                  <UserCheck className="w-4 h-4" />
-                                  Already Converted
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+
+                                {openMenuId === record._id && (
+                                  <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 min-w-max">
+                                    {isGuest && !record.guest?.convertedToMember && (
+                                      <button
+                                        onClick={() => handleConvertGuest(record)}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 first:rounded-t-lg"
+                                      >
+                                        <ArrowUpCircle className="w-4 h-4" />
+                                        Convert to Member
+                                      </button>
+                                    )}
+                                    {isGuest && record.guest?.convertedToMember && (
+                                      <div className="px-4 py-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                                        <UserCheck className="w-4 h-4" />
+                                        Already Converted
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="px-4 py-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Page {currentPage} of {totalPages}
                   </p>

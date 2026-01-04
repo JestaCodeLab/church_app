@@ -33,7 +33,7 @@ const DonationSettings: React.FC<Props> = ({ value, onChange }) => {
   return (
     <div className="space-y-6">
       {/* Enable/Disable Toggle */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
         <div className="flex items-center space-x-3">
           <DollarSign className="w-5 h-5 text-green-600" />
           <div>

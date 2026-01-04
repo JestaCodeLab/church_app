@@ -132,16 +132,23 @@ const EventCheckIn = () => {
         }
       }
     } catch (error: any) {
-      const errorCode = error.response?.data?.error;
+      const errorCode = error.response?.data?.code;
       let message = error.response?.data?.message || 'Check-in failed. Please try again.';
       
-      // Provide clearer message for duplicate check-ins
-      if (errorCode === 'ALREADY_CHECKED_IN') {
-        message = 'You have already checked in to this event. Thank you for attending!';
+      // Provide more specific messages based on error code
+      if (errorCode === 'code_not_yet_valid') {
+        // Don't toast for not-yet-valid as it's informational
+        setError(message);
+      } else if (errorCode === 'code_expired') {
+        setError(message);
+        toast.error(message);
+      } else if (errorCode === 'code_not_found' || errorCode === 'code_invalid') {
+        setError('Invalid service code. Please check and try again.');
+        toast.error('Invalid service code. Please check and try again.');
+      } else {
+        setError(message);
+        toast.error(message);
       }
-      
-      setError(message);
-      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -313,6 +320,20 @@ const EventCheckIn = () => {
 
           {/* Form Card */}
           <div className="p-6 sm:p-10">
+            {/* Error Message Alert */}
+            {error && (
+              <div className="mb-6 p-4 rounded-lg border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {isNewSystem ? (
                 // New System: Event Code Check-in

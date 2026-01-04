@@ -178,10 +178,10 @@ const AdminBranches = () => {
                       <div className="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
                         <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>
-                          {branch.location.address && `${branch.location.address}, `}
-                          {branch.location.city}
-                          {branch.location.region && `, ${branch.location.region}`}
-                          {branch.location.country && `, ${branch.location.country}`}
+                          {branch.location?.address && `${branch.location?.address}, `}
+                          {branch.location?.city}
+                          {branch.location?.region && `, ${branch.location?.region}`}
+                          {branch.location?.country && `, ${branch.location?.country}`}
                         </span>
                       </div>
 
