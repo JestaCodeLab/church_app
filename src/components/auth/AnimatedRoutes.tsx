@@ -12,6 +12,8 @@ import PublicRoute from '../../routes/PublicRoute';
 import Login from '../../pages/auth/Login';
 import Register from '../../pages/auth/Register';
 import VerifyEmail from '../../pages/auth/VerifyEmail';
+import ForgotPassword from '../../pages/auth/ForgotPassword';
+import ResetPassword from '../../pages/auth/ResetPassword';
 import Dashboard from '../../pages/merchant/Dashboard';
 import AllMembers from '../../pages/merchant/members/AllMembers';
 import NewMember from '../../pages/merchant/members/NewMember';
@@ -73,6 +75,7 @@ import PublicEventDonation from '../../pages/public/PublicEventDonation';
 import DonationStatus from '../../pages/public/DonationStatus';
 import SMSSettings from '../../pages/merchant/messaging/SMSSettings';
 import AdminSenderIds from '../../pages/admin/sms/AdminSenderIds';
+import SelectChurch from '../../pages/admin/SelectChurch';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -134,6 +137,8 @@ const AnimatedRoutes = () => {
             </RegisterGuard>
           } />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
           <Route path="/attend/:eventId" element={<EventCheckIn />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
@@ -203,6 +208,9 @@ const AnimatedRoutes = () => {
 
         {/* Protected Routes - Super Admin Dashboard */}
         <Route element={<ProtectedRoute requiredRole="super_admin" />}>
+          {/* Church Selection Route - Before accessing merchant features */}
+          <Route path="/select-church" element={<SelectChurch />} />
+          
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/churches" element={<AdminMerchants />} />

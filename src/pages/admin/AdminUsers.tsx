@@ -54,7 +54,7 @@ const AdminUsers = () => {
       setLoading(true);
       const params: any = {
         page: currentPage,
-        limit: 10,
+        limit: 20,
       };
 
       if (searchQuery) params.search = searchQuery;

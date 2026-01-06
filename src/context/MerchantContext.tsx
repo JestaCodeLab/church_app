@@ -20,6 +20,10 @@ interface MerchantContextType {
   loading: boolean;
   subdomain: string | null;
   isMainDomain: boolean;
+  selectedMerchantId: string | null;
+  setSelectedMerchantId: (id: string | null) => void;
+  selectedMerchantSubdomain: string | null;
+  setSelectedMerchantSubdomain: (subdomain: string | null) => void;
 }
 
 const MerchantContext = createContext<MerchantContextType | null>(null);
@@ -29,6 +33,37 @@ export const MerchantProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [loading, setLoading] = useState(true);
   const [subdomain, setSubdomain] = useState<string | null>(null);
   const [isMainDomain, setIsMainDomain] = useState(true);
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(null);
+  const [selectedMerchantSubdomain, setSelectedMerchantSubdomain] = useState<string | null>(null);
+
+  // Load selected merchant from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('superAdminSelectedMerchantId');
+    if (saved) {
+      setSelectedMerchantId(saved);
+    }
+    const savedSubdomain = localStorage.getItem('superAdminSelectedMerchantSubdomain');
+    if (savedSubdomain) {
+      setSelectedMerchantSubdomain(savedSubdomain);
+    }
+  }, []);
+
+  // Save selected merchant to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedMerchantId) {
+      localStorage.setItem('superAdminSelectedMerchantId', selectedMerchantId);
+    } else {
+      localStorage.removeItem('superAdminSelectedMerchantId');
+    }
+  }, [selectedMerchantId]);
+
+  useEffect(() => {
+    if (selectedMerchantSubdomain) {
+      localStorage.setItem('superAdminSelectedMerchantSubdomain', selectedMerchantSubdomain);
+    } else {
+      localStorage.removeItem('superAdminSelectedMerchantSubdomain');
+    }
+  }, [selectedMerchantSubdomain]);
 
   useEffect(() => {
     const detectSubdomainAndFetchMerchant = async () => {
@@ -95,6 +130,10 @@ export const MerchantProvider: React.FC<{ children: ReactNode }> = ({ children }
     loading,
     subdomain,
     isMainDomain,
+    selectedMerchantId,
+    setSelectedMerchantId,
+    selectedMerchantSubdomain,
+    setSelectedMerchantSubdomain,
   };
 
   return (

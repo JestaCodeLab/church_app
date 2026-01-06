@@ -33,6 +33,23 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // For super admin: add merchant header if merchant is selected
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.role?.slug === 'super_admin') {
+          const selectedMerchantSubdomain = localStorage.getItem('superAdminSelectedMerchantSubdomain');
+          if (selectedMerchantSubdomain) {
+            config.headers['X-Merchant-Subdomain'] = selectedMerchantSubdomain;
+          }
+        }
+      } catch (e) {
+        // Silently fail if can't parse user
+      }
+    }
+
     return config;
   },
   (error) => {
@@ -116,6 +133,46 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
   getCurrentUser: () => api.get('/auth/me'),
   refreshToken: (refreshToken: any) => api.post('/auth/refresh', { refreshToken }),
+  forgotPassword: (email: string) => {
+    // ✅ Extract subdomain from current URL
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    
+    let subdomain = null;
+    
+    // Check if we're on a subdomain
+    if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+      // faith.localhost
+      if (parts.length === 2 && parts[0] !== 'localhost') {
+        subdomain = parts[0];
+      }
+    } else if (parts.length >= 3) {
+      // faith.thechurchhq.com
+      subdomain = parts[0];
+    }
+    
+    return api.post('/auth/forgot-password', { email, subdomain });
+  },
+  resetPassword: (token: string, email: string, newPassword: string, confirmPassword: string) => {
+    // ✅ Extract subdomain from current URL
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    
+    let subdomain = null;
+    
+    // Check if we're on a subdomain
+    if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+      // faith.localhost
+      if (parts.length === 2 && parts[0] !== 'localhost') {
+        subdomain = parts[0];
+      }
+    } else if (parts.length >= 3) {
+      // faith.thechurchhq.com
+      subdomain = parts[0];
+    }
+    
+    return api.post('/auth/reset-password', { token, email, newPassword, confirmPassword, subdomain });
+  },
 };
 
 // Merchant API

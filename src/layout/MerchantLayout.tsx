@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -35,9 +35,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
+import { useMerchant } from '../context/MerchantContext';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
 import SubscriptionAlert from '../components/ui/SubscriptionAlert';
+import ChurchSelector from '../components/selectors/ChurchSelector';
 
 interface NavigationItem {
   name: string;
@@ -50,8 +52,10 @@ interface NavigationItem {
 
 const MerchantLayout = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { hasFeature } = useFeatureFlag();
   const location = useLocation();
+  const { selectedMerchantId, setSelectedMerchantId, setSelectedMerchantSubdomain } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlert, setShowAlert] = useState(true);
@@ -92,6 +96,19 @@ const MerchantLayout = () => {
   useEffect(() => {
     setShowAlert(true);
   }, [subscriptionStatus]);
+
+  // For super admin: if no merchant is selected, redirect to church selector
+  useEffect(() => {
+    if (user?.role?.slug === 'super_admin' && !selectedMerchantId) {
+      navigate('/select-church');
+    }
+  }, [user?.role?.slug, selectedMerchantId, navigate]);
+
+  // Handle church selection for super admin
+  const handleSelectChurch = (church: any) => {
+    setSelectedMerchantId(church._id);
+    setSelectedMerchantSubdomain(church.subdomain);
+  };
 
   // ✅ Helper function to filter navigation based on features
   const filterNavigation = (items: NavigationItem[]): NavigationItem[] => {
@@ -624,7 +641,7 @@ const MerchantLayout = () => {
         {/* Header - White with search & user */}
         <header className="h-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 transition-colors">
           <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-            {/* Left: Mobile menu + Search */}
+            {/* Left: Mobile menu + Search + Church Selector */}
             <div className="flex items-center flex-1 space-x-4">
               {/* Mobile Menu Button */}
               <button
@@ -633,6 +650,16 @@ const MerchantLayout = () => {
               >
                 {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
+
+              {/* Church Selector for Super Admin */}
+              {user?.role?.slug === 'super_admin' && (
+                <ChurchSelector
+                  selectedChurchId={selectedMerchantId || undefined}
+                  onSelectChurch={handleSelectChurch}
+                  variant="dropdown"
+                  className="hidden sm:block"
+                />
+              )}
 
               {/* Search Bar */}
               <div className="flex-1 max-w-md">

@@ -116,6 +116,12 @@ const handleSubmit = async (e: React.FormEvent) => {
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                 placeholder="••••••••"
             />
+            <Link
+              to="/forgot-password"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium mt-2 inline-block"
+            >
+              Forgot Password?
+            </Link>
             </div>
 
             <button

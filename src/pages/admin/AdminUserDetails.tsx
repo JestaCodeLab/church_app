@@ -150,6 +150,9 @@ const confirmStatusChange = async () => {
     });
   };
 
+  // Check if account is locked (either manually or by failed attempts)
+  const isAccountLocked = data?.user?.accountLocked || (data?.user?.lockUntil && new Date(data.user.lockUntil) > new Date());
+
   const getRoleBadge = (role: string) => {
     const badges: any = {
       super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' },
@@ -193,8 +196,6 @@ const confirmStatusChange = async () => {
     );
   }
 
-  console.log(data)
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -224,7 +225,7 @@ const confirmStatusChange = async () => {
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(data.user.status)}`}>
                   {data.user.status.charAt(0).toUpperCase() + data.user.status.slice(1)}
                 </span>
-                {data.user.accountLocked && (
+                {isAccountLocked && (
                   <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300 flex items-center">
                     <Lock className="w-4 h-4 mr-1" />
                     Locked
@@ -237,45 +238,15 @@ const confirmStatusChange = async () => {
 
         {/* Quick Actions */}
         <div className="flex items-center space-x-3">
-          {data.user.accountLocked ? (
-            <>
-              <button
-                onClick={() => setShowUnlockModal(true)}
-                disabled={actionLoading}
-                className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
-              >
-                <Unlock className="w-5 h-5 mr-2" />
-                Unlock
-              </button>
-              {showUnlockModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full max-w-md">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                      Unlock Account
-                    </h2>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-6">
-                      Are you sure you want to unlock this account? The user will regain access to the platform.
-                    </p>
-                    <div className="flex justify-end space-x-3">
-                      <button
-                        onClick={() => setShowUnlockModal(false)}
-                        className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        disabled={actionLoading}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={()=>setShowUnlockModal(true)}
-                        className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50"
-                        disabled={actionLoading}
-                      >
-                        Confirm Unlock
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
+          {isAccountLocked ? (
+            <button
+              onClick={() => setShowUnlockModal(true)}
+              disabled={actionLoading}
+              className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Unlock className="w-5 h-5 mr-2" />
+              Unlock
+            </button>
           ) : (
             <button
               onClick={() => setShowLockModal(true)}
@@ -290,7 +261,7 @@ const confirmStatusChange = async () => {
       </div>
 
       {/* Account Locked Warning */}
-      {data.user.accountLocked && (
+      {isAccountLocked && (
         <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/20 rounded-xl p-4">
           <div className="flex items-start space-x-3">
             <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -299,10 +270,10 @@ const confirmStatusChange = async () => {
                 Account Locked
               </p>
               <p className="text-sm text-red-700 dark:text-red-400 mt-1">
-                {data.user.accountLockedReason || 'No reason provided'}
+                {data.user.accountLockedReason ? data.user.accountLockedReason : (data.user.lockUntil ? 'Locked due to too many failed login attempts' : 'No reason provided')}
               </p>
               <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                Locked on: {formatDate(data.user.accountLockedAt)}
+                Locked on: {formatDate(data.user.accountLockedAt || data.user.lockUntil)}
               </p>
             </div>
           </div>
@@ -392,28 +363,28 @@ const confirmStatusChange = async () => {
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-center">
                   <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {data.stats.loginCount}
+                    {data?.stats?.loginCount || 0}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Logins</p>
                 </div>
                 <div className="p-4 bg-green-50 dark:bg-green-900/10 rounded-lg text-center">
                   <Clock className="w-6 h-6 text-green-600 dark:text-green-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {data.stats.accountAge}
+                    {data?.stats?.accountAge || 0}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Days Old</p>
                 </div>
                 <div className="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg text-center">
                   <CheckCircle className="w-6 h-6 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
                   <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                    {formatDate(data.stats.lastLogin)}
+                    {formatDate(data?.stats?.lastLogin || '')}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Last Login</p>
                 </div>
                 <div className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-lg text-center">
                   <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {data.stats.failedLoginAttempts}
+                    {data?.stats?.failedLoginAttempts || 0}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Failed Attempts</p>
                 </div>
@@ -472,22 +443,22 @@ const confirmStatusChange = async () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <Shield className={`w-5 h-5 ${data.user.accountLocked ? 'text-red-600' : 'text-green-600'}`} />
+                    <Shield className={`w-5 h-5 ${isAccountLocked ? 'text-red-600' : 'text-green-600'}`} />
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Account Lock Status
                       </p>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        {data.user.accountLocked ? 'Account is currently locked' : 'Account is unlocked'}
+                        {isAccountLocked ? 'Account is currently locked' : 'Account is unlocked'}
                       </p>
                     </div>
                   </div>
                   <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                    data.user.accountLocked
+                    isAccountLocked
                       ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
                       : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
                   }`}>
-                    {data.user.accountLocked ? 'Locked' : 'Active'}
+                    {isAccountLocked ? 'Locked' : 'Active'}
                   </span>
                 </div>
 
@@ -525,7 +496,7 @@ const confirmStatusChange = async () => {
                     </div>
                   </div>
                   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                    {data.stats.failedLoginAttempts}
+                    {data?.stats?.failedLoginAttempts || 0}
                   </span>
                 </div>
               </div>
@@ -547,7 +518,7 @@ const confirmStatusChange = async () => {
                   Account Access
                 </h4>
                 <div className="space-y-3">
-                  {data.user.accountLocked ? (
+                  {isAccountLocked ? (
                     <>
                       <button
                         onClick={() => setShowUnlockModal(true)}
