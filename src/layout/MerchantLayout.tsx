@@ -82,6 +82,10 @@ const MerchantLayout = () => {
     return null;
   };
 
+  useEffect(() => {
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }, []); 
+
   const alertStatus = getAlertStatus();
 
   // Reset alert visibility when status changes

@@ -4,7 +4,6 @@ import { messagingAPI } from '../../../services/api';
 import { Link } from 'react-router-dom';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
-import LockedFeature from '../../../components/LockedFeature';
 import { ChartArea, CheckCircle, ClipboardClock, CreditCard, FilePen, FilePenLine, Mail, Users, RefreshCcw } from 'lucide-react';
 import FeatureGate from '../../../components/access/FeatureGate';
 

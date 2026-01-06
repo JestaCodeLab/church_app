@@ -1,11 +1,9 @@
-// src/pages/merchant/messaging/SMSHistory.tsx - ENHANCED
-
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, CheckCircle, Clock, XCircle, AlertCircle, Loader } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, AlertCircle, Loader } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
-import LockedFeature from '../../../components/LockedFeature';
 import api, { messagingAPI } from '../../../services/api';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 interface Recipient {
   phoneNumber: string;
@@ -103,13 +101,7 @@ const SMSHistory = () => {
   }
 
   return (
-    <LockedFeature
-      featureName="SMS History"
-      description="View SMS messaging history and delivery status. Upgrade your plan to access this feature."
-      isLocked={hasSMSAccess === false}
-      variant="overlay"
-      showUpgradeButton={true}
-    >
+    <FeatureGate feature="smsHistory" showUpgrade={!hasSMSAccess}>
       <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -279,7 +271,7 @@ const SMSHistory = () => {
         </div>
       )}
       </div>
-    </LockedFeature>
+    </FeatureGate>
   );
 };
 

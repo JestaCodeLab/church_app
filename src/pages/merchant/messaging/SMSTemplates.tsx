@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import api, { messagingAPI } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
-import LockedFeature from '../../../components/LockedFeature';
 import FeatureGate from '../../../components/access/FeatureGate';
 
 interface Template {

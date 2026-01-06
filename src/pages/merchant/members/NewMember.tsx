@@ -10,7 +10,8 @@ import { useResourceLimit } from '../../../hooks/useResourceLimit';
 
 
 const NewMember = () => {
-  const { merchant } = useAuth()?.user
+  const { user, fetchAndUpdateSubscription } = useAuth()
+  const merchant = user?.merchant;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -61,9 +62,6 @@ const NewMember = () => {
     departments: [] as string[],
   primaryDepartment: '',
   });
-
-
-
 
   useEffect(() => {
     if(memberLimit?.canCreate){
@@ -246,6 +244,7 @@ const NewMember = () => {
 
       await memberAPI.createMember(dataToSubmit);
       showToast.success('Member added successfully!');
+      await fetchAndUpdateSubscription();
       navigate('/members/all');
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to add member');
