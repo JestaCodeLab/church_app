@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 interface LimitReachedModalProps {
   isOpen: boolean;
   onClose: () => void;
-  resourceType: 'members' | 'branches' | 'events' | 'sermons' | 'storage';
+  resourceType: 'members' | 'branches' | 'events' | 'sermons' | 'departments';
   current: number;
   limit: number;
   planName: string;
@@ -31,10 +31,10 @@ const LimitReachedModal: React.FC<LimitReachedModalProps> = ({
 
   const resourceDisplayNames: Record<string, string> = {
     members: 'Members',
+    departments: 'Departments',
     branches: 'Branches',
     events: 'Events',
     sermons: 'Sermons',
-    storage: 'Storage'
   };
 
   const handleUpgrade = () => {

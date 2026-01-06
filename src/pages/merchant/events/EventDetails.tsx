@@ -6,7 +6,7 @@ import {
   ExternalLink, X, Repeat2, Copy, CheckCircle, Code,
   Trash, RotateCw, MessageSquare, DollarSign, Save
 } from 'lucide-react';
-import { eventAPI, eventCodeAPI } from '../../../services/api';
+import api, { eventAPI, eventCodeAPI, merchantAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import QRCodeDisplay from '../../../components/events/QRCodeDisplay';
@@ -23,9 +23,7 @@ const EventDetails: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [regeneratingQR, setRegeneratingQR] = useState(false);
-  const [todayEventCode, setTodayEventCode] = useState<any>(null);
+  const [attendance, setAttendance] = useState<any>(null);
   const [allEventCodes, setAllEventCodes] = useState<any[]>([]);
   const [copiedCode, setCopiedCode] = useState(false);
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
@@ -59,16 +57,47 @@ const EventDetails: React.FC = () => {
     hasRunToday: boolean;
     lastRun?: string;
   } | null>(null);
+
+  // Feature Access State
+  const [features, setFeatures] = useState<{
+    smsAutomation: boolean;
+    eventDonations: boolean;
+  }>({
+    smsAutomation: false,
+    eventDonations: false
+  });
+
   useEffect(() => {
     fetchEvent();
+    fetchUserPlanFeatures();
   }, [id]);
+
+  const fetchUserPlanFeatures = async () => {
+    try {
+      const response = await merchantAPI.planFeatures();
+      if (response?.data?.success) {
+        const data = response.data;
+        if (data.data?.features) {
+          setFeatures({
+            smsAutomation: data.data.features.smsAutomation || false,
+            eventDonations: data.data.features.eventDonations || false
+          });
+        }
+      }
+    } catch (error) {
+      // Silently fail - features will default to false
+      console.log('Could not fetch plan features');
+    }
+  };
 
   const fetchEvent = async () => {
     try {
       setLoading(true);
       const response = await eventAPI.getEvent(id!);
-      const eventData = response.data.data.event;
+      const eventData = response.data.data?.event;
+      const attendanceData = response.data.data?.stats?.attendance;
       setEvent(eventData);
+      setAttendance(attendanceData?.totalAttended || 0);
 
       // Load SMS automation settings
       if (eventData.smsAutomation) {
@@ -100,7 +129,6 @@ const EventDetails: React.FC = () => {
 
       // If recurring event, fetch today's event code
       if (eventData.isRecurring) {
-        fetchTodayEventCode(eventData._id);
         fetchAllEventCodes(eventData._id);
       }
 
@@ -140,22 +168,6 @@ const EventDetails: React.FC = () => {
     }
   };
 
-  const fetchTodayEventCode = async (eventId: string) => {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1'}/attendance/public/event/${eventId}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data?.eventCode) {
-          setTodayEventCode(data.data.eventCode);
-        }
-      }
-    } catch (error) {
-      // Silently fail
-    }
-  };
-
   const fetchAllEventCodes = async (eventId: string) => {
     try {
       const response = await eventCodeAPI.getCodesForEvent(eventId);
@@ -164,6 +176,7 @@ const EventDetails: React.FC = () => {
       }
     } catch (error) {
       // Silently fail
+      console.log(error)
     }
   };
 
@@ -183,15 +196,12 @@ const EventDetails: React.FC = () => {
 
   const handleRegenerateQR = async () => {
     try {
-      setRegeneratingQR(true);
       await eventAPI.regenerateQR(id!);
       await fetchEvent(); // Reload event data
       showToast.success('QR Code regenerated successfully');
     } catch (error: any) {
       showToast.error('Failed to regenerate QR code');
-    } finally {
-      setRegeneratingQR(false);
-    }
+    } 
   };
 
   const handleRegenerateEventCodes = async () => {
@@ -279,7 +289,7 @@ const EventDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <button
@@ -323,10 +333,10 @@ const EventDetails: React.FC = () => {
                 onClick={() => navigate(`/events/${id}/attendance`)}
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
               >
-                <Users className="w-4 h-4" />
                 <span>Attendance</span>
+                <p>({attendance})</p>
               </button>
-              {event.donations?.enabled && (
+              {(features.eventDonations && event.donations?.enabled) && (
                 <button
                   onClick={() => navigate(`/events/${id}/donations`)}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
@@ -338,11 +348,10 @@ const EventDetails: React.FC = () => {
               <button
                 onClick={() => {
                   setShowDeleteModal(true);
-                  setShowDropdown(false);
                 }}
                 className="p-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
               >
-                <Trash className="w-5 h-5 text-white dark:text-gray-400" />
+                <Trash className="w-5 h-5 text-white dark:text-white" />
               </button>
 
             </div>
@@ -604,6 +613,23 @@ const EventDetails: React.FC = () => {
             )}
 
             {/* SMS Automation Settings */}
+            {!features.smsAutomation ? (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 relative opacity-60">
+                <div className="flex flex-col items-center justify-between mb-6">
+                  <div className="inset-0 flex items-center justify-center bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 rounded-xl">
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-3">
+                        <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100">SMS Automations</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Upgrade your plan to access SMS Automation</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
               {/* SMS Automation Status Banner */}
               {smsAutomation?.enabled && smsAutomationStatus?.hasRunToday && (
@@ -671,8 +697,25 @@ const EventDetails: React.FC = () => {
                 onChange={setSmsAutomation}
               />
             </div>
+            )}
 
             {/* Donation Settings */}
+            {!features.eventDonations ? (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 relative opacity-60">
+                <div className="inset-0 flex items-center justify-center bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 rounded-xl">
+                  <div className="text-center">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-3">
+                      <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">Event Donations</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Upgrade your plan to access Event Donations</p>
+                  </div>
+                </div>
+                
+              </div>
+            ) : (
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
               {/* Donation Thank You SMS Status Banner */}
               {donations?.enabled && donations?.thankYouSms && donationAutomationStatus && (
@@ -755,6 +798,7 @@ const EventDetails: React.FC = () => {
                 onChange={setDonations}
               />
             </div>
+            )}
           </div>
 
           {/* Sidebar */}

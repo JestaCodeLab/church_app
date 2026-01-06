@@ -3,7 +3,10 @@ import { useAuth } from '../../../context/AuthContext';
 import { messagingAPI } from '../../../services/api';
 import { Link } from 'react-router-dom';
 import { showToast } from '../../../utils/toasts';
+import { checkFeatureAccess } from '../../../utils/featureAccess';
+import LockedFeature from '../../../components/LockedFeature';
 import { ChartArea, CheckCircle, ClipboardClock, CreditCard, FilePen, FilePenLine, Mail, Users, RefreshCcw } from 'lucide-react';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 interface SMSStats {
   totalSent: number;
@@ -31,10 +34,19 @@ const SMSDashboard: React.FC = () => {
   const [stats, setStats] = useState<SMSStats | null>(null);
   const [credits, setCredits] = useState<Credits | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasSMSAccess, setHasSMSAccess] = useState<boolean | null>(null);
 
   useEffect(() => {
+    checkSMSAccess();
     fetchDashboardData();
   }, []);
+
+  const checkSMSAccess = async () => {
+    const hasAccess = await checkFeatureAccess('smsAnalytics', {
+      showErrorToast: false
+    });
+    setHasSMSAccess(hasAccess);
+  };
 
   const fetchDashboardData = async () => {
   try {
@@ -62,7 +74,8 @@ const SMSDashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <FeatureGate feature={"smsAnalytics"} showUpgrade={!hasSMSAccess}>
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -245,7 +258,8 @@ const SMSDashboard: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </FeatureGate>
   );
 };
 

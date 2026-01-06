@@ -52,29 +52,57 @@ const AdminCreatePlan = () => {
 
   // Features
   const [features, setFeatures] = useState<PlanFeatures>({
+    // Core Features
     memberManagement: true,
-    branchManagement: true,
+    branchManagement: false,
+    departmentManagement: false,
     eventManagement: false,
     sermonManagement: false,
+    
+    // Financial Features
     financialManagement: false,
-    donationTracking: false,
-    emailCommunications: false,
+    eventDonations: false,
+    expenseTracking: false,
+    incomeTracking: false,
+    tithingManagement: false,
+    financialReports: false,
+    transactionManagement: false,
+    
+    // Communications Features
+    emailCommunications: true,
     smsCommunications: false,
     bulkMessaging: false,
-    basicReports: true,
+    smsAutomation: false,
+    smsSend: false,
+    smsHistory: false,
+    smsAnalytics: false,
+    smsTemplates: false,
+    smsCredits: false,
+    smsSenderID: false,
+    
+    // Reporting Features
+    basicReports: false,
     advancedReports: false,
     customReports: false,
     dataExport: false,
+    
+    // Integration Features
     apiAccess: false,
     webhooks: false,
     thirdPartyIntegrations: false,
+    
+    // Support Features
     emailSupport: true,
     prioritySupport: false,
     dedicatedAccountManager: false,
     phoneSupport: false,
+    
+    // Customization Features
     customBranding: false,
     customDomain: false,
     whiteLabel: false,
+    
+    // Advanced Features
     multiLanguage: false,
     mobileApp: false,
     automatedWorkflows: false
@@ -167,6 +195,7 @@ const AdminCreatePlan = () => {
       features: [
         { key: 'memberManagement', label: 'Member Management' },
         { key: 'branchManagement', label: 'Branch Management' },
+        { key: 'departmentManagement', label: 'Department Management' },
         { key: 'eventManagement', label: 'Event Management' },
         { key: 'sermonManagement', label: 'Sermon Management' }
       ]
@@ -175,7 +204,12 @@ const AdminCreatePlan = () => {
       name: 'Financial',
       features: [
         { key: 'financialManagement', label: 'Financial Management' },
-        { key: 'donationTracking', label: 'Donation Tracking' }
+        { key: 'eventDonations', label: 'Event Donations' },
+        { key: 'expenseTracking', label: 'Expense Tracking' },
+        { key: 'incomeTracking', label: 'Income Tracking' },
+        { key: 'tithingManagement', label: 'Tithing Management' },
+        { key: 'financialReports', label: 'Financial Reports' },
+        { key: 'transactionManagement', label: 'Transaction Management' }
       ]
     },
     {
@@ -183,7 +217,14 @@ const AdminCreatePlan = () => {
       features: [
         { key: 'emailCommunications', label: 'Email Communications' },
         { key: 'smsCommunications', label: 'SMS Communications' },
-        { key: 'bulkMessaging', label: 'Bulk Messaging' }
+        { key: 'bulkMessaging', label: 'Bulk Messaging' },
+        { key: 'smsAutomation', label: 'SMS Automation' },
+        { key: 'smsSend', label: 'SMS Send' },
+        { key: 'smsHistory', label: 'SMS History' },
+        { key: 'smsAnalytics', label: 'SMS Analytics' },
+        { key: 'smsTemplates', label: 'SMS Templates' },
+        { key: 'smsCredits', label: 'SMS Credits' },
+        { key: 'smsSenderID', label: 'SMS Sender ID' }
       ]
     },
     {

@@ -147,74 +147,111 @@ const AdminPlanEdit = () => {
     setHighlights(newHighlights);
   };
 
-  const featureCategories = [
-    {
-      name: 'Core Features',
-      features: [
-        { key: 'memberManagement', label: 'Member Management' },
-        { key: 'branchManagement', label: 'Branch Management' },
-        { key: 'eventManagement', label: 'Event Management' },
-        { key: 'sermonManagement', label: 'Sermon Management' }
-      ]
-    },
-    {
-      name: 'Financial',
-      features: [
-        { key: 'financialManagement', label: 'Financial Management' },
-        { key: 'donationTracking', label: 'Donation Tracking' }
-      ]
-    },
-    {
-      name: 'Communications',
-      features: [
-        { key: 'emailCommunications', label: 'Email Communications' },
-        { key: 'smsCommunications', label: 'SMS Communications' },
-        { key: 'bulkMessaging', label: 'Bulk Messaging' }
-      ]
-    },
-    {
-      name: 'Reporting',
-      features: [
-        { key: 'basicReports', label: 'Basic Reports' },
-        { key: 'advancedReports', label: 'Advanced Reports' },
-        { key: 'customReports', label: 'Custom Reports' },
-        { key: 'dataExport', label: 'Data Export' }
-      ]
-    },
-    {
-      name: 'Integration',
-      features: [
-        { key: 'apiAccess', label: 'API Access' },
-        { key: 'webhooks', label: 'Webhooks' },
-        { key: 'thirdPartyIntegrations', label: 'Third Party Integrations' }
-      ]
-    },
-    {
-      name: 'Support',
-      features: [
-        { key: 'emailSupport', label: 'Email Support' },
-        { key: 'prioritySupport', label: 'Priority Support' },
-        { key: 'dedicatedAccountManager', label: 'Dedicated Account Manager' },
-        { key: 'phoneSupport', label: 'Phone Support' }
-      ]
-    },
-    {
-      name: 'Customization',
-      features: [
-        { key: 'customBranding', label: 'Custom Branding' },
-        { key: 'customDomain', label: 'Custom Domain' },
-        { key: 'whiteLabel', label: 'White Label' }
-      ]
-    },
-    {
-      name: 'Advanced',
-      features: [
-        { key: 'multiLanguage', label: 'Multi-Language' },
-        { key: 'mobileApp', label: 'Mobile App' },
-        { key: 'automatedWorkflows', label: 'Automated Workflows' }
-      ]
-    }
-  ];
+  // Helper function to convert camelCase to Title Case
+  const formatLabel = (key: string): string => {
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase())
+      .trim();
+  };
+
+  // Feature categorization based on naming conventions
+  const featureCategoryMap: { [key: string]: string } = {
+    // Core Features (Management)
+    memberManagement: 'Core Features',
+    branchManagement: 'Core Features',
+    departmentManagement: 'Core Features',
+    eventManagement: 'Core Features',
+    sermonManagement: 'Core Features',
+    
+    // Financial Features
+    financialManagement: 'Financial',
+    eventDonations: 'Financial',
+    expenseTracking: 'Financial',
+    incomeTracking: 'Financial',
+    tithingManagement: 'Financial',
+    financialReports: 'Financial',
+    transactionManagement: 'Financial',
+    
+    // Communications Features (Email, SMS, Messaging)
+    emailCommunications: 'Communications',
+    smsCommunications: 'Communications',
+    bulkMessaging: 'Communications',
+    smsAutomation: 'Communications',
+    smsSend: 'Communications',
+    smsHistory: 'Communications',
+    smsAnalytics: 'Communications',
+    smsTemplates: 'Communications',
+    smsCredits: 'Communications',
+    smsSenderID: 'Communications',
+
+    
+    // Reporting Features
+    basicReports: 'Reporting',
+    advancedReports: 'Reporting',
+    customReports: 'Reporting',
+    dataExport: 'Reporting',
+    
+    // Integration Features
+    apiAccess: 'Integration',
+    webhooks: 'Integration',
+    thirdPartyIntegrations: 'Integration',
+    
+    // Support Features
+    emailSupport: 'Support',
+    prioritySupport: 'Support',
+    dedicatedAccountManager: 'Support',
+    phoneSupport: 'Support',
+    
+    // Customization Features
+    customBranding: 'Customization',
+    customDomain: 'Customization',
+    whiteLabel: 'Customization',
+    
+    // Advanced Features
+    multiLanguage: 'Advanced',
+    mobileApp: 'Advanced',
+    automatedWorkflows: 'Advanced'
+  };
+
+  // Generate feature categories dynamically from features object
+  const generateFeatureCategories = () => {
+    const categorizedFeatures: { [key: string]: Array<{ key: string; label: string }> } = {};
+    
+    // Group features by category
+    Object.keys(features).forEach(featureKey => {
+      const category = featureCategoryMap[featureKey] || 'Other';
+      if (!categorizedFeatures[category]) {
+        categorizedFeatures[category] = [];
+      }
+      categorizedFeatures[category].push({
+        key: featureKey,
+        label: formatLabel(featureKey)
+      });
+    });
+
+    // Sort categories and features for consistent display
+    const categoryOrder = [
+      'Core Features',
+      'Financial',
+      'Communications',
+      'Reporting',
+      'Integration',
+      'Support',
+      'Customization',
+      'Advanced',
+      'Other'
+    ];
+
+    return categoryOrder
+      .filter(cat => categorizedFeatures[cat])
+      .map(cat => ({
+        name: cat,
+        features: categorizedFeatures[cat].sort((a, b) => a.label.localeCompare(b.label))
+      }));
+  };
+
+  const featureCategories = generateFeatureCategories();
 
   if (loading) {
     return (
@@ -463,22 +500,34 @@ const AdminPlanEdit = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                   {category.name}
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {category.features.map((feature) => (
-                    <label
+                    <div
                       key={feature.key}
-                      className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
                     >
-                      <input
-                        type="checkbox"
-                        checked={features[feature.key] || false}
-                        onChange={() => handleFeatureToggle(feature.key)}
-                        className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                      />
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {feature.label}
                       </span>
-                    </label>
+
+                      <button
+                        onClick={() => handleFeatureToggle(feature.key)}
+                        className={`
+                          relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                          ${features[feature.key]
+                            ? 'bg-primary-600'
+                            : 'bg-gray-300 dark:bg-gray-600'
+                          }
+                        `}
+                      >
+                        <span
+                          className={`
+                            inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                            ${features[feature.key] ? 'translate-x-6' : 'translate-x-1'}
+                          `}
+                        />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>

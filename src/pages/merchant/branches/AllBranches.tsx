@@ -11,7 +11,8 @@ import { useAuth } from '../../../context/AuthContext';
 
 const Branches = () => {
   const navigate = useNavigate();
-  const plan = useAuth()?.user?.merchant?.subscription?.plan
+  const { fetchAndUpdateSubscription, user } = useAuth();
+  const plan = user?.merchant?.subscription?.plan;
   const [branches, setBranches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,6 +101,7 @@ const Branches = () => {
         showToast.success(permanent ? 'Branch deleted permanently' : 'Branch archived');
         setShowDeleteModal(false);
         setSelectedBranch(null);
+        await fetchAndUpdateSubscription();
         fetchBranches();
         fetchSummary();
       }
@@ -153,7 +155,6 @@ const Branches = () => {
             <div className="flex flex-col items-end">
               <button
                 onClick={handleAddBranchClick}
-                disabled={!branchLimit.canCreate}
                 className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
               >
                 <Plus className="w-4 h-4 mr-2" />

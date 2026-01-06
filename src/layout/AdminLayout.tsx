@@ -29,7 +29,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [plansMenuOpen, setPlansMenuOpen] = useState(true); // Plans submenu open by default
+  const [plansMenuOpen, setPlansMenuOpen] = useState(false); // ✅ FIXED: Changed from true to false
   const [messagingMenuOpen, setMessagingMenuOpen] = useState(false); // ✅ NEW: Messaging submenu
 
   // Main navigation (no submenus)
@@ -43,7 +43,6 @@ const AdminLayout = () => {
       icon: Users,
       href: '/admin/departments',
     },
-    { name: 'Attendance', href: '/admin/attendance', icon: Users },
   ];
 
   // Plans submenu items
@@ -58,6 +57,7 @@ const AdminLayout = () => {
     { name: 'SMS Packages', href: '/admin/sms-packages', icon: CreditCard },
     { name: 'SMS Statistics', href: '/admin/sms-statistics', icon: TrendingUp },
     { name: 'SMS Balance', href: '/admin/sms-balance', icon: Wallet },
+    { name: 'SMS Sender IDs', href: '/admin/sender-ids', icon: MessageSquare },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -67,6 +67,13 @@ const AdminLayout = () => {
   React.useEffect(() => {
     if (isSubmenuActive(messagingSubmenu)) {
       setMessagingMenuOpen(true);
+    }
+  }, [location.pathname]);
+
+  // ✅ Auto-expand plans menu if on plans pages
+  React.useEffect(() => {
+    if (isSubmenuActive(plansSubmenu)) {
+      setPlansMenuOpen(true);
     }
   }, [location.pathname]);
 

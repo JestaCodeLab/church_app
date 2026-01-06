@@ -124,6 +124,8 @@ export const merchantAPI = {
   verifyEmail: (data: any) => api.post('/merchants/verify-email', data),
   resendCode: (data: any) => api.post('/merchants/resend-code', data),
   completeOnboarding: (data: any) => api.put('/merchants/onboarding', data),
+  planFeatures: () => api.get('/merchants/plan-features'),
+  getSenderIDStatus: () => api.get('/merchants/sender-id/status'),
 };
 
 // Member API
@@ -307,6 +309,12 @@ export const adminAPI = {
   updateUserStatus: (id: any, data: any) => api.patch(`/admin/users/${id}/status`, data),
   resetUserPassword: (id: any) => api.post(`/admin/users/${id}/reset-password`),
   deleteUser: (id: any) => api.delete(`/admin/users/${id}`),
+
+  // SMS Sender ID Management
+  getSenderIds: (params?: any) => api.get('/admin/sender-ids', { params }),
+  approveSenderId: (merchantId: string) => api.post(`/admin/sender-ids/${merchantId}/approve`),
+  rejectSenderId: (merchantId: string, reason: string) => 
+    api.post(`/admin/sender-ids/${merchantId}/reject`, { reason }),
 
   // Merchant-specific resource creation
   getMerchantBranches: (merchantId: string, params?: any) =>

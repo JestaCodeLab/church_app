@@ -23,9 +23,15 @@ import api from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { format } from 'date-fns';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
+import LimitReachedModal from '../../../components/modals/LimitReachedModal';
+import { useAuth } from '../../../context/AuthContext';
+import { useResourceLimit } from '../../../hooks/useResourceLimit';
 
 const AllEvents = () => {
   const navigate = useNavigate();
+  const { user, fetchAndUpdateSubscription } = useAuth();
+  const plan = user?.merchant?.subscription?.plan;
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,6 +44,7 @@ const AllEvents = () => {
   const [eventToDelete, setEventToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [usageData, setUsageData] = useState<any>(null);
+  const eventLimit = useResourceLimit('events');
  
 
   useEffect(() => {
@@ -112,6 +119,14 @@ const AllEvents = () => {
     return time; // Already in HH:mm format
   };
 
+  const handleAddEventClick = () => {
+    if (!eventLimit?.canCreate) {
+      setShowLimitModal(true);
+      return;
+    }
+    navigate('/events/new');
+  };
+
   return (
     <div className="p-2 space-y-3">
       {/* Header */}
@@ -126,8 +141,7 @@ const AllEvents = () => {
         </div>
         <div className="flex flex-col items-end space-y-2">
           <button
-            onClick={() => navigate('/events/new')}
-            disabled={usageData?.events?.limit && usageData?.events?.current >= usageData?.events?.limit}
+            onClick={handleAddEventClick}
             className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center shadow-md"
           >
             <Plus className="w-5 h-5 mr-2" />
@@ -313,7 +327,7 @@ const AllEvents = () => {
 
                       {/* Status */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(event.status)}`}>
+                        <span className={`px-2 py-1 text-xs font-medium capitalize rounded-full ${getStatusBadge(event.status)}`}>
                           {event.status}
                         </span>
                       </td>
@@ -392,6 +406,16 @@ const AllEvents = () => {
             type="danger"
             isLoading={deleting}
         /> 
+
+        {/* Limit Modal */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        resourceType="events"
+        planName={plan}
+        current={eventLimit?.current}
+        limit={eventLimit?.limit || 0}
+      />
     </div>
   );
 };

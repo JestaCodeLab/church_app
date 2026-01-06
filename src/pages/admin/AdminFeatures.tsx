@@ -85,7 +85,17 @@ const AdminFeatures = () => {
       toast.success(response.data.message || 'Plan features updated successfully');
       
       // Refresh data
-      await fetchFeatures();
+      const refreshResponse = await adminAPI.getFeatures();
+      const updatedFeatureData = refreshResponse.data.data;
+      setFeatureData(updatedFeatureData);
+      
+      // ✅ Update selected plan and modified features with refreshed data
+      const updatedPlan = updatedFeatureData.plans.find(p => p._id === selectedPlan._id);
+      if (updatedPlan) {
+        setSelectedPlan(updatedPlan);
+        setModifiedFeatures(updatedPlan.features || {});
+      }
+      
       setHasChanges(false);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to update features');

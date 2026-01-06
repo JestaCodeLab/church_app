@@ -27,7 +27,11 @@ import {
   Wallet,
   Receipt,
   PieChart,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  Send,
+  FileChartColumn,
+  HandHeart
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -40,6 +44,7 @@ interface NavigationItem {
   href?: string;
   icon: any;
   requiresFeature: string | null;
+  lockedFeature?: string | null; // Feature required to unlock this menu item
   children?: NavigationItem[];
 }
 
@@ -184,8 +189,9 @@ const MerchantLayout = () => {
             {
               name: 'Donations',
               href: '/finance/donations',
-              icon: DollarSign,
-              requiresFeature: 'donationTracking'
+              icon: HandHeart,
+              requiresFeature: 'financialManagement',
+              lockedFeature: 'donationTracking'
             },
             {
               name: 'Reports',
@@ -194,8 +200,8 @@ const MerchantLayout = () => {
               requiresFeature: 'financialManagement'
             },
             {
-              name: 'Budgets',
-              href: '/finance/budgets',
+              name: 'Transactions',
+              href: '/finance/transactions',
               icon: Wallet,
               requiresFeature: 'financialManagement'
             }
@@ -234,7 +240,7 @@ const MerchantLayout = () => {
           name: 'Departments', 
           href: '/departments', 
           icon: FolderKanban,
-          requiresFeature: 'memberManagement'
+          requiresFeature: 'departmentManagement'
         },
         { 
           name: 'Members', 
@@ -248,12 +254,6 @@ const MerchantLayout = () => {
               requiresFeature: 'memberManagement'
             },
             {
-              name: 'Add Member',
-              href: '/members/new',
-              icon: Users,
-              requiresFeature: 'memberManagement'
-            },
-            {
               name: 'Birthdays',
               href: '/members/birthdays',
               icon: Cake,
@@ -261,12 +261,12 @@ const MerchantLayout = () => {
             },
           ]
         },
-        { 
-          name: 'Sermons', 
-          href: '/sermons', 
-          icon: FileVolume,
-          requiresFeature: 'sermonManagement'
-        },
+        // { 
+        //   name: 'Sermons', 
+        //   href: '/sermons', 
+        //   icon: FileVolume,
+        //   requiresFeature: 'sermonManagement'
+        // },
         { 
           name: 'Events', 
           href: '/events', 
@@ -283,37 +283,50 @@ const MerchantLayout = () => {
               name: 'Overview',
               href: '/finance/overview',
               icon: PieChart,
-              requiresFeature: 'financialManagement'
+              requiresFeature: 'financialManagement',
+              lockedFeature: null
             },
             {
               name: 'Income',
               href: '/finance/income',
               icon: TrendingUp,
-              requiresFeature: 'financialManagement'
+              requiresFeature: 'financialManagement',
+              lockedFeature: 'incomeTracking'
             },
             {
               name: 'Expenses',
               href: '/finance/expenses',
               icon: Receipt,
-              requiresFeature: 'financialManagement'
+              requiresFeature: 'financialManagement',
+              lockedFeature: 'expenseTracking'
             },
             {
-              name: 'Donations',
-              href: '/finance/donations',
-              icon: DollarSign,
-              requiresFeature: 'donationTracking'
+              name: 'Tithing',
+              href: '/finance/tithing',
+              icon: Wallet,
+              requiresFeature: 'financialManagement',
+              lockedFeature: 'tithingManagement'
             },
             {
               name: 'Reports',
               href: '/finance/reports',
-              icon: BarChart3,
-              requiresFeature: 'financialManagement'
+              icon: FileChartColumn,
+              requiresFeature: 'financialManagement',
+              lockedFeature: 'financialReports'
             },
             {
-              name: 'Budgets',
-              href: '/finance/budgets',
-              icon: Wallet,
-              requiresFeature: 'financialManagement'
+              name: 'Donations',
+              href: '/finance/donations',
+              icon: HandHeart,
+              requiresFeature: 'financialManagement',
+              lockedFeature: 'eventDonations'
+            },
+            {
+              name: 'Transactions',
+              href: '/finance/transactions',
+              icon: BarChart3,
+              requiresFeature: 'financialManagement',
+              lockedFeature: 'transactionManagement'
             }
           ]
         },
@@ -326,31 +339,43 @@ const MerchantLayout = () => {
               name: 'Analytics',
               href: '/messaging/analytics',
               icon: BarChart3,
-              requiresFeature: 'smsCommunications'
+              requiresFeature: 'smsCommunications',
+              lockedFeature: 'smsAnalytics'
             },
             {
               name: 'Send SMS',
               href: '/messaging/send',
               icon: Mail,
-              requiresFeature: 'smsCommunications'
-            },
-            {
-              name: 'Templates',
-              href: '/messaging/templates',
-              icon: FileText,
-              requiresFeature: 'smsCommunications'
+              requiresFeature: 'smsCommunications',
+              lockedFeature: 'smsSend'
             },
             {
               name: 'History',
               href: '/messaging/history',
               icon: History,
-              requiresFeature: 'smsCommunications'
+              requiresFeature: 'smsCommunications',
+              lockedFeature: 'smsHistory'
+            },
+            {
+              name: 'Templates',
+              href: '/messaging/templates',
+              icon: FileText,
+              requiresFeature: 'smsCommunications',
+              lockedFeature: 'smsTemplates'
             },
             {
               name: 'Credits',
               href: '/messaging/credits',
               icon: CreditCard,
-              requiresFeature: 'smsCommunications'
+              requiresFeature: 'smsCommunications',
+              lockedFeature: 'smsCredits'
+            },
+            {
+              name: 'Sender ID',
+              href: '/messaging/sender-id',
+              icon: Send,
+              requiresFeature: 'smsCommunications',
+              lockedFeature: 'smsSenderID'
             }
           ]
         },
@@ -447,6 +472,36 @@ const MerchantLayout = () => {
               {item.children?.map(child => {
                 const ChildIcon = child.icon;
                 const childActive = child.href && isActive(child.href);
+                const isLocked = child.lockedFeature && !hasFeature(child.lockedFeature as any);
+
+                if (isLocked) {
+                  return (
+                    <div
+                      key={child.name}
+                      className="group relative flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg opacity-50 text-gray-500 cursor-not-allowed hover:opacity-60 transition-opacity"
+                    >
+                      <div className="flex items-center">
+                        <ChildIcon className="w-4 h-4 mr-3" />
+                        {child.name}
+                      </div>
+                      <div className="relative flex items-center">
+                        <Lock className="w-4 h-4 text-yellow-400 group-hover:scale-125 transition-transform cursor-help" />
+                        
+                        <div className="absolute right-0 bottom-full mb-3 hidden group-hover:block">
+                          {/* Tooltip Container */}
+                          <div className="bg-white rounded-lg px-2 py-1 whitespace-nowrap animate-in fade-in zoom-in-95 duration-200">
+                            <div className="text-xs bg-white text-black">
+                              Upgrade to unlock
+                            </div>
+                          </div>
+                          
+                          {/* Arrow Pointer */}
+                          <div className="absolute right-3 top-full w-2 h-2 bg-white transform rotate-45 -mt-1 border-r border-b border-gray-200"></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
 
                 return (
                   <Link

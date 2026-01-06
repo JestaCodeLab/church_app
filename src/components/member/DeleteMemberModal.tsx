@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { X, AlertTriangle, Trash2, Archive } from 'lucide-react';
+import { X, AlertTriangle, Trash2, Archive, Loader } from 'lucide-react';
 
 interface DeleteMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDelete: (permanent: boolean) => void;
+  onDelete: (permanent: boolean) => void | Promise<void>;
   memberName: string;
+  isLoading?: boolean;
 }
 
 const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
@@ -13,6 +14,7 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
   onClose,
   onDelete,
   memberName,
+  isLoading = false,
 }) => {
   const [deletePermanently, setDeletePermanently] = useState(false);
 
@@ -136,27 +138,30 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
             <div className="flex items-center justify-end space-x-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                disabled={isLoading}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
-                className={`px-4 py-2 font-medium rounded-lg transition-colors ${
+                disabled={isLoading}
+                className={`px-4 py-2 font-medium rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   deletePermanently
                     ? 'bg-red-600 hover:bg-red-700 text-white'
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >
+                {isLoading && <Loader className="w-4 h-4 animate-spin" />}
                 {deletePermanently ? (
                   <>
-                    <Trash2 className="w-4 h-4 inline mr-2" />
-                    Delete Permanently
+                    <Trash2 className="w-4 h-4" />
+                    <span>{isLoading ? 'Deleting...' : 'Delete Permanently'}</span>
                   </>
                 ) : (
                   <>
-                    <Archive className="w-4 h-4 inline mr-2" />
-                    Archive Member
+                    <Archive className="w-4 h-4" />
+                    <span>{isLoading ? 'Archiving...' : 'Archive Member'}</span>
                   </>
                 )}
               </button>

@@ -6,7 +6,6 @@ import SecuritySettings from '../../components/settings/SecuritySettings';
 import PreferencesSettings from '../../components/settings/PreferencesSettings';
 import AppearanceSettings from '../../components/settings/AppearanceSettings';
 import TeamManagement from '../../components/settings/TeamManagement';
-import SMSSettings from '../../components/settings/SMSSettings';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -26,13 +25,6 @@ const Settings = () => {
     { id: 'team', label: 'Team Management', icon: Users2, component: <TeamManagement />, description: 'Manage your team members and their roles.' },
     { id: 'preferences', label: 'Preferences', icon: SettingsIcon, component: <PreferencesSettings />, description: 'Customize your application experience and notification settings.' },
     { id: 'billing', label: 'Billing & Subscription', icon: CreditCard, component: <BillingSettings />, description: 'View your current plan, upgrade, and manage billing.' },
-    { 
-      id: 'sms', 
-      label: 'SMS Settings', 
-      icon: MessageSquare, 
-      component: <SMSSettings />, 
-      description: 'Configure your SMS sender ID and messaging preferences.' 
-    },
     { id: 'security', label: 'Security', icon: Lock, component: <SecuritySettings />, description: 'Change your password and manage account security.' },
     // { id: 'reports', label: 'Reports & Analytics', icon: BarChart2, component: <div>Reports & Analytics Coming Soon</div>, description: 'View and export your data.' },
   ];

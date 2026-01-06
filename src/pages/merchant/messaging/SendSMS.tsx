@@ -15,10 +15,11 @@ import {
   Search
 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
-import api from '../../../services/api';
+import { merchantAPI } from '../../../services/api';
 import { memberAPI, departmentAPI, branchAPI, messagingAPI } from '../../../services/api';
 import { Link } from 'react-router-dom';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 interface Member {
   _id: string;
@@ -101,6 +102,7 @@ const SendSMS = () => {
     fetchSenderIdStatus();
   }, []);
 
+
   // ✅ Debounced member search
   useEffect(() => {
     if (sendType !== 'members') return;
@@ -162,7 +164,7 @@ const SendSMS = () => {
 
   const fetchSenderIdStatus = async () => {
     try {
-      const response = await api.get('/merchant/sender-id/status');
+      const response = await merchantAPI.getSenderIDStatus();
       setSenderIdStatus(response.data.data);
     } catch (error) {
       console.log('Sender ID not configured');
@@ -300,7 +302,7 @@ const SendSMS = () => {
             showToast.error('Select at least one member');
             return;
           }
-          response = await api.post('/sms/send-to-members', {
+          response = await messagingAPI.sms.sendToMembers({
             memberIds: selectedMembers,
             message,
             category,
@@ -393,7 +395,7 @@ const SendSMS = () => {
   }
 
   return (
-    <>
+    <FeatureGate feature="smsSend">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -432,13 +434,13 @@ const SendSMS = () => {
                 </p>
                 {senderIdStatus.status === 'pending' && (
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    ⏳ Custom sender ID "{senderIdStatus.customSenderId}" is pending approval
+                    Your custom sender ID <b>"{senderIdStatus.customSenderId}"</b> is pending approval
                   </p>
                 )}
                 {senderIdStatus.status === 'none' && (
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    💡 Want to use your church name? {' '}
-                    <Link to="/settings?tab=sms" className="underline font-medium">
+                    Want to use your church name? {' '}
+                    <Link to="/messaging/sender-id" className="underline font-medium">
                       Register a custom sender ID
                     </Link>
                   </p>
@@ -479,7 +481,7 @@ const SendSMS = () => {
                       className={`p-3 rounded-lg border-2 transition-all ${
                         sendType === type.value
                           ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                     >
                       <Icon className="w-5 h-5 mx-auto mb-1" />
@@ -856,7 +858,7 @@ const SendSMS = () => {
           isLoading={sending}
         />
       )}
-    </>
+    </FeatureGate>
   );
 };
 

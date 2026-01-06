@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Building2, Users, Clock, Wifi, UserPlus } from 'lucide-react';
-import { branchAPI, memberAPI } from '../../../services/api';
+import { branchAPI, memberAPI, settingsAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
 import { validatePhone, validateEmail } from '../../../utils/validators';
+import { useResourceLimit } from '../../../hooks/useResourceLimit';
+import { useAuth } from '../../../context/AuthContext';
 
 const NewBranch = () => {
+  const { fetchAndUpdateSubscription } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
-  const [hasPastors, setHasPastors] = useState(true);
   const [serviceTimes, setServiceTimes] = useState<any[]>([
     { day: 'Sunday', service: 'Morning Service', startTime: '09:00', endTime: '11:00' }
   ]);
@@ -66,10 +68,12 @@ const NewBranch = () => {
 
   const [errors, setErrors] = useState<any>({});
   const [amenityInput, setAmenityInput] = useState('');
+  const branchLimit = useResourceLimit('branches');
 
   useEffect(() => {
-    fetchMembers();
+    branchLimit?.canCreate && fetchMembers();
   }, []);
+
 
   const fetchMembers = async () => {
   try {
@@ -79,12 +83,6 @@ const NewBranch = () => {
       status: 'active'
     });
     setMembers(response.data.data.members);
-    
-    // Check if there are any pastors/leaders
-    const pastorsAndLeaders = response.data.data.members.filter((m: any) => 
-      ['pastor', 'elder', 'leader'].includes(m.membershipType)
-    );
-    setHasPastors(pastorsAndLeaders.length > 0);
     
   } catch (error) {
     console.error('Failed to load members');
@@ -243,6 +241,7 @@ const NewBranch = () => {
 
       await branchAPI.createBranch(submitData);
       showToast.success('Branch created successfully');
+      await fetchAndUpdateSubscription();
       navigate('/branches');
     } catch (error: any) {
       showToast.error(error?.response?.data?.message || 'Failed to create branch');
@@ -254,7 +253,7 @@ const NewBranch = () => {
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   return (
-    <FeatureGate feature={'branchManagement'}>
+    <FeatureGate feature={'branchManagement'} usageExceeded={!branchLimit?.canCreate}>
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
       <div className=" dark:bg-gray-900 border-gray-200 rounded-lg dark:border-gray-700 px-6 py-4">

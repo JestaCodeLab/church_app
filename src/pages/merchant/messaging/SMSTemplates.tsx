@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../../services/api';
+import api, { messagingAPI } from '../../../services/api';
 import toast from 'react-hot-toast';
+import { checkFeatureAccess } from '../../../utils/featureAccess';
+import LockedFeature from '../../../components/LockedFeature';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 interface Template {
   _id: string;
@@ -29,6 +32,7 @@ const SMSTemplates: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [hasSMSAccess, setHasSMSAccess] = useState<boolean | null>(null);
 
   // Form state
   const [name, setName] = useState('');
@@ -38,14 +42,22 @@ const SMSTemplates: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    checkSMSAccess();
     fetchTemplates();
     fetchVariables();
   }, []);
 
+  const checkSMSAccess = async () => {
+    const hasAccess = await checkFeatureAccess('smsAutomation', {
+      showErrorToast: false
+    });
+    setHasSMSAccess(hasAccess);
+  };
+
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/sms/templates');
+      const response = await messagingAPI.templates.getAll();
       setTemplates(response.data.data.templates);
     } catch (error: any) {
       toast.error('Failed to load templates');
@@ -57,7 +69,7 @@ const SMSTemplates: React.FC = () => {
 
   const fetchVariables = async () => {
     try {
-      const response = await api.get('/sms/templates/variables');
+      const response = await messagingAPI.templates.getVariables();
       setVariables(response.data.data.variables);
     } catch (error: any) {
       console.error('Failed to load variables', error);
@@ -177,7 +189,8 @@ const SMSTemplates: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <FeatureGate feature="smsTemplates" showUpgrade={!hasSMSAccess}>
+      <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -456,7 +469,9 @@ const SMSTemplates: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </FeatureGate>
+
   );
 };
 

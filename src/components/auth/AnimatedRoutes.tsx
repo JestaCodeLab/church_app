@@ -71,6 +71,8 @@ import BirthdaySettings from '../../pages/merchant/members/BirthdaySettings';
 import AdminLogs from '../../pages/admin/logs/AdminLogs';
 import PublicEventDonation from '../../pages/public/PublicEventDonation';
 import DonationStatus from '../../pages/public/DonationStatus';
+import SMSSettings from '../../pages/merchant/messaging/SMSSettings';
+import AdminSenderIds from '../../pages/admin/sms/AdminSenderIds';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -193,6 +195,7 @@ const AnimatedRoutes = () => {
           <Route path="/messaging/templates" element={<SMSTemplates />} />
           <Route path="/messaging/history" element={<SMSHistory />} />
           <Route path="/messaging/credits" element={<SMSCredits />} />
+          <Route path="/messaging/sender-id" element={<SMSSettings />} />
 
             <Route path="/settings" element={<Settings />} />
           </Route>
@@ -222,6 +225,7 @@ const AnimatedRoutes = () => {
             <Route path="/admin/discounts/:id/edit" element={<AdminEditDiscount />} />
 
             {/* ✅ NEW: Messaging Routes */}
+            <Route path="/admin/sender-ids" element={<AdminSenderIds />} />
             <Route path="/admin/sms-packages" element={<SMSPackages />} />
             <Route path="/admin/sms-statistics" element={<SMSStatistics />} />
             <Route path="/admin/sms-balance" element={<AdminSMSBalance />} />

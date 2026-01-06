@@ -302,7 +302,7 @@ const DepartmentDetails = () => {
             </div>
             
             <div>
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-col items-start space-y-2">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {department.name}
                 </h1>

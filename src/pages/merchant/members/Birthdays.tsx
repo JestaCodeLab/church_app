@@ -13,13 +13,14 @@ import {
   Loader,
   Search,
   Download,
-  Filter,
+  Zap,
   Cake,
   MessageSquare
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
+import { checkFeatureAccess } from '../../../utils/featureAccess';
 
 interface Birthday {
   _id: string;
@@ -65,6 +66,7 @@ interface AutomationSettings {
 }
 
 const Birthdays: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [birthdays, setBirthdays] = useState<Birthday[]>([]);
   const [todaysBirthdays, setTodaysBirthdays] = useState<Birthday[]>([]);
@@ -72,12 +74,12 @@ const Birthdays: React.FC = () => {
   const [stats, setStats] = useState<BirthdayStats | null>(null);
   const [automationSettings, setAutomationSettings] = useState<AutomationSettings | null>(null);
   const [smsCredits, setSmsCredits] = useState<number>(0);
+  const [hasSmsAutomationAccess, setHasSmsAutomationAccess] = useState<boolean>(false);
   
   const [loading, setLoading] = useState(true);
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBranch, setFilterBranch] = useState('');
-  const [showAutomationModal, setShowAutomationModal] = useState(false);
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -86,7 +88,13 @@ const Birthdays: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    checkSmsAutomationAccess();
   }, [selectedMonth]);
+
+  const checkSmsAutomationAccess = async () => {
+    const hasAccess = await checkFeatureAccess('smsAutomation', {showErrorToast: false});
+    setHasSmsAutomationAccess(hasAccess);
+  };
 
   const fetchData = async () => {
     try {
@@ -150,24 +158,6 @@ const Birthdays: React.FC = () => {
     }
   };
 
-  const handleToggleAutomation = async () => {
-    try {
-      const newStatus = !automationSettings?.enabled;
-      await api.put('/birthdays/automation/settings', {
-        enabled: newStatus
-      });
-      
-      setAutomationSettings(prev => prev ? { ...prev, enabled: newStatus } : null);
-      showToast.success(
-        newStatus 
-          ? 'Birthday automation enabled! Messages will be sent automatically.' 
-          : 'Birthday automation disabled.'
-      );
-    } catch (error: any) {
-      showToast.error('Failed to update automation settings');
-    }
-  };
-
   const exportBirthdays = () => {
     const csv = [
       ['Name', 'Date of Birth', 'Age', 'Phone', 'Email', 'Branch'].join(','),
@@ -224,13 +214,6 @@ const Birthdays: React.FC = () => {
             <Download className="w-4 h-4 mr-2" />
             Export
           </button>
-          <Link
-            to="/members/birthdays/settings"
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Link>
         </div>
       </div>
 
@@ -266,23 +249,46 @@ const Birthdays: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm font-medium">Automation</p>
-              <p className="text-lg font-semibold mt-1">
-                {automationSettings?.enabled ? 'Enabled' : 'Disabled'}
-              </p>
+        {hasSmsAutomationAccess ? (
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium">Automation</p>
+                <p className="text-lg font-semibold mt-1">
+                  {automationSettings?.enabled ? 'Enabled' : 'Disabled'}
+                </p>
+              </div>
+              <Bell className={`w-12 h-12 ${automationSettings?.enabled ? 'text-green-200' : 'text-green-300/50'}`} />
             </div>
-            <Bell className={`w-12 h-12 ${automationSettings?.enabled ? 'text-green-200' : 'text-green-300/50'}`} />
+            <button
+              onClick={() => navigate('/members/birthdays/settings')}
+              className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+            >
+              {automationSettings?.enabled ? 'Disable' : 'Enable'} Automation
+            </button>
           </div>
-          <button
-            onClick={handleToggleAutomation}
-            className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
-          >
-            {automationSettings?.enabled ? 'Disable' : 'Enable'} Automation
-          </button>
-        </div>
+        ) : (
+          <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 rounded-xl p-6 text-white relative overflow-hidden group">
+            {/* Background shimmer effect */}
+            <div className="inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            
+            <div className="flex flex-row items-start justify-between py-0">
+              <div className='text-left'>
+                <p className="text-lg font-bold text-white">Premium Feature</p>
+                <p className="text-sm text-white/90 mb-2">
+                  Birthday Automation & Settings
+                </p>
+                  <div onClick={() => navigate('/settings?tab=billing')} className="cursor-pointer bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-sm w-fit hover:bg-white/30 transition">
+                    <p className="font-semibold">Unlock Feature</p>
+                  </div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 group-hover:scale-110 transition-transform">
+                <Zap className="w-8 h-8 text-yellow-300" />
+              </div>
+              
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Automation Status Banner */}
@@ -520,7 +526,7 @@ const Birthdays: React.FC = () => {
               className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
               <Send className="w-4 h-4 mr-2" />
-              Send SMS to All ({filteredBirthdays.filter(b => !b.smsSent).length})
+              Send to All ({filteredBirthdays.filter(b => !b.smsSent).length})
             </button>
           )}
         </div>

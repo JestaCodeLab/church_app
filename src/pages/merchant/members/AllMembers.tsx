@@ -15,7 +15,7 @@ const AllMembers = () => {
   const { user } = useAuth();
   const plan = user?.merchant?.subscription?.plan;
   const merchantId = user?.merchant?.id;
-  const merchantName = user?.merchant?.name || 'Church'; // ⭐ NEW: Get church name
+  const merchantName = user?.merchant?.name || 'Church'; 
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -37,7 +37,7 @@ const AllMembers = () => {
     female: 0,
     leaders: { pastors: 0, elders: 0, deacons: 0, leaders: 0, total: 0},
     members: 0,
-    firstTimers: 0, 
+    firstTimersCount: 0, 
   });
   
   // Pagination
@@ -48,6 +48,9 @@ const AllMembers = () => {
   // Delete Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   // Filters
   const [filters, setFilters] = useState({
@@ -88,11 +91,7 @@ const AllMembers = () => {
       };
 
       if (activeTab !== 'all') {
-        if (activeTab === 'first-timer') {
-          params.registrationType = 'first-timer';
-        } else {
-          params.membershipType = activeTab;
-        }
+        params.membershipType = activeTab;
       }
 
       if (filters.status) params.status = filters.status;
@@ -141,7 +140,7 @@ const AllMembers = () => {
         female: genderMap.female || 0,
         leaders: data?.leaders,
         members: data?.regularMembers || 0,
-        firstTimers: statusMap.first_timer || 0, 
+        firstTimersCount: data?.firstTimersCount || 0, 
       });
     } catch (error) {
       console.error('Failed to load stats');
@@ -189,6 +188,52 @@ const AllMembers = () => {
       name: member.fullName || `${member.firstName} ${member.lastName}`
     });
     setShowDeleteModal(true);
+  };
+
+  const toggleMemberSelection = (memberId: string) => {
+    const newSelected = new Set(selectedMembers);
+    if (newSelected.has(memberId)) {
+      newSelected.delete(memberId);
+    } else {
+      newSelected.add(memberId);
+    }
+    setSelectedMembers(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedMembers.size === members.length) {
+      setSelectedMembers(new Set());
+    } else {
+      const allIds = new Set(members.map(m => m._id));
+      setSelectedMembers(allIds);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedMembers.size === 0) return;
+    setShowBulkDeleteModal(true);
+  };
+
+  const confirmBulkDelete = async (permanent: boolean) => {
+    setIsDeleting(true);
+    try {
+      const memberIds = Array.from(selectedMembers);
+      
+      // Delete members one by one
+      for (const memberId of memberIds) {
+        await memberAPI.deleteMember(memberId);
+      }
+      
+      showToast.success(`${selectedMembers.size} member(s) deleted successfully`);
+      setSelectedMembers(new Set());
+      setShowBulkDeleteModal(false);
+      await fetchMembers();
+      await fetchStats();
+    } catch (error: any) {
+      showToast.error('Failed to delete some members');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSuccess = async() => {
@@ -253,7 +298,7 @@ const AllMembers = () => {
     { id: 'leader', label: 'Leaders', count: stats?.leaders?.leaders || 0 },
     { id: 'pastor', label: 'Pastors', count: stats?.leaders?.pastors || 0 },
     { id: 'member', label: 'Members', count: stats?.members || 0 },
-    { id: 'first-timer', label: 'First Timers', count: stats?.firstTimers || 0 },
+    { id: 'first-timer', label: 'First Timers', count: stats?.firstTimersCount || 0 },
   ];
 
   const handleTabClick = (tab: any) => {
@@ -277,8 +322,9 @@ const AllMembers = () => {
       youth: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
       children: 'bg-pink-100 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300',
       visitor: 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300',
+      
     };
-    return colors[role] || colors.member;
+    return colors[role] || colors.visitor;
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -307,7 +353,8 @@ const AllMembers = () => {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          {/* Export Button */}
+
+        {/* Export Button */}
           <button
             onClick={handleExport}
             disabled={isExporting || members.length === 0}
@@ -329,7 +376,6 @@ const AllMembers = () => {
           {/* Add Member Button */}
           <button
             onClick={handleAddMemberClick}
-            disabled={!memberLimit.canCreate}
             className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               memberLimit.canCreate
                 ? 'text-white bg-primary-600 hover:bg-primary-700'
@@ -347,38 +393,6 @@ const AllMembers = () => {
           </button>
         </div>
       </div>
-
-      {/* Member Limit Alert - Add after header, before Public Registration Link */}
-      {!memberLimit.canCreate && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <TriangleAlert className="h-6 w-6 text-red-600 dark:text-red-400" />
-            </div>
-            <div className="ml-3 flex-1">
-              <h3 className="text-sm font-bold text-red-800 dark:text-red-200">
-                Member Limit Reached
-              </h3>
-              <div className="mt-0 text-sm text-red-700 dark:text-red-300">
-                <p className="mb-2">
-                  You've reached your member limit of <strong>{memberLimit.limit}</strong> members on the <strong className="capitalize">{plan}</strong> plan.
-                </p>
-              </div>
-              <div className="mt-4">
-                <button
-                  onClick={() => navigate('/settings?tab=billing')}
-                  className="inline-flex items-center px-2 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                  </svg>
-                  Upgrade Plan
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Member Usage Card - Progressive status with visual feedback */}
       <div className={`rounded-xl p-6 border-[1px] transition-all ${
@@ -602,15 +616,37 @@ const AllMembers = () => {
             </div>
 
             {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative flex items-center space-x-3">
+              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search members..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
+              {selectedMembers.size > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={isDeleting}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:hover:bg-red-500 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete {selectedMembers.size}
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -631,30 +667,63 @@ const AllMembers = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <label className="inline-flex items-center cursor-pointer group">
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            checked={members.length > 0 && selectedMembers.size === members.length}
+                            onChange={toggleSelectAll}
+                            className="sr-only peer"
+                            title="Select all members"
+                          />
+                          <div className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 peer-checked:bg-primary-600 peer-checked:border-primary-600 dark:peer-checked:bg-primary-600 dark:peer-checked:border-primary-600 transition-all peer-focus:ring-1 peer-focus:ring-primary-500 peer-focus:ring-offset-2 dark:peer-focus:ring-offset-gray-900 peer-focus:ring-offset-0 dark:peer-focus:ring-offset-0 group-hover:border-primary-400 dark:group-hover:border-primary-500"></div>
+                          <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-white hidden peer-checked:block pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        </div>
+                      </label>
+                    </th>
+                    <th className="px-2 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Member
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Branch
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Role
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                   
+                    <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {members.map((member) => (
-                    <tr key={member._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={member._id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                      selectedMembers.has(member._id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    }`}>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <label className="inline-flex items-center cursor-pointer group">
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              checked={selectedMembers.has(member._id)}
+                              onChange={() => toggleMemberSelection(member._id)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 peer-checked:bg-primary-600 peer-checked:border-primary-600 dark:peer-checked:bg-primary-600 dark:peer-checked:border-primary-600 transition-all peer-focus:ring-1 peer-focus:ring-primary-500 peer-focus:ring-offset-2 dark:peer-focus:ring-offset-gray-900 peer-focus:ring-offset-0 dark:peer-focus:ring-offset-0 group-hover:border-primary-400 dark:group-hover:border-primary-500"></div>
+                            <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-white hidden peer-checked:block pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                          </div>
+                        </label>
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
                             <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm">
@@ -683,11 +752,7 @@ const AllMembers = () => {
                           {member.membershipType?.charAt(0).toUpperCase() + member.membershipType?.slice(1)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(member.membershipStatus)}`}>
-                          {member.membershipStatus?.charAt(0).toUpperCase() + member.membershipStatus?.slice(1).replace('_', ' ')}
-                        </span>
-                      </td>
+                      
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
                           <button
@@ -720,6 +785,21 @@ const AllMembers = () => {
             </div>
 
             {/* Pagination */}
+            {/* Selection Info Bar */}
+            {selectedMembers.size > 0 && (
+              <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-700 flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {selectedMembers.size} member{selectedMembers.size !== 1 ? 's' : ''} selected
+                </span>
+                <button
+                  onClick={() => setSelectedMembers(new Set())}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Clear selection
+                </button>
+              </div>
+            )}
+
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
@@ -865,6 +945,18 @@ const AllMembers = () => {
         }}
         onDelete={handleSuccess}
         memberName={selectedMember?.name}
+        isLoading={isDeleting}
+      />
+
+      {/* Bulk Delete Modal */}
+      <DeleteMemberModal
+        isOpen={showBulkDeleteModal}
+        onClose={() => {
+          setShowBulkDeleteModal(false);
+        }}
+        onDelete={confirmBulkDelete}
+        memberName={`${selectedMembers.size} member${selectedMembers.size !== 1 ? 's' : ''}`}
+        isLoading={isDeleting}
       />
 
       <ImportMembersModal

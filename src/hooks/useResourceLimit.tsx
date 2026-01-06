@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 
-export type ResourceType = 'members' | 'branches' | 'events' | 'sermons' | 'users';
+export type ResourceType = 'members' | 'branches' | 'events' | 'sermons' | 'users' | 'departments';
 
 interface ResourceLimitResult {
   canCreate: boolean;

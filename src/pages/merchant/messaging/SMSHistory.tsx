@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, CheckCircle, Clock, XCircle, AlertCircle, Loader } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
+import { checkFeatureAccess } from '../../../utils/featureAccess';
+import LockedFeature from '../../../components/LockedFeature';
 import api, { messagingAPI } from '../../../services/api';
 
 interface Recipient {
@@ -33,10 +35,19 @@ const SMSHistory = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<SmsLog | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [hasSMSAccess, setHasSMSAccess] = useState<boolean | null>(null);
 
   useEffect(() => {
+    checkSMSAccess();
     fetchLogs();
   }, []);
+
+  const checkSMSAccess = async () => {
+    const hasAccess = await checkFeatureAccess('smsHistory', {
+      showErrorToast: false
+    });
+    setHasSMSAccess(hasAccess);
+  };
 
   const fetchLogs = async () => {
     try {
@@ -92,7 +103,14 @@ const SMSHistory = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <LockedFeature
+      featureName="SMS History"
+      description="View SMS messaging history and delivery status. Upgrade your plan to access this feature."
+      isLocked={hasSMSAccess === false}
+      variant="overlay"
+      showUpgradeButton={true}
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           SMS History
@@ -260,7 +278,8 @@ const SMSHistory = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </LockedFeature>
   );
 };
 

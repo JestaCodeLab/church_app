@@ -12,12 +12,15 @@ import {
   Clock,
   Mail,
   Phone,
-  Eye
+  Eye,
+  Grid3x3,
+  List
 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
-import api, { departmentAPI } from '../../../services/api';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+import { departmentAPI } from '../../../services/api';
+import LimitReachedModal from '../../../components/modals/LimitReachedModal';
+import { useAuth } from '../../../context/AuthContext';
+import { useResourceLimit } from '../../../hooks/useResourceLimit';
 
 interface Department {
   _id: string;
@@ -46,6 +49,7 @@ interface Department {
 
 const AllDepartments = () => {
   const navigate = useNavigate();
+  const plan = useAuth()?.user?.merchant?.subscription?.plan
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,19 +57,19 @@ const AllDepartments = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [usageData, setUsageData] = useState<any>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const departmentLimit = useResourceLimit('departments');
 
   useEffect(() => {
     fetchDepartments();
-    fetchUsageData();
   }, [filterActive]);
 
   const fetchDepartments = async () => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      
+      setLoading(true);      
       const params: any = {};
+
       if (filterActive !== null) {
         params.isActive = filterActive;
       }
@@ -82,16 +86,6 @@ const AllDepartments = () => {
     }
   };
 
-  const fetchUsageData = async () => {
-    try {
-      const response = await api.get('/merchants/usage');
-      if (response.data.success) {
-        setUsageData(response.data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch usage data:', error);
-    }
-  };
 
   const handleDelete = async () => {
     if (!departmentToDelete) return;
@@ -126,6 +120,14 @@ const AllDepartments = () => {
     );
   }
 
+    const handleAddDepartmentClick = () => {
+    if (!departmentLimit?.canCreate) {
+      setShowLimitModal(true);
+      return;
+    }
+    navigate('/departments/new');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -140,16 +142,15 @@ const AllDepartments = () => {
         </div>
         <div className="flex flex-col items-end space-y-2">
           <button
-            onClick={() => navigate('/departments/new')}
-            disabled={usageData?.departments?.limit && usageData?.departments?.current >= usageData?.departments?.limit}
+            onClick={handleAddDepartmentClick}
             className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Department
           </button>
-          {usageData?.departments && (
+          {departmentLimit && (
             <p className="text-xs text-gray-600 dark:text-gray-400">
-              {usageData.departments.current} / {usageData.departments.limit || '∞'} used
+              {departmentLimit?.current} / {departmentLimit?.limit || '∞'} used
             </p>
           )}
         </div>
@@ -170,8 +171,36 @@ const AllDepartments = () => {
             />
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex space-x-2">
+          {/* View Toggle & Filter Tabs */}
+          <div className="flex items-center space-x-4">
+            {/* View Toggle */}
+            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                }`}
+                title="Grid view"
+              >
+                <Grid3x3 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                }`}
+                title="List view"
+              >
+                <List className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex space-x-2">
             <button
               onClick={() => setFilterActive(null)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -202,6 +231,7 @@ const AllDepartments = () => {
             >
               Inactive ({departments.filter(d => !d.isActive).length})
             </button>
+            </div>
           </div>
         </div>
       </div>
@@ -226,44 +256,45 @@ const AllDepartments = () => {
             </button>
           )}
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
+        /* Grid View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDepartments.map((dept) => (
             <div
               key={dept._id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
             >
-              {/* Header with color accent */}
+              {/* Header with gradient accent */}
               <div 
-                className="h-2"
-                style={{ backgroundColor: dept.color }}
+                className="h-3"
+                style={{ background: `linear-gradient(90deg, ${dept.color}, ${dept.color}dd)` }}
               />
 
               <div className="p-6">
                 {/* Title & Icon */}
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 flex-1">
                     <div 
-                      className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                      style={{ backgroundColor: `${dept.color}20` }}
+                      className="w-14 h-14 rounded-lg flex items-center justify-center text-3xl flex-shrink-0 shadow-sm"
+                      style={{ backgroundColor: `${dept.color}15`, border: `2px solid ${dept.color}40` }}
                     >
                       {dept.icon}
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-1">
                         {dept.name}
                       </h3>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      <div className="flex items-center space-x-2 mt-1 flex-wrap gap-1">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
                           dept.isActive
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
                         }`}>
-                          {dept.isActive ? 'Active' : 'Inactive'}
+                          {dept.isActive ? '● Active' : '○ Inactive'}
                         </span>
                         {dept.allowSelfRegistration && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                            Open Registration
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                            Open
                           </span>
                         )}
                       </div>
@@ -279,53 +310,56 @@ const AllDepartments = () => {
                 )}
 
                 {/* Stats */}
-                <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <Users className="w-4 h-4 mr-1" />
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">
-                      {dept.memberCount || 0}
-                    </span>
-                    <span className="ml-1">members</span>
-                  </div>
-                </div>
-
-                {/* Leader */}
-                {dept.leader && (
-                  <div className="mb-4">
-                    <div className="flex items-center text-sm">
-                      <UserCheck className="w-4 h-4 text-gray-400 mr-2" />
-                      <span className="text-gray-600 dark:text-gray-400">Leader:</span>
-                      <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-                        {dept.leader.firstName} {dept.leader.lastName}
+                <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3">
+                    <div className="flex items-center space-x-1">
+                      <Users className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {dept.memberCount || 0}
                       </span>
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">Members</p>
                   </div>
-                )}
+                  {dept.meetingSchedule && dept.meetingSchedule.day !== 'None' && (
+                    <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3">
+                      <div className="flex items-center space-x-1">
+                        <Clock className="w-4 h-4 text-gray-500" />
+                        <span className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
+                          {dept.meetingSchedule.frequency}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">{dept.meetingSchedule.day}</p>
+                    </div>
+                  )}
+                </div>
 
-                {/* Meeting Schedule */}
-                {dept.meetingSchedule && dept.meetingSchedule.day !== 'None' && (
-                  <div className="mb-4">
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>
-                        {dept.meetingSchedule.day}s at {dept.meetingSchedule.time}
-                      </span>
+                {/* Leader Info */}
+                {dept.leader && (
+                  <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/10 rounded-lg">
+                    <div className="flex items-center text-sm">
+                      <UserCheck className="w-4 h-4 text-primary-600 dark:text-primary-400 mr-2 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Leader</p>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                          {dept.leader.firstName} {dept.leader.lastName}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={() => navigate(`/departments/${dept._id}`)}
-                    className="inline-flex items-center justify-center px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500 text-white text-sm font-semibold rounded-lg transition-colors"
                   >
                     <Eye className="w-4 h-4 mr-1" />
                     View
                   </button>
                   <button
                     onClick={() => navigate(`/departments/${dept._id}/edit`)}
-                    className="inline-flex items-center justify-center px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center justify-center px-3 py-2 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-semibold rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
@@ -334,7 +368,7 @@ const AllDepartments = () => {
                       setDepartmentToDelete(dept);
                       setShowDeleteModal(true);
                     }}
-                    className="inline-flex items-center justify-center px-3 py-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center justify-center px-3 py-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 text-sm font-semibold rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -342,6 +376,113 @@ const AllDepartments = () => {
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        /* List View */
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Department</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Leader</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Members</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Schedule</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredDepartments.map((dept) => (
+                  <tr key={dept._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <div 
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                          style={{ backgroundColor: `${dept.color}20` }}
+                        >
+                          {dept.icon}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">{dept.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{dept.description}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {dept.leader ? (
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{dept.leader.firstName} {dept.leader.lastName}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{dept.leader.email}</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        {dept.memberCount || 0}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {dept.meetingSchedule && dept.meetingSchedule.day !== 'None' ? (
+                        <div>
+                          <p className="text-sm text-gray-900 dark:text-gray-100">{dept.meetingSchedule.day}s</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{dept.meetingSchedule.time}</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          dept.isActive
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+                        }`}>
+                          {dept.isActive ? '● Active' : '○ Inactive'}
+                        </span>
+                        {dept.allowSelfRegistration && (
+                          <span className="block inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                            Open
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => navigate(`/departments/${dept._id}`)}
+                          className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                          title="View"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => navigate(`/departments/${dept._id}/edit`)}
+                          className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setDepartmentToDelete(dept);
+                            setShowDeleteModal(true);
+                          }}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -383,6 +524,16 @@ const AllDepartments = () => {
           </div>
         </div>
       )}
+
+      {/* Limit Modal */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        resourceType="departments"
+        planName={plan}
+        current={departmentLimit?.current}
+        limit={departmentLimit?.limit || 0}
+      />
     </div>
   );
 };

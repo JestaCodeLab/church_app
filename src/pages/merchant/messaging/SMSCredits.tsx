@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../../services/api';
 import { usePaystackSMS } from '../../../hooks/usePaystackSMS';
+import { checkFeatureAccess } from '../../../utils/featureAccess';
 import { 
   CreditCard, 
   TrendingUp, 
@@ -15,6 +16,7 @@ import {
   Award
 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
+import FeatureGate from '../../../components/access/FeatureGate';
 
 interface Credits {
   balance: number;
@@ -72,7 +74,6 @@ const MessagingCredits: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { initializePayment } =   usePaystackSMS();
-
   const [credits, setCredits] = useState<Credits | null>(null);
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -80,9 +81,10 @@ const MessagingCredits: React.FC = () => {
   const [purchasing, setPurchasing] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'buy' | 'history'>('buy');
-  const [syncing, setSyncing] = useState(false);
+  const [hasSMSAccess, setHasSMSAccess] = useState<boolean | null>(null);
 
   useEffect(() => {
+    checkSMSAccess();
     fetchData();
     
     // Check for payment verification (fallback for redirect method)
@@ -91,6 +93,13 @@ const MessagingCredits: React.FC = () => {
       verifyPayment(reference);
     }
   }, [searchParams]);
+
+  const checkSMSAccess = async () => {
+    const hasAccess = await checkFeatureAccess('smsCredits', {
+      showErrorToast: false
+    });
+    setHasSMSAccess(hasAccess);
+  };
 
   const fetchData = async () => {
     try {
@@ -215,27 +224,6 @@ const handlePurchase = async (pkg: CreditPackage) => {
     }
   };
 
-  const handleSyncCredits = async () => {
-    try {
-      setSyncing(true);
-      showToast.loading('Syncing plan credits...');
-
-      const response = await api.post('/settings/subscription/sync-credits');
-
-      if (response.data.success) {
-        showToast.success(response.data.message);
-        // Refresh credits data
-        await fetchData();
-      }
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || 'Failed to sync credits';
-      showToast.error(errorMsg);
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-
   const getPackageGradient = (index: number) => {
     const gradients = [
       'from-blue-500 to-blue-600',
@@ -288,7 +276,8 @@ const handlePurchase = async (pkg: CreditPackage) => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <FeatureGate feature="smsCredits" showUpgrade={!hasSMSAccess}>
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -300,15 +289,6 @@ const handlePurchase = async (pkg: CreditPackage) => {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={handleSyncCredits}
-            disabled={syncing}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
-            title="Sync credits from your current subscription plan"
-          >
-            <RefreshCw className={`w-5 h-5 ${syncing ? 'animate-spin' : ''}`} />
-            <span>{syncing ? 'Syncing...' : 'Sync Plan Credits'}</span>
-          </button>
           <button
             onClick={() => fetchData()}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -695,7 +675,8 @@ const handlePurchase = async (pkg: CreditPackage) => {
           </div>
         </>
       )}
-    </div>
+      </div>
+    </FeatureGate>
   );
 };
 

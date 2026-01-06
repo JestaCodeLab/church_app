@@ -1,29 +1,49 @@
 import { useAuth } from '../context/AuthContext';
 
-type Feature = 
+export type Feature = 
+  // Core Features
   | 'memberManagement'
   | 'branchManagement'
+  | 'departmentManagement'
   | 'eventManagement'
   | 'sermonManagement'
   | 'financialManagement'
-  | 'donationTracking'
+  | 'eventDonations'
+  | 'expenseTracking'
+  | 'incomeTracking'
+  | 'tithingManagement'
+  | 'financialReports'
+  | 'transactionManagement'
+  // Communication Features
   | 'emailCommunications'
   | 'smsCommunications'
   | 'bulkMessaging'
+  | 'smsAutomation'
+  | 'smsSend'
+  | 'smsHistory'
+  | 'smsAnalytics'
+  | 'smsTemplates'
+  | 'smsCredits'
+  | 'smsSenderID'
+  // Reporting Features
   | 'basicReports'
   | 'advancedReports'
   | 'customReports'
   | 'dataExport'
+  // Integration Features
   | 'apiAccess'
   | 'webhooks'
   | 'thirdPartyIntegrations'
+  // Support Features
   | 'emailSupport'
   | 'prioritySupport'
   | 'dedicatedAccountManager'
   | 'phoneSupport'
+  // Customization Features
   | 'customBranding'
   | 'customDomain'
   | 'whiteLabel'
+  // Advanced Features
   | 'multiLanguage'
   | 'mobileApp'
   | 'automatedWorkflows';

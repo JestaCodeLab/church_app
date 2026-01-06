@@ -6,6 +6,7 @@ import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
 import { useAuth } from '../../../context/AuthContext';
 import { validateEmail, validatePhone } from '../../../utils/validators';
+import { useResourceLimit } from '../../../hooks/useResourceLimit';
 
 
 const NewMember = () => {
@@ -16,9 +17,10 @@ const NewMember = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [branches, setBranches] = useState<any[]>([]);
   const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
-const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [emailError, setEmailError] = useState<string>('');
   const [phoneError, setPhoneError] = useState<string>('');
+  const memberLimit = useResourceLimit('members');
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -60,26 +62,26 @@ const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   primaryDepartment: '',
   });
 
-  // Fetch departments on mount
-useEffect(() => {
-  fetchDepartments();
-}, []);
 
-const fetchDepartments = async () => {
-  try {
-    const response = await departmentAPI.getDepartments();
-    if (response.data.success) {
-      setAvailableDepartments(response.data.data.departments);
-    }
-  } catch (error) {
-    console.error('Error fetching departments:', error);
-  }
-};
 
-  // ADDED: Fetch branches on component mount
+
   useEffect(() => {
-    fetchBranches();
+    if(memberLimit?.canCreate){
+      fetchBranches();
+      fetchDepartments();
+    }
   }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await departmentAPI.getDepartments();
+      if (response.data.success) {
+        setAvailableDepartments(response.data.data.departments);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  };
 
   const fetchBranches = async () => {
     try {
@@ -238,7 +240,8 @@ const fetchDepartments = async () => {
     try {
       const dataToSubmit = {
         ...formData,
-        ministries: formData.ministries ? formData.ministries.split(',').map(m => m.trim()) : []
+        ministries: formData.ministries ? formData.ministries.split(',').map(m => m.trim()) : [],
+        photo: photoFile // ✅ Include photo file if present
       };
 
       await memberAPI.createMember(dataToSubmit);
@@ -252,7 +255,7 @@ const fetchDepartments = async () => {
   };
 
   return (
-    <FeatureGate feature={'memberManagement'}>
+    <FeatureGate feature={'memberManagement'} usageExceeded={!memberLimit?.canCreate}>
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
       <div className="w-full dark:bg-gray-800 rounded-lg dark:border-gray-700">
@@ -729,6 +732,7 @@ const fetchDepartments = async () => {
                     <option value="youth">Youth</option>
                     <option value="children">Children</option>
                     <option value="visitor">Visitor</option>
+                    <option value="first-timer">First Timer</option>
                   </select>
                 </div>
 
