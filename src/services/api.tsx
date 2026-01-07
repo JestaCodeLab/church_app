@@ -711,4 +711,42 @@ export const eventCodeAPI = {
   regenerateCodes: (eventId: string) => api.post(`/event-codes/regenerate`, { eventId }),
 };
 
+// Finance API
+export const financeAPI = {
+  // Overview & Analytics
+  getOverview: () => api.get('/finance/overview'),
+
+  // Income Operations
+  income: {
+    getAll: (params?: any) => api.get('/finance/income', { params }),
+    create: (data: any) => api.post('/finance/income', data),
+    getOne: (id: string) => api.get(`/finance/income/${id}`),
+    update: (id: string, data: any) => api.put(`/finance/income/${id}`, data),
+    delete: (id: string) => api.delete(`/finance/income/${id}`),
+  },
+
+  // Tithe Operations (uses Income with category='tithe')
+  tithe: {
+    getAll: (params?: any) => api.get('/finance/income', { params: { ...params, category: 'tithe' } }),
+    create: (data: any) => api.post('/finance/income', { ...data, category: 'tithe' }),
+    getOne: (id: string) => api.get(`/finance/income/${id}`),
+    update: (id: string, data: any) => api.put(`/finance/income/${id}`, { ...data, category: 'tithe' }),
+    delete: (id: string) => api.delete(`/finance/income/${id}`),
+    resendSms: (id: string) => api.post(`/finance/tithe/${id}/resend-sms`, {}),
+  },
+
+  // Expense Operations
+  expenses: {
+    getAll: (params?: any) => api.get('/finance/expenses', { params }),
+    create: (data: any) => api.post('/finance/expenses', data),
+    getOne: (id: string) => api.get(`/finance/expenses/${id}`),
+    update: (id: string, data: any) => api.put(`/finance/expenses/${id}`, data),
+    approve: (id: string, notes?: string) => 
+      api.put(`/finance/expenses/${id}/approve`, { approvalNotes: notes }),
+    reject: (id: string, notes?: string) => 
+      api.put(`/finance/expenses/${id}/reject`, { approvalNotes: notes }),
+    delete: (id: string) => api.delete(`/finance/expenses/${id}`),
+  },
+};
+
 export default api;

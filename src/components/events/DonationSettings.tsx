@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Link as LinkIcon, Copy, Check } from 'lucide-react';
+import { DollarSign, Link as LinkIcon, Copy, Check, Share2 } from 'lucide-react';
 
 interface DonationData {
   enabled: boolean;
@@ -27,6 +27,29 @@ const DonationSettings: React.FC<Props> = ({ value, onChange }) => {
       navigator.clipboard.writeText(fullUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const shareDonationLink = async () => {
+    if (value.publicUrl) {
+      const fullUrl = `${window.location.origin}${value.publicUrl}`;
+      
+      // Check if Web Share API is available
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Support Us with a Donation',
+            text: 'Help us by making a donation',
+            url: fullUrl
+          });
+        } catch (error) {
+          // User cancelled the share or an error occurred
+          console.log('Share cancelled or error:', error);
+        }
+      } else {
+        // Fallback: Copy to clipboard if Web Share API not available
+        copyDonationLink();
+      }
     }
   };
 
@@ -178,6 +201,15 @@ const DonationSettings: React.FC<Props> = ({ value, onChange }) => {
                       <span className="text-sm">Copy</span>
                     </>
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={shareDonationLink}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2"
+                  title="Share donation link"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="text-sm">Share</span>
                 </button>
               </div>
               <p className="mt-2 text-xs text-green-700 dark:text-green-300">

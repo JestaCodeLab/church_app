@@ -31,7 +31,8 @@ import {
   Lock,
   Send,
   FileChartColumn,
-  HandHeart
+  HandHeart,
+  Coins
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -324,7 +325,7 @@ const MerchantLayout = () => {
             {
               name: 'Tithing',
               href: '/finance/tithing',
-              icon: Wallet,
+              icon: Coins,
               requiresFeature: 'financialManagement',
               lockedFeature: 'tithingManagement'
             },
@@ -343,9 +344,9 @@ const MerchantLayout = () => {
               lockedFeature: 'eventDonations'
             },
             {
-              name: 'Transactions',
-              href: '/finance/transactions',
-              icon: BarChart3,
+              name: 'My Wallet',
+              href: '/finance/wallet',
+              icon: Wallet,
               requiresFeature: 'financialManagement',
               lockedFeature: 'transactionManagement'
             }

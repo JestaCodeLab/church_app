@@ -720,6 +720,7 @@ const NewEvent: React.FC = () => {
                       <option value="general">General</option>
                       <option value="worship">Worship</option>
                       <option value="prayer">Prayer</option>
+                      <option value="leadership">Leadership</option>
                       <option value="youth">Youth</option>
                       <option value="children">Children</option>
                       <option value="men">Men</option>

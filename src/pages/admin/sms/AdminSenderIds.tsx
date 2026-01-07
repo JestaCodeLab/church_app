@@ -12,7 +12,9 @@ import {
   Building2,
   MessageSquare,
   Check,
-  X
+  X,
+  Trash2,
+  Edit2
 } from 'lucide-react';
 import api from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -40,6 +42,20 @@ const AdminSenderIds = () => {
   const [rejectData, setRejectData] = useState<{ merchantId: string; senderId: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  // ✅ NEW: State for credentials modal
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [credentialsData, setCredentialsData] = useState<{ merchantId: string; churchName: string } | null>(null);
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
+  const [storingCredentials, setStoringCredentials] = useState(false);
+  const [isReapproval, setIsReapproval] = useState(false);
+
+  // ✅ NEW: State for revoke modal
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [revokeData, setRevokeData] = useState<{ merchantId: string; senderId: string } | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
+  const [revoking, setRevoking] = useState<string | null>(null);
+
   const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0 });
 
   useEffect(() => {
@@ -53,12 +69,28 @@ const AdminSenderIds = () => {
         params: statusFilter !== 'all' ? { status: statusFilter } : {}
       });
 
-      setSenderIds(response.data.data.senderIds);
-      setStats({
-        pending: response.data.data.pending,
-        approved: response.data.data.approved,
-        rejected: response.data.data.rejected
+      // Map merchants to SenderIdRequest interface
+      const senderIdRequests = response.data.data.map((merchant: any) => ({
+        merchantId: merchant._id,
+        churchName: merchant.name,
+        email: merchant.email,
+        senderId: merchant.smsConfig?.senderId || 'none',
+        status: merchant.smsConfig?.senderIdStatus || 'none',
+        registeredAt: merchant.smsConfig?.senderIdRegisteredAt || merchant.createdAt,
+        approvedAt: merchant.smsConfig?.senderIdApprovedAt || null,
+        rejectionReason: merchant.smsConfig?.senderIdRejectionReason || null
+      }));
+
+      setSenderIds(senderIdRequests);
+
+      // Calculate stats
+      const stats = { pending: 0, approved: 0, rejected: 0 };
+      senderIdRequests.forEach((item: any) => {
+        if (item.status === 'pending') stats.pending++;
+        else if (item.status === 'approved') stats.approved++;
+        else if (item.status === 'rejected') stats.rejected++;
       });
+      setStats(stats);
     } catch (error: any) {
       showToast.error('Failed to load sender IDs');
       console.error(error);
@@ -67,17 +99,83 @@ const AdminSenderIds = () => {
     }
   };
 
-  const handleApproveSenderId = async (merchantId: string) => {
+  const handleApproveSenderId = async (merchantId: string, churchName: string) => {
+    // ✅ NEW: Show credentials modal instead of approving directly
+    setCredentialsData({ merchantId, churchName });
+    setClientId('');
+    setClientSecret('');
+    setIsReapproval(false);
+    setShowCredentialsModal(true);
+  };
+
+  // ✅ NEW: Handle storing credentials after approval
+  const handleStoreCredentials = async () => {
+    if (!credentialsData || !clientId.trim() || !clientSecret.trim()) {
+      showToast.error('Please provide both Client ID and Client Secret');
+      return;
+    }
+
     try {
-      setApproving(merchantId);
-      const response = await api.post(`/admin/sender-ids/${merchantId}/approve`);
+      setStoringCredentials(true);
       
-      showToast.success(response.data.message);
+      // If this is NOT a reapproval, first approve the sender ID
+      if (!isReapproval) {
+        const approveResponse = await api.post(`/admin/sender-ids/${credentialsData.merchantId}/approve`);
+        showToast.success('Sender ID approved!');
+      }
+
+      // Store/update the credentials
+      const credResponse = await api.post(`/admin/sender-ids/${credentialsData.merchantId}/credentials`, {
+        clientId: clientId.trim(),
+        clientSecret: clientSecret.trim()
+      });
+      
+      showToast.success(isReapproval ? 'Credentials updated successfully!' : 'Hubtel credentials stored successfully!');
+      setShowCredentialsModal(false);
       await fetchSenderIds();
     } catch (error: any) {
-      showToast.error(error.response?.data?.message || 'Failed to approve sender ID');
+      showToast.error(error.response?.data?.message || 'Failed to process sender ID');
     } finally {
-      setApproving(null);
+      setStoringCredentials(false);
+    }
+  };
+
+  // ✅ NEW: Handle reapproval for already approved sender IDs
+  const handleReapproveSenderId = async (merchantId: string, churchName: string) => {
+    setCredentialsData({ merchantId, churchName });
+    setClientId('');
+    setClientSecret('');
+    setIsReapproval(true);
+    setShowCredentialsModal(true);
+  };
+
+  // ✅ NEW: Handle opening revoke modal
+  const handleOpenRevokeModal = (merchantId: string, senderId: string) => {
+    setRevokeData({ merchantId, senderId });
+    setRevokeReason('');
+    setShowRevokeModal(true);
+  };
+
+  // ✅ NEW: Handle revoking approved sender ID
+  const handleRevokeSenderId = async () => {
+    if (!revokeData || !revokeReason.trim()) {
+      showToast.error('Please provide a reason for revocation');
+      return;
+    }
+
+    try {
+      setRevoking(revokeData.merchantId);
+      const response = await api.post(`/admin/sender-ids/${revokeData.merchantId}/revoke`, {
+        reason: revokeReason.trim()
+      });
+
+      showToast.success(response.data.message);
+      setShowRevokeModal(false);
+      await fetchSenderIds();
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to revoke sender ID');
+    } finally {
+      setRevoking(null);
     }
   };
 
@@ -276,7 +374,7 @@ const AdminSenderIds = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <Building2 className="w-4 h-4 text-gray-400" />
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                        <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
                           {item.churchName}
                         </span>
                       </div>
@@ -308,13 +406,13 @@ const AdminSenderIds = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {item.status === 'pending' && (
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleApproveSenderId(item.merchantId)}
-                            disabled={approving === item.merchantId}
-                            className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-sm rounded font-medium flex items-center space-x-1 transition-colors"
+                            onClick={() => handleApproveSenderId(item.merchantId, item.churchName)}
+                            disabled={storingCredentials}
+                            className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
                           >
-                            {approving === item.merchantId ? (
+                            {storingCredentials ? (
                               <Loader className="w-4 h-4 animate-spin" />
                             ) : (
                               <Check className="w-4 h-4" />
@@ -324,7 +422,7 @@ const AdminSenderIds = () => {
                           <button
                             onClick={() => handleOpenRejectModal(item.merchantId, item.senderId)}
                             disabled={rejecting === item.merchantId}
-                            className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white text-sm rounded font-medium flex items-center space-x-1 transition-colors"
+                            className="px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
                           >
                             {rejecting === item.merchantId ? (
                               <Loader className="w-4 h-4 animate-spin" />
@@ -336,9 +434,29 @@ const AdminSenderIds = () => {
                         </div>
                       )}
                       {item.status === 'approved' && (
-                        <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                          Active
-                        </span>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleReapproveSenderId(item.merchantId, item.churchName)}
+                            title="Update credentials"
+                            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            <span className="hidden sm:inline">Update</span>
+                          </button>
+                          <button
+                            onClick={() => handleOpenRevokeModal(item.merchantId, item.senderId)}
+                            disabled={revoking === item.merchantId}
+                            title="Revoke approval"
+                            className="px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
+                          >
+                            {revoking === item.merchantId ? (
+                              <Loader className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                            <span className="hidden sm:inline">Revoke</span>
+                          </button>
+                        </div>
                       )}
                       {item.status === 'rejected' && (
                         <div className="text-right">
@@ -418,6 +536,153 @@ const AdminSenderIds = () => {
                   <>
                     <X className="w-4 h-4" />
                     <span>Confirm Rejection</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ NEW: Credentials Modal */}
+      {showCredentialsModal && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 space-y-4">
+            {/* Header */}
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Store Hubtel Credentials
+              </h2>
+            </div>
+
+            {/* Info */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <strong>{credentialsData?.churchName}</strong> has their own Hubtel account. Please enter their credentials below.
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="space-y-3">
+              {/* Client ID */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Client ID <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  placeholder="Enter Hubtel Client ID"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Client Secret */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Client Secret <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={clientSecret}
+                  onChange={(e) => setClientSecret(e.target.value)}
+                  placeholder="Enter Hubtel Client Secret"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowCredentialsModal(false)}
+                disabled={storingCredentials}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleStoreCredentials}
+                disabled={!clientId.trim() || !clientSecret.trim() || storingCredentials}
+                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                {storingCredentials ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Approve & Store</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ NEW: Revoke Modal */}
+      {showRevokeModal && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 space-y-4">
+            {/* Header */}
+            <div className="flex items-center space-x-3">
+              <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Revoke Sender ID
+              </h2>
+            </div>
+
+            {/* Message */}
+            <div className="space-y-3">
+              <p className="text-gray-700 dark:text-gray-300">
+                Are you sure you want to revoke the sender ID <strong className="font-mono">"{revokeData?.senderId}"</strong>? This will disable SMS sending for this sender ID.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Revocation Reason <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  placeholder="Explain why this sender ID is being revoked..."
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {revokeReason.length}/500 characters
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowRevokeModal(false)}
+                disabled={revoking !== null}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRevokeSenderId}
+                disabled={!revokeReason.trim() || revoking !== null}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                {revoking !== null ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span>Revoking...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Confirm Revocation</span>
                   </>
                 )}
               </button>

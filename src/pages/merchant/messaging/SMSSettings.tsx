@@ -247,7 +247,7 @@ const SMSSettings = () => {
                 <button
                   onClick={handleCancelRequest}
                   disabled={submitting}
-                  className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                 >
                   {submitting ? 'Cancelling...' : 'Cancel Request'}
                 </button>

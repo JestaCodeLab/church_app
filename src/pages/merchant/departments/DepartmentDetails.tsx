@@ -238,12 +238,16 @@ const DepartmentDetails = () => {
 
     try {
       setRemovingMember(true);
-      // Remove department from member's departments array
-      console.log(memberToRemove)
-      const updatedDepartments = memberToRemove?.departments.filter(
-        (dept: any) => dept?.id !== id
+      
+      // ✅ FIXED: Remove department from member's departments array
+      // departments array contains ObjectIds (strings), so compare directly
+      const updatedDepartments = memberToRemove.departments.filter(
+        (deptId: any) => {
+          // Handle both string IDs and object IDs
+          const deptIdString = typeof deptId === 'string' ? deptId : deptId?._id || deptId?.id;
+          return deptIdString !== id;
+        }
       );
-      console.log('here 2 ==>', updatedDepartments)
 
       await memberAPI.updateMember(memberToRemove._id, {
         departments: updatedDepartments

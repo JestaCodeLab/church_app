@@ -76,6 +76,12 @@ import DonationStatus from '../../pages/public/DonationStatus';
 import SMSSettings from '../../pages/merchant/messaging/SMSSettings';
 import AdminSenderIds from '../../pages/admin/sms/AdminSenderIds';
 import SelectChurch from '../../pages/admin/SelectChurch';
+import FinanceOverview from '../../pages/merchant/finance/FinanceOverview';
+import Income from '../../pages/merchant/finance/Income';
+import Expenses from '../../pages/merchant/finance/Expenses';
+import Transactions from '../../pages/merchant/finance/Transactions';
+import FinancialReports from '../../pages/merchant/finance/FinancialReports';
+import TithingTransactions from '../../pages/merchant/finance/Tithing';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -201,6 +207,15 @@ const AnimatedRoutes = () => {
           <Route path="/messaging/history" element={<SMSHistory />} />
           <Route path="/messaging/credits" element={<SMSCredits />} />
           <Route path="/messaging/sender-id" element={<SMSSettings />} />
+
+            {/* Finance Routes */}
+            <Route path="/finance/overview" element={<FinanceOverview />} />
+            <Route path="/finance/income" element={<Income />} />
+            <Route path="/finance/expenses" element={<Expenses />} />
+            <Route path="/finance/transactions" element={<Transactions />} />
+            <Route path="/finance/reports" element={<FinancialReports />} />
+            <Route path="/finance/tithing" element={<TithingTransactions />} />
+
 
             <Route path="/settings" element={<Settings />} />
           </Route>
