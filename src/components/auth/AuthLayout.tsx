@@ -3,6 +3,7 @@ import { Church } from 'lucide-react';
 import AuthFooter from './AuthFooter';
 import ThemeToggle from '../ui/ThemeToggle';
 import { useMerchant } from '../../context/MerchantContext';
+import { useNavigate } from 'react-router';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   showHeader = true,
   maxWidth = 'md' 
 }) => {
+  const navigate = useNavigate();
   const { merchant, loading: merchantLoading, isMainDomain } = useMerchant();
 
   const maxWidthClasses = {
@@ -59,7 +61,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
       <div className={`${maxWidthClasses[maxWidth]} w-full`}>
         {/* Logo/Brand */}
         { showHeader && (
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 cursor-pointer" onClick={()=>navigate('/')}>
             {merchantLoading ? (
               // Loading state
               <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
