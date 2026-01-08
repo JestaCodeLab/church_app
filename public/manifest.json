@@ -1,7 +1,14 @@
 {
-  "short_name": "The Church HQ",
-  "name": "The Church HQ - Church Management Platform",
-  "description": "Modern church management and member engagement platform",
+  "short_name": "Church HQ",
+  "name": "Church HQ - Church Management Software & Member Engagement Platform",
+  "description": "The ultimate platform for modern churches to manage members, events, donations, communications, and engagement",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "favicon.ico",
@@ -11,16 +18,81 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "logo192-maskable.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "logo512-maskable.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#4F46E5",
-  "background_color": "#ffffff"
+  "shortcuts": [
+    {
+      "name": "Sign In",
+      "short_name": "Sign In",
+      "description": "Sign in to your Church HQ account",
+      "url": "/login",
+      "icons": [
+        {
+          "src": "login-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Register",
+      "short_name": "Register",
+      "description": "Create a new Church HQ account",
+      "url": "/register",
+      "icons": [
+        {
+          "src": "register-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot-540x720.png",
+      "type": "image/png",
+      "sizes": "540x720",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshot-1280x720.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "screenshots_additional": [
+    {
+      "src": "screenshot-member-management.png",
+      "type": "image/png",
+      "sizes": "1280x720"
+    },
+    {
+      "src": "screenshot-events.png",
+      "type": "image/png",
+      "sizes": "1280x720"
+    }
+  ]
 }

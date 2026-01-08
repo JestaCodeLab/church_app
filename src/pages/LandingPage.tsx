@@ -52,6 +52,127 @@ const LandingPage: React.FC = () => {
   const [contactLoading, setContactLoading] = useState(false);
   const [contactSuccess, setContactSuccess] = useState(false);
 
+  // SEO Meta Tags
+  useEffect(() => {
+    document.title = 'Church HQ - Church Management Software & Member Engagement Platform';
+    
+    const updateMetaTag = (name: string, content: string) => {
+      let element = document.querySelector(`meta[name="${name}"]`);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute('name', name);
+        document.head.appendChild(element);
+      }
+      element.setAttribute('content', content);
+    };
+
+    const updateOGTag = (property: string, content: string) => {
+      let element = document.querySelector(`meta[property="${property}"]`);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute('property', property);
+        document.head.appendChild(element);
+      }
+      element.setAttribute('content', content);
+    };
+
+    // Meta Tags
+    updateMetaTag('description', 'Church HQ is the ultimate platform for church management, member engagement, SMS communications, donations, and event planning. Trusted by 5M+ churches.');
+    updateMetaTag('keywords', 'church management software, member management, church app, donation management, SMS church, event planning, church communications, worship management');
+    updateMetaTag('author', 'Church HQ');
+    updateMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+
+    // Open Graph Tags
+    updateOGTag('og:title', 'Church HQ - Church Management Software');
+    updateOGTag('og:description', 'Transform your church operations with Church HQ. Member management, events, donations, and communications all in one platform.');
+    updateOGTag('og:type', 'website');
+    updateOGTag('og:url', 'https://thechurchhq.com');
+    updateOGTag('og:image', 'https://thechurchhq.com/images/og-image.png');
+
+    // Twitter Tags
+    updateMetaTag('twitter:card', 'summary_large_image');
+    updateMetaTag('twitter:title', 'Church HQ - Church Management Software');
+    updateMetaTag('twitter:description', 'Transform your church operations with Church HQ');
+    updateMetaTag('twitter:image', 'https://thechurchhq.com/images/og-image.png');
+
+    // Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', 'https://thechurchhq.com');
+
+    // JSON-LD Structured Data for Organization
+    const organizationSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Church HQ',
+      url: 'https://thechurchhq.com',
+      logo: 'https://thechurchhq.com/logo.png',
+      description: 'The ultimate platform for modern churches to manage members, events, donations, communications, and engagement',
+      sameAs: [
+        'https://www.facebook.com/churchhq',
+        'https://www.twitter.com/churchhq',
+        'https://www.linkedin.com/company/churchhq',
+        'https://www.instagram.com/churchhq'
+      ],
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'Customer Support',
+        email: 'support@thechurchhq.com',
+        availableLanguage: ['en']
+      },
+      address: {
+        '@type': 'PostalAddress',
+        addressCountry: 'Global'
+      }
+    };
+
+    // JSON-LD Structured Data for SoftwareApplication
+    const applicationSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'Church HQ',
+      description: 'Modern church management and member engagement platform',
+      url: 'https://thechurchhq.com',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: ['Web Browser'],
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+        description: 'Free tier available, paid plans starting at $99/month'
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.8',
+        ratingCount: '150'
+      }
+    };
+
+    // Add Organization Schema
+    let orgScript = document.querySelector('script[data-schema="organization"]');
+    if (!orgScript) {
+      orgScript = document.createElement('script');
+      orgScript.setAttribute('type', 'application/ld+json');
+      orgScript.setAttribute('data-schema', 'organization');
+      document.head.appendChild(orgScript);
+    }
+    orgScript.textContent = JSON.stringify(organizationSchema);
+
+    // Add Software Application Schema
+    let appScript = document.querySelector('script[data-schema="application"]');
+    if (!appScript) {
+      appScript = document.createElement('script');
+      appScript.setAttribute('type', 'application/ld+json');
+      appScript.setAttribute('data-schema', 'application');
+      document.head.appendChild(appScript);
+    }
+    appScript.textContent = JSON.stringify(applicationSchema);
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);

@@ -1,3 +1,62 @@
-# https://www.robotstxt.org/robotstxt.html
+# Church HQ - robots.txt
+# Directives for search engine crawlers
+
 User-agent: *
-Disallow:
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /features
+Allow: /pricing
+Allow: /faqs
+Allow: /docs
+Allow: /api/v1/public
+
+# Disallow private and admin paths
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /private
+Disallow: /settings
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /*.pdf
+Disallow: /search?
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+
+# Allow specific crawlers for better SEO
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Social media crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Disable aggressive bots
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+# Crawl delay for polite crawling
+User-agent: *
+Crawl-delay: 1
+Request-rate: 1/1s
+
+# Sitemap location
+Sitemap: https://thechurchhq.com/sitemap.xml
