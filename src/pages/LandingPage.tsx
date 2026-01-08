@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   Menu, X, ArrowRight, Check, ChevronDown, Users, Calendar,
   MessageSquare, DollarSign, BarChart3, Shield, Zap, Globe,
-  ArrowUpRight, Star, Play, Sparkles, TrendingUp, Heart
+  ArrowUpRight, Star, Play, Sparkles, TrendingUp, Heart, User,
+  ChevronLeft, ChevronRight, Facebook, Twitter, Linkedin, Instagram, Mail, Send
 } from 'lucide-react';
 import api from '../services/api';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
+import MobileAppSection from '../components/sections/MobileAppSection';
 
 // Counter Component
 const CounterStat: React.FC<{ value: number; suffix: string; format?: string }> = ({ value, suffix, format }) => {
@@ -44,6 +47,10 @@ const LandingPage: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
   const [pricing, setPricing] = useState<any[]>([]);
   const [loadingPricing, setLoadingPricing] = useState(true);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -77,10 +84,38 @@ const LandingPage: React.FC = () => {
     setMobileMenuOpen(false);
   };
 
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactLoading(true);
+    try {
+      const response = await api.post('/public/contact', {
+        name: contactForm.name,
+        email: contactForm.email,
+        subject: contactForm.subject,
+        message: contactForm.message,
+      });
+      if (response?.data?.success) {
+        setContactSuccess(true);
+        toast.success('Message sent successfully!');
+        setContactForm({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => {
+          setContactModalOpen(false);
+          setContactSuccess(false);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error sending contact form:', error);
+      const errorMessage = (error as any)?.response?.data?.message || 'Failed to send message. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setContactLoading(false);
+    }
+  };
+
   const navItems = [
     { id: 'home', label: 'Home' },
     { id: 'features', label: 'Features' },
-    { id: 'benefits', label: 'Benefits' },
+    { id: 'benefits', label: 'Apps' },
     { id: 'pricing', label: 'Pricing' },
     { id: 'faqs', label: 'FAQs' },
   ];
@@ -124,14 +159,6 @@ const LandingPage: React.FC = () => {
     },
   ];
 
-  const benefits = [
-    'Centralized member database with unlimited contacts',
-    'Automated communication workflows and reminders',
-    'Real-time financial tracking and reporting',
-    'Mobile app for on-the-go access',
-    'Multi-location support for growing churches',
-    'Integration with popular payment processors',
-  ];
 
   const defaultPricing = [
     {
@@ -209,21 +236,53 @@ const LandingPage: React.FC = () => {
       name: 'Pastor Michael',
       role: 'Calvary Baptist Church',
       text: 'Church HQ has transformed how we manage our congregation. The SMS reminders have increased attendance by 40%!',
-      avatar: '👨‍💼'
     },
     {
       name: 'Sister Grace',
       role: 'Grace Assembly',
       text: 'The donation tracking feature has made our financial management so much easier. Highly recommended!',
-      avatar: '👩‍🦱'
     },
     {
       name: 'Bishop Daniel',
       role: 'Zion Ministries',
       text: 'Managing multiple locations is now seamless. This platform is a game-changer for our organization.',
-      avatar: '👨‍💼'
     },
   ];
+
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    setTouchEnd(e.changedTouches[0].clientX);
+    handleSwipe();
+  };
+
+  const handleSwipe = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }
+    if (isRightSwipe) {
+      setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    }
+  };
+
+  const nextTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const prevTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
 
   return (
     <div className="bg-white dark:bg-gray-950 overflow-hidden">
@@ -273,25 +332,30 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* Mobile Menu */}
-          <div className="md:hidden pb-4 space-y-2 border-t border-gray-200 dark:border-gray-800">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-base font-semibold"
-              >
-                {item.label}
-              </button>
-            ))}
-            <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800">
-              <button className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition text-base font-bold" onClick={() => navigate('/login')}>
-                Sign In
-              </button>
-              <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition text-base font-bold" onClick={() => navigate('/register')}>
-                Get Started
-              </button>
+          {mobileMenuOpen && (
+            <div className="md:hidden pb-4 space-y-2 border-t border-gray-200 dark:border-gray-800">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    scrollToSection(item.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-base font-semibold"
+                >
+                  {item.label}
+                </button>
+              ))}
+              <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800">
+                <button className="w-full px-4 py-2 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition text-base font-bold" onClick={() => navigate('/login')}>
+                  Sign In
+                </button>
+                <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition text-base font-bold" onClick={() => navigate('/register')}>
+                  Get Started
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </nav>
 
@@ -304,15 +368,15 @@ const LandingPage: React.FC = () => {
           <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-pink-100 dark:bg-pink-900/20 rounded-full blur-3xl opacity-20"></div>
         </div>
 
-        <div className="max-w-5xl mx-auto">
+        <div className="min-w-7xl mx-auto">
           {/* Centered Content */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-12 mt-8">
             <div className="inline-flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-full mb-6 group cursor-pointer hover:border-blue-300 transition">
               <Sparkles size={16} className="text-blue-600" />
               <span className="text-sm text-blue-600 dark:text-blue-400 font-bold">Modern Church Management</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Ministry Made Simple, <br/>Connection Made Strong
             </h1>
 
@@ -333,7 +397,7 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* Hero Image - Full Width Centered */}
-          <div className="relative mb-12 border-8 border-white dark:border-gray-900 rounded-3xl shadow-2xl mx-auto max-w-4xl">
+          <div className="relative mb-12 border-8 border-white dark:border-blue-900 rounded-[30px] shadow-2xl mx-auto max-w-6xl">
             <div className="absolute -inset-4 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-3xl blur-3xl opacity-60"></div>
             <div className="relative rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
               <img 
@@ -345,7 +409,7 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* Stats - Below Image */}
-          <div className="grid grid-cols-3 gap-6 mb-12 divide-x divide-gray-300 dark:divide-gray-700">
+          <div className="max-w-4xl mx-auto grid grid-cols-3 gap-6 mb-12 divide-x divide-gray-300 dark:divide-gray-700">
             {[
               { value: 50, label: 'Churches', suffix: '+', isCounter: true },
               { value: 20, label: 'Members', suffix: '+', isCounter: true, format: 'K' },
@@ -385,8 +449,8 @@ const LandingPage: React.FC = () => {
       {/* Features Section */}
       <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Powerful Features
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium">
@@ -398,14 +462,22 @@ const LandingPage: React.FC = () => {
             {features.map((feature, i) => (
               <div
                 key={i}
-                className="group relative bg-white dark:bg-gray-800 rounded-2xl p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden"
+                className={`group relative bg-white dark:bg-gray-800 rounded-2xl p-8 transition-all duration-300 border overflow-hidden ${
+                  i === 0
+                    ? 'shadow-2xl -translate-y-2 border-blue-300 dark:border-blue-600'
+                    : 'hover:shadow-2xl hover:-translate-y-2 border-gray-200 dark:border-gray-700'
+                }`}
               >
                 {/* Gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 dark:from-blue-500/10 dark:to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className={`absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 dark:from-blue-500/10 dark:to-purple-500/10 transition-opacity duration-300 ${
+                  i === 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}></div>
                 
                 {/* Icon Container */}
                 <div className="relative mb-6">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center group-hover:scale-125 transition-all duration-300 shadow-lg`}>
+                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg ${
+                    i === 0 ? 'scale-125' : 'group-hover:scale-125'
+                  }`}>
                     <feature.icon className="text-white" size={32} />
                   </div>
                 </div>
@@ -418,7 +490,9 @@ const LandingPage: React.FC = () => {
                   <p className="text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-6">
                     {feature.description}
                   </p>
-                  <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className={`flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-bold transition-opacity duration-300 ${
+                    i === 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`}>
                     <span>Learn more</span>
                     <ArrowUpRight size={18} />
                   </div>
@@ -429,67 +503,14 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section id="benefits" className="py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-950">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-16 items-center mb-24">
-            {/* Left Content */}
-            <div>
-              <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-8 leading-tight" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
-                Why Choose Church HQ?
-              </h2>
-              <ul className="space-y-6">
-                {benefits.map((benefit, i) => (
-                  <li key={i} className="flex items-start space-x-4 group">
-                    <div className="mt-1 flex-shrink-0 p-2 bg-green-100 dark:bg-green-900/30 rounded-lg group-hover:bg-green-200 transition">
-                      <Check className="text-green-600 dark:text-green-400" size={24} />
-                    </div>
-                    <span className="text-lg text-gray-700 dark:text-gray-300 font-medium">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Right Image */}
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-3xl blur-2xl opacity-60"></div>
-              <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="aspect-video bg-gradient-to-br from-blue-200 to-purple-200 dark:from-blue-900/50 dark:to-purple-900/50 rounded-2xl flex items-center justify-center text-6xl hover:scale-110 transition">
-                  📊
-                </div>
-                <div className="mt-6 grid grid-cols-3 gap-4">
-                  {['Real-time Data', 'Live Updates', 'Analytics'].map((label, i) => (
-                    <div key={i} className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-3 text-center">
-                      <div className="text-sm font-bold text-gray-900 dark:text-white">{label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { icon: '⚡', label: 'Lightning Fast', text: 'Optimized for speed' },
-              { icon: '🔐', label: 'Secure', text: 'Enterprise security' },
-              { icon: '🌍', label: 'Global', text: 'Used worldwide' },
-            ].map((stat, i) => (
-              <div key={i} className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 hover:border-blue-300 transition text-center">
-                <div className="text-5xl mb-4">{stat.icon}</div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{stat.label}</h3>
-                <p className="text-gray-600 dark:text-gray-400 font-medium">{stat.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Mobile App Section */}
+      <MobileAppSection />
 
       {/* Pricing Section */}
       <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Transparent Pricing
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400">
@@ -553,7 +574,7 @@ const LandingPage: React.FC = () => {
                       </p>
 
                       <div className="mb-6">
-                        <span className={`text-5xl font-bold ${plan.highlighted ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                        <span className={`text-3xl md:text-5xl font-bold ${plan.highlighted ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
                           {typeof plan.price === 'number' ? `₵${plan.price}` : plan.price}
                         </span>
                         <span className={`text-sm ${plan.highlighted ? 'text-blue-100' : 'text-gray-600 dark:text-gray-400'}`}>
@@ -600,17 +621,18 @@ const LandingPage: React.FC = () => {
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               What Our Users Say
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          {/* Desktop View - Grid */}
+          <div className="hidden md:grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, i) => (
               <div key={i} className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition">
                 <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-2xl">
-                    {testimonial.avatar}
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900 dark:text-white">
@@ -623,6 +645,59 @@ const LandingPage: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* Mobile View - Swipeable Carousel */}
+          <div className="md:hidden">
+            <div
+              className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 min-h-96 flex flex-col justify-between"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 dark:text-white">
+                    {testimonials[currentTestimonial].name}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{testimonials[currentTestimonial].role}</p>
+                </div>
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium mb-8 flex-grow">
+                "{testimonials[currentTestimonial].text}"
+              </p>
+
+              {/* Navigation Controls */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={prevTestimonial}
+                  className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                </button>
+
+                <div className="flex gap-2">
+                  {testimonials.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentTestimonial(i)}
+                      className={`w-2 h-2 rounded-full transition ${
+                        i === currentTestimonial ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={nextTestimonial}
+                  className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -630,7 +705,7 @@ const LandingPage: React.FC = () => {
       <section id="faqs" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Frequently Asked
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 font-medium">
@@ -677,7 +752,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-5xl md:text-6xl font-bold text-white mb-6" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
             Ready to Transform Your Church?
           </h2>
           <p className="text-xl text-blue-100 mb-12 font-medium">
@@ -696,75 +771,175 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-5 gap-12 mb-12">
-            {/* Company Info */}
-            <div>
-              <div className="flex items-center space-x-2 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">CH</span>
+      <footer className="bg-gradient-to-b from-gray-900 to-black text-gray-300 relative overflow-hidden py-16">
+        {/* Animated Background */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-start gap-12 mb-12">
+            {/* Brand Section */}
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-xl">HQ</span>
                 </div>
-                <span className="text-white font-bold">Church HQ</span>
+                <span className="text-2xl font-bold text-white">Church HQ</span>
               </div>
-              <p className="text-sm leading-relaxed">
-                The ultimate platform to manage your church operations with ease.
+              <p className="text-gray-400 mb-8 leading-relaxed">
+                The ultimate platform to manage your church operations with ease. Connect, engage, and grow your faith community.
               </p>
+              <div className="flex space-x-4">
+                <a href="#" aria-label="Facebook" className="w-10 h-10 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition transform hover:scale-110">
+                  <Facebook size={20} />
+                </a>
+                <a href="#" aria-label="Twitter" className="w-10 h-10 bg-gray-800 hover:bg-sky-500 rounded-lg flex items-center justify-center transition transform hover:scale-110">
+                  <Twitter size={20} />
+                </a>
+                <a href="#" aria-label="LinkedIn" className="w-10 h-10 bg-gray-800 hover:bg-blue-700 rounded-lg flex items-center justify-center transition transform hover:scale-110">
+                  <Linkedin size={20} />
+                </a>
+                <a href="#" aria-label="Instagram" className="w-10 h-10 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition transform hover:scale-110">
+                  <Instagram size={20} />
+                </a>
+              </div>
             </div>
 
-            {/* Product Links */}
-            <div>
-              <h4 className="text-white font-bold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm">
-                {['Features', 'Pricing', 'Security', 'Updates'].map((item) => (
-                  <li key={item}><a href="#" className="hover:text-white transition">{item}</a></li>
+            {/* Quick Links */}
+            <div className="flex-1">
+              <h4 className="text-transparent font-bold mb-6 text-lg">Quick Links</h4>
+              <div className="grid grid-cols-2 gap-4">
+                {navItems.map((item: any) => (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    className="text-gray-400 hover:text-white transition text-base font-medium"
+                  >
+                    {item.label}
+                  </button>
                 ))}
-              </ul>
-            </div>
-
-            {/* Resources */}
-            <div>
-              <h4 className="text-white font-bold mb-4">Resources</h4>
-              <ul className="space-y-2 text-sm">
-                {['Documentation', 'API', 'Support', 'Blog'].map((item) => (
-                  <li key={item}><a href="#" className="hover:text-white transition">{item}</a></li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h4 className="text-white font-bold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm">
-                {['About', 'Contact', 'Press', 'Jobs', 'Blog'].map((item) => (
-                  <li key={item}><a href="#" className="hover:text-white transition">{item}</a></li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div>
-              <h4 className="text-white font-bold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                {['Privacy', 'Terms', 'Security', 'Compliance', 'GDPR'].map((item) => (
-                  <li key={item}><a href="#" className="hover:text-white transition">{item}</a></li>
-                ))}
-              </ul>
+                <button
+                  onClick={() => setContactModalOpen(true)}
+                  className="text-gray-400 hover:text-white transition text-base font-medium"
+                >
+                  Contact
+                </button>
+              </div>
             </div>
           </div>
 
+          {/* Divider */}
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-sm">&copy; 2026 Church HQ. All rights reserved.</p>
-              <div className="flex space-x-6 mt-4 md:mt-0">
-                {['Twitter', 'Facebook', 'LinkedIn', 'Instagram'].map((social) => (
-                  <a key={social} href="#" className="text-sm hover:text-white transition">{social}</a>
-                ))}
+              <p className="text-sm text-gray-500">&copy; 2026 Church HQ. All rights reserved.</p>
+              <div className="flex gap-6 mt-4 md:mt-0 text-sm text-gray-500">
+                <a href="#" className="hover:text-white transition">Privacy Policy</a>
+                <a href="#" className="hover:text-white transition">Terms of Service</a>
+                <a href="#" className="hover:text-white transition">Security</a>
               </div>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Contact Modal */}
+      {contactModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="p-8">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-lg flex items-center justify-center">
+                  <Mail size={20} className="text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Get in Touch</h2>
+              </div>
+
+              {contactSuccess ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+                    <Check size={32} className="text-green-600 dark:text-green-400" />
+                  </div>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white text-center">Message Sent!</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-2">We'll get back to you soon.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Your name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+                    <input
+                      type="text"
+                      required
+                      value={contactForm.subject}
+                      onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Message subject"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
+                    <textarea
+                      required
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      placeholder="Your message..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setContactForm({ name: '', email: '', subject: '', message: '' });
+                        setContactModalOpen(false);
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={contactLoading}
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition font-medium flex items-center justify-center space-x-2 disabled:opacity-50"
+                    >
+                      <span>{contactLoading ? 'Sending...' : 'Send'}</span>
+                      <Send size={16} />
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

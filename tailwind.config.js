@@ -31,6 +31,25 @@ module.exports = {
           800: '#065f46',
           900: '#064e3b',
         }
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-15px)' },
+        },
+        'float-alt': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(15px)' },
+        },
+        'float-delayed': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+      },
+      animation: {
+        float: 'float 6s ease-in-out infinite',
+        'float-alt': 'float-alt 7s ease-in-out infinite',
+        'float-delayed': 'float-delayed 8s ease-in-out infinite',
       }
     },
   },
