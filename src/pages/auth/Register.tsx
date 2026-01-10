@@ -7,9 +7,59 @@ import AuthLayout from '../../components/auth/AuthLayout';
 import PageTransition from '../../components/auth/PageTransition';
 import { verificationStorage } from '../../utils/verificationStorage';
 import { validateEmail, validatePhone } from '../../utils/validators';
+import useSEO from '../../hooks/useSEO';
 
 const Register = () => {
   const navigate = useNavigate();
+  
+  // SEO Configuration for Register Page
+  useSEO({
+    title: 'Register Your Church - Church HQ | Free Church Management Software',
+    description: 'Register your church with Church HQ and start managing members, events, donations, and communications today. Free account creation for churches of all sizes.',
+    keywords: 'register church, church registration, church management sign up, church account creation, free church software registration, member management signup',
+    ogTitle: 'Register Your Church - Church HQ',
+    ogDescription: 'Join thousands of churches using Church HQ to streamline their operations. Register your church today.',
+    ogUrl: 'https://thechurchhq.com/register',
+    ogType: 'website',
+    canonicalUrl: 'https://thechurchhq.com/register',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebPage',
+          name: 'Church HQ Registration',
+          url: 'https://thechurchhq.com/register',
+          description: 'Registration page for new Church HQ accounts',
+          publisher: {
+            '@type': 'Organization',
+            name: 'Church HQ',
+            url: 'https://thechurchhq.com'
+          }
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: 'How do I register my church with Church HQ?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Fill out the registration form with your church name, email, phone number, and create a secure password. You will receive an email verification code to activate your account.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'Is Church HQ registration free?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Yes! Church HQ offers a free starter plan. You can upgrade to paid plans for additional features and functionality.'
+              }
+            }
+          ]
+        }
+      ]
+    }
+  });
   
   const [formData, setFormData] = useState({
     churchName: '',

@@ -77,8 +77,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                 />
               </div>
             ) : (
-              // Show default icon
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 rounded-full mb-4 shadow-lg dark:shadow-primary-500/20 transition-all duration-300">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-[20px] mb-4 shadow-lg dark:shadow-primary-500/20 transition-all duration-300">
                 {icon || <Church className="w-8 h-8 text-white" />}
               </div>
             )}

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Church HQ - App Icon Generator</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      background: #1a1a1a;
+      color: white;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #888;
+      margin-bottom: 30px;
+    }
+    .icons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .icon-item {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .icon-item h3 {
+      margin: 10px 0 5px;
+      font-size: 14px;
+    }
+    .icon-item p {
+      color: #888;
+      font-size: 12px;
+      margin: 0;
+    }
+    canvas {
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      max-width: 100%;
+      height: auto;
+    }
+    .download-btn {
+      background: linear-gradient(135deg, #2563eb, #9333ea, #ec4899);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .download-btn:hover {
+      opacity: 0.9;
+    }
+    .download-all {
+      background: linear-gradient(135deg, #2563eb, #9333ea, #ec4899);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 20px 0;
+    }
+    .download-all:hover {
+      opacity: 0.9;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    .section h2 {
+      border-bottom: 2px solid #444;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Church HQ App Icons</h1>
+    <p class="subtitle">Generated icons for iOS, Android, and Web</p>
+    
+    <button class="download-all" onclick="downloadAll()">Download All Icons</button>
+
+    <div class="section">
+      <h2>iOS App Icons</h2>
+      <div class="icons-grid" id="ios-icons"></div>
+    </div>
+
+    <div class="section">
+      <h2>Android App Icons</h2>
+      <div class="icons-grid" id="android-icons"></div>
+    </div>
+
+    <div class="section">
+      <h2>Web Favicons</h2>
+      <div class="icons-grid" id="web-icons"></div>
+    </div>
+  </div>
+
+  <script>
+    // Church icon SVG paths (from Lucide)
+    const churchIconPaths = [
+      "M10 9h4",
+      "M12 7v5",
+      "M14 21v-3a2 2 0 0 0-4 0v3",
+      "m18 9 3.52 2.147a1 1 0 0 1 .48.854V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6.999a1 1 0 0 1 .48-.854L6 9",
+      "M6 21V7a1 1 0 0 1 .376-.782l5-3.999a1 1 0 0 1 1.249.001l5 4A1 1 0 0 1 18 7v14"
+    ];
+    
+    // Icon sizes needed
+    const iosSizes = [
+      { size: 1024, name: 'ios-1024.png', label: 'App Store' },
+      { size: 180, name: 'ios-180.png', label: 'iPhone @3x' },
+      { size: 167, name: 'ios-167.png', label: 'iPad Pro' },
+      { size: 152, name: 'ios-152.png', label: 'iPad @2x' },
+      { size: 120, name: 'ios-120.png', label: 'iPhone @2x' },
+      { size: 76, name: 'ios-76.png', label: 'iPad' },
+      { size: 60, name: 'ios-60.png', label: 'iPhone' },
+      { size: 40, name: 'ios-40.png', label: 'Spotlight' },
+      { size: 29, name: 'ios-29.png', label: 'Settings' }
+    ];
+
+    const androidSizes = [
+      { size: 512, name: 'android-512.png', label: 'Play Store' },
+      { size: 192, name: 'android-192.png', label: 'xxxhdpi' },
+      { size: 144, name: 'android-144.png', label: 'xxhdpi' },
+      { size: 96, name: 'android-96.png', label: 'xhdpi' },
+      { size: 72, name: 'android-72.png', label: 'hdpi' },
+      { size: 48, name: 'android-48.png', label: 'mdpi' }
+    ];
+
+    const webSizes = [
+      { size: 512, name: 'icon-512.png', label: 'PWA Large' },
+      { size: 192, name: 'icon-192.png', label: 'PWA Standard' },
+      { size: 180, name: 'apple-touch-icon.png', label: 'Apple Touch' },
+      { size: 32, name: 'favicon-32x32.png', label: 'Favicon 32' },
+      { size: 16, name: 'favicon-16x16.png', label: 'Favicon 16' }
+    ];
+
+    async function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      canvas.width = size;
+      canvas.height = size;
+
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#2563eb');    // blue-600
+      gradient.addColorStop(0.5, '#9333ea');  // purple-600
+      gradient.addColorStop(1, '#ec4899');    // pink-500
+
+      // Draw rounded rectangle background
+      const radius = size * 0.2; // 20% border radius
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, size, size, radius);
+      ctx.fill();
+
+      // Create SVG with the church icon
+      const iconSize = size * 0.5;
+      const svgString = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 9h4"></path>
+          <path d="M12 7v5"></path>
+          <path d="M14 21v-3a2 2 0 0 0-4 0v3"></path>
+          <path d="m18 9 3.52 2.147a1 1 0 0 1 .48.854V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6.999a1 1 0 0 1 .48-.854L6 9"></path>
+          <path d="M6 21V7a1 1 0 0 1 .376-.782l5-3.999a1 1 0 0 1 1.249.001l5 4A1 1 0 0 1 18 7v14"></path>
+        </svg>
+      `;
+
+      // Convert SVG to image and draw on canvas
+      return new Promise((resolve) => {
+        const img = new Image();
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        
+        img.onload = () => {
+          const iconX = (size - iconSize) / 2;
+          const iconY = (size - iconSize) / 2;
+          ctx.drawImage(img, iconX, iconY, iconSize, iconSize);
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        
+        img.src = url;
+      });
+    }
+
+    async function createIconElement(size, name, label, container) {
+      const canvas = document.createElement('canvas');
+      await drawIcon(canvas, size);
+
+      const div = document.createElement('div');
+      div.className = 'icon-item';
+      
+      div.appendChild(canvas);
+      
+      const h3 = document.createElement('h3');
+      h3.textContent = label;
+      div.appendChild(h3);
+      
+      const p = document.createElement('p');
+      p.textContent = `${size}x${size}px`;
+      div.appendChild(p);
+      
+      const btn = document.createElement('button');
+      btn.className = 'download-btn';
+      btn.textContent = 'Download';
+      btn.onclick = () => downloadIcon(name, size);
+      div.appendChild(btn);
+      
+      container.appendChild(div);
+    }
+
+    async function downloadIcon(name, size) {
+      const canvas = document.createElement('canvas');
+      await drawIcon(canvas, size);
+      
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    async function downloadAll() {
+      const JSZip = await loadJSZip();
+      const zip = new JSZip();
+
+      const allSizes = [
+        ...iosSizes.map(s => ({...s, folder: 'ios'})),
+        ...androidSizes.map(s => ({...s, folder: 'android'})),
+        ...webSizes.map(s => ({...s, folder: 'web'}))
+      ];
+
+      for (const icon of allSizes) {
+        const canvas = document.createElement('canvas');
+        await drawIcon(canvas, icon.size);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve));
+        zip.folder(icon.folder).file(icon.name, blob);
+      }
+
+      const content = await zip.generateAsync({type: 'blob'});
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'church-hq-icons.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function loadJSZip() {
+      if (window.JSZip) return JSZip;
+      return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        script.onload = () => resolve(JSZip);
+        document.head.appendChild(script);
+      });
+    }
+
+    // Generate all icons
+    const iosContainer = document.getElementById('ios-icons');
+    const androidContainer = document.getElementById('android-icons');
+    const webContainer = document.getElementById('web-icons');
+
+    async function generateAllIcons() {
+      for (const icon of iosSizes) {
+        await createIconElement(icon.size, icon.name, icon.label, iosContainer);
+      }
+      for (const icon of androidSizes) {
+        await createIconElement(icon.size, icon.name, icon.label, androidContainer);
+      }
+      for (const icon of webSizes) {
+        await createIconElement(icon.size, icon.name, icon.label, webContainer);
+      }
+    }
+
+    generateAllIcons();
+  </script>
+</body>
+</html>

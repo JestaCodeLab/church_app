@@ -5,12 +5,16 @@ import {
   Menu, X, ArrowRight, Check, ChevronDown, Users, Calendar,
   MessageSquare, DollarSign, BarChart3, Shield, Zap, Globe,
   ArrowUpRight, Star, Play, Sparkles, TrendingUp, Heart, User,
-  ChevronLeft, ChevronRight, Facebook, Twitter, Linkedin, Instagram, Mail, Send
+  ChevronLeft, ChevronRight, Facebook, Twitter, Linkedin, Instagram, Mail, Send,
+  Church
 } from 'lucide-react';
 import api from '../services/api';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 import MobileAppSection from '../components/sections/MobileAppSection';
+import useSEO from '../hooks/useSEO';
+import PageTransition from '../components/auth/PageTransition';
+import FeatureShowcase from '../components/sections/FeatureSection';
 
 // Counter Component
 const CounterStat: React.FC<{ value: number; suffix: string; format?: string }> = ({ value, suffix, format }) => {
@@ -35,9 +39,11 @@ const CounterStat: React.FC<{ value: number; suffix: string; format?: string }> 
     return () => clearInterval(timer);
   }, [value]);
 
-  const displayValue = format === 'M' ? (count / 1000000).toFixed(1) : count;
-  return <>{displayValue}{suffix}</>;
+  const displayValue = format === 'K' ? (count / 1000).toFixed(0) : format === 'M' ? (count / 1000000).toFixed(1) : count;
+  const formatSuffix = format === 'K' ? 'K' : format === 'M' ? 'M' : '';
+  return <>{displayValue}{formatSuffix}{suffix}</>;
 };
+
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -52,126 +58,90 @@ const LandingPage: React.FC = () => {
   const [contactLoading, setContactLoading] = useState(false);
   const [contactSuccess, setContactSuccess] = useState(false);
 
-  // SEO Meta Tags
-  useEffect(() => {
-    document.title = 'Church HQ - Church Management Software & Member Engagement Platform';
-    
-    const updateMetaTag = (name: string, content: string) => {
-      let element = document.querySelector(`meta[name="${name}"]`);
-      if (!element) {
-        element = document.createElement('meta');
-        element.setAttribute('name', name);
-        document.head.appendChild(element);
-      }
-      element.setAttribute('content', content);
-    };
-
-    const updateOGTag = (property: string, content: string) => {
-      let element = document.querySelector(`meta[property="${property}"]`);
-      if (!element) {
-        element = document.createElement('meta');
-        element.setAttribute('property', property);
-        document.head.appendChild(element);
-      }
-      element.setAttribute('content', content);
-    };
-
-    // Meta Tags
-    updateMetaTag('description', 'Church HQ is the ultimate platform for church management, member engagement, SMS communications, donations, and event planning. Trusted by 5M+ churches.');
-    updateMetaTag('keywords', 'church management software, member management, church app, donation management, SMS church, event planning, church communications, worship management');
-    updateMetaTag('author', 'Church HQ');
-    updateMetaTag('viewport', 'width=device-width, initial-scale=1.0');
-
-    // Open Graph Tags
-    updateOGTag('og:title', 'Church HQ - Church Management Software');
-    updateOGTag('og:description', 'Transform your church operations with Church HQ. Member management, events, donations, and communications all in one platform.');
-    updateOGTag('og:type', 'website');
-    updateOGTag('og:url', 'https://thechurchhq.com');
-    updateOGTag('og:image', 'https://thechurchhq.com/images/og-image.png');
-
-    // Twitter Tags
-    updateMetaTag('twitter:card', 'summary_large_image');
-    updateMetaTag('twitter:title', 'Church HQ - Church Management Software');
-    updateMetaTag('twitter:description', 'Transform your church operations with Church HQ');
-    updateMetaTag('twitter:image', 'https://thechurchhq.com/images/og-image.png');
-
-    // Canonical URL
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute('href', 'https://thechurchhq.com');
-
-    // JSON-LD Structured Data for Organization
-    const organizationSchema = {
+  // Comprehensive SEO Configuration for Landing Page
+  useSEO({
+    title: 'Church HQ - Church Management Software & Member Engagement Platform',
+    description: 'Church HQ is the ultimate platform for church management, member engagement, SMS communications, donations, and event planning. Trusted by thousands of churches worldwide.',
+    keywords: 'church management software, member management, member app, donation management, SMS church, event planning, church communications, attendance tracking, tithe management, church engagement platform',
+    author: 'Church HQ',
+    ogTitle: 'Church HQ - Transform Your Church Operations',
+    ogDescription: 'Manage members, events, donations, and communications in one powerful platform designed for modern churches.',
+    ogImage: 'https://thechurchhq.com/images/og-image.png',
+    ogUrl: 'https://thechurchhq.com',
+    ogType: 'website',
+    twitterTitle: 'Church HQ - Church Management Software',
+    twitterDescription: 'The ultimate platform for modern churches. Manage members, events, donations, and communications easily.',
+    twitterImage: 'https://thechurchhq.com/images/og-image.png',
+    canonicalUrl: 'https://thechurchhq.com',
+    structuredData: {
       '@context': 'https://schema.org',
-      '@type': 'Organization',
-      name: 'Church HQ',
-      url: 'https://thechurchhq.com',
-      logo: 'https://thechurchhq.com/logo.png',
-      description: 'The ultimate platform for modern churches to manage members, events, donations, communications, and engagement',
-      sameAs: [
-        'https://www.facebook.com/churchhq',
-        'https://www.twitter.com/churchhq',
-        'https://www.linkedin.com/company/churchhq',
-        'https://www.instagram.com/churchhq'
-      ],
-      contactPoint: {
-        '@type': 'ContactPoint',
-        contactType: 'Customer Support',
-        email: 'support@thechurchhq.com',
-        availableLanguage: ['en']
-      },
-      address: {
-        '@type': 'PostalAddress',
-        addressCountry: 'Global'
-      }
-    };
-
-    // JSON-LD Structured Data for SoftwareApplication
-    const applicationSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Church HQ',
-      description: 'Modern church management and member engagement platform',
-      url: 'https://thechurchhq.com',
-      applicationCategory: 'BusinessApplication',
-      operatingSystem: ['Web Browser'],
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'USD',
-        description: 'Free tier available, paid plans starting at $99/month'
-      },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.8',
-        ratingCount: '150'
-      }
-    };
-
-    // Add Organization Schema
-    let orgScript = document.querySelector('script[data-schema="organization"]');
-    if (!orgScript) {
-      orgScript = document.createElement('script');
-      orgScript.setAttribute('type', 'application/ld+json');
-      orgScript.setAttribute('data-schema', 'organization');
-      document.head.appendChild(orgScript);
+      '@graph': [
+        {
+          '@type': 'Organization',
+          name: 'Church HQ',
+          url: 'https://thechurchhq.com',
+          logo: 'https://thechurchhq.com/logo.png',
+          description: 'The ultimate platform for modern churches to manage members, events, donations, communications, and engagement',
+          sameAs: [
+            'https://www.facebook.com/churchhq',
+            'https://www.twitter.com/churchhq',
+            'https://www.linkedin.com/company/churchhq',
+            'https://www.instagram.com/churchhq'
+          ],
+          contactPoint: {
+            '@type': 'ContactPoint',
+            contactType: 'Customer Support',
+            email: 'support@thechurchhq.com',
+            availableLanguage: ['en']
+          },
+          address: {
+            '@type': 'PostalAddress',
+            addressCountry: 'Global'
+          }
+        },
+        {
+          '@type': 'SoftwareApplication',
+          name: 'Church HQ',
+          description: 'Modern church management and member engagement platform',
+          url: 'https://thechurchhq.com',
+          applicationCategory: 'BusinessApplication',
+          operatingSystem: ['Web', 'iOS', 'Android'],
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'GHS',
+            description: 'Free tier available, paid plans starting at GHS450/month'
+          },
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: '4.8',
+            ratingCount: '150'
+          },
+          featureList: [
+            'Member Management',
+            'Event Planning',
+            'SMS Communications',
+            'Mobile App',
+            'SMS Automations',
+            'Donation Tracking',
+            'Attendance Management',
+            'Financial Reports'
+          ]
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: 'https://thechurchhq.com'
+            }
+          ]
+        }
+      ]
     }
-    orgScript.textContent = JSON.stringify(organizationSchema);
-
-    // Add Software Application Schema
-    let appScript = document.querySelector('script[data-schema="application"]');
-    if (!appScript) {
-      appScript = document.createElement('script');
-      appScript.setAttribute('type', 'application/ld+json');
-      appScript.setAttribute('data-schema', 'application');
-      document.head.appendChild(appScript);
-    }
-    appScript.textContent = JSON.stringify(applicationSchema);
-  }, []);
+  });
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -286,21 +256,21 @@ const LandingPage: React.FC = () => {
       name: 'Starter',
       price: 'Free',
       description: 'Perfect for small churches just starting out',
-      highlights: ['Up to 100 members', 'Basic member management', 'Email support', 'Limited SMS'],
+      highlights: ['Up to 20 members', 'Basic member management', 'Email support', 'Limited SMS'],
       highlighted: false,
       badge: 'Most Popular'
     },
     {
       name: 'Basic',
-      price: 99,
+      price: 450,
       period: '/month',
       description: 'For growing churches',
-      highlights: ['Up to 1,000 members', 'Full member management', 'Event planning', 'Email support', '500 SMS/month'],
+      highlights: ['Up to 1,000 members', 'Full member management', 'Event planning', 'Email support', '5000 SMS/month'],
       highlighted: false
     },
     {
-      name: 'Pro',
-      price: 249,
+      name: 'Growth',
+      price: 750,
       period: '/month',
       description: 'For established churches',
       highlights: ['Unlimited members', 'Advanced analytics', 'Email + Phone support', 'Unlimited SMS', 'Payment processing', 'Multiple locations'],
@@ -405,7 +375,11 @@ const LandingPage: React.FC = () => {
     setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
+  // State for features showcase
+  const [activeFeature, setActiveFeature] = useState(0);
+
   return (
+    <PageTransition>
     <div className="bg-white dark:bg-gray-950 overflow-hidden">
       {/* Navigation */}
       <nav className="fixed w-full bg-white/80 dark:bg-gray-950/80 backdrop-blur-md z-50 border-b border-gray-200 dark:border-gray-800">
@@ -414,7 +388,7 @@ const LandingPage: React.FC = () => {
             {/* Logo */}
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-110 transition">
-                <span className="text-white font-bold text-lg">HQ</span>
+                <Church className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:inline">Church HQ</span>
             </div>
@@ -425,7 +399,7 @@ const LandingPage: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-base font-medium transition"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-base font-normal transition"
                 >
                   {item.label}
                 </button>
@@ -492,17 +466,17 @@ const LandingPage: React.FC = () => {
         <div className="min-w-7xl mx-auto">
           {/* Centered Content */}
           <div className="text-center mb-12 mt-8">
-            <div className="inline-flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-full mb-6 group cursor-pointer hover:border-blue-300 transition">
+            <div className="inline-flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-full mb-6 group hover:border-blue-300 transition">
               <Sparkles size={16} className="text-blue-600" />
-              <span className="text-sm text-blue-600 dark:text-blue-400 font-bold">Modern Church Management</span>
+              <span className="text-sm text-blue-600 dark:text-blue-400 font-bold">Organize . Connect . Grow</span>
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Ministry Made Simple, <br/>Connection Made Strong
             </h1>
 
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed font-medium max-w-2xl mx-auto">
-              Unite your congregation with a platform that makes ministry easier. From member engagement to digital giving, everything your church needs flows seamlessly in one intelligent space.
+            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed font-normal max-w-2xl mx-auto">
+              Unite your congregation with a platform that makes ministry effortless. Member engagement, attendance tracking, digital giving, and communications — everything flows seamlessly in one intelligent space.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -533,7 +507,7 @@ const LandingPage: React.FC = () => {
           <div className="max-w-4xl mx-auto grid grid-cols-3 gap-6 mb-12 divide-x divide-gray-300 dark:divide-gray-700">
             {[
               { value: 50, label: 'Churches', suffix: '+', isCounter: true },
-              { value: 20, label: 'Members', suffix: '+', isCounter: true, format: 'K' },
+              { value: 2000, label: 'Members', suffix: '+', isCounter: true, format: 'K' },
               { value: 99.9, label: 'Uptime', suffix: '%', isCounter: false },
             ].map((stat, i) => (
               <div key={i} className="text-center">
@@ -544,7 +518,7 @@ const LandingPage: React.FC = () => {
                     <>99.9%</>
                   )}
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 font-medium">{stat.label}</div>
+                <div className="text-gray-600 dark:text-gray-400 font-normal">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -554,7 +528,7 @@ const LandingPage: React.FC = () => {
       {/* Trusted By Section */}
       {/* <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-gray-600 dark:text-gray-400 mb-8 font-medium">
+          <p className="text-center text-gray-600 dark:text-gray-400 mb-8 font-normal">
             Trusted by over 1.7 million companies worldwide
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
@@ -567,6 +541,76 @@ const LandingPage: React.FC = () => {
         </div>
       </section> */}
 
+      {/* Features Slide Section */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-950 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Text Content */}
+            <div className="space-y-4 animate-in fade-in slide-in-from-left-8 duration-1000">
+              <div>
+                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+                  Everything Your Church Needs in One Place
+                </h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed font-normal">
+                  Streamline your operations, engage your congregation, and grow your ministry with our comprehensive suite of tools designed specifically for modern churches.
+                </p>
+              </div>
+
+              {/* Features List */}
+              <div className="space-y-4">
+                {[
+                  { icon: Zap, title: 'Automations', desc: 'Set up workflows to automate repetitive tasks and save time' },
+                  { icon: Calendar, title: 'Attendance Tracking', desc: 'Track member attendance automatically with real-time insights' },
+                  { icon: DollarSign, title: 'Givings & Donations', desc: 'Accept online donations and track giving patterns easily' },
+                  { icon: Globe, title: 'Member App', desc: 'Empower members with a dedicated mobile app experience' },
+                ].map((feature, i) => {
+                  const Icon = feature.icon;
+                  return (
+                    <div
+                      key={i}
+                      onMouseEnter={() => setActiveFeature(i)}
+                      onClick={() => setActiveFeature(i)}
+                      className={`flex items-start space-x-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ${
+                        activeFeature === i
+                          ? 'bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 border border-blue-300 dark:border-blue-600'
+                          : 'bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/20 dark:to-transparent hover:from-blue-100 dark:hover:from-blue-900/30 border border-transparent'
+                      }`}
+                    >
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg transition-all duration-300 ${
+                        activeFeature === i
+                          ? 'bg-gradient-to-br from-blue-600 to-purple-600 scale-110'
+                          : 'bg-gradient-to-br from-blue-500 to-purple-500'
+                      }`}>
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className={`font-bold text-lg transition-colors duration-300 ${
+                          activeFeature === i
+                            ? 'text-blue-900 dark:text-blue-200'
+                            : 'text-gray-900 dark:text-white'
+                        }`}>
+                          {feature.title}
+                        </h3>
+                        <p className={`text-sm transition-colors duration-300 ${
+                          activeFeature === i
+                            ? 'text-blue-800 dark:text-blue-300'
+                            : 'text-gray-600 dark:text-gray-400'
+                        }`}>
+                          {feature.desc}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Side - Visual Element */}
+            <FeatureShowcase activeFeature={activeFeature} />
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="max-w-7xl mx-auto">
@@ -574,7 +618,7 @@ const LandingPage: React.FC = () => {
             <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Powerful Features
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-normal">
               Everything you need to run your church efficiently, all in one beautiful platform.
             </p>
           </div>
@@ -608,7 +652,7 @@ const LandingPage: React.FC = () => {
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-6">
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed font-normal mb-6">
                     {feature.description}
                   </p>
                   <div className={`flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-bold transition-opacity duration-300 ${
@@ -762,7 +806,7 @@ const LandingPage: React.FC = () => {
                     <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</p>
                   </div>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium">{testimonial.text}</p>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-normal">{testimonial.text}</p>
               </div>
             ))}
           </div>
@@ -785,7 +829,7 @@ const LandingPage: React.FC = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400">{testimonials[currentTestimonial].role}</p>
                 </div>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium mb-8 flex-grow">
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-normal mb-8 flex-grow">
                 "{testimonials[currentTestimonial].text}"
               </p>
 
@@ -829,7 +873,7 @@ const LandingPage: React.FC = () => {
             <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Frequently Asked
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 font-medium">
+            <p className="text-xl text-gray-600 dark:text-gray-400 font-normal">
               Find answers to common questions about Church HQ
             </p>
           </div>
@@ -856,7 +900,7 @@ const LandingPage: React.FC = () => {
                 </button>
                 {expandedFAQ === i && (
                   <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-top-2">
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium">{faq.a}</p>
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-normal">{faq.a}</p>
                   </div>
                 )}
               </div>
@@ -876,7 +920,7 @@ const LandingPage: React.FC = () => {
           <h2 className="text-4xl md:text-6xl font-bold text-white mb-6" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
             Ready to Transform Your Church?
           </h2>
-          <p className="text-xl text-blue-100 mb-12 font-medium">
+          <p className="text-xl text-blue-100 mb-12 font-normal">
             Join hundreds of churches already using Church HQ to streamline their operations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -905,7 +949,7 @@ const LandingPage: React.FC = () => {
             <div className="flex-1">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-xl">HQ</span>
+                  <Church className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-2xl font-bold text-white">Church HQ</span>
               </div>
@@ -936,14 +980,14 @@ const LandingPage: React.FC = () => {
                   <button
                     key={item.id}
                     onClick={() => scrollToSection(item.id)}
-                    className="text-gray-400 hover:text-white transition text-base font-medium"
+                    className="text-gray-400 hover:text-white transition text-base font-normal"
                   >
                     {item.label}
                   </button>
                 ))}
                 <button
                   onClick={() => setContactModalOpen(true)}
-                  className="text-gray-400 hover:text-white transition text-base font-medium"
+                  className="text-gray-400 hover:text-white transition text-base font-normal"
                 >
                   Contact
                 </button>
@@ -954,11 +998,10 @@ const LandingPage: React.FC = () => {
           {/* Divider */}
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-sm text-gray-500">&copy; 2026 Church HQ. All rights reserved.</p>
+              <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} Church HQ. All rights reserved.</p>
               <div className="flex gap-6 mt-4 md:mt-0 text-sm text-gray-500">
                 <a href="#" className="hover:text-white transition">Privacy Policy</a>
                 <a href="#" className="hover:text-white transition">Terms of Service</a>
-                <a href="#" className="hover:text-white transition">Security</a>
               </div>
             </div>
           </div>
@@ -988,7 +1031,7 @@ const LandingPage: React.FC = () => {
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">Name</label>
                     <input
                       type="text"
                       required
@@ -1000,7 +1043,7 @@ const LandingPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">Email</label>
                     <input
                       type="email"
                       required
@@ -1012,7 +1055,7 @@ const LandingPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">Subject</label>
                     <input
                       type="text"
                       required
@@ -1024,7 +1067,7 @@ const LandingPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
+                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">Message</label>
                     <textarea
                       required
                       value={contactForm.message}
@@ -1042,14 +1085,14 @@ const LandingPage: React.FC = () => {
                         setContactForm({ name: '', email: '', subject: '', message: '' });
                         setContactModalOpen(false);
                       }}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-normal"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={contactLoading}
-                      className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition font-medium flex items-center justify-center space-x-2 disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition font-normal flex items-center justify-center space-x-2 disabled:opacity-50"
                     >
                       <span>{contactLoading ? 'Sending...' : 'Send'}</span>
                       <Send size={16} />
@@ -1062,6 +1105,7 @@ const LandingPage: React.FC = () => {
         </div>
       )}
     </div>
+    </PageTransition>
   );
 };
 

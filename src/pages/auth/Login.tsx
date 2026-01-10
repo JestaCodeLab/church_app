@@ -6,12 +6,38 @@ import AuthLayout from '../../components/auth/AuthLayout';
 import PageTransition from '../../components/auth/PageTransition';
 import { useMerchant } from '../../context/MerchantContext';
 import { validateEmail } from '../../utils/validators';
+import useSEO from '../../hooks/useSEO';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [error, setError] = useState('');
   const { isMainDomain } = useMerchant();
+  
+  // SEO Configuration for Login Page
+  useSEO({
+    title: 'Sign In - Church HQ | Church Management Software',
+    description: 'Sign in to your Church HQ account to manage your church members, events, donations, and communications. Secure login for church administrators and staff.',
+    keywords: 'church login, church management login, sign in, church admin portal, secure church login',
+    ogTitle: 'Sign In - Church HQ',
+    ogDescription: 'Access your church management dashboard on Church HQ',
+    ogUrl: 'https://thechurchhq.com/login',
+    ogType: 'website',
+    canonicalUrl: 'https://thechurchhq.com/login',
+    noindex: false,
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: 'Church HQ Login',
+      url: 'https://thechurchhq.com/login',
+      description: 'Secure login page for Church HQ users',
+      publisher: {
+        '@type': 'Organization',
+        name: 'Church HQ',
+        url: 'https://thechurchhq.com'
+      }
+    }
+  });
   
   const [formData, setFormData] = useState({
     email: '',
