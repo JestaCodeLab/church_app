@@ -1,6 +1,7 @@
 
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { getSecureItem, setSecureItem, clearSecureItems } from '../utils/encryption';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
@@ -22,23 +23,22 @@ const api = axios.create({
 
 // Request interceptor - Check network and add auth token
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     // Check network status before making request
     if (!isOnlineGlobal) {
       toast.error('No internet connection. Please check your network.');
       return Promise.reject(new Error('No internet connection'));
     }
 
-    const token = localStorage.getItem('accessToken');
+    const token = await getSecureItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     // For super admin: add merchant header if merchant is selected
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
+    const user = await getSecureItem('user');
+    if (user) {
       try {
-        const user = JSON.parse(userStr);
         if (user.role?.slug === 'super_admin') {
           const selectedMerchantSubdomain = localStorage.getItem('superAdminSelectedMerchantSubdomain');
           if (selectedMerchantSubdomain) {
@@ -76,23 +76,21 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = await getSecureItem('refreshToken');
         const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refreshToken,
         });
 
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
+        await setSecureItem('accessToken', accessToken);
+        await setSecureItem('refreshToken', newRefreshToken);
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh failed, logout user
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
+        clearSecureItems(['accessToken', 'refreshToken', 'user']);
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }

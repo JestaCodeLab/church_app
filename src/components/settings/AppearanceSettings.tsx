@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Upload, X, Loader } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toasts';
+import { getSecureItem } from '../../utils/encryption';
 import axios from 'axios';
 
 const AppearanceSettings = () => {
@@ -89,7 +90,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     data.append('secondaryColor', formData.secondaryColor);
     data.append('tagline', formData.tagline);
 
-    const token = localStorage.getItem('accessToken');
+    const token = await getSecureItem('accessToken');
     
     const response = await axios.patch(
       `${process.env.REACT_APP_API_URL}/merchants/branding`,

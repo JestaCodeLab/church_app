@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { authAPI, settingsAPI } from '../services/api';
 import useSessionExpiry from '../hooks/useSessionExpiry';
 import SessionExpiryModal from '../components/modals/SessionExpiryModal';
+import { setSecureItem, getSecureItem } from '../utils/encryption';
 
 interface Role {
   _id: string;
@@ -145,6 +146,10 @@ interface LoginResult {
   user?: User;
   requiresOnboarding?: boolean;
   message?: string;
+  statusCode?: number;
+  redirectUrl?: string;
+  correctSubdomain?: string;
+  pendingApproval?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -206,37 +211,53 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const checkAuth = async () => {
-  try {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      const response = await authAPI.getCurrentUser();
-      const userData = response.data.data.user;
+    try {
+      // ✅ Try to get encrypted access token
+      const token = await getSecureItem('accessToken');
       
-      setUser(userData);
-      setIsAuthenticated(true);
-      
-      // ADD: Fetch subscription data if user has a merchant
-      if (userData.merchant) {
-        await fetchAndUpdateSubscription();
+      if (token) {
+        const response = await authAPI.getCurrentUser();
+        const userData = response.data.data.user;
+        
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        // ADD: Fetch subscription data if user has a merchant
+        if (userData.merchant) {
+          await fetchAndUpdateSubscription();
+        }
       }
+      
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      await logout();
+    } finally {
+      setLoading(false);
     }
-    
-  } catch (error) {
-    console.error('Auth check failed:', error);
-    logout();
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const login = async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
       const response = await authAPI.login(credentials);
+      
+      // ✅ Handle 202 Accepted response (cross-domain redirect)
+      if (response.status === 202) {
+        const { redirectUrl, statusCode } = response.data;
+        console.log('✅ 202 redirect response received:', redirectUrl);
+        return {
+          success: true,
+          statusCode: 202,
+          redirectUrl,
+          message: 'Redirecting to your church subdomain...'
+        };
+      }
+      
       const { user, accessToken, refreshToken } = response.data.data;
 
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
+      // ✅ Store tokens securely using encrypted storage
+      await setSecureItem('accessToken', accessToken);
+      await setSecureItem('refreshToken', refreshToken);
+      await setSecureItem('user', user);
 
       setUser(user);
       setIsAuthenticated(true);
@@ -253,9 +274,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
     } catch (error: any) {
       console.error('Login failed:', error);
+      const statusCode = error?.response?.status;
+      const errorData = error?.response?.data;
+      
       return {
         success: false,
-        message: error?.response?.data?.message || 'Login failed. Please try again.',
+        message: errorData?.message || 'Login failed. Please try again.',
+        statusCode,
+        correctSubdomain: errorData?.correctSubdomain,
+        pendingApproval: errorData?.pendingApproval,
+        requiresOnboarding: errorData?.requiresOnboarding,
       };
     }
   };
@@ -266,6 +294,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // ✅ Remove secure items from encrypted storage
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');

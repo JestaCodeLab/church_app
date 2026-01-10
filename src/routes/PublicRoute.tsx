@@ -8,13 +8,13 @@ const PublicRoute = () => {
   const { isMainDomain, loading: merchantLoading } = useMerchant();
   const location = useLocation();
 
-  console.log('🔓 PublicRoute - Rendering:', {
-    isAuthenticated,
-    loading,
-    onboardingCompleted: user?.merchant?.onboardingCompleted,
-    pathname: window.location.pathname,
-    isMainDomain
-  });
+  // console.log('🔓 PublicRoute - Rendering:', {
+  //   isAuthenticated,
+  //   loading,
+  //   onboardingCompleted: user?.merchant?.onboardingCompleted,
+  //   pathname: window.location.pathname,
+  //   isMainDomain
+  // });
 
   if (loading || merchantLoading) {
     return (
@@ -26,7 +26,7 @@ const PublicRoute = () => {
 
   // BLOCK REGISTER/VERIFY-EMAIL ON SUBDOMAIN
   if (!isMainDomain && (location.pathname === '/register' || location.pathname === '/verify-email')) {
-    console.log('🔓 PublicRoute: Register/Verify blocked on subdomain → Redirect to /login');
+    // console.log('🔓 PublicRoute: Register/Verify blocked on subdomain → Redirect to /login');
     return <Navigate to="/login" replace />;
   }
 

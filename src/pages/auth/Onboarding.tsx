@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { merchantAPI, settingsAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { useAuth } from '../../context/AuthContext';
+import { clearSecureItems } from '../../utils/encryption';
 import PageTransition from '../../components/auth/PageTransition';
 import { authAPI } from '../../services/api';
 
@@ -63,10 +64,8 @@ const Onboarding = () => {
   };
 
   const handleLogout = () => {
-  // Clear tokens
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
+  // Clear encrypted tokens
+  clearSecureItems(['accessToken', 'refreshToken', 'user']);
   
   // Show message
   toast.success('Progress saved! You can continue later.');

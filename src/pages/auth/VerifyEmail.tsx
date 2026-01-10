@@ -4,6 +4,7 @@ import { merchantAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { verificationStorage } from '../../utils/verificationStorage';
 import { useAuth } from '../../context/AuthContext';
+import { setSecureItem } from '../../utils/encryption';
 import { Mail, ArrowRight } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import PageTransition from '../../components/auth/PageTransition';
@@ -112,10 +113,10 @@ const VerifyEmail = () => {
 
       const { accessToken, refreshToken, user, merchantId, subdomainOptions } = response.data.data;
 
-      // Save tokens and user to localStorage (auto-login)
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
+      // Save encrypted tokens and user to localStorage (auto-login)
+      await setSecureItem('accessToken', accessToken);
+      await setSecureItem('refreshToken', refreshToken);
+      await setSecureItem('user', user);
 
       // Update auth context
       await checkAuth();

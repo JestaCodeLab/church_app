@@ -341,14 +341,14 @@ const MerchantLayout = () => {
               href: '/finance/donations',
               icon: HandHeart,
               requiresFeature: 'financialManagement',
-              lockedFeature: 'eventDonations'
+              lockedFeature: 'eventDonationss'
             },
             {
               name: 'My Wallet',
               href: '/finance/wallet',
               icon: Wallet,
               requiresFeature: 'financialManagement',
-              lockedFeature: 'transactionManagement'
+              lockedFeature: 'transactionManagements'
             }
           ]
         },
@@ -599,7 +599,9 @@ const MerchantLayout = () => {
               <h2 className="text-white font-semibold text-sm truncate">
                 {user?.merchant?.name || 'Church'}
               </h2>
-              <p className="text-gray-400 text-xs">Admin Panel</p>
+              <p className="text-gray-400 text-xs capitalize">
+                {user?.role?.name || 'User'}
+              </p>
             </div>
           </div>
         </div>

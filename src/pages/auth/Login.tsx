@@ -64,7 +64,26 @@ const handleSubmit = async (e: React.FormEvent) => {
   setError('');
 
   try {
-    const result = await login(formData);
+    // ✅ Extract current subdomain from hostname
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    const currentSubdomain = parts.length > 2 ? parts[0] : null;
+    
+    // ✅ Include subdomain in login payload
+    const loginData = {
+      ...formData,
+      subdomain: currentSubdomain
+    };
+    
+    const result = await login(loginData);
+
+    // ✅ Handle 202 redirect response
+    if ((result as any).statusCode === 202 && (result as any).redirectUrl) {
+      showToast.success('Redirecting to your church subdomain...');
+      console.log('🔄 Redirecting to:', (result as any).redirectUrl);
+      window.location.href = (result as any).redirectUrl;
+      return;
+    }
 
     if (result.success && result.user) {
       showToast.success('Login successful!');
@@ -82,26 +101,40 @@ const handleSubmit = async (e: React.FormEvent) => {
         navigate('/dashboard');
       }
     } else {
+      // ✅ Check result for specific error scenarios
+      if ((result as any).statusCode === 403 && (result as any).correctSubdomain) {
+        const correctSubdomain = (result as any).correctSubdomain;
+        const protocol = window.location.protocol;
+        const redirectUrl = `${protocol}//${correctSubdomain}.thechurchhq.com/login`;
+        showToast.error(`Please login at ${correctSubdomain}.thechurchhq.com...`);
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 1000);
+        return;
+      }
+      
+      // ✅ Handle pending approval
+      if ((result as any).pendingApproval) {
+        setError(result.message || 'Your account is pending approval');
+        showToast.error(result.message || 'Your account is pending approval');
+        return;
+      }
+      
+      // ✅ Handle requires onboarding
+      if (result.requiresOnboarding) {
+        showToast.error(result.message || 'Please complete onboarding');
+        navigate('/onboarding');
+        return;
+      }
+      
       setError(result.message || 'Login failed');
       showToast.error(result.message || 'Login failed');
     }
   } catch (error: any) {
     console.error('Login error:', error);
-    
-    const errorData = error.response?.data;
-    
-    // ✅ Handle pending approval specifically
-    if (errorData?.pendingApproval) {
-      setError(errorData.message);
-      showToast.error(errorData.message);
-    } else if (errorData?.requiresOnboarding) {
-      showToast.error(errorData.message);
-      navigate('/onboarding');
-    } else {
-      const message = errorData?.message || 'Login failed. Please try again.';
-      setError(message);
-      showToast.error(message);
-    }
+    const message = 'Login failed. Please try again.';
+    setError(message);
+    showToast.error(message);
   } finally {
     setLoading(false);
   }

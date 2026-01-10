@@ -300,7 +300,7 @@ const TithingTransactions: React.FC = () => {
 
       {/* Search and Filters Bar */}
       <div className="space-y-4">
-        <div className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-2 border border-gray-200 dark:border-gray-700 shadow-sm">
           <Search className="h-5 w-5 text-gray-400" />
           <input
             type="text"

@@ -83,6 +83,7 @@ import Transactions from '../../pages/merchant/finance/Transactions';
 import FinancialReports from '../../pages/merchant/finance/FinancialReports';
 import TithingTransactions from '../../pages/merchant/finance/Tithing';
 import LandingPage from '../../pages/LandingPage';
+import AuthRedirect from '../../pages/auth/AuthRedirect';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -141,6 +142,7 @@ const AnimatedRoutes = () => {
         {/* Public Routes */}
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/auth-redirect" element={<AuthRedirect />} />
           <Route path="/register" element={
             <RegisterGuard>
               <Register />

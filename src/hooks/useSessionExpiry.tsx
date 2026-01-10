@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getSecureItem, setSecureItem } from '../utils/encryption';
 
 interface SessionExpiryConfig {
   warningTimeBeforeExpiry: number; // in milliseconds (default: 5 minutes)
@@ -36,8 +37,8 @@ export const useSessionExpiry = (config: SessionExpiryConfig): SessionExpiryRetu
   /**
    * Decode JWT token and extract expiration time
    */
-  const getTokenExpiry = useCallback((): number | null => {
-    const token = localStorage.getItem('accessToken');
+  const getTokenExpiry = useCallback(async (): Promise<number | null> => {
+    const token = await getSecureItem('accessToken');
     if (!token) return null;
 
     try {
@@ -62,8 +63,8 @@ export const useSessionExpiry = (config: SessionExpiryConfig): SessionExpiryRetu
   /**
    * Calculate time remaining until token expires
    */
-  const calculateTimeRemaining = useCallback((): number => {
-    const expiryTime = getTokenExpiry();
+  const calculateTimeRemaining = useCallback(async (): Promise<number> => {
+    const expiryTime = await getTokenExpiry();
     if (!expiryTime) return 0;
 
     const now = Date.now();
@@ -74,8 +75,8 @@ export const useSessionExpiry = (config: SessionExpiryConfig): SessionExpiryRetu
   /**
    * Check if we should trigger warning
    */
-  const checkAndTriggerWarning = useCallback(() => {
-    const expiryTime = getTokenExpiry();
+  const checkAndTriggerWarning = useCallback(async () => {
+    const expiryTime = await getTokenExpiry();
     if (!expiryTime) {
       setIsWarningActive(false);
       warningTriggeredRef.current = false;
@@ -109,7 +110,7 @@ export const useSessionExpiry = (config: SessionExpiryConfig): SessionExpiryRetu
    */
   const extendSession = useCallback(async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = await getSecureItem('refreshToken');
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
@@ -132,16 +133,16 @@ export const useSessionExpiry = (config: SessionExpiryConfig): SessionExpiryRetu
       const data = await response.json();
       const { accessToken, refreshToken: newRefreshToken } = data.data;
 
-      // Update tokens in localStorage
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', newRefreshToken);
+      // Update encrypted tokens in localStorage
+      await setSecureItem('accessToken', accessToken);
+      await setSecureItem('refreshToken', newRefreshToken);
 
       // Reset warning state
       setIsWarningActive(false);
       warningTriggeredRef.current = false;
 
       // Restart checking
-      checkAndTriggerWarning();
+      await checkAndTriggerWarning();
     } catch (error) {
       console.error('Failed to extend session:', error);
       throw error;

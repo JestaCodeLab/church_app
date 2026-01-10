@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Mail, Clock, ArrowRight, Home } from 'lucide-react';
+import { clearSecureItems } from '../../utils/encryption';
 import PageTransition from '../auth/PageTransition';
 
 const OnboardingSuccess: React.FC = () => {
@@ -22,10 +23,8 @@ const OnboardingSuccess: React.FC = () => {
   // Clear onboarding data
   localStorage.removeItem('onboardingComplete');
   
-  // Clear all auth tokens
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
+  // Clear all encrypted auth tokens
+  clearSecureItems(['accessToken', 'refreshToken', 'user']);
   
   window.location.href = '/login';
 };
