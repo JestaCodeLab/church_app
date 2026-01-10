@@ -193,11 +193,11 @@ const OnboardingSuccess: React.FC = () => {
             <div className="mt-12 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-500">
                 By completing registration, you agree to our{' '}
-                <a href="#" className="text-primary-600 dark:text-primary-400 hover:underline">
+                <a href="/" className="text-primary-600 dark:text-primary-400 hover:underline">
                 Terms of Service
                 </a>{' '}
                 and{' '}
-                <a href="#" className="text-primary-600 dark:text-primary-400 hover:underline">
+                <a href="/" className="text-primary-600 dark:text-primary-400 hover:underline">
                 Privacy Policy
                 </a>
             </p>

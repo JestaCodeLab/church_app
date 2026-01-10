@@ -205,13 +205,6 @@ const PlanStep: React.FC<PlanStepProps> = ({
         </button>
 
         <div className="flex items-center space-x-3">
-          {/* <button
-            onClick={onSkip}
-            disabled={loading || paymentLoading}
-            className="px-4 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Skip for now
-          </button> */}
           <button
             onClick={handleFinishSetup}
             disabled={loading || paymentLoading }
@@ -224,9 +217,14 @@ const PlanStep: React.FC<PlanStepProps> = ({
               </>
             ) : loading ? (
               'Finishing Setup...'
-            ) : (
+            ) : selectedPlanDetails?.price.amount === 0 ? (
               <>
                 Finish Setup
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </>
+            ) : (
+              <>
+                Proceed to Pay
                 <ArrowRight className="ml-2 w-5 h-5" />
               </>
             )}
