@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Eye, Edit2, Trash2, MapPin, Users, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit2, Trash2, MapPin, Users, Phone, Mail, Church } from 'lucide-react';
 import { branchAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteBranchModal from '../../../components/branch/DeleteBranchModal';
@@ -146,7 +146,7 @@ const Branches = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                Branches & Locations
+                Branches
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Manage your church locations and campuses
@@ -233,97 +233,76 @@ const Branches = () => {
               {branches.map((branch) => (
                 <div
                   key={branch._id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
+                  onClick={() => handleView(branch._id)}
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all cursor-pointer group"
                 >
-                  {/* Branch Header */}
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-start justify-between mb-0">
+                  {/* Header with Church Name and Icon */}
+                  <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Church className="w-5 h-5 text-white" />
+                      </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                           {branch.name}
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {branch.code}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs font-medium capitalize rounded-full ${getTypeBadgeColor(branch.type)}`}>
-                          {branch.type}
-                        </span>
-                        <span className={`px-2 py-1 text-xs font-medium capitalize rounded-full ${getStatusBadgeColor(branch.status)}`}>
-                          {branch.status}
-                        </span>
+                        <div className="mt-0 flex items-center space-x-2">
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getTypeBadgeColor(branch.type)}`}>
+                            {branch.type.charAt(0).toUpperCase() + branch.type.slice(1)}
+                          </span>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadgeColor(branch.status)}`}>
+                            {branch.status.charAt(0).toUpperCase() + branch.status.slice(1)}
+                          </span>
+                          </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Branch Info */}
-                  <div className="p-6 space-y-3">
-                    {/* Address */}
-                    <div className="flex items-start space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {branch.address?.street}, {branch.address?.city}
+                  {/* Content */}
+                  <div className="p-6">
+                    {/* Members Count Box */}
+                    <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-xl p-4 mb-6 flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <span className="text-sm text-green-700 dark:text-green-300 font-medium">Total Members</span>
+                      </div>
+                      <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                        {branch.statistics?.memberCount || 0}
                       </p>
                     </div>
 
-                    {/* Contact */}
-                    {branch.phone && (
+                    {/* Location */}
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase mb-2">Location</p>
                       <div className="flex items-center space-x-2">
-                        <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {branch.phone}
+                        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
+                          {branch.address?.street && branch.address?.city
+                            ? `${branch.address.street}, ${branch.address.city}`
+                            : 'Location not specified'}
                         </p>
                       </div>
-                    )}
-
-                    {branch.email && (
-                      <div className="flex items-center space-x-2">
-                        <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                          {branch.email}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Member Count */}
-                    <div className="flex items-center space-x-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                      <Users className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {branch.statistics?.memberCount || 0} Member(s)
-                      </p>
                     </div>
-
-                    {/* Pastor */}
-                    {branch.pastor && (
-                      <div className="pt-2">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pastor</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {branch.pastor.firstName} {branch.pastor.lastName}
-                        </p>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Actions */}
+                  {/* Actions Footer */}
                   <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2">
                     <button
-                      onClick={() => handleView(branch._id)}
-                      className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                      title="View"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(branch._id)}
-                      className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(branch._id);
+                      }}
+                      className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       title="Edit"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(branch)}
-                      className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(branch);
+                      }}
+                      className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />

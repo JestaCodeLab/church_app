@@ -715,12 +715,17 @@ const LandingPage: React.FC = () => {
                   'text-rose-600 dark:text-rose-400'
                 ];
                 const colorIndex = i % 4;
+                const badgeText = plan.badge?.trim().toLowerCase() || '';
 
                 return (
                   <div
                     key={i}
                     className={`rounded-2xl overflow-hidden transition-all duration-300 border h-full flex flex-col ${
-                      plan.highlighted
+                      badgeText === 'popular'
+                        ? `${plan.highlighted ? 'md:scale-105 shadow-2xl shadow-blue-500/30 dark:ring-offset-gray-950' : ''} bg-blue-600 border-blue-200 dark:border-blue-800`
+                        : badgeText === 'recommended'
+                        ? `${plan.highlighted ? 'md:scale-105 shadow-2xl shadow-green-500/30 dark:ring-offset-gray-950' : ''} bg-green-600 border-green-200 dark:border-green-800`
+                        : plan.highlighted
                         ? `md:scale-105 bg-gradient-to-br from-blue-600 to-indigo-600 shadow-2xl shadow-blue-500/30 border-blue-500 ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-950`
                         : `bg-gradient-to-br ${cardColors[colorIndex]} ${borderColors[colorIndex]} border-2`
                     }`}

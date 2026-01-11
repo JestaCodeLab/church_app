@@ -181,6 +181,7 @@ export const merchantAPI = {
   completeOnboarding: (data: any) => api.put('/merchants/onboarding', data),
   planFeatures: () => api.get('/merchants/plan-features'),
   getSenderIDStatus: () => api.get('/merchants/sender-id/status'),
+  getMerchantBySubdomain: (subdomain: string) => api.get(`/merchants/by-subdomain/${subdomain}`),
 };
 
 // Member API

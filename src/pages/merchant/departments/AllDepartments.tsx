@@ -17,6 +17,7 @@ import {
   List
 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
+import { formatTime } from '../../../utils/timeFormat';
 import { departmentAPI } from '../../../services/api';
 import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
@@ -33,6 +34,7 @@ interface Department {
   } | null;
   contactEmail: string;
   contactPhone: string;
+  branch: any
   meetingSchedule: {
     day: string;
     time: string;
@@ -325,7 +327,7 @@ const AllDepartments = () => {
                       <div className="flex items-center space-x-1">
                         <Clock className="w-4 h-4 text-gray-500" />
                         <span className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
-                          {dept.meetingSchedule.frequency}
+                          {formatTime(dept.meetingSchedule.time)}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">{dept.meetingSchedule.day}</p>
@@ -394,7 +396,7 @@ const AllDepartments = () => {
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredDepartments.map((dept) => (
-                  <tr key={dept._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <tr key={dept._id} onClick={() => navigate(`/departments/${dept._id}`)} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div 
@@ -406,6 +408,9 @@ const AllDepartments = () => {
                         <div>
                           <p className="font-semibold text-gray-900 dark:text-gray-100">{dept.name}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{dept.description}</p>
+                          {dept.branch && (
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0">{dept.branch.name}</p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -428,7 +433,7 @@ const AllDepartments = () => {
                       {dept.meetingSchedule && dept.meetingSchedule.day !== 'None' ? (
                         <div>
                           <p className="text-sm text-gray-900 dark:text-gray-100">{dept.meetingSchedule.day}s</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{dept.meetingSchedule.time}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{formatTime(dept.meetingSchedule.time)}</p>
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
@@ -453,21 +458,18 @@ const AllDepartments = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => navigate(`/departments/${dept._id}`)}
-                          className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
-                          title="View"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => navigate(`/departments/${dept._id}/edit`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/departments/${dept._id}/edit`);
+                          }}
                           className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Edit className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setDepartmentToDelete(dept);
                             setShowDeleteModal(true);
                           }}

@@ -12,7 +12,8 @@ import {
   Heart,
   Users,
   AlertCircle,
-  FileText
+  FileText,
+  Building2
 } from 'lucide-react';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -343,46 +344,47 @@ const MemberDetails = () => {
 
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Church Information */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Church Information
-                </h3>
-              </div>
-              <div className="p-6 space-y-4">
-                {member.baptismDate && (
+            {/* Branch Information */}
+            {member.branch && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <Building2 className="w-5 h-5 mr-2" />
+                    Branch Information
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Baptism Date</p>
-                    <p className="text-gray-900 dark:text-gray-100">{formatDate(member.baptismDate)}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch Name</p>
+                    <button
+                      onClick={() => navigate(`/branches/${member.branch._id}`)}
+                      className="text-primary-600 dark:text-primary-400 hover:underline font-medium"
+                    >
+                      {member.branch.name}
+                    </button>
                   </div>
-                )}
-                {member.salvationDate && (
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Salvation Date</p>
-                    <p className="text-gray-900 dark:text-gray-100">{formatDate(member.salvationDate)}</p>
-                  </div>
-                )}
-                {member.ministries && member.ministries.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
-                      Ministries
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {member.ministries.map((ministry: string, index: number) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-full text-sm font-medium"
-                        >
-                          {ministry}
-                        </span>
-                      ))}
+                  {member.branch.code && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch Code</p>
+                      <p className="text-gray-900 dark:text-gray-100 font-mono text-sm">{member.branch.code}</p>
                     </div>
-                  </div>
-                )}
+                  )}
+                  {member.branch.address && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 flex items-center">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        Location
+                      </p>
+                      <p className="text-gray-900 dark:text-gray-100">
+                        {member.branch.address.street && `${member.branch.address.street}, `}
+                        {member.branch.address.city && `${member.branch.address.city}, `}
+                        {member.branch.address.state && `${member.branch.address.state}`}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Departments - ADD THIS SECTION */}
             {member.departments && member.departments.length > 0 && (

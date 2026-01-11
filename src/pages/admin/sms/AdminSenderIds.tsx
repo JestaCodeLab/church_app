@@ -56,6 +56,12 @@ const AdminSenderIds = () => {
   const [revokeReason, setRevokeReason] = useState('');
   const [revoking, setRevoking] = useState<string | null>(null);
 
+  // ✅ NEW: State for edit pending sender ID modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState<{ merchantId: string; senderId: string; churchName: string } | null>(null);
+  const [editSenderId, setEditSenderId] = useState('');
+  const [updating, setUpdating] = useState(false);
+
   const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0 });
 
   useEffect(() => {
@@ -183,6 +189,41 @@ const AdminSenderIds = () => {
     setRejectData({ merchantId, senderId });
     setRejectReason('');
     setShowRejectModal(true);
+  };
+
+  // ✅ NEW: Handle opening edit modal for pending sender IDs
+  const handleOpenEditModal = (merchantId: string, senderId: string, churchName: string) => {
+    setEditData({ merchantId, senderId, churchName });
+    setEditSenderId(senderId);
+    setShowEditModal(true);
+  };
+
+  // ✅ NEW: Handle updating pending sender ID
+  const handleUpdateSenderId = async () => {
+    if (!editData || !editSenderId.trim()) {
+      showToast.error('Please provide a sender ID');
+      return;
+    }
+
+    if (editSenderId === editData.senderId) {
+      showToast.error('Please enter a different sender ID');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const response = await api.post(`/admin/sender-ids/${editData.merchantId}/update-pending`, {
+        senderId: editSenderId.trim()
+      });
+
+      showToast.success(response.data.message || 'Sender ID updated successfully!');
+      setShowEditModal(false);
+      await fetchSenderIds();
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to update sender ID');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleRejectSenderId = async () => {
@@ -408,6 +449,14 @@ const AdminSenderIds = () => {
                       {item.status === 'pending' && (
                         <div className="flex items-center justify-end gap-2">
                           <button
+                            onClick={() => handleOpenEditModal(item.merchantId, item.senderId, item.churchName)}
+                            title="Edit sender ID"
+                            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            <span className="hidden sm:inline">Edit</span>
+                          </button>
+                          <button
                             onClick={() => handleApproveSenderId(item.merchantId, item.churchName)}
                             disabled={storingCredentials}
                             className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
@@ -473,6 +522,90 @@ const AdminSenderIds = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ NEW: Edit Pending Sender ID Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 space-y-4">
+            {/* Header */}
+            <div className="flex items-center space-x-3">
+              <Edit2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Edit Pending Sender ID
+              </h2>
+            </div>
+
+            {/* Info */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <strong>{editData?.churchName}</strong> - Update the sender ID for this pending request
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="space-y-3">
+              {/* Current Sender ID */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Current Sender ID
+                </label>
+                <input
+                  type="text"
+                  value={editData?.senderId || ''}
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                />
+              </div>
+
+              {/* New Sender ID */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  New Sender ID <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editSenderId}
+                  onChange={(e) => setEditSenderId(e.target.value.toUpperCase())}
+                  placeholder="Enter new sender ID"
+                  maxLength={11}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Max 11 characters
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowEditModal(false)}
+                disabled={updating}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateSenderId}
+                disabled={!editSenderId.trim() || editSenderId === editData?.senderId || updating}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                {updating ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span>Updating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit2 className="w-4 h-4" />
+                    <span>Update</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

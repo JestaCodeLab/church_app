@@ -1,5 +1,6 @@
 import React from 'react';
-import { ArrowRight, CheckCircle, Info } from 'lucide-react';
+import { ArrowRight, CheckCircle, Info, AlertCircle } from 'lucide-react';
+import { merchantAPI } from '../../services/api';
 
 interface SubdomainStepProps {
   formData: any;
@@ -20,15 +21,96 @@ const SubdomainStep: React.FC<SubdomainStepProps> = ({
   handleLogout
 }) => {
   const [customMode, setCustomMode] = React.useState(false);
+  const [checkingAvailability, setCheckingAvailability] = React.useState(false);
+  const [subdomainError, setSubdomainError] = React.useState<string | null>(null);
+  const [availableSubdomains, setAvailableSubdomains] = React.useState<Set<string>>(new Set());
+
+  const validateSubdomainAvailability = async (subdomain: string) => {
+    if (!subdomain) {
+      setSubdomainError(null);
+      return;
+    }
+
+    setCheckingAvailability(true);
+    setSubdomainError(null);
+
+    try {
+      // Check if subdomain is already taken
+      const response = await merchantAPI.getMerchantBySubdomain(subdomain);
+      
+      if (response.data.success && response.data.data?.merchant) {
+        // Subdomain is taken
+        setSubdomainError('This subdomain is already taken. Please choose another.');
+        setAvailableSubdomains(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(subdomain);
+          return newSet;
+        });
+      } else {
+        // Subdomain is available
+        setSubdomainError(null);
+        setAvailableSubdomains(prev => new Set(prev).add(subdomain));
+      }
+    } catch (error: any) {
+      // If 404, subdomain is available
+      if (error?.response?.status === 404) {
+        setSubdomainError(null);
+        setAvailableSubdomains(prev => new Set(prev).add(subdomain));
+      } else {
+        setSubdomainError('Error checking subdomain availability');
+        console.error('Subdomain check error:', error);
+      }
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
 
   const handleSelect = (subdomain: string) => {
     setFormData({ ...formData, subdomain });
     setCustomMode(false);
+    setSubdomainError(null);
   };
 
   const handleCustomInput = (value: string) => {
     const sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     setFormData({ ...formData, subdomain: sanitized });
+    
+    // Debounce validation with a small delay
+    if (sanitized) {
+      setTimeout(() => {
+        validateSubdomainAvailability(sanitized);
+      }, 500);
+    } else {
+      setSubdomainError(null);
+    }
+  };
+
+  const isSubdomainValid = formData.subdomain && (
+    subdomainOptions.includes(formData.subdomain) || 
+    availableSubdomains.has(formData.subdomain)
+  );
+
+  const handleNext = async () => {
+    // If using custom subdomain, verify it one more time before proceeding
+    if (customMode || (!subdomainOptions.includes(formData.subdomain) && formData.subdomain)) {
+      setCheckingAvailability(true);
+      try {
+        const response = await merchantAPI.getMerchantBySubdomain(formData.subdomain);
+        if (response.data.success && response.data.data?.merchant) {
+          setSubdomainError('This subdomain is already taken. Please choose another.');
+          setCheckingAvailability(false);
+          return;
+        }
+      } catch (error: any) {
+        if (error?.response?.status !== 404) {
+          setSubdomainError('Error verifying subdomain');
+          setCheckingAvailability(false);
+          return;
+        }
+      }
+      setCheckingAvailability(false);
+    }
+    onNext();
   };
 
   return (
@@ -178,6 +260,23 @@ const SubdomainStep: React.FC<SubdomainStepProps> = ({
               <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
                 .{process.env.REACT_APP_PROJECT_DOMAIN || '.thechurchhq.com'}
               </span>
+              {checkingAvailability && (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600 dark:border-primary-500"></div>
+              )}
+            </div>
+            <div className="mt-2 ml-8">
+              {subdomainError && (
+                <div className="flex items-center text-red-600 dark:text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                  {subdomainError}
+                </div>
+              )}
+              {!subdomainError && (customMode || (!subdomainOptions.includes(formData.subdomain) && formData.subdomain)) && !checkingAvailability && (
+                <div className="flex items-center text-green-600 dark:text-green-400 text-sm">
+                  <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                  This subdomain is available
+                </div>
+              )}
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 ml-8">
               Only lowercase letters, numbers, and hyphens allowed
@@ -192,8 +291,8 @@ const SubdomainStep: React.FC<SubdomainStepProps> = ({
             Logout
         </p>
         <button
-          onClick={onNext}
-          disabled={!formData.subdomain}
+          onClick={handleNext}
+          disabled={!formData.subdomain || subdomainError !== null || checkingAvailability}
           className="px-8 py-3 bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-semibold rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
         >
           Continue

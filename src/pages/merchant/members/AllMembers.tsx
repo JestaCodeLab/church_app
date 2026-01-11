@@ -12,7 +12,7 @@ import RegistrationSettingsPanel from '../../../components/modals/RegistrationSe
 import { useAuth } from '../../../context/AuthContext';
 
 const AllMembers = () => {
-  const { user } = useAuth();
+  const { user, fetchAndUpdateSubscription } = useAuth();
   const plan = user?.merchant?.subscription?.plan;
   const merchantId = user?.merchant?.id;
   const merchantName = user?.merchant?.name || 'Church'; 
@@ -704,7 +704,7 @@ const AllMembers = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {members.map((member) => (
-                    <tr key={member._id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    <tr key={member._id} onClick={() => navigate(`/members/${member._id}`)} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group ${
                       selectedMembers.has(member._id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                     }`}>
                       <td className="px-4 py-4 whitespace-nowrap">
@@ -756,21 +756,20 @@ const AllMembers = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
                           <button
-                            onClick={() => navigate(`/members/${member._id}`)}
-                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => navigate(`/members/${member._id}/edit`)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/members/${member._id}/edit`);
+                            }}
                             className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(member)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(member);
+                            }}
                             className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Delete"
                           >
@@ -961,7 +960,7 @@ const AllMembers = () => {
 
       <ImportMembersModal
         isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
+        onClose={() => { fetchAndUpdateSubscription(); setShowImportModal(false)}  }
         onImportComplete={handleImportComplete}
       />
 

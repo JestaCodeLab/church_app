@@ -7,7 +7,6 @@ import {
   Plus,
   Search,
   Filter,
-  Eye,
   Edit2,
   Trash2,
   QrCode,
@@ -22,6 +21,7 @@ import { eventAPI } from '../../../services/api';
 import api from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { format } from 'date-fns';
+import { formatTime } from '../../../utils/timeFormat';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
@@ -115,9 +115,7 @@ const AllEvents = () => {
     return format(new Date(date), 'MMM dd, yyyy');
   };
 
-  const formatEventTime = (time: string) => {
-    return time; // Already in HH:mm format
-  };
+
 
   const handleAddEventClick = () => {
     if (!eventLimit?.canCreate) {
@@ -259,7 +257,8 @@ const AllEvents = () => {
                   {events.map((event) => (
                     <tr
                       key={event._id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      onClick={() => navigate(`/events/${event._id}`)}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                     >
                       {/* Event */}
                       <td className="px-6 py-4">
@@ -286,9 +285,9 @@ const AllEvents = () => {
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
                           <Clock className="w-3 h-3 mr-1" />
-                          { event?.isRecurring ? formatEventTime(event.recurrence?.baseTime || event.startTime) : formatEventTime(event.startTime)}
+                          { event?.isRecurring ? formatTime(event.recurrence?.baseTime || event.startTime) : formatTime(event.startTime)}
                           {((event.isRecurring && event.recurrence?.baseEndTime) || event.endTime) && 
-                            ` - ${formatEventTime(event.isRecurring ? event.recurrence?.baseEndTime : event.endTime)}`}
+                            ` - ${formatTime(event.isRecurring ? event.recurrence?.baseEndTime : event.endTime)}`}
                         </div>
                       </td>
 
@@ -336,21 +335,14 @@ const AllEvents = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
                           <button
-                            onClick={() => navigate(`/events/${event._id}`)}
-                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => navigate(`/events/${event._id}/edit`)}
+                            onClick={(e) => { e.stopPropagation(); navigate(`/events/${event._id}/edit`); }}
                             className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(event)}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(event); }}
                             className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Delete"
                           >

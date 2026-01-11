@@ -268,19 +268,75 @@ const SMSSettings = () => {
                         Members will see <strong className="font-mono text-xl">"{status.customSenderId}"</strong> when receiving SMS from your church.
                       </p>
                       {status.approvedAt && (
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-3">
-                          Approved: {new Date(status.approvedAt).toLocaleString()}
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-3">
+                          Approved: {new Date(status.approvedAt).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })} at {new Date(status.approvedAt).toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })}
                         </p>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-6">
                   <p className="text-sm text-blue-700 dark:text-blue-300">
                     💡 <strong>Tip:</strong> Test it by sending an SMS to yourself from the messaging page.
                   </p>
                 </div>
+
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Want to change your Sender ID?
+                  </h4>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    New Sender ID (3-11 characters, letters and numbers only)
+                  </label>
+                  <input
+                    type="text"
+                    value={senderId}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                      if (value.length <= 11) {
+                        setSenderId(value);
+                      }
+                    }}
+                    placeholder="ZIONHILL"
+                    maxLength={11}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent font-mono text-lg tracking-wider"
+                  />
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Examples: ZIONHILL, GRACECHPL, VICTORYCH
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {senderId.length}/11
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleRegisterSenderId}
+                  disabled={submitting || senderId.length < 3}
+                  className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-base transition-colors flex items-center justify-center"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader className="w-5 h-5 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5 mr-2" />
+                      Request Change
+                    </>
+                  )}
+                </button>
               </div>
             )}
 

@@ -110,18 +110,27 @@ const BrandingStep: React.FC<BrandingStepProps> = ({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Selected Logo
             </label>    
-            <div className="relative inline-block">
-                <img
-                src={formData.logoPreview}
-                alt="Logo preview"
-                className="w-40 h-20 object-contain rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2"
-                />
-                <button
-                onClick={removeLogo}
-                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-lg"
-                >
-                <X className="w-5 h-5" />
-                </button>
+            <div className="flex items-center space-x-4">
+              <div className="relative inline-block">
+                  <img
+                  src={formData.logoPreview}
+                  alt="Logo preview"
+                  className="w-40 h-20 object-contain rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2"
+                  />
+                  <button
+                  onClick={removeLogo}
+                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-lg"
+                  >
+                  <X className="w-5 h-5" />
+                  </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors font-medium"
+              >
+                Change Logo
+              </button>
             </div>
             </>
         ) : (

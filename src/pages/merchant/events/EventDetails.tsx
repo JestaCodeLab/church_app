@@ -546,12 +546,12 @@ const EventDetails: React.FC = () => {
                         <table className="min-w-full text-sm">
                           <thead>
                             <tr className="bg-primary-50 dark:bg-primary-900/20">
-                              <th className="px-4 py-3 text-left font-semibold">Date</th>
-                              <th className="px-4 py-3 text-left font-semibold">Code</th>
-                              <th className="px-4 py-3 text-left font-semibold">Opens</th>
-                              <th className="px-4 py-3 text-left font-semibold">Closes</th>
-                              <th className="px-4 py-3 text-left font-semibold">Status</th>
-                              <th className="px-4 py-3 text-left font-semibold">Action</th>
+                              <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">Date</th>
+                              <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">Code</th>
+                              <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">Opens</th>
+                              <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">Closes</th>
+                              <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">Status</th>
+                              <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">Action</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -564,10 +564,10 @@ const EventDetails: React.FC = () => {
                               
                               return (
                                 <tr key={codeObj._id} className="border-b border-gray-200 dark:border-gray-700">
-                                  <td className="px-4 py-3">{format(new Date(codeObj.serviceDate), 'MMM d, yyyy')}</td>
-                                  <td className="px-4 py-3 font-mono font-bold text-lg">{codeObj.code}</td>
-                                  <td className="px-4 py-3">{format(validFrom, 'h:mm a')}</td>
-                                  <td className="px-4 py-3">{format(validUntil, 'h:mm a')}</td>
+                                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{format(new Date(codeObj.serviceDate), 'MMM d, yyyy')}</td>
+                                  <td className="px-4 py-3 font-mono font-bold text-lg text-gray-900 dark:text-gray-100">{codeObj.code}</td>
+                                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{format(validFrom, 'h:mm a')}</td>
+                                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{format(validUntil, 'h:mm a')}</td>
                                   <td className="px-4 py-3">
                                     {isActive ? (
                                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
