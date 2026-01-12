@@ -26,7 +26,7 @@ const OnboardingSuccess: React.FC = () => {
   // Clear all encrypted auth tokens
   clearSecureItems(['accessToken', 'refreshToken', 'user']);
   
-  window.location.href = '/login';
+  window.location.href = '/';
 };
 
   if (!merchantData) {
@@ -169,7 +169,7 @@ const OnboardingSuccess: React.FC = () => {
                 Questions or need immediate assistance?
                 <br />
                 <a 
-                    href="mailto:support@thechurchhq.com" 
+                    href="mailto:thechurchhq@gmail.com" 
                     className="text-primary-600 dark:text-primary-400 hover:underline font-medium"
                 >
                     Contact our support team

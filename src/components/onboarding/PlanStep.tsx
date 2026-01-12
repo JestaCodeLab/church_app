@@ -112,7 +112,7 @@ const PlanStep: React.FC<PlanStepProps> = ({
           Choose Your Plan
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Select the plan that fits your church size. Start with a 14-day free trial.
+          Select the plan that fits your church size. Start the journey to digital management!
         </p>
       </div>
 
@@ -186,12 +186,12 @@ const PlanStep: React.FC<PlanStepProps> = ({
       </div>
 
       {/* Trial Notice */}
-      <div className="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border-l-4 border-blue-500 p-4 mb-6 rounded">
+      {/* <div className="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border-l-4 border-blue-500 p-4 mb-6 rounded">
         <p className="text-sm text-blue-800 dark:text-blue-200">
           <strong>14-Day Free Trial:</strong> All paid plans include a 14-day trial period. 
           No credit card required for the Free plan. Cancel anytime.
         </p>
-      </div>
+      </div> */}
 
       {/* Navigation */}
       <div className="flex items-center justify-between mt-8">

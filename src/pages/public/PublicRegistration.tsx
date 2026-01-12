@@ -82,7 +82,7 @@ const PublicRegistrationPage = () => {
       setAvailableBranches(merchantResponse.data.data.branches);
     } catch (error) {
       console.error('Error checking registration status:', error);
-      toast.error('Failed to load registration information');
+      // console.error(error?.response?.data?.message || 'Failed to load registration status. Please try again later.' );
     } finally {
       setStatusLoading(false);
     }
@@ -295,7 +295,12 @@ const handleSetPrimaryDepartment = (deptId) => {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
+      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+      toast.error(errorMessage);
+      // If it's a duplicate phone error, highlight the phone field
+      if (errorMessage.includes('phone number')) {
+        setErrors(prev => ({ ...prev, phone: errorMessage }));
+      }
     } finally {
       setLoading(false);
     }
