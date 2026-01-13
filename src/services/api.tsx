@@ -178,7 +178,18 @@ export const merchantAPI = {
   register: (data: any) => api.post('/merchants/register', data),
   verifyEmail: (data: any) => api.post('/merchants/verify-email', data),
   resendCode: (data: any) => api.post('/merchants/resend-code', data),
-  completeOnboarding: (data: any) => api.put('/merchants/onboarding', data),
+  completeOnboarding: (data: any) => {
+    // Check if data is FormData (for file uploads)
+    if (data instanceof FormData) {
+      // Don't set Content-Type header - let browser/axios handle it with proper boundary
+      return api.put('/merchants/onboarding', data, {
+        headers: {
+          'Content-Type': undefined
+        }
+      });
+    }
+    return api.put('/merchants/onboarding', data);
+  },
   planFeatures: () => api.get('/merchants/plan-features'),
   getSenderIDStatus: () => api.get('/merchants/sender-id/status'),
   getMerchantBySubdomain: (subdomain: string) => api.get(`/merchants/by-subdomain/${subdomain}`),
