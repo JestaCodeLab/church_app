@@ -61,35 +61,35 @@ const MerchantLayout = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlert, setShowAlert] = useState(true);
 
-  // Get subscription details
-  const subscription = user?.merchant?.subscription;
-  const subscriptionStatus = subscription?.status;
-  const planName = subscription?.planDetails?.name || subscription?.plan;
-  const expiryDate = subscription?.currentPeriodEnd;
-
-  // Calculate days until renewal
-  const getDaysUntilRenewal = (): number => {
+  // Get subscription details from merchant data
+  const subscriptionData = user?.merchant?.subscription;
+  const subscriptionStatus = (subscriptionData as any)?.subscriptionStatus;
+  const planName = subscriptionData?.plan || 'starter';
+  const expiryDate = (subscriptionData as any)?.expirationDate;
+  
+  // Calculate days until expiry
+  const getDaysUntilExpiry = (): number => {
     if (!expiryDate) return 0;
     const now = new Date();
-    const renewalDate = new Date(expiryDate);
-    const diffTime = renewalDate.getTime() - now.getTime();
+    const expiry = new Date(expiryDate);
+    const diffTime = expiry.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
 
-  const daysUntilRenewal = getDaysUntilRenewal();
+  const daysUntilExpiry = getDaysUntilExpiry();
 
-  // Determine which alert to show
-  const getAlertStatus = (): 'expired' | 'cancelled' | 'expiring_soon' | null => {
+  // Determine alert status based on subscription status
+  const getAlertStatus = (): 'expired' | 'cancelled' | 'expiring-soon' | null => {
     if (subscriptionStatus === 'expired') return 'expired';
     if (subscriptionStatus === 'cancelled') return 'cancelled';
-    if (daysUntilRenewal <= 7 && daysUntilRenewal > 0) return 'expiring_soon';
+    if (subscriptionStatus === 'expiring-soon') return 'expiring-soon';
     return null;
   };
 
   useEffect(() => {
-      window.scrollTo({top: 0, behavior: 'smooth'});
-    }, []); 
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }, []);
 
   const alertStatus = getAlertStatus();
 
@@ -700,15 +700,17 @@ const MerchantLayout = () => {
         {/* Page Content */}
         <main className="flex-1 bg-gray-100 min-h-screen dark:bg-gray-900 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-full mx-auto">
-            {/* ✅ SUBSCRIPTION ALERT - Shows at top of page */}
+            {/* ✅ SUBSCRIPTION ALERT - Shows on every page */}
             {alertStatus && showAlert && (
-              <SubscriptionAlert
-                status={alertStatus}
-                planName={planName}
-                expiryDate={expiryDate}
-                daysUntilRenewal={daysUntilRenewal}
-                onDismiss={() => setShowAlert(false)}
-              />
+              <div className="mb-6">
+                <SubscriptionAlert
+                  status={alertStatus}
+                  planName={planName}
+                  expiryDate={expiryDate}
+                  daysUntilRenewal={daysUntilExpiry}
+                  onDismiss={() => setShowAlert(false)}
+                />
+              </div>
             )}
             <Outlet />
           </div>

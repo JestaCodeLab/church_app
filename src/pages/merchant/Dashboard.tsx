@@ -26,6 +26,7 @@ import { showToast } from '../../utils/toasts';
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [stats, setStats] = useState<any>({
     totalMembers: 0,
     totalBranches: 0,
@@ -79,6 +80,11 @@ const Dashboard = () => {
           leaders: data.memberStats?.leaders || { total: 0, pastors: 0, elders: 0, deacons: 0 }
         }
       });
+
+      // Fetch subscription data
+      if (data.subscriptionData) {
+        setSubscriptionData(data.subscriptionData);
+      }
     } catch (error) {
       showToast.error('Failed to load dashboard data');
     } finally {
