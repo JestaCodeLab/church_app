@@ -46,21 +46,22 @@ const UserMenu: React.FC<UserMenuProps> = ({ showEmail = true }) => {
       },
     },
     {
+      icon: CreditCard,
+      label: 'Subscription',
+      onClick: () => {
+        navigate('/settings?tab=billing');
+        setIsOpen(false);
+      },
+    },
+    
+    {
+      divider: true,
+    },
+   {
       icon: HelpCircle,
       label: 'Get help',
       onClick: () => {
         navigate('/');
-        setIsOpen(false);
-      },
-    },
-    {
-      divider: true,
-    },
-    {
-      icon: CreditCard,
-      label: 'Upgrade plan',
-      onClick: () => {
-        navigate('/settings?tab=billing');
         setIsOpen(false);
       },
     },

@@ -37,6 +37,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import { useMerchant } from '../context/MerchantContext';
+import { checkAllPermissions, checkAnyPermission, canManageResource } from '../utils/permissionUtils';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
 import SubscriptionAlert from '../components/ui/SubscriptionAlert';
@@ -48,6 +49,7 @@ interface NavigationItem {
   icon: any;
   requiresFeature: string | null;
   lockedFeature?: string | null; // Feature required to unlock this menu item
+  requiredPermissions?: string[]; // Permissions required to access this item (AND logic)
   children?: NavigationItem[];
 }
 
@@ -61,9 +63,21 @@ const MerchantLayout = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlert, setShowAlert] = useState(true);
 
+  // Helper to check if user has permission (all must be present)
+  const checkPermission = (permissions?: string[]): boolean => {
+    if (!permissions || permissions.length === 0) return true;
+    return checkAllPermissions(user, permissions);
+  };
+
+  // Helper to check if user has any of the permissions
+  const hasAnyPermission = (permissions?: string[]): boolean => {
+    if (!permissions || permissions.length === 0) return true;
+    return checkAnyPermission(user, permissions);
+  };
+
   // Get subscription details from merchant data
   const subscriptionData = user?.merchant?.subscription;
-  const subscriptionStatus = (subscriptionData as any)?.subscriptionStatus;
+  const expirationStatus = (subscriptionData as any)?.expirationStatus;
   const planName = subscriptionData?.plan || 'starter';
   const expiryDate = (subscriptionData as any)?.expirationDate;
   
@@ -79,11 +93,11 @@ const MerchantLayout = () => {
 
   const daysUntilExpiry = getDaysUntilExpiry();
 
-  // Determine alert status based on subscription status
+  // Determine alert status based on subscription expiration status
   const getAlertStatus = (): 'expired' | 'cancelled' | 'expiring-soon' | null => {
-    if (subscriptionStatus === 'expired') return 'expired';
-    if (subscriptionStatus === 'cancelled') return 'cancelled';
-    if (subscriptionStatus === 'expiring-soon') return 'expiring-soon';
+    if (expirationStatus === 'expired') return 'expired';
+    if (expirationStatus === 'expired') return 'cancelled'; // Treat expired as cancelled state
+    if (expirationStatus === 'expiring-soon') return 'expiring-soon';
     return null;
   };
 
@@ -96,7 +110,7 @@ const MerchantLayout = () => {
   // Reset alert visibility when status changes
   useEffect(() => {
     setShowAlert(true);
-  }, [subscriptionStatus]);
+  }, [expirationStatus]);
 
   // For super admin: if no merchant is selected, redirect to church selector
   useEffect(() => {
@@ -111,12 +125,21 @@ const MerchantLayout = () => {
     setSelectedMerchantSubdomain(church.subdomain);
   };
 
-  // ✅ Helper function to filter navigation based on features
+  // ✅ Helper function to filter navigation based on features AND permissions
   const filterNavigation = (items: NavigationItem[]): NavigationItem[] => {
     return items
       .filter(item => {
-        if (!item.requiresFeature) return true;
-        return hasFeature(item.requiresFeature as any);
+        // Check feature requirement
+        if (item.requiresFeature && !hasFeature(item.requiresFeature as any)) {
+          return false;
+        }
+        
+        // Check permission requirement (AND logic - all must be present)
+        if (!checkPermission(item.requiredPermissions)) {
+          return false;
+        }
+        
+        return true;
       })
       .map(item => {
         if (item.children) {
@@ -129,283 +152,186 @@ const MerchantLayout = () => {
       });
   };
 
-  // Navigation configuration based on user role
+  // ✅ UNIFIED NAVIGATION - Single config with permission-based access
   const navigation = useMemo(() => {
-    let allNavigation: NavigationItem[] = [];
-
-    // Department Admin Navigation (Limited)
-    if (user?.role?.slug === 'dept_admin') {
-      allNavigation = [
-        { 
-          name: 'My Departments', 
-          href: '/departments', 
-          icon: FolderKanban,
-          requiresFeature: null
-        },
-        { 
-          name: 'Members', 
-          href: '/members', 
-          icon: Users,
-          requiresFeature: 'memberManagement'
-        },
-        { 
-          name: 'SMS', 
-          icon: MessageSquare,
-          requiresFeature: 'smsCommunications',
-          children: [
-            {
-              name: 'Send SMS',
-              href: '/messaging/send',
-              icon: Mail,
-              requiresFeature: 'smsCommunications'
-            },
-            {
-              name: 'History',
-              href: '/messaging/history',
-              icon: History,
-              requiresFeature: 'smsCommunications'
-            }
-          ]
-        },
-        { 
-          name: 'Events', 
-          href: '/events', 
-          icon: Calendar,
-          requiresFeature: 'eventManagement'
-        },
-
-      ];
-    } 
-    // Finance Admin Navigation
-    else if (user?.role?.slug === 'finance_admin') {
-      allNavigation = [
-        { 
-          name: 'Dashboard', 
-          href: '/dashboard', 
-          icon: LayoutDashboard,
-          requiresFeature: null
-        },
-        { 
-          name: 'Finance', 
-          icon: HandCoins,
-          requiresFeature: 'financialManagement',
-          children: [
-            {
-              name: 'Overview',
-              href: '/finance/overview',
-              icon: PieChart,
-              requiresFeature: 'financialManagement'
-            },
-            {
-              name: 'Income',
-              href: '/finance/income',
-              icon: TrendingUp,
-              requiresFeature: 'financialManagement'
-            },
-            {
-              name: 'Expenses',
-              href: '/finance/expenses',
-              icon: Receipt,
-              requiresFeature: 'financialManagement'
-            },
-            {
-              name: 'Donations',
-              href: '/finance/donations',
-              icon: HandHeart,
-              requiresFeature: 'financialManagement',
-              lockedFeature: 'donationTracking'
-            },
-            {
-              name: 'Reports',
-              href: '/finance/reports',
-              icon: BarChart3,
-              requiresFeature: 'financialManagement'
-            },
-            {
-              name: 'Transactions',
-              href: '/finance/transactions',
-              icon: Wallet,
-              requiresFeature: 'financialManagement'
-            }
-          ]
-        },
-        { 
-          name: 'Members', 
-          href: '/members', 
-          icon: Users,
-          requiresFeature: 'memberManagement'
-        },
-        { 
-          name: 'Events', 
-          href: '/events', 
-          icon: Calendar,
-          requiresFeature: 'eventManagement'
-        },
-      ];
-    }
-    // Church Admin / Full Access Navigation
-    else {
-      allNavigation = [
-        { 
-          name: 'Dashboard', 
-          href: '/dashboard', 
-          icon: LayoutDashboard,
-          requiresFeature: null
-        },
-        { 
-          name: 'Branches', 
-          href: '/branches', 
-          icon: Church,
-          requiresFeature: 'branchManagement'
-        },
-        { 
-          name: 'Departments', 
-          href: '/departments', 
-          icon: FolderKanban,
-          requiresFeature: 'departmentManagement'
-        },
-        { 
-          name: 'Members', 
-          icon: Users,
-          requiresFeature: 'memberManagement',
-          children: [
-            {
-              name: 'All Members',
-              href: '/members/all',
-              icon: Users,
-              requiresFeature: 'memberManagement'
-            },
-            {
-              name: 'Birthdays',
-              href: '/members/birthdays',
-              icon: Cake,
-              requiresFeature: 'memberManagement'
-            },
-          ]
-        },
-        // { 
-        //   name: 'Sermons', 
-        //   href: '/sermons', 
-        //   icon: FileVolume,
-        //   requiresFeature: 'sermonManagement'
-        // },
-        { 
-          name: 'Events', 
-          href: '/events', 
-          icon: Calendar,
-          requiresFeature: 'eventManagement'
-        },
-
-        { 
-          name: 'Finance', 
-          icon: HandCoins,
-          requiresFeature: 'financialManagement',
-          children: [
-            {
-              name: 'Overview',
-              href: '/finance/overview',
-              icon: PieChart,
-              requiresFeature: 'financialManagement',
-              lockedFeature: null
-            },
-            {
-              name: 'Income',
-              href: '/finance/income',
-              icon: TrendingUp,
-              requiresFeature: 'financialManagement',
-              lockedFeature: 'incomeTracking'
-            },
-            {
-              name: 'Expenses',
-              href: '/finance/expenses',
-              icon: Receipt,
-              requiresFeature: 'financialManagement',
-              lockedFeature: 'expenseTracking'
-            },
-            {
-              name: 'Tithing',
-              href: '/finance/tithing',
-              icon: Coins,
-              requiresFeature: 'financialManagement',
-              lockedFeature: 'tithingManagement'
-            },
-            {
-              name: 'Reports',
-              href: '/finance/reports',
-              icon: FileChartColumn,
-              requiresFeature: 'financialManagement',
-              lockedFeature: 'financialReports'
-            },
-            {
-              name: 'Donations',
-              href: '/finance/donations',
-              icon: HandHeart,
-              requiresFeature: 'financialManagement',
-              lockedFeature: 'eventDonationss'
-            },
-            {
-              name: 'My Wallet',
-              href: '/finance/wallet',
-              icon: Wallet,
-              requiresFeature: 'financialManagement',
-              lockedFeature: 'transactionManagements'
-            }
-          ]
-        },
-        { 
-          name: 'Messaging', 
-          icon: MessageSquare,
-          requiresFeature: 'smsCommunications',
-          children: [
-            {
-              name: 'Analytics',
-              href: '/messaging/analytics',
-              icon: BarChart3,
-              requiresFeature: 'smsCommunications',
-              lockedFeature: 'smsAnalytics'
-            },
-            {
-              name: 'Send SMS',
-              href: '/messaging/send',
-              icon: Mail,
-              requiresFeature: 'smsCommunications',
-              lockedFeature: 'smsSend'
-            },
-            {
-              name: 'History',
-              href: '/messaging/history',
-              icon: History,
-              requiresFeature: 'smsCommunications',
-              lockedFeature: 'smsHistory'
-            },
-            {
-              name: 'Templates',
-              href: '/messaging/templates',
-              icon: FileText,
-              requiresFeature: 'smsCommunications',
-              lockedFeature: 'smsTemplates'
-            },
-            {
-              name: 'Credits',
-              href: '/messaging/credits',
-              icon: CreditCard,
-              requiresFeature: 'smsCommunications',
-              lockedFeature: 'smsCredits'
-            },
-            {
-              name: 'Sender ID',
-              href: '/messaging/sender-id',
-              icon: Send,
-              requiresFeature: 'smsCommunications',
-              lockedFeature: 'smsSenderID'
-            }
-          ]
-        },
-      ];
-    }
+    const allNavigation: NavigationItem[] = [
+      { 
+        name: 'Dashboard', 
+        href: '/dashboard', 
+        icon: LayoutDashboard,
+        requiresFeature: null,
+        requiredPermissions: ['dashboard.view']
+      },
+      { 
+        name: 'Branches', 
+        href: '/branches', 
+        icon: Church,
+        requiresFeature: 'branchManagement',
+        requiredPermissions: ['branches.view']
+      },
+      { 
+        name: 'Departments', 
+        href: '/departments', 
+        icon: FolderKanban,
+        requiresFeature: 'departmentManagement',
+        requiredPermissions: ['departments.view']
+      },
+      { 
+        name: 'Members', 
+        icon: Users,
+        requiresFeature: 'memberManagement',
+        requiredPermissions: ['members.view'],
+        children: [
+          {
+            name: 'All Members',
+            href: '/members/all',
+            icon: Users,
+            requiresFeature: 'memberManagement',
+            requiredPermissions: ['members.view']
+          },
+          {
+            name: 'Birthdays',
+            href: '/members/birthdays',
+            icon: Cake,
+            requiresFeature: 'memberManagement',
+            requiredPermissions: ['members.viewBirthdays']
+          },
+        ]
+      },
+      { 
+        name: 'Events & Services', 
+        href: '/events', 
+        icon: Calendar,
+        requiresFeature: 'eventManagement',
+        requiredPermissions: ['events.view']
+      },
+      { 
+        name: 'Finance', 
+        icon: HandCoins,
+        requiresFeature: 'financialManagement',
+        requiredPermissions: ['finance.view'],
+        children: [
+          {
+            name: 'Overview',
+            href: '/finance/overview',
+            icon: PieChart,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.view'],
+            lockedFeature: null
+          },
+          {
+            name: 'Income',
+            href: '/finance/income',
+            icon: TrendingUp,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.view', 'finance.income'],
+            lockedFeature: 'incomeTracking'
+          },
+          {
+            name: 'Expenses',
+            href: '/finance/expenses',
+            icon: Receipt,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.view', 'finance.expenses'],
+            lockedFeature: 'expenseTracking'
+          },
+          {
+            name: 'Tithing',
+            href: '/finance/tithing',
+            icon: Coins,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.view', 'finance.tithing'],
+            lockedFeature: 'tithingManagement'
+          },
+          {
+            name: 'Reports',
+            href: '/finance/reports',
+            icon: FileChartColumn,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.view', 'finance.reports'],
+            lockedFeature: 'financialReports'
+          },
+          {
+            name: 'Donations',
+            href: '/finance/donations',
+            icon: HandHeart,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.view', 'finance.donations'],
+            lockedFeature: 'eventDonationss'
+          },
+          {
+            name: 'My Wallet',
+            href: '/finance/wallet',
+            icon: Wallet,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.view', 'finance.transactions'],
+            lockedFeature: 'transactionManagements'
+          }
+        ]
+      },
+      { 
+        name: 'Messaging', 
+        icon: MessageSquare,
+        requiresFeature: 'smsCommunications',
+        requiredPermissions: ['sms.view'],
+        children: [
+          {
+            name: 'Analytics',
+            href: '/messaging/analytics',
+            icon: BarChart3,
+            requiresFeature: 'smsCommunications',
+            requiredPermissions: ['sms.view', 'sms.analytics'],
+            lockedFeature: 'smsAnalytics'
+          },
+          {
+            name: 'Send SMS',
+            href: '/messaging/send',
+            icon: Mail,
+            requiresFeature: 'smsCommunications',
+            requiredPermissions: ['sms.send'],
+            lockedFeature: 'smsSend'
+          },
+          {
+            name: 'History',
+            href: '/messaging/history',
+            icon: History,
+            requiresFeature: 'smsCommunications',
+            requiredPermissions: ['sms.view'],
+            lockedFeature: 'smsHistory'
+          },
+          {
+            name: 'Templates',
+            href: '/messaging/templates',
+            icon: FileText,
+            requiresFeature: 'smsCommunications',
+            requiredPermissions: ['sms.templates'],
+            lockedFeature: 'smsTemplates'
+          },
+          {
+            name: 'Credits',
+            href: '/messaging/credits',
+            icon: CreditCard,
+            requiresFeature: 'smsCommunications',
+            requiredPermissions: ['sms.view'],
+            lockedFeature: 'smsCredits'
+          },
+          {
+            name: 'Sender ID',
+            href: '/messaging/sender-id',
+            icon: Send,
+            requiresFeature: 'smsCommunications',
+            requiredPermissions: ['sms.view'],
+            lockedFeature: 'smsSenderID'
+          }
+        ]
+      },
+    ];
 
     return filterNavigation(allNavigation);
-  }, [user?.role?.slug, hasFeature]);
+  }, [hasFeature, user?.role?.permissions]);
+
+  console.log('ALL NAV ==>', navigation)
+  console.log('USER ROLES ==>', user?.role?.permissions)
 
   //  Initialize expanded menus based on current route
   const getInitialExpandedMenus = (): string[] => {

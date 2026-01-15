@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { settingsAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
-import { Check, Crown, Users, Zap, TrendingUp, AlertCircle, Church, Download, Calendar, FileText, CreditCard, DollarSign, Filter, X, FileDown, CalendarDays, BookOpen, HardDrive, UserCircle, Building2, ChevronRight, CheckCircle, XCircle, Info } from 'lucide-react';
+import { Check, Crown, Users, Zap, TrendingUp, AlertCircle, Church, Download, Calendar, FileText, CreditCard, DollarSign, Filter, X, FileDown, CalendarDays, BookOpen, HardDrive, UserCircle, Building2, ChevronRight, CheckCircle, XCircle, Info, RotateCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usePaystackPayment } from '../../hooks/usePaystackPayment';
 import DiscountCodeInput from '../ui/DiscountCodeInput';
@@ -354,16 +354,57 @@ const BillingSettings = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Current Plan Card */}
         <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg border border-primary-200 dark:border-primary-800 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Current Plan</span>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Current Plan</span>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1) || 'N/A'}
+              </p>
+            </div>
             <Crown className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1) || 'N/A'}
-          </p>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-            Active subscription
-          </p>
+          
+          {/* Status Badge */}
+          <div className="mb-3">
+            {subscription?.expirationStatus === 'active' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded-full text-xs font-medium">
+                <CheckCircle className="w-3 h-3" />
+                Active subscription
+              </span>
+            )}
+            {subscription?.expirationStatus === 'expiring-soon' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full text-xs font-medium">
+                <AlertCircle className="w-3 h-3" />
+                Expiring soon
+              </span>
+            )}
+            {subscription?.expirationStatus === 'expired' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full text-xs font-medium">
+                <XCircle className="w-3 h-3" />
+                Expired
+              </span>
+            )}
+            {subscription?.expirationStatus === 'free-tier' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
+                <Info className="w-3 h-3" />
+                Free tier
+              </span>
+            )}
+          </div>
+
+          {/* Renew Button for Expired Subscriptions */}
+          {subscription?.expirationStatus === 'expired' && (
+            <button
+              onClick={() => {
+                setActiveTab('plans');
+                setSelectedPlan(subscription?.plan);
+              }}
+              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+            >
+              <RotateCw className="w-4 h-4" />
+              Renew Subscription
+            </button>
+          )}
         </div>
 
         {/* Next Billing Card */}

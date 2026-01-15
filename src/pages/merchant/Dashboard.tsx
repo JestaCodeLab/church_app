@@ -175,7 +175,7 @@ const Dashboard = () => {
               </div>
             </div>
             <button
-              onClick={() => navigate('/members')}
+              onClick={() => navigate('/members/all')}
               className="w-full py-2 px-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
             >
               View all

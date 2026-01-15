@@ -407,6 +407,22 @@ export const adminAPI = {
 
   createBranchForMerchant: (merchantId: string, data: any) =>
     api.post(`/admin/merchants/${merchantId}/branches`, data),
+
+  // Permissions
+  getAllPermissions: () => api.get('/admin/permissions'),
+  getPermissionDetails: (permissionId: string) => api.get(`/admin/permissions/${permissionId}`),
+  createPermission: (data: any) => api.post('/admin/permissions', data),
+  updatePermission: (permissionId: string, data: any) => api.put(`/admin/permissions/${permissionId}`, data),
+  assignPermissionToRoles: (permissionId: string, data: any) => api.post(`/admin/permissions/${permissionId}/assign`, data),
+  deletePermission: (permissionId: string) => api.delete(`/admin/permissions/${permissionId}`),
+
+  // Permission Categories
+  getAllPermissionCategories: () => api.get('/admin/permission-categories'),
+  getPermissionCategory: (categoryId: string) => api.get(`/admin/permission-categories/${categoryId}`),
+  createPermissionCategory: (data: any) => api.post('/admin/permission-categories', data),
+  updatePermissionCategory: (categoryId: string, data: any) => api.put(`/admin/permission-categories/${categoryId}`, data),
+  deletePermissionCategory: (categoryId: string) => api.delete(`/admin/permission-categories/${categoryId}`),
+  reorderPermissionCategories: (data: any) => api.post('/admin/permission-categories/reorder', data),
 };
 
 // Branch API

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Loader, Mail, User, UserCog } from 'lucide-react';
 import { teamAPI } from '../../services/api';
+import api from '../../services/api';
 import { showToast } from '../../utils/toasts';
 
 interface InviteUserModalProps {
@@ -8,22 +9,48 @@ interface InviteUserModalProps {
   onSuccess: () => void;
 }
 
+interface RoleOption {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+}
+
 const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    role: 'church_admin',
+    role: '',
   });
 
-  const roleOptions = [
-    { value: 'church_admin', label: 'Admin', description: 'Full access to all features' },
-    // { value: 'pastor', label: 'Pastor', description: 'Manage members and ministry' },
-    // { value: 'leader', label: 'Leader', description: 'Lead specific departments' },
-    // { value: 'elder', label: 'Elder', description: 'Church leadership team' },
-    // { value: 'deacon', label: 'Deacon', description: 'Serve and support ministry' },
-  ];
+  // Fetch available roles on mount
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await api.get('/roles');
+        // Filter out super_admin role
+        const filteredRoles = response.data.data.filter(
+          (role: RoleOption) => role.slug !== 'super_admin'
+        );
+        setRoleOptions(filteredRoles);
+        // Set default to first role
+        if (filteredRoles.length > 0) {
+          setFormData(prev => ({ ...prev, role: filteredRoles[0].slug }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch roles:', error);
+        showToast.error('Failed to load available roles');
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -136,13 +163,20 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
                 value={formData.role}
                 onChange={handleChange}
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none cursor-pointer"
+                disabled={fetching}
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {roleOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label} - {option.description}
-                  </option>
-                ))}
+                {fetching ? (
+                  <option>Loading roles...</option>
+                ) : roleOptions.length === 0 ? (
+                  <option>No available roles</option>
+                ) : (
+                  roleOptions.map((option) => (
+                    <option key={option._id} value={option.slug}>
+                      {option.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           </div>

@@ -84,6 +84,7 @@ import FinancialReports from '../../pages/merchant/finance/FinancialReports';
 import TithingTransactions from '../../pages/merchant/finance/Tithing';
 import LandingPage from '../../pages/LandingPage';
 import AuthRedirect from '../../pages/auth/AuthRedirect';
+import AdminRolesPage from '../../pages/admin/AdminRolesPage';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -258,6 +259,9 @@ const AnimatedRoutes = () => {
             <Route path="/admin/sms-packages" element={<SMSPackages />} />
             <Route path="/admin/sms-statistics" element={<SMSStatistics />} />
             <Route path="/admin/sms-balance" element={<AdminSMSBalance />} />
+
+            {/* Roles & Permissions */}
+            <Route path="/admin/roles" element={<AdminRolesPage />} />
 
             <Route path="/admin/logs" element={<AdminLogs />} />
           </Route>

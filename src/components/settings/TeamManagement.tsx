@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Trash2, RotateCw, Loader } from 'lucide-react';
+import { Search, UserPlus, Trash2, RotateCw, Loader, Shield } from 'lucide-react';
 import { teamAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import InviteUserModal from '../modals/InviteUserModal';
 import ConfirmModal from '../modals/ConfirmModal';
+import ManageRolesModal from '../roles/ManageRolesModal';
 
 interface TeamMember {
   _id: string;
@@ -24,6 +25,7 @@ const TeamManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showManageRoles, setShowManageRoles] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -142,13 +144,22 @@ const TeamManagement = () => {
           />
         </div>
 
-        <button
-          onClick={() => setShowInviteModal(true)}
-          className="flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
-        >
-          <UserPlus className="w-5 h-5" />
-          <span>Invite User</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowManageRoles(true)}
+            className="flex items-center space-x-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+          >
+            <Shield className="w-5 h-5" />
+            <span>Manage Roles</span>
+          </button>
+          <button
+            onClick={() => setShowInviteModal(true)}
+            className="flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+          >
+            <UserPlus className="w-5 h-5" />
+            <span>Invite User</span>
+          </button>
+        </div>
       </div>
 
       {/* Team Table */}
@@ -294,7 +305,7 @@ const TeamManagement = () => {
         </div>
       )}
 
-      {/* Invite Modal */}
+      {/* Invite User Modal */}
       {showInviteModal && (
         <InviteUserModal
           onClose={() => setShowInviteModal(false)}
@@ -302,6 +313,13 @@ const TeamManagement = () => {
             setShowInviteModal(false);
             fetchTeamMembers();
           }}
+        />
+      )}
+
+      {/* Manage Roles Modal */}
+      {showManageRoles && (
+        <ManageRolesModal
+          onClose={() => setShowManageRoles(false)}
         />
       )}
 

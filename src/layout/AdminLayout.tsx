@@ -20,7 +20,9 @@ import {
   CreditCard,
   TrendingUp,
   Wallet,
-  FileText // Added FileText icon
+  FileText,
+  Lock,
+  Zap
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -43,6 +45,7 @@ const AdminLayout = () => {
       icon: Users,
       href: '/admin/departments',
     },
+    { name: 'Roles & Permissions', href: '/admin/roles', icon: Lock },
   ];
 
   // Plans submenu items
