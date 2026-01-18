@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, CheckCircle, Loader, AlertCircle, Clock, ArrowLeft, Phone, User } from 'lucide-react';
 import axios from 'axios';
@@ -29,11 +29,7 @@ const EventCheckIn = () => {
     lastName: '' // For old system: guest last name
   });
 
-  useEffect(() => {
-    fetchEvent();
-  }, [qrData, eventId]);
-
-  const fetchEvent = async () => {
+  const fetchEvent = useCallback(async () => {
     try {
       setLoading(true);
       let response;
@@ -56,7 +52,11 @@ const EventCheckIn = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [qrData, eventId, isNewSystem, API_BASE_URL]);
+
+  useEffect(() => {
+    fetchEvent();
+  }, [fetchEvent]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

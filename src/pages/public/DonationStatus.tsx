@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2, Heart, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
@@ -10,7 +10,6 @@ const DonationStatus: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const reference = searchParams.get('reference');
-  const urlStatus = searchParams.get('status');
 
   const [loading, setLoading] = useState(true);
   const [donation, setDonation] = useState<any>(null);
@@ -18,21 +17,7 @@ const DonationStatus: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
 
-  useEffect(() => {
-    if (reference && !isVerified) {
-      verifyDonation();
-      // Poll for verification status every 2 seconds until verified
-      const interval = setInterval(() => {
-        verifyDonation();
-      }, 2000);
-      return () => clearInterval(interval);
-    } else if (!reference) {
-      setError('No payment reference found');
-      setLoading(false);
-    }
-  }, [reference, isVerified]);
-
-  const verifyDonation = async () => {
+  const verifyDonation = useCallback(async () => {
     try {
       // URL encode the reference to handle special characters
       const encodedReference = encodeURIComponent(reference || '');
@@ -48,17 +33,30 @@ const DonationStatus: React.FC = () => {
           setIsVerified(true);
         }
       } else {
-        setError('Unable to verify donation');
+        setError(response.data.message || 'Failed to verify donation');
         setIsVerified(true);
       }
     } catch (err: any) {
-      console.error('Verification error:', err);
       setError(err.response?.data?.message || 'Failed to verify donation');
       setIsVerified(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, [reference]);
+
+  useEffect(() => {
+    if (reference && !isVerified) {
+      verifyDonation();
+      // Poll for verification status every 2 seconds until verified
+      const interval = setInterval(() => {
+        verifyDonation();
+      }, 2000);
+      return () => clearInterval(interval);
+    } else if (!reference) {
+      setError('No payment reference found');
+      setLoading(false);
+    }
+  }, [reference, isVerified, verifyDonation]);
 
   if (loading) {
     return (

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Users, UserPlus, CheckCircle, Mail, Phone, MapPin, Calendar, User, Clock, XCircle, AlertCircle } from 'lucide-react';
-import api, { branchAPI } from '../../services/api';
+import { Users, UserPlus, CheckCircle, Mail, Phone, MapPin, Calendar, Clock, XCircle } from 'lucide-react';
+import api from '../../services/api';
 import { validateEmail, validatePhone } from '../../utils/validators';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
@@ -61,11 +61,7 @@ const PublicRegistrationPage = () => {
   const [submitted, setSubmitted] = useState(false);
 
   // Check registration status on mount
-  useEffect(() => {
-    checkRegistrationStatus();
-  }, [merchantId]);
-
-  const checkRegistrationStatus = async () => {
+  const checkRegistrationStatus = useCallback(async () => {
     try {
       setStatusLoading(true);
       const response = await axios.get(`${API_URL}/public/register/${merchantId}/status`);
@@ -86,25 +82,29 @@ const PublicRegistrationPage = () => {
     } finally {
       setStatusLoading(false);
     }
-  };
+  }, [merchantId]);
+
+  useEffect(() => {
+    checkRegistrationStatus();
+  }, [checkRegistrationStatus]);
 
   // Fetch departments on mount
-useEffect(() => {
-  fetchAvailableDepartments();
-}, [merchantId]);
-
-const fetchAvailableDepartments = async () => {
-  try {
-    const response = await api.get(`${API_URL}/public/register/${merchantId}/departments`);
-    if (response.data.success) {
-      setAvailableDepartments(response.data.data.departments);
+  const fetchAvailableDepartments = useCallback(async () => {
+    try {
+      const response = await api.get(`${API_URL}/public/register/${merchantId}/departments`);
+      if (response.data.success) {
+        setAvailableDepartments(response.data.data.departments);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
     }
-  } catch (error) {
-    console.error('Error fetching departments:', error);
-  }
-};
+  }, [merchantId]);
 
-const handleDepartmentToggle = (deptId) => {
+  useEffect(() => {
+    fetchAvailableDepartments();
+  }, [fetchAvailableDepartments]);
+
+  const handleDepartmentToggle = (deptId) => {
   setSelectedDepartments(prev => {
     if (prev.includes(deptId)) {
       // Remove department

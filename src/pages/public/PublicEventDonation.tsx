@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DollarSign, Heart, Calendar, MapPin, Users, Loader2, Check } from 'lucide-react';
+import { Heart, Calendar, MapPin, Users, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { showToast } from '../../utils/toasts';
 
@@ -112,11 +112,7 @@ const PublicEventDonation: React.FC = () => {
   // Preset amounts
   const presetAmounts = [10, 25, 50, 100, 200, 500];
 
-  useEffect(() => {
-    loadEventData();
-  }, [uniqueId]);
-
-  const loadEventData = async () => {
+  const loadEventData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(
@@ -131,7 +127,11 @@ const PublicEventDonation: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [uniqueId, navigate]);
+
+  useEffect(() => {
+    loadEventData();
+  }, [loadEventData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -51,7 +51,7 @@ export const isValidEmail = (email: string) => {
   const parts = email.split('@');
   if (parts.length !== 2) return false;
   
-  const [localPart, domain] = parts;
+  const [, domain] = parts;
   
   // Domain must have dot
   if (!domain.includes('.')) return false;
