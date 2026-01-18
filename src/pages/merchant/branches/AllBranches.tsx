@@ -8,6 +8,7 @@ import FeatureGate from '../../../components/access/FeatureGate';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 const Branches = () => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ const Branches = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [summary, setSummary] = useState<any>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const branchLimit = useResourceLimit('branches');
@@ -96,16 +98,19 @@ const Branches = () => {
 
   const handleDeleteSuccess = async (permanent: boolean) => {
     try {
+      setIsDeleting(true);
       if (selectedBranch) {
         await branchAPI.deleteBranch(selectedBranch.id, permanent);
         showToast.success(permanent ? 'Branch deleted permanently' : 'Branch archived');
         setShowDeleteModal(false);
         setSelectedBranch(null);
+        setIsDeleting(false);
         await fetchAndUpdateSubscription();
         fetchBranches();
         fetchSummary();
       }
     } catch (error: any) {
+      setIsDeleting(false);
       showToast.error(error?.response?.data?.message || 'Failed to delete branch');
     }
   };
@@ -152,6 +157,7 @@ const Branches = () => {
                 Manage your church locations and campuses
               </p>
             </div>
+            <PermissionGuard permission="branches.create">
             <div className="flex flex-col items-end">
               <button
                 onClick={handleAddBranchClick}
@@ -164,6 +170,7 @@ const Branches = () => {
                 {branchLimit.current} / {branchLimit.limit || '∞'} used
               </span>
             </div>
+            </PermissionGuard>
           </div>
 
         </div>
@@ -287,6 +294,7 @@ const Branches = () => {
 
                   {/* Actions Footer */}
                   <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2">
+                    <PermissionGuard permission="branches.edit">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -297,6 +305,8 @@ const Branches = () => {
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
+                    </PermissionGuard>
+                    <PermissionGuard permission="branches.delete">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -307,6 +317,7 @@ const Branches = () => {
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                    </PermissionGuard>
                   </div>
                 </div>
               ))}
@@ -353,6 +364,7 @@ const Branches = () => {
         onDelete={handleDeleteSuccess}
         branchName={selectedBranch?.name || ''}
         memberCount={selectedBranch?.memberCount || 0}
+        isDeleting={isDeleting}
       />
 
       {/* Limit Modal */}

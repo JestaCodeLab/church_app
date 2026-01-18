@@ -9,6 +9,7 @@ export type Feature =
   | 'sermonManagement'
   | 'financialManagement'
   | 'eventDonations'
+  | 'eventAttendanceTracking'
   | 'expenseTracking'
   | 'incomeTracking'
   | 'tithingManagement'

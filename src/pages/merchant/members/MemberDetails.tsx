@@ -19,6 +19,7 @@ import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
 import FeatureGate from '../../../components/access/FeatureGate';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 const MemberDetails = () => {
   const navigate = useNavigate();
@@ -146,6 +147,7 @@ const MemberDetails = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-3">
+              <PermissionGuard permission="members.edit">
               <button
                 onClick={() => navigate(`/members/${id}/edit`)}
                 className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
@@ -153,6 +155,8 @@ const MemberDetails = () => {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </button>
+              </PermissionGuard>
+              <PermissionGuard permission="members.delete">
               <button
                 onClick={() => setShowDeleteModal(true)}
                 className="flex items-center px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded-lg transition-colors"
@@ -160,6 +164,7 @@ const MemberDetails = () => {
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </button>
+              </PermissionGuard>
             </div>
           </div>
         </div>

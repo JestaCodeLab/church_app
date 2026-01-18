@@ -16,6 +16,7 @@ import api, { messagingAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import FeatureGate from '../../../components/access/FeatureGate';
+import { PermissionRoute } from '../../../components/guards/PermissionRoute';
 
 interface AutomationSettings {
   enabled: boolean;

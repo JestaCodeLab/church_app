@@ -7,6 +7,7 @@ import SearchableSelect from '../../../components/ui/SearchableSelect';
 import FeatureGate from '../../../components/access/FeatureGate';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import { useAuth } from '../../../context/AuthContext';
+import { PermissionRoute } from '../../../components/guards/PermissionRoute';
 
 
 const DAYS = ['None', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -163,7 +164,6 @@ const DepartmentForm = () => {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
 
       const payload = {
         ...formData,
@@ -207,416 +207,418 @@ const DepartmentForm = () => {
   }
 
   return (
-    <FeatureGate feature={'memberManagement'} usageExceeded={!isEdit && !departmentLimit?.canCreate}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate('/departments')}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {isEdit ? 'Edit Department' : 'Create Department'}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {isEdit ? 'Update department information' : 'Add a new department or ministry'}
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Basic Information
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Department Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  placeholder="e.g., Youth Ministry, Choir, Ushers"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={3}
-                  placeholder="Brief description of the department..."
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Branch (Optional)
-                </label>
-                <select
-                  name="branchId"
-                  value={formData.branchId}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="">All Branches</option>
-                  {branches.map(branch => (
-                    <option key={branch._id} value={branch._id}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Leave empty for church-wide department
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Color
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {COLORS.map(color => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, color }))}
-                      className={`w-10 h-10 rounded-lg transition-all ${
-                        formData.color === color
-                          ? 'ring-2 ring-offset-2 ring-primary-500 scale-110'
-                          : 'hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Icon
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {ICONS.map(icon => (
-                    <button
-                      key={icon}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, icon }))}
-                      className={`w-12 h-12 text-2xl rounded-lg border-2 transition-all ${
-                        formData.icon === icon
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-110'
-                          : 'border-gray-300 dark:border-gray-600 hover:border-primary-300 hover:scale-105'
-                      }`}
-                    >
-                      {icon}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Leadership */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Leadership
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Department Leader - Searchable */}
-              <div className="md:col-span-2">
-              <SearchableSelect
-                  label="Department Leader"
-                  placeholder="Search for a member..."
-                  value={formData.leaderId}
-                  options={members} 
-                  onSearch={searchMembers}
-                  onChange={(value) => setFormData(prev => ({ ...prev, leaderId: value }))}
-                  helperText="Select a member from your church to lead this department"
-              />
-              </div>
-
-              {/* Assistant Leaders - Multi-select */}
-              <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Assistant Leaders
-              </label>
-
-              {/* Selected Assistants Display */}
-              {formData.assistantLeaderIds.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-2">
-                  {formData.assistantLeaderIds.map(assistantId => {
-                      const assistant = members.find(m => m._id === assistantId);
-                      return assistant ? (
-                      <span
-                          key={assistantId}
-                          className="px-3 py-1.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-full text-sm flex items-center space-x-2"
-                      >
-                          <span>{assistant.firstName} {assistant.lastName}</span>
-                          <button
-                          type="button"
-                          onClick={() => handleAssistantLeaderToggle(assistantId)}
-                          className="hover:text-primary-900 dark:hover:text-primary-200 font-bold"
-                          >
-                          ×
-                          </button>
-                      </span>
-                      ) : null;
-                  })}
-                  </div>
-              )}
-
-              {/* Assistant Leaders List with Search */}
-              <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-                  {/* Search Bar */}
-                  <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
-                  <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                      // on input change, we will call the onSearch prop to fetch members
-                      onChange={async (e) => {
-                          const searchTerm = e.target.value;
-                          if (searchTerm.trim() === '') {
-                          setMembers(members); // Reset to initial members if search is empty
-                          return;
-                          }
-                          const results = await searchMembers(searchTerm);
-                          setMembers(results);
-                      }}
-                      type="text"
-                      placeholder="Search members..."
-                      className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 text-gray-900 dark:text-gray-100"
-                      />
-                  </div>
-                  </div>
-                  {/* Available Assistants */}
-                  <div className="p-4 max-h-60 overflow-y-auto">
-                  {members.filter(m => m._id !== formData.leaderId).length > 0 ? (
-                      members.filter(m => m._id !== formData.leaderId).map(member => (
-                      <label
-                          key={member._id}
-                          className="flex items-start space-x-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-2 cursor-pointer transition-colors"
-                      >
-                          <input
-                          type="checkbox"
-                          checked={formData.assistantLeaderIds.includes(member._id)}
-                          onChange={() => handleAssistantLeaderToggle(member._id)}
-                          className="w-4 h-4 mt-0.5 text-primary-600 rounded border-gray-300 dark:border-gray-600 focus:ring-primary-500"
-                          />
-                          <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {member.firstName} {member.lastName}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {member.email || member.phone}
-                          </div>
-                          </div>
-                      </label>
-                      ))
-                  ) : (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                      {formData.leaderId 
-                          ? 'No other members available as assistants'
-                          : 'Select a leader first to see available assistants'
-                      }
-                      </p>
-                  )}
-                  </div>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Selected members will be assigned as leaders. Manage user accounts for these members in the Team Management settings.
-              </p>
-              </div>
-          </div>
-          </div>
-
-          {/* Contact Information */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Contact Information
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Contact Email
-                </label>
-                <input
-                  type="email"
-                  name="contactEmail"
-                  value={formData.contactEmail}
-                  onChange={handleChange}
-                  placeholder="department@church.com"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Contact Phone
-                </label>
-                <input
-                  type="tel"
-                  name="contactPhone"
-                  value={formData.contactPhone}
-                  onChange={handleChange}
-                  placeholder="+233 24 123 4567"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Meeting Schedule */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Meeting Schedule
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Meeting Day
-                </label>
-                <select
-                  name="meetingSchedule.day"
-                  value={formData.meetingSchedule.day}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                >
-                  {DAYS.map(day => (
-                    <option key={day} value={day}>{day}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Meeting Time
-                </label>
-                <input
-                  type="time"
-                  name="meetingSchedule.time"
-                  value={formData.meetingSchedule.time}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Frequency
-                </label>
-                <select
-                  name="meetingSchedule.frequency"
-                  value={formData.meetingSchedule.frequency}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                >
-                  {FREQUENCIES.map(freq => (
-                    <option key={freq} value={freq}>{freq}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Meeting Location
-                </label>
-                <input
-                  type="text"
-                  name="meetingSchedule.location"
-                  value={formData.meetingSchedule.location}
-                  onChange={handleChange}
-                  placeholder="e.g., Main Auditorium"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Settings */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Settings
-            </h2>
-
-            <div className="space-y-4">
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleChange}
-                  className="w-5 h-5 text-primary-600 rounded"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Active Department
-                  </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Department is visible and accepting members
-                  </p>
-                </div>
-              </label>
-
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="allowSelfRegistration"
-                  checked={formData.allowSelfRegistration}
-                  onChange={handleChange}
-                  className="w-5 h-5 text-primary-600 rounded"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Allow Self-Registration
-                  </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Members can join this department during registration
-                  </p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end space-x-4">
+    <PermissionRoute permission={isEdit ? 'departments.edit' : 'departments.create'}>
+      <FeatureGate feature={'memberManagement'} usageExceeded={!isEdit && !departmentLimit?.canCreate}>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center space-x-4">
             <button
-              type="button"
               onClick={() => navigate('/departments')}
-              disabled={loading}
-              className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
-              Cancel
+              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-medium rounded-lg transition-colors"
-            >
-              {loading ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              {isEdit ? 'Update' : 'Create'} Department
-            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {isEdit ? 'Edit Department' : 'Create Department'}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                {isEdit ? 'Update department information' : 'Add a new department or ministry'}
+              </p>
+            </div>
           </div>
-        </form>
-      </div>
-    </FeatureGate>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Information */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Basic Information
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Department Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g., Youth Ministry, Choir, Ushers"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Brief description of the department..."
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Branch (Optional)
+                  </label>
+                  <select
+                    name="branchId"
+                    value={formData.branchId}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">All Branches</option>
+                    {branches.map(branch => (
+                      <option key={branch._id} value={branch._id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Leave empty for church-wide department
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Color
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {COLORS.map(color => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, color }))}
+                        className={`w-10 h-10 rounded-lg transition-all ${
+                          formData.color === color
+                            ? 'ring-2 ring-offset-2 ring-primary-500 scale-110'
+                            : 'hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Icon
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {ICONS.map(icon => (
+                      <button
+                        key={icon}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, icon }))}
+                        className={`w-12 h-12 text-2xl rounded-lg border-2 transition-all ${
+                          formData.icon === icon
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-110'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-primary-300 hover:scale-105'
+                        }`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Leadership */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Leadership
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Department Leader - Searchable */}
+                <div className="md:col-span-2">
+                <SearchableSelect
+                    label="Department Leader"
+                    placeholder="Search for a member..."
+                    value={formData.leaderId}
+                    options={members} 
+                    onSearch={searchMembers}
+                    onChange={(value) => setFormData(prev => ({ ...prev, leaderId: value }))}
+                    helperText="Select a member from your church to lead this department"
+                />
+                </div>
+
+                {/* Assistant Leaders - Multi-select */}
+                <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Assistant Leaders
+                </label>
+
+                {/* Selected Assistants Display */}
+                {formData.assistantLeaderIds.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                    {formData.assistantLeaderIds.map(assistantId => {
+                        const assistant = members.find(m => m._id === assistantId);
+                        return assistant ? (
+                        <span
+                            key={assistantId}
+                            className="px-3 py-1.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-full text-sm flex items-center space-x-2"
+                        >
+                            <span>{assistant.firstName} {assistant.lastName}</span>
+                            <button
+                            type="button"
+                            onClick={() => handleAssistantLeaderToggle(assistantId)}
+                            className="hover:text-primary-900 dark:hover:text-primary-200 font-bold"
+                            >
+                            ×
+                            </button>
+                        </span>
+                        ) : null;
+                    })}
+                    </div>
+                )}
+
+                {/* Assistant Leaders List with Search */}
+                <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                    {/* Search Bar */}
+                    <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                        // on input change, we will call the onSearch prop to fetch members
+                        onChange={async (e) => {
+                            const searchTerm = e.target.value;
+                            if (searchTerm.trim() === '') {
+                            setMembers(members); // Reset to initial members if search is empty
+                            return;
+                            }
+                            const results = await searchMembers(searchTerm);
+                            setMembers(results);
+                        }}
+                        type="text"
+                        placeholder="Search members..."
+                        className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 text-gray-900 dark:text-gray-100"
+                        />
+                    </div>
+                    </div>
+                    {/* Available Assistants */}
+                    <div className="p-4 max-h-60 overflow-y-auto">
+                    {members.filter(m => m._id !== formData.leaderId).length > 0 ? (
+                        members.filter(m => m._id !== formData.leaderId).map(member => (
+                        <label
+                            key={member._id}
+                            className="flex items-start space-x-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-2 cursor-pointer transition-colors"
+                        >
+                            <input
+                            type="checkbox"
+                            checked={formData.assistantLeaderIds.includes(member._id)}
+                            onChange={() => handleAssistantLeaderToggle(member._id)}
+                            className="w-4 h-4 mt-0.5 text-primary-600 rounded border-gray-300 dark:border-gray-600 focus:ring-primary-500"
+                            />
+                            <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {member.firstName} {member.lastName}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {member.email || member.phone}
+                            </div>
+                            </div>
+                        </label>
+                        ))
+                    ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                        {formData.leaderId 
+                            ? 'No other members available as assistants'
+                            : 'Select a leader first to see available assistants'
+                        }
+                        </p>
+                    )}
+                    </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Selected members will be assigned as leaders. Manage user accounts for these members in the Team Management settings.
+                </p>
+                </div>
+            </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Contact Information
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    name="contactEmail"
+                    value={formData.contactEmail}
+                    onChange={handleChange}
+                    placeholder="department@church.com"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Contact Phone
+                  </label>
+                  <input
+                    type="tel"
+                    name="contactPhone"
+                    value={formData.contactPhone}
+                    onChange={handleChange}
+                    placeholder="+233 24 123 4567"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Meeting Schedule */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Meeting Schedule
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Meeting Day
+                  </label>
+                  <select
+                    name="meetingSchedule.day"
+                    value={formData.meetingSchedule.day}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    {DAYS.map(day => (
+                      <option key={day} value={day}>{day}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Meeting Time
+                  </label>
+                  <input
+                    type="time"
+                    name="meetingSchedule.time"
+                    value={formData.meetingSchedule.time}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Frequency
+                  </label>
+                  <select
+                    name="meetingSchedule.frequency"
+                    value={formData.meetingSchedule.frequency}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    {FREQUENCIES.map(freq => (
+                      <option key={freq} value={freq}>{freq}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Meeting Location
+                  </label>
+                  <input
+                    type="text"
+                    name="meetingSchedule.location"
+                    value={formData.meetingSchedule.location}
+                    onChange={handleChange}
+                    placeholder="e.g., Main Auditorium"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Settings */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Settings
+              </h2>
+
+              <div className="space-y-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={handleChange}
+                    className="w-5 h-5 text-primary-600 rounded"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      Active Department
+                    </span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Department is visible and accepting members
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="allowSelfRegistration"
+                    checked={formData.allowSelfRegistration}
+                    onChange={handleChange}
+                    className="w-5 h-5 text-primary-600 rounded"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      Allow Self-Registration
+                    </span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Members can join this department during registration
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => navigate('/departments')}
+                disabled={loading}
+                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-medium rounded-lg transition-colors"
+              >
+                {loading ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                {isEdit ? 'Update' : 'Create'} Department
+              </button>
+            </div>
+          </form>
+        </div>
+      </FeatureGate>
+    </PermissionRoute>
   );
 };
 

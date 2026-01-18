@@ -93,7 +93,7 @@ const AddSpeakerModal: React.FC<AddSpeakerModalProps> = ({
                 <Mic className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Add Event Speaker
+                Add Service Speaker
               </h3>
             </div>
             <button

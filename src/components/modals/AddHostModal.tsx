@@ -86,7 +86,7 @@ const AddHostModal: React.FC<AddHostModalProps> = ({
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              Add Event Host
+              Add Service Host
             </h3>
             <button
               onClick={onClose}

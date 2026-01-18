@@ -166,7 +166,6 @@ export const getSecureItem = async (key: string): Promise<any> => {
       return null;
     }
 
-    console.log(`[Encryption] Successfully retrieved decrypted data for key: ${key}`);
     return decrypted;
   } catch (error) {
     console.error(`[Encryption] Failed to retrieve secure item '${key}':`, error);

@@ -163,6 +163,7 @@ const AdminPlanEdit = () => {
     departmentManagement: 'Core Features',
     eventManagement: 'Core Features',
     sermonManagement: 'Core Features',
+    attendanceTracking: 'Core Features',
     
     // Financial Features
     financialManagement: 'Financial',
@@ -226,7 +227,7 @@ const AdminPlanEdit = () => {
       }
       categorizedFeatures[category].push({
         key: featureKey,
-        label: formatLabel(featureKey)
+        label: formatLabel(featureKey === 'eventManagement' ? 'Service Management' : featureKey)
       });
     });
 

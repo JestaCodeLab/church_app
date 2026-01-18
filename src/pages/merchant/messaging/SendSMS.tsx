@@ -12,7 +12,13 @@ import {
   MessageSquare,
   CreditCard,
   Info,
-  Search
+  Search,
+  Clock,
+  Calendar,
+  Wand2,
+  ChevronDown,
+  ChevronUp,
+  Lock
 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
 import { merchantAPI } from '../../../services/api';
@@ -83,6 +89,18 @@ const SendSMS = () => {
   const [category, setCategory] = useState('general');
   const [selectedTemplate, setSelectedTemplate] = useState('');
 
+  // ✅ Scheduling
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('09:00');
+
+  // ✅ AI Generation
+  const [messageTab, setMessageTab] = useState<'write' | 'ai'>('write');
+  const [aiTone, setAiTone] = useState('');
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [displayedMessage, setDisplayedMessage] = useState(''); // For typewriter effect
+  const [isTyping, setIsTyping] = useState(false); // Track if currently typing
+
   // Data
   const [members, setMembers] = useState<Member[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -112,7 +130,7 @@ const SendSMS = () => {
     }
 
     memberSearchTimeoutRef.current = setTimeout(() => {
-      fetchMembers();
+      fetchMembers(memberSearchTerm);
     }, 300);
 
     return () => {
@@ -121,6 +139,22 @@ const SendSMS = () => {
       }
     };
   }, [memberSearchTerm, sendType]);
+
+  // ✅ Typewriter effect for AI-generated messages
+  useEffect(() => {
+    if (!isTyping || displayedMessage.length >= message.length) {
+      if (displayedMessage.length === message.length && isTyping) {
+        setIsTyping(false);
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setDisplayedMessage(message.substring(0, displayedMessage.length + 1));
+    }, 30); // 30ms per character for smooth typing effect
+
+    return () => clearTimeout(timer);
+  }, [displayedMessage, message, isTyping]);
 
   const fetchData = async () => {
     try {
@@ -144,13 +178,13 @@ const SendSMS = () => {
     }
   };
 
-  // ✅ Fetch members with API search
-  const fetchMembers = async () => {
+  // ✅ Fetch members with API search - accepts optional search parameter
+  const fetchMembers = async (searchTerm: string = '') => {
     try {
       setSearchingMembers(true);
       const response = await memberAPI.getMembers({ 
         limit: 100,
-        search: memberSearchTerm || undefined,
+        search: searchTerm || undefined,
         status: 'active'
       });
       setMembers(response.data.data.members || []);
@@ -168,6 +202,37 @@ const SendSMS = () => {
       setSenderIdStatus(response.data.data);
     } catch (error) {
       console.log('Sender ID not configured');
+    }
+  };
+
+  // ✅ AI Message Generation
+  const handleGenerateMessage = async () => {
+    if (!aiTone.trim()) {
+      showToast.error('Please provide context or tone for your message');
+      return;
+    }
+
+    setGeneratingAI(true);
+    try {
+      const response = await messagingAPI.generateMessage({
+        tone: aiTone
+      });
+
+      if (response.data.success) {
+        const generatedText = response.data.data.message;
+        setMessage(generatedText); // Set full message
+        setDisplayedMessage(''); // Reset displayed message
+        setIsTyping(true); // Start typewriter effect
+        showToast.success('Message generated! Typing...');
+        // Don't close the generator - keep it open in case user wants to regenerate
+      } else {
+        showToast.error(response.data.message || 'Failed to generate message');
+      }
+    } catch (error: any) {
+      console.error('AI generation error:', error);
+      showToast.error(error.response?.data?.message || 'Failed to generate message');
+    } finally {
+      setGeneratingAI(false);
     }
   };
 
@@ -192,9 +257,9 @@ const SendSMS = () => {
     setSelectedBranch('');
     setMemberSearchTerm('');
     
-    // Load members if switching to members type
-    if (newType === 'members') {
-      fetchMembers();
+    // Load members if switching to members type or all type - pass empty string explicitly
+    if (newType === 'members' || newType === 'all') {
+      fetchMembers('');
     }
   };
 
@@ -247,10 +312,25 @@ const SendSMS = () => {
       return;
     }
 
+    // ✅ Validate scheduled time
+    if (isScheduled && !scheduledDate) {
+      showToast.error('Please select a date for the scheduled message');
+      return;
+    }
+
+    if (isScheduled) {
+      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+      const now = new Date();
+      if (scheduledDateTime <= now) {
+        showToast.error('Scheduled time must be in the future');
+        return;
+      }
+    }
+
     if (sendType === 'all') {
       setConfirmData({
         title: 'Send to All Members',
-        message: `Are you sure you want to send SMS to all ${members.length} members? This will use ${creditsNeeded} credits.`,
+        message: `Are you sure you want to send SMS to all ${members.length} members? This will use ${creditsNeeded} credits.${isScheduled ? ` Message will be sent on ${new Date(scheduledDate + 'T' + scheduledTime).toLocaleString()}.` : ''}`,
         onConfirm: () => {
           setShowConfirmModal(false);
           executeSend();
@@ -279,7 +359,8 @@ const SendSMS = () => {
             phone,
             message,
             category,
-            templateId: selectedTemplate || undefined
+            templateId: selectedTemplate || undefined,
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
           });
           break;
 
@@ -293,7 +374,8 @@ const SendSMS = () => {
             phones: phoneArray,
             message,
             category,
-            templateId: selectedTemplate || undefined
+            templateId: selectedTemplate || undefined,
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
           });
           break;
 
@@ -306,7 +388,8 @@ const SendSMS = () => {
             memberIds: selectedMembers,
             message,
             category,
-            templateId: selectedTemplate || undefined
+            templateId: selectedTemplate || undefined,
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
           });
           break;
 
@@ -319,7 +402,8 @@ const SendSMS = () => {
             departmentId: selectedDepartment,
             message,
             category,
-            templateId: selectedTemplate || undefined
+            templateId: selectedTemplate || undefined,
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
           });
           break;
 
@@ -332,7 +416,8 @@ const SendSMS = () => {
             branchId: selectedBranch,
             message,
             category,
-            templateId: selectedTemplate || undefined
+            templateId: selectedTemplate || undefined,
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
           });
           break;
 
@@ -340,7 +425,8 @@ const SendSMS = () => {
           response = await messagingAPI.sms.sendToAll({
             message,
             category,
-            templateId: selectedTemplate || undefined
+            templateId: selectedTemplate || undefined,
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
           });
           break;
 
@@ -353,9 +439,10 @@ const SendSMS = () => {
         const data = response.data.data;
         
         showToast.success(
-          `SMS sent successfully! 
+          `SMS ${isScheduled ? 'scheduled' : 'sent'} successfully! 
            ${data.successCount ? `Sent to ${data.successCount} recipients` : 'Message submitted'}
            Credits used: ${data.creditsUsed || creditsNeeded}
+           ${isScheduled ? `\nWill be delivered on ${new Date(scheduledDate + 'T' + scheduledTime).toLocaleString()}` : ''}
            
            Delivery status will update shortly.`
         );
@@ -370,6 +457,9 @@ const SendSMS = () => {
         setSelectedTemplate('');
         setMemberSearchTerm('');
         setSendType('single');
+        setIsScheduled(false);
+        setScheduledDate('');
+        setScheduledTime('09:00');
 
         // Refresh credits
         const creditsRes = await messagingAPI.credits.get();
@@ -712,30 +802,124 @@ const SendSMS = () => {
               </div>
             )}
 
-            {/* Message */}
+            {/* ✅ Message Section with Tabs */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Message
-              </label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Enter your message here..."
-                rows={5}
-                maxLength={1000}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                required
-              />
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {message.length}/1000 characters
-                  {message.length > 160 && (
-                    <span className="ml-2 text-yellow-600 dark:text-yellow-400">
-                      • {Math.ceil(message.length / 153)} SMS parts
-                    </span>
-                  )}
-                </p>
+              {/* Tab Navigation */}
+              <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setMessageTab('write')}
+                  className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
+                    messageTab === 'write'
+                      ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <FileText className="w-4 h-4 inline mr-2" />
+                  Write it myself
+                </button>
+
+                <button
+                  type="button"
+                  disabled={true}
+                  className="px-4 py-3 font-medium text-sm transition-colors border-b-2 opacity-50 cursor-not-allowed border-transparent text-gray-400 dark:text-gray-500"
+                  title="AI SMS generation is not available in your plan"
+                >
+                  <Lock className="w-4 h-4 inline mr-2" />
+                  Use AI
+                </button>
               </div>
+
+              {/* Write Message Tab */}
+              {messageTab === 'write' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Message
+                  </label>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Enter your message here..."
+                    rows={5}
+                    maxLength={500}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                    required
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {message.length}/500 characters
+                      {message.length > 160 && (
+                        <span className="ml-2 text-yellow-600 dark:text-yellow-400">
+                          • {Math.ceil(message.length / 153)} SMS parts
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Use AI Tab */}
+              {messageTab === 'ai' && (
+                <div className="space-y-4">
+                  {/* AI Generation Form */}
+                  <div className="space-y-3 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Context or Tone
+                      </label>
+                      <textarea
+                        value={aiTone}
+                        onChange={(e) => setAiTone(e.target.value)}
+                        placeholder="e.g. Invite to Sunday service in a friendly manner..."
+                        rows={4}
+                        className="w-full px-4 py-2 border border-purple-300 dark:border-purple-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-purple-500"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Describe what you'd like the message to convey or how you want it to sound
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleGenerateMessage}
+                      disabled={generatingAI || !aiTone.trim()}
+                      className="px-4 py-2 bg-black hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors"
+                    >
+                      {generatingAI ? (
+                        <>
+                          <Loader className="w-4 h-4 animate-spin" />
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-4 h-4" />
+                          <span>Generate Message →</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Generated Message Display */}
+                  {message && (
+                    <div className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <p className="text-xs font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                        Your Message
+                      </p>
+                      <p className="text-gray-900 dark:text-gray-100 leading-relaxed mb-3">
+                        {message}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {message.length}/500 characters
+                        {message.length > 160 && (
+                          <span className="ml-2 text-yellow-600 dark:text-yellow-400">
+                            • {Math.ceil(message.length / 153)} SMS parts
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Category */}
@@ -754,6 +938,72 @@ const SendSMS = () => {
                 <option value="reminder">Reminder</option>
                 <option value="emergency">Emergency</option>
               </select>
+            </div>
+
+            {/* ✅ Schedule Message */}
+            <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isScheduled}
+                  onChange={(e) => {
+                    setIsScheduled(e.target.checked);
+                    if (!e.target.checked) {
+                      setScheduledDate('');
+                      setScheduledTime('09:00');
+                    }
+                  }}
+                  className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Schedule this message for later
+                  </span>
+                </div>
+              </label>
+
+              {/* ✅ Scheduled Date/Time Inputs */}
+              {isScheduled && (
+                <div className="mt-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Date
+                      </label>
+                      <input
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Time
+                      </label>
+                      <input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {scheduledDate && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <p className="text-xs text-blue-900 dark:text-blue-100">
+                        <Calendar className="w-4 h-4 inline mr-2" />
+                        <strong>Scheduled for:</strong> {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Credits Summary */}
@@ -812,12 +1062,21 @@ const SendSMS = () => {
                 {sending ? (
                   <>
                     <Loader className="w-5 h-5 animate-spin" />
-                    <span>Sending...</span>
+                    <span>Processing...</span>
                   </>
                 ) : (
                   <>
-                    <Send className="w-5 h-5" />
-                    <span>Send SMS</span>
+                    {isScheduled ? (
+                      <>
+                        <Clock className="w-5 h-5" />
+                        <span>Schedule SMS</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        <span>Send SMS</span>
+                      </>
+                    )}
                   </>
                 )}
               </button>

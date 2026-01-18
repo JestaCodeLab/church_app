@@ -11,6 +11,7 @@ import { showToast } from '../../../utils/toasts';
 import DeleteBranchModal from '../../../components/branch/DeleteBranchModal';
 import FeatureGate from '../../../components/access/FeatureGate';
 import { departmentAPI } from '../../../services/api';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 const BranchDetails = () => {
   const navigate = useNavigate();
@@ -191,13 +192,16 @@ const BranchDetails = () => {
                 <Users className="w-4 h-4 mr-2" />
                 View Members
               </button>
-              <button
-                onClick={() => navigate(`/branches/${id}/edit`)}
-                className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </button>
+              <PermissionGuard permission="branches.edit">
+                <button
+                  onClick={() => navigate(`/branches/${id}/edit`)}
+                  className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </button>
+              </PermissionGuard>
+              <PermissionGuard permission="branches.delete">
               <button
                 onClick={handleDelete}
                 className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -205,6 +209,7 @@ const BranchDetails = () => {
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </button>
+              </PermissionGuard>
             </div>
           </div>
         </div>

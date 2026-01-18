@@ -56,11 +56,10 @@ export const usePermission = (permission: PermissionPath): PermissionResult => {
     };
   }
 
+  const perms = user?.role?.permissions as any;
+
   // NEW ARCHITECTURE: Check by permission ID (Strategy A - IDs Only)
   if (isPermissionId(permission)) {
-    // Check if permission ID exists in role.permissions array
-    const perms = user?.role?.permissions as any;
-    
     // Handle array structure (new architecture)
     if (Array.isArray(perms)) {
       const hasPermissionId = perms.some(
@@ -98,8 +97,29 @@ export const usePermission = (permission: PermissionPath): PermissionResult => {
     };
   }
 
-  // For legacy format, check if role structure still has boolean flags
-  const categoryPermissions = (user?.role?.permissions as any)?.[category as string];
+  // NEW: Check by category.action against populated permissionId array
+  // Permissions are stored as array with populated permissionId objects
+  if (Array.isArray(perms)) {
+    const hasPermission = perms.some((p: any) => {
+      const permObj = p.permissionId;
+      // Handle both populated object and reference-only scenarios
+      if (typeof permObj === 'object' && permObj !== null) {
+        return permObj.category?.toLowerCase() === category.toLowerCase() &&
+               permObj.action?.toLowerCase() === action.toLowerCase();
+      }
+      return false;
+    });
+
+    return {
+      hasPermission,
+      isSuperAdmin: false,
+      roleName: user?.role?.name || null,
+      roleSlug: user?.role?.slug || null,
+    };
+  }
+
+  // LEGACY: Check if role structure still has boolean flags (for backward compatibility)
+  const categoryPermissions = perms?.[category as string];
   const hasPermission = categoryPermissions?.[action] === true;
 
   return {
@@ -137,12 +157,12 @@ export const usePermissions = (permissions: PermissionPath[]): PermissionResult 
     };
   }
 
+  const perms = user?.role?.permissions as any;
+
   // Check if user has ALL permissions
   const hasAllPermissions = permissions.every((permission) => {
     // NEW ARCHITECTURE: Check by permission ID
     if (isPermissionId(permission)) {
-      const perms = user?.role?.permissions as any;
-      
       // Handle array structure (new architecture)
       if (Array.isArray(perms)) {
         return perms.some(
@@ -157,7 +177,20 @@ export const usePermissions = (permissions: PermissionPath[]): PermissionResult 
     const [category, action] = permission.split('.');
     if (!category || !action) return false;
 
-    const categoryPermissions = (user?.role?.permissions as any)?.[category as string];
+    // NEW: Check by category.action against populated permissionId array
+    if (Array.isArray(perms)) {
+      return perms.some((p: any) => {
+        const permObj = p.permissionId;
+        if (typeof permObj === 'object' && permObj !== null) {
+          return permObj.category?.toLowerCase() === category.toLowerCase() &&
+                 permObj.action?.toLowerCase() === action.toLowerCase();
+        }
+        return false;
+      });
+    }
+
+    // LEGACY: Check boolean flag structure
+    const categoryPermissions = perms?.[category as string];
     return categoryPermissions?.[action] === true;
   });
 
@@ -196,12 +229,12 @@ export const usePermissionsOr = (permissions: PermissionPath[]): PermissionResul
     };
   }
 
+  const perms = user?.role?.permissions as any;
+
   // Check if user has ANY permission
   const hasAnyPermission = permissions.some((permission) => {
     // NEW ARCHITECTURE: Check by permission ID
     if (isPermissionId(permission)) {
-      const perms = user?.role?.permissions as any;
-      
       // Handle array structure (new architecture)
       if (Array.isArray(perms)) {
         return perms.some(
@@ -216,7 +249,20 @@ export const usePermissionsOr = (permissions: PermissionPath[]): PermissionResul
     const [category, action] = permission.split('.');
     if (!category || !action) return false;
 
-    const categoryPermissions = (user?.role?.permissions as any)?.[category as string];
+    // NEW: Check by category.action against populated permissionId array
+    if (Array.isArray(perms)) {
+      return perms.some((p: any) => {
+        const permObj = p.permissionId;
+        if (typeof permObj === 'object' && permObj !== null) {
+          return permObj.category?.toLowerCase() === category.toLowerCase() &&
+                 permObj.action?.toLowerCase() === action.toLowerCase();
+        }
+        return false;
+      });
+    }
+
+    // LEGACY: Check boolean flag structure
+    const categoryPermissions = perms?.[category as string];
     return categoryPermissions?.[action] === true;
   });
 

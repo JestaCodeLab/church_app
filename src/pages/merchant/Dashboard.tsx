@@ -121,10 +121,10 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="mb-4 md:mb-0 text-center md:text-left">
               <h2 className="text-xl font-bold text-white mb-1">
-                Ready to grow your community?
+                Ready to grow your church?
               </h2>
               <p className="text-primary-100 text-sm">
-                Add members, create events, and manage your church effectively.
+                Add members, create services, and manage your church effectively.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 justify-center">
@@ -136,11 +136,11 @@ const Dashboard = () => {
                 Add Member
               </button>
               <button
-                onClick={() => navigate('/events/new')}
+                onClick={() => navigate('/services/new')}
                 className="inline-flex items-center px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30"
               >
                 <CalendarDays className="w-4 h-4 mr-2" />
-                New Event
+                New Service
               </button>
               <button
                 onClick={() => navigate('/messaging/send')}
@@ -241,7 +241,7 @@ const Dashboard = () => {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Events</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Services</p>
                 <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                   {stats.totalEvents}
                 </h3>
@@ -256,7 +256,7 @@ const Dashboard = () => {
               </div>
             </div>
             <button
-              onClick={() => navigate('/events')}
+              onClick={() => navigate('/services')}
               className="w-full py-2 px-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
             >
               View calendar
@@ -373,17 +373,17 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Upcoming Events - 1 column */}
+          {/* Upcoming Services - 1 column */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-2">
                 <Calendar className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Upcoming Events
+                  Upcoming Services
                 </h2>
               </div>
               <button
-                onClick={() => navigate('/events')}
+                onClick={() => navigate('/services')}
                 className="text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium"
               >
                 View all →
@@ -395,7 +395,7 @@ const Dashboard = () => {
                 {stats.upcomingEvents.slice(0, 4).map((event: any) => (
                   <div
                     key={event._id}
-                    onClick={() => navigate(`/events/${event._id}`)}
+                    onClick={() => navigate(`/services/${event._id}`)}
                     className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-start space-x-3">
@@ -423,13 +423,13 @@ const Dashboard = () => {
             ) : (
               <div className="text-center py-12">
                 <Calendar className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 mb-4">No upcoming events</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">No upcoming services</p>
                 <button
-                  onClick={() => navigate('/events/new')}
+                  onClick={() => navigate('/services/new')}
                   className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Event
+                  Create Service
                 </button>
               </div>
             )}

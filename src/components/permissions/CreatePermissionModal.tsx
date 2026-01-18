@@ -230,7 +230,7 @@ const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
           <div className="bg-gray-50 dark:bg-gray-900/30 p-3 rounded-lg">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Permission Path:</p>
             <p className="text-sm font-mono text-gray-900 dark:text-white">
-              {formData.category}.{formData.action.toLowerCase() || 'action'}
+              {formData.category}.{formData.action || 'action'}
             </p>
           </div>
 

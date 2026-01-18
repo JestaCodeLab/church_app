@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Trash2, Edit2, Plus, Loader, Download, Search, Inbox, Check, AlertCircle, DollarSign, BarChart3, TrendingDown, ThumbsUp, X, Filter, ChevronDown, CheckCircle2, Clock } from 'lucide-react';
+import { Trash2, Edit2, Plus, Loader, Download, Search, Inbox, Check, AlertCircle, DollarSign, BarChart3, TrendingDown, ThumbsUp, X, Filter, ChevronDown, CheckCircle2, Clock, MessageSquare, AlertTriangle, History } from 'lucide-react';
 import { financeAPI } from '../../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 interface Expense {
   _id: string;
@@ -15,6 +16,8 @@ interface Expense {
   status: 'pending' | 'approved' | 'rejected' | 'paid';
   receipt?: string;
   notes?: string;
+  approvalNotes?: string;
+  approvalDate?: string;
 }
 
 const EXPENSE_CATEGORIES = ['utilities', 'maintenance', 'supplies', 'payroll', 'rent', 'insurance', 'transportation', 'events', 'ministry', 'facilities', 'professional_fees', 'technology', 'other'];
@@ -23,11 +26,15 @@ const PAYMENT_METHODS = ['cash', 'cheque', 'bank_transfer', 'mobile_money', 'car
 const Expenses: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalApprovedAmount, setTotalApprovedAmount] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [approvalNotes, setApprovalNotes] = useState('');
+  const [viewingNoteId, setViewingNoteId] = useState<string | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -51,7 +58,12 @@ const Expenses: React.FC = () => {
     try {
       setLoading(true);
       const response = await financeAPI.expenses.getAll();
-      setExpenses(response.data.data || []);
+      const data = response.data.data || [];
+      setExpenses(Array.isArray(data) ? data : data.expenses || []);
+      // Get total approved amount from API
+      if (response.data.totalApprovedAmount !== undefined) {
+        setTotalApprovedAmount(response.data.totalApprovedAmount);
+      }
     } catch (err) {
       toast.error('Failed to fetch expenses');
       console.error(err);
@@ -134,6 +146,7 @@ const Expenses: React.FC = () => {
 
   const handleApprove = async (id: string) => {
     try {
+      setIsApproving(true);
       await financeAPI.expenses.approve(id, approvalNotes);
       toast.success('Expense approved');
       setApprovingId(null);
@@ -142,11 +155,14 @@ const Expenses: React.FC = () => {
     } catch (err) {
       toast.error('Failed to approve expense');
       console.error(err);
+    } finally {
+      setIsApproving(false);
     }
   };
 
   const handleReject = async (id: string) => {
     try {
+      setIsRejecting(true);
       await financeAPI.expenses.reject(id, approvalNotes);
       toast.success('Expense rejected');
       setRejectingId(null);
@@ -155,6 +171,8 @@ const Expenses: React.FC = () => {
     } catch (err) {
       toast.error('Failed to reject expense');
       console.error(err);
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -239,14 +257,18 @@ const Expenses: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mt-1">Track and manage your spending</p>
         </div>
         <div className="flex gap-2">
+          <PermissionGuard permissions={['finance.export']}>
           <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 font-medium">
             <Download className="h-4 w-4" />
             Export
           </button>
+          </PermissionGuard>
+          <PermissionGuard permissions={['finance.addExpense']}>
           <button onClick={handleAddClick} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
             <Plus className="h-4 w-4" />
             Add Expense
           </button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -257,7 +279,7 @@ const Expenses: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-red-700 dark:text-red-400 uppercase tracking-wide">Total Spent</p>
-              <p className="text-3xl font-bold text-red-900 dark:text-red-100 mt-2">{formatCurrencyValue(expenses.reduce((sum, e) => sum + e.amount, 0))}</p>
+              <p className="text-3xl font-bold text-red-900 dark:text-red-100 mt-2">{formatCurrencyValue(totalApprovedAmount)}</p>
               <p className="text-xs text-red-600 dark:text-red-300 mt-3 font-semibold">+8% vs last month</p>
             </div>
             <div className="bg-red-200 dark:bg-red-800/50 p-4 rounded-xl">
@@ -472,12 +494,15 @@ const Expenses: React.FC = () => {
                         className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 cursor-pointer accent-blue-600"
                       />
                     </th>
-                    <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">TRANSACTION</th>
+                    <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">EXPENSE DATE</th>
                     <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">CATEGORY</th>
-                    <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">DATE</th>
+                    <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">DETAILS</th>
                     <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">STATUS</th>
+                    <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">APPROVAL DATE</th>
                     <th className="text-right py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">AMOUNT</th>
+                    <PermissionGuard permissions={['finance.approveExpense', 'finance.rejectExpense', 'finance.editExpense', 'finance.delete']}>
                     <th className="text-center py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">ACTIONS</th>
+                    </PermissionGuard>
                   </tr>
                 </thead>
                 <tbody>
@@ -491,66 +516,114 @@ const Expenses: React.FC = () => {
                           className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 cursor-pointer accent-blue-600"
                         />
                       </td>
-                      <td className="py-4 px-6">
-                        <p className="font-medium text-gray-900 dark:text-white">{expense.vendor}</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{expense.paymentMethod.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</p>
+                       <td className="py-4 px-6">
+                        <div className="text-sm">
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {new Date(expense.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(expense.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                          </div>
+                        </div>
                       </td>
                       <td className="py-4 px-6">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
                           {expense.category.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">{new Date(expense.date).toLocaleDateString()}</td>
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        <p className="font-medium text-gray-900 dark:text-white">{expense.vendor}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{expense.paymentMethod.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</p>
+                      </td>
+                     
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           expense.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
                           expense.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
                           expense.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
                           'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
                         }`}>
-                          {expense.status === 'pending' ? '• Pending' : expense.status === 'approved' ? '• Completed' : expense.status === 'rejected' ? '• Rejected' : '• Paid'}
+                          {expense.status === 'pending' && <History className="h-3 w-3" />}
+                          {expense.status === 'approved' && <Check className="h-3 w-3" />}
+                          {expense.status === 'rejected' && <X className="h-3 w-3" />}
+                          {expense.status === 'paid' && <CheckCircle2 className="h-3 w-3" />}
+                          <span>{expense.status === 'pending' ? 'Pending' : expense.status === 'approved' ? 'Approved' : expense.status === 'rejected' ? 'Rejected' : 'Paid'}</span>
                         </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm">
+                          {expense.approvalDate ? (
+                            <>
+                              <div className="font-medium text-gray-900 dark:text-white">
+                                {new Date(expense.approvalDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {new Date(expense.approvalDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-gray-500 dark:text-gray-400">-</span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-6 text-right font-semibold text-red-600 dark:text-red-400">{formatCurrencyValue(expense.amount)}</td>
                       <td className="py-4 px-6">
-                        <div className="flex justify-center gap-2">
-                          {expense.status === 'pending' && (
-                            <div className="flex items-center gap-2">
-                              <button 
-                                onClick={() => setApprovingId(expense._id)} 
-                                className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 text-xs font-semibold transition-all shadow-sm hover:shadow-md"
-                              >
-                                <ThumbsUp className="h-3.5 w-3.5" />
-                                Approve
-                              </button>
-                              <button 
-                                onClick={() => setRejectingId(expense._id)} 
-                                className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-lg hover:from-red-600 hover:to-rose-600 text-xs font-semibold transition-all shadow-sm hover:shadow-md"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                                Reject
-                              </button>
-                            </div>
-                          )}
-                          {expense.status !== 'pending' && (
-                            <div className="flex items-center gap-2">
-                              <button 
-                                onClick={() => handleEditClick(expense)} 
-                                className="inline-flex items-center justify-center p-2 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-all hover:shadow-sm"
-                                title="Edit"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </button>
-                              <button 
-                                onClick={() => handleDelete(expense._id)} 
-                                className="inline-flex items-center justify-center p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-all hover:shadow-sm"
-                                title="Delete"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        
+                          <div className="flex justify-center gap-2">
+                            {expense.status === 'pending' && (
+                              <div className="flex items-center gap-2">
+                                <PermissionGuard permission={'finance.approveExpense'}>
+                                  <button 
+                                    onClick={() => setApprovingId(expense._id)} 
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 text-xs font-semibold transition-all shadow-sm hover:shadow-md"
+                                  >
+                                    <ThumbsUp className="h-3.5 w-3.5" />
+                                    Approve
+                                  </button>
+                                </PermissionGuard>
+                                <PermissionGuard permission={'finance.rejectExpense'}>
+                                  <button 
+                                    onClick={() => setRejectingId(expense._id)} 
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-lg hover:from-red-600 hover:to-rose-600 text-xs font-semibold transition-all shadow-sm hover:shadow-md"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                    Reject
+                                  </button>
+                                </PermissionGuard>
+                              </div>
+                            )}
+                            {expense.status !== 'pending' && (
+                              <div className="flex items-center gap-2">
+                                {expense.approvalNotes  && (
+                                  <button 
+                                    onClick={() => setViewingNoteId(expense._id)}
+                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    title="View approval note"
+                                  >
+                                    <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg" style={{ width: '36px', height: '36px' }} />
+                                  </button>
+                                )}
+                                <PermissionGuard permission={'finance.editExpense'}>
+                                <button 
+                                  onClick={() => handleEditClick(expense)} 
+                                  className="inline-flex items-center justify-center p-2 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-all hover:shadow-sm"
+                                  title="Edit"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </button>
+                                </PermissionGuard>
+                                <PermissionGuard permission={'finance.delete'}>
+                                  <button 
+                                    onClick={() => handleDelete(expense._id)} 
+                                    className="inline-flex items-center justify-center p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-all hover:shadow-sm"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </PermissionGuard>
+                              </div>
+                            )}
+                          </div>
                       </td>
                     </tr>
                   ))}
@@ -635,11 +708,24 @@ const Expenses: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{approvingId ? 'Approve' : 'Reject'} Expense</h2>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
-              <textarea value={approvalNotes} onChange={(e) => setApprovalNotes(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm" rows={3} />
+              <textarea value={approvalNotes} onChange={(e) => setApprovalNotes(e.target.value)} disabled={isApproving || isRejecting} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm disabled:opacity-50" rows={3} />
             </div>
             <div className="flex gap-3">
-              <button onClick={() => approvingId ? handleApprove(approvingId) : handleReject(rejectingId!)} className={`flex-1 text-white py-2 rounded-lg text-sm font-medium ${approvingId ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>{approvingId ? 'Approve' : 'Reject'}</button>
-              <button onClick={() => { setApprovingId(null); setRejectingId(null); setApprovalNotes(''); }} className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white py-2 rounded-lg hover:bg-gray-400 text-sm font-medium">Cancel</button>
+              <button 
+                onClick={() => approvingId ? handleApprove(approvingId) : handleReject(rejectingId!)} 
+                disabled={isApproving || isRejecting}
+                className={`flex-1 text-white py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 ${approvingId ? 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400' : 'bg-red-600 hover:bg-red-700 disabled:bg-gray-400'} disabled:cursor-not-allowed transition-colors`}
+              >
+                {(isApproving || isRejecting) && <Loader className="h-4 w-4 animate-spin" />}
+                {approvingId ? 'Approve' : 'Reject'}
+              </button>
+              <button 
+                onClick={() => { setApprovingId(null); setRejectingId(null); setApprovalNotes(''); }} 
+                disabled={isApproving || isRejecting}
+                className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white py-2 rounded-lg hover:bg-gray-400 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -668,6 +754,39 @@ const Expenses: React.FC = () => {
         cancelText="Cancel"
         type="danger"
       />
+
+      {/* Approval Note Modal */}
+      {viewingNoteId && expenses.find(e => e._id === viewingNoteId)?.approvalNotes && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            {(() => {
+              const expense = expenses.find(e => e._id === viewingNoteId);
+              const isRejected = expense?.status === 'rejected';
+              return (
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <MessageSquare className={`h-5 w-5 ${isRejected ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`} />
+                    <h2 className={`text-xl font-bold ${isRejected ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100'}`}>
+                      {isRejected ? 'Rejected Note' : 'Approved Note'}
+                    </h2>
+                  </div>
+                  <div className={`${isRejected ? 'bg-red-50 dark:bg-red-900/20' : 'bg-green-50 dark:bg-green-900/20'} p-4 rounded-lg mb-6`}>
+                    <p className="text-gray-900 dark:text-white text-sm leading-relaxed whitespace-pre-wrap">
+                      {expense?.approvalNotes}
+                    </p>
+                  </div>
+                </>
+              );
+            })()}
+            <button 
+              onClick={() => setViewingNoteId(null)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

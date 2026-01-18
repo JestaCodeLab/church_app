@@ -54,12 +54,15 @@ export const checkUserPermission = (
 
   // ✅ NEW FORMAT: Array of permission objects with permissionId
   if (Array.isArray(permissions)) {
+    const categoryLower = category.toLowerCase();
+    const actionLower = action.toLowerCase();
+    
     return permissions.some(perm => {
       const permId = perm.permissionId;
       return (
         permId &&
-        permId.category === category &&
-        permId.action === action
+        permId.category?.toLowerCase() === categoryLower &&
+        permId.action?.toLowerCase() === actionLower
       );
     });
   }

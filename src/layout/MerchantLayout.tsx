@@ -61,7 +61,6 @@ const MerchantLayout = () => {
   const { selectedMerchantId, setSelectedMerchantId, setSelectedMerchantSubdomain } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAlert, setShowAlert] = useState(true);
 
   // Helper to check if user has permission (all must be present)
   const checkPermission = (permissions?: string[]): boolean => {
@@ -93,13 +92,15 @@ const MerchantLayout = () => {
 
   const daysUntilExpiry = getDaysUntilExpiry();
 
-  // Determine alert status based on subscription expiration status
+  // ✅ Determine alert status based on subscription expiration status
   const getAlertStatus = (): 'expired' | 'cancelled' | 'expiring-soon' | null => {
     if (expirationStatus === 'expired') return 'expired';
-    if (expirationStatus === 'expired') return 'cancelled'; // Treat expired as cancelled state
     if (expirationStatus === 'expiring-soon') return 'expiring-soon';
     return null;
   };
+
+  // ✅ State for alert visibility
+  const [showAlert, setShowAlert] = useState(true);
 
   useEffect(() => {
     window.scrollTo({top: 0, behavior: 'smooth'});
@@ -199,11 +200,27 @@ const MerchantLayout = () => {
         ]
       },
       { 
-        name: 'Events & Services', 
-        href: '/events', 
+        name: 'Services', 
         icon: Calendar,
         requiresFeature: 'eventManagement',
-        requiredPermissions: ['events.view']
+        requiredPermissions: ['events.view'],
+        children: [
+          {
+            name: 'All Services',
+            href: '/services',
+            icon: Calendar,
+            requiresFeature: 'eventManagement',
+            requiredPermissions: ['events.view']
+          },
+          {
+            name: 'Attendance',
+            href: '/services/attendance',
+            icon: CheckCircle2,
+            requiresFeature: 'eventManagement',
+            requiredPermissions: ['events.viewAttendance'],
+            lockedFeature: 'eventAttendanceTracking'
+          },
+        ]
       },
       { 
         name: 'Finance', 
@@ -216,7 +233,7 @@ const MerchantLayout = () => {
             href: '/finance/overview',
             icon: PieChart,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.view'],
+            requiredPermissions: ['finance.overview'],
             lockedFeature: null
           },
           {
@@ -224,7 +241,7 @@ const MerchantLayout = () => {
             href: '/finance/income',
             icon: TrendingUp,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.view', 'finance.income'],
+            requiredPermissions: ['finance.income'],
             lockedFeature: 'incomeTracking'
           },
           {
@@ -232,23 +249,23 @@ const MerchantLayout = () => {
             href: '/finance/expenses',
             icon: Receipt,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.view', 'finance.expenses'],
+            requiredPermissions: ['finance.expenses'],
             lockedFeature: 'expenseTracking'
           },
-          {
-            name: 'Tithing',
-            href: '/finance/tithing',
-            icon: Coins,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.view', 'finance.tithing'],
-            lockedFeature: 'tithingManagement'
-          },
+          // {
+          //   name: 'Tithing',
+          //   href: '/finance/tithing',
+          //   icon: Coins,
+          //   requiresFeature: 'financialManagement',
+          //   requiredPermissions: ['finance.tithing'],
+          //   lockedFeature: 'tithingManagement'
+          // },
           {
             name: 'Reports',
             href: '/finance/reports',
             icon: FileChartColumn,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.view', 'finance.reports'],
+            requiredPermissions: ['finance.reports'],
             lockedFeature: 'financialReports'
           },
           {
@@ -256,16 +273,16 @@ const MerchantLayout = () => {
             href: '/finance/donations',
             icon: HandHeart,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.view', 'finance.donations'],
-            lockedFeature: 'eventDonationss'
+            requiredPermissions: ['finance.donations'],
+            lockedFeature: 'financeDonations'
           },
           {
             name: 'My Wallet',
             href: '/finance/wallet',
             icon: Wallet,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.view', 'finance.transactions'],
-            lockedFeature: 'transactionManagements'
+            requiredPermissions: ['finance.wallet'],
+            lockedFeature: 'financeAccounts'
           }
         ]
       },
@@ -273,14 +290,14 @@ const MerchantLayout = () => {
         name: 'Messaging', 
         icon: MessageSquare,
         requiresFeature: 'smsCommunications',
-        requiredPermissions: ['sms.view'],
+        requiredPermissions: ['communications.view'],
         children: [
           {
             name: 'Analytics',
             href: '/messaging/analytics',
             icon: BarChart3,
             requiresFeature: 'smsCommunications',
-            requiredPermissions: ['sms.view', 'sms.analytics'],
+            requiredPermissions: ['communications.analytics'],
             lockedFeature: 'smsAnalytics'
           },
           {
@@ -288,7 +305,7 @@ const MerchantLayout = () => {
             href: '/messaging/send',
             icon: Mail,
             requiresFeature: 'smsCommunications',
-            requiredPermissions: ['sms.send'],
+            requiredPermissions: ['communications.sendSMS'],
             lockedFeature: 'smsSend'
           },
           {
@@ -296,7 +313,7 @@ const MerchantLayout = () => {
             href: '/messaging/history',
             icon: History,
             requiresFeature: 'smsCommunications',
-            requiredPermissions: ['sms.view'],
+            requiredPermissions: ['communications.history'],
             lockedFeature: 'smsHistory'
           },
           {
@@ -304,7 +321,7 @@ const MerchantLayout = () => {
             href: '/messaging/templates',
             icon: FileText,
             requiresFeature: 'smsCommunications',
-            requiredPermissions: ['sms.templates'],
+            requiredPermissions: ['communications.templates'],
             lockedFeature: 'smsTemplates'
           },
           {
@@ -312,7 +329,7 @@ const MerchantLayout = () => {
             href: '/messaging/credits',
             icon: CreditCard,
             requiresFeature: 'smsCommunications',
-            requiredPermissions: ['sms.view'],
+            requiredPermissions: ['communications.smsCredits'],
             lockedFeature: 'smsCredits'
           },
           {
@@ -320,7 +337,7 @@ const MerchantLayout = () => {
             href: '/messaging/sender-id',
             icon: Send,
             requiresFeature: 'smsCommunications',
-            requiredPermissions: ['sms.view'],
+            requiredPermissions: ['communications.smsSenderID'],
             lockedFeature: 'smsSenderID'
           }
         ]
@@ -328,10 +345,7 @@ const MerchantLayout = () => {
     ];
 
     return filterNavigation(allNavigation);
-  }, [hasFeature, user?.role?.permissions]);
-
-  console.log('ALL NAV ==>', navigation)
-  console.log('USER ROLES ==>', user?.role?.permissions)
+  }, [hasFeature, user?.role?._id, user?.merchant?.id]);
 
   //  Initialize expanded menus based on current route
   const getInitialExpandedMenus = (): string[] => {

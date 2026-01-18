@@ -6,6 +6,7 @@ import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import { ChartArea, CheckCircle, ClipboardClock, CreditCard, FilePen, FilePenLine, Mail, Users, RefreshCcw } from 'lucide-react';
 import FeatureGate from '../../../components/access/FeatureGate';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 interface SMSStats {
   totalSent: number;
@@ -79,7 +80,7 @@ const SMSDashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            SMS Analytics
+            Analytics
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Overview of your SMS messaging performance

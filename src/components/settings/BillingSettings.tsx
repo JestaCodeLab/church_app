@@ -183,6 +183,52 @@ const BillingSettings = () => {
     setShowUpgradeModal(true);
   };
 
+  const handleRenewSubscription = async () => {
+    // Find the current plan in available plans
+    const currentPlan = availablePlans.find((p: any) => p.slug === subscription?.plan);
+    
+    if (!currentPlan) {
+      showToast.error('Unable to find your current plan');
+      return;
+    }
+
+    setSelectedPlan(currentPlan);
+
+    // If it's a free plan, just apply directly
+    if (currentPlan.price.amount === 0) {
+      try {
+        setActionLoading(true);
+        await settingsAPI.changePlan(currentPlan.slug);
+        showToast.success('Subscription renewed successfully!');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } catch (error: any) {
+        showToast.error(error.response?.data?.message || 'Failed to renew subscription');
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+
+    // For paid plans, initiate payment directly
+    await initializePayment({
+      email: user?.email || '',
+      amount: currentPlan.price.amount * 100, // Convert to kobo/pesewas
+      planSlug: currentPlan.slug,
+      discountCode: null,
+      onSuccess: () => {
+        showToast.success('Subscription renewed successfully!');
+        setSelectedPlan(null);
+        setAppliedDiscount(null);
+        window.location.reload();
+      },
+      onClose: () => {
+        setSelectedPlan(null);
+      }
+    });
+  };
+
   const handleConfirmUpgrade = async () => {
     if (!selectedPlan) return;
 
@@ -356,7 +402,36 @@ const BillingSettings = () => {
         <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg border border-primary-200 dark:border-primary-800 p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Current Plan</span>
+                  <div className='flex gap-2'>
+                      <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Current Plan</span>
+                      {/* Status Badge */}
+                      <div>
+                        {/* {subscription?.expirationStatus === 'active' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded-full text-xs font-medium">
+                            <CheckCircle className="w-3 h-3" />
+                            Active subscription
+                          </span>
+                        )} */}
+                        {subscription?.expirationStatus === 'expiring-soon' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full text-xs font-medium">
+                            <AlertCircle className="w-3 h-3" />
+                            Expiring soon
+                          </span>
+                        )}
+                        {subscription?.expirationStatus === 'expired' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full text-xs font-medium">
+                            <XCircle className="w-3 h-3" />
+                            Expired
+                          </span>
+                        )}
+                        {subscription?.expirationStatus === 'free-tier' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
+                            <Info className="w-3 h-3" />
+                            Free tier
+                          </span>
+                        )}
+                      </div>
+                  </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1) || 'N/A'}
               </p>
@@ -364,45 +439,17 @@ const BillingSettings = () => {
             <Crown className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           
-          {/* Status Badge */}
-          <div className="mb-3">
-            {subscription?.expirationStatus === 'active' && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded-full text-xs font-medium">
-                <CheckCircle className="w-3 h-3" />
-                Active subscription
-              </span>
-            )}
-            {subscription?.expirationStatus === 'expiring-soon' && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full text-xs font-medium">
-                <AlertCircle className="w-3 h-3" />
-                Expiring soon
-              </span>
-            )}
-            {subscription?.expirationStatus === 'expired' && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full text-xs font-medium">
-                <XCircle className="w-3 h-3" />
-                Expired
-              </span>
-            )}
-            {subscription?.expirationStatus === 'free-tier' && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
-                <Info className="w-3 h-3" />
-                Free tier
-              </span>
-            )}
-          </div>
+          
 
-          {/* Renew Button for Expired Subscriptions */}
-          {subscription?.expirationStatus === 'expired' && (
+          {/* Renew Button for Expired or Expiring Soon Subscriptions */}
+          {(subscription?.expirationStatus === 'expired' || subscription?.expirationStatus === 'expiring-soon') && (
             <button
-              onClick={() => {
-                setActiveTab('plans');
-                setSelectedPlan(subscription?.plan);
-              }}
-              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              onClick={handleRenewSubscription}
+              disabled={actionLoading || paymentLoading || !scriptLoaded}
+              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RotateCw className="w-4 h-4" />
-              Renew Subscription
+              {actionLoading || paymentLoading ? 'Processing...' : 'Renew Subscription'}
             </button>
           )}
         </div>

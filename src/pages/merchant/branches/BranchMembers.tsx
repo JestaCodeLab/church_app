@@ -10,11 +10,13 @@ import {
   Users,
   Loader,
   Eye,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 interface Member {
   _id: string;
@@ -225,6 +227,45 @@ const BranchMembers = () => {
     }
   };
 
+  const handleExportMembers = () => {
+    if (members.length === 0) {
+      showToast.error('No members to export');
+      return;
+    }
+
+    // Prepare CSV data
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Membership Type', 'Status'];
+    const rows = members.map(member => [
+      member.firstName,
+      member.lastName,
+      member.email || '',
+      member.phone || '',
+      member.membershipType || '',
+      member.membershipStatus || ''
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${branch.name}-members-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast.success(`Exported ${members.length} member(s)`);
+  };
+
   const toggleMemberSelection = (memberId: string) => {
     setSelectedMemberIds(prev =>
       prev.includes(memberId)
@@ -269,13 +310,18 @@ const BranchMembers = () => {
 
               {/* Action Buttons */}
               <div className="flex items-center space-x-3">
+                <PermissionGuard permission="branches.canExportMembers">
                 <button
-                  onClick={() => navigate('/members/new', { state: { branchId: id } })}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                  onClick={handleExportMembers}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+                  disabled={members.length === 0}
+                  title="Export members as CSV"
                 >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Add New Member
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
                 </button>
+                </PermissionGuard>
+                <PermissionGuard permission="branches.canAddMembers">
                 <button
                   onClick={() => {
                     setMemberSearchTerm('');
@@ -285,8 +331,9 @@ const BranchMembers = () => {
                   className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
                 >
                   <Users className="w-4 h-4 mr-2" />
-                  Add Existing Members
+                  Add Members
                 </button>
+                </PermissionGuard>
               </div>
             </div>
           </div>
@@ -403,7 +450,7 @@ const BranchMembers = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-
+                          <PermissionGuard permission="branches.canRemoveMembers">
                           <button
                             onClick={() => setMemberToRemove(member)}
                             className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
@@ -411,6 +458,7 @@ const BranchMembers = () => {
                           >
                             <UserMinus className="w-4 h-4" />
                           </button>
+                          </PermissionGuard>
                         </div>
                       </div>
                     </div>

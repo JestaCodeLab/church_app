@@ -162,17 +162,17 @@ export const useSessionExpiry = (config: SessionExpiryConfig): SessionExpiryRetu
     // Initial check
     checkAndTriggerWarning();
 
-    // Check every 10 seconds
+    // Check every 30 seconds (reduced frequency from 10s to prevent excessive checks)
     checkIntervalRef.current = setInterval(() => {
       checkAndTriggerWarning();
-    }, 10000);
+    }, 30000);
 
     return () => {
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current);
       }
     };
-  }, [checkAndTriggerWarning]);
+  }, []); // Empty dependency array - we don't need to restart interval on every render
 
   return {
     timeUntilExpiry,

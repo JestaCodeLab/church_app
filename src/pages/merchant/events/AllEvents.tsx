@@ -26,6 +26,7 @@ import ConfirmModal from '../../../components/modals/ConfirmModal';
 import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 const AllEvents = () => {
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ const AllEvents = () => {
       setTotalPages(response.data.data.pagination.pages);
       setTotalEvents(response.data.data.pagination.total);
     } catch (error: any) {
-      showToast.error(error.response?.data?.message || 'Failed to fetch events');
+      showToast.error(error.response?.data?.message || 'Failed to fetch services');
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,8 @@ const AllEvents = () => {
     const confirmDelete = async () => {
         setDeleting(true);
         await eventAPI.deleteEvent(eventToDelete._id);
-        showToast.success('Event deleted successfully');
+        await fetchUsageData();
+        showToast.success('Service deleted successfully');
         setShowDeleteModal(false);
         setDeleting(false);
         setEventToDelete(null);
@@ -122,7 +124,7 @@ const AllEvents = () => {
       setShowLimitModal(true);
       return;
     }
-    navigate('/events/new');
+    navigate('/services/new');
   };
 
   return (
@@ -131,19 +133,20 @@ const AllEvents = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Events
+            Services
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your church events and track attendance
+            Manage your church services and track attendance
           </p>
         </div>
+        <PermissionGuard permission="events.create">
         <div className="flex flex-col items-end space-y-2">
           <button
             onClick={handleAddEventClick}
             className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center shadow-md"
           >
             <Plus className="w-5 h-5 mr-2" />
-            Create Event
+            Create Service
           </button>
           {usageData?.events && (
             <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -151,6 +154,7 @@ const AllEvents = () => {
             </p>
           )}
         </div>
+        </PermissionGuard>
       </div>
 
       {/* Filters */}
@@ -161,7 +165,7 @@ const AllEvents = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search events..."
+              placeholder="Search services..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
@@ -211,17 +215,19 @@ const AllEvents = () => {
           <div className="text-center py-12">
             <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              No events found
+              No services found
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Create your first event to get started
+              Create your first service to get started
             </p>
+            <PermissionGuard permission="events.create">
             <button
-              onClick={() => navigate('/events/new')}
+              onClick={() => navigate('/services/new')}
               className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
             >
-              Create Event
+              Create Service
             </button>
+            </PermissionGuard>
           </div>
         ) : (
           <>
@@ -231,7 +237,7 @@ const AllEvents = () => {
                 <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Event
+                      Service
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Date & Time
@@ -257,7 +263,7 @@ const AllEvents = () => {
                   {events.map((event) => (
                     <tr
                       key={event._id}
-                      onClick={() => navigate(`/events/${event._id}`)}
+                      onClick={() => navigate(`/services/${event._id}`)}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                     >
                       {/* Event */}
@@ -334,6 +340,7 @@ const AllEvents = () => {
                       {/* Actions */}
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
+                          <PermissionGuard permission="events.edit">
                           <button
                             onClick={(e) => { e.stopPropagation(); navigate(`/events/${event._id}/edit`); }}
                             className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
@@ -341,6 +348,8 @@ const AllEvents = () => {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="events.delete">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(event); }}
                             className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
@@ -348,6 +357,7 @@ const AllEvents = () => {
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
+                          </PermissionGuard>
                         </div>
                       </td>
                     </tr>

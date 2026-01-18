@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, AlertTriangle, Trash2, Archive } from 'lucide-react';
+import { X, AlertTriangle, Trash2, Archive, Loader } from 'lucide-react';
 
 interface DeleteBranchModalProps {
   isOpen: boolean;
@@ -7,6 +7,7 @@ interface DeleteBranchModalProps {
   onDelete: (permanent: boolean) => void;
   branchName: string;
   memberCount: number;
+  isDeleting?: boolean;
 }
 
 const DeleteBranchModal: React.FC<DeleteBranchModalProps> = ({
@@ -15,13 +16,16 @@ const DeleteBranchModal: React.FC<DeleteBranchModalProps> = ({
   onDelete,
   branchName,
   memberCount,
+  isDeleting = false,
 }) => {
   const [deletePermanently, setDeletePermanently] = useState(false);
 
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    onDelete(deletePermanently);
+    if (!isDeleting) {
+      onDelete(deletePermanently);
+    }
   };
 
   // Prevent permanent deletion if there are active members
@@ -171,27 +175,30 @@ const DeleteBranchModal: React.FC<DeleteBranchModalProps> = ({
             <div className="flex items-center justify-end space-x-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                disabled={isDeleting}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
-                className={`px-4 py-2 font-medium rounded-lg transition-colors ${
+                disabled={isDeleting}
+                className={`px-4 py-2 font-medium rounded-lg transition-colors flex items-center space-x-2 ${
                   deletePermanently
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    ? 'bg-red-600 hover:bg-red-700 text-white disabled:bg-red-400 disabled:cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                 }`}
               >
+                {isDeleting && <Loader className="w-4 h-4 animate-spin" />}
                 {deletePermanently ? (
                   <>
-                    <Trash2 className="w-4 h-4 inline mr-2" />
-                    Delete Permanently
+                    <Trash2 className="w-4 h-4" />
+                    {isDeleting ? 'Deleting...' : 'Delete Permanently'}
                   </>
                 ) : (
                   <>
-                    <Archive className="w-4 h-4 inline mr-2" />
-                    Archive Branch
+                    <Archive className="w-4 h-4" />
+                    {isDeleting ? 'Archiving...' : 'Archive Branch'}
                   </>
                 )}
               </button>

@@ -152,8 +152,8 @@ const AnimatedRoutes = () => {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
-          <Route path="/attend/:eventId" element={<EventCheckIn />} />
+          <Route path="/service/attend/:qrData" element={<EventCheckIn />} />
+          <Route path="/service/attend/:eventId" element={<EventCheckIn />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
           <Route path="/donate/:uniqueId" element={<PublicEventDonation />} />
           <Route path="/donate/:uniqueId/status" element={<DonationStatus />} />
@@ -186,13 +186,13 @@ const AnimatedRoutes = () => {
             <Route path="/members/birthdays" element={<Birthdays />} />
             <Route path="/members/birthdays/settings" element={<BirthdaySettings />} />
 
-            <Route path="/events" element={<AllEvents />} />
-            <Route path="/events/new" element={<NewEvent />} />
-            <Route path="/events/:id" element={<EventDetails />} />
-            <Route path="/events/:id/edit" element={<NewEvent />} />
-            <Route path="/events/:id/attendance" element={<EventAttendance />} />
-            <Route path="/events/:id/donations" element={<EventDonations />} />
-            <Route path="/events/guests" element={<GuestManagement />} />
+            <Route path="/services" element={<AllEvents />} />
+            <Route path="/services/new" element={<NewEvent />} />
+            <Route path="/services/:id" element={<EventDetails />} />
+            <Route path="/services/:id/edit" element={<NewEvent />} />
+            <Route path="/services/:id/attendance" element={<EventAttendance />} />
+            <Route path="/services/:id/donations" element={<EventDonations />} />
+            <Route path="/services/guests" element={<GuestManagement />} />
             
             
             <Route 

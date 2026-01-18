@@ -13,21 +13,22 @@ import {
   MoreVertical,
   Mail
 } from 'lucide-react';
-import { eventAPI, branchAPI } from '../../../services/api';
+import { eventAPI, branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { format } from 'date-fns';
+import ConfirmModal from '../../../components/modals/ConfirmModal';
 
 const EventAttendance = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState<any>(null);
   const [attendance, setAttendance] = useState<any[]>([]);
   const [filteredAttendance, setFilteredAttendance] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'members' | 'guests'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'members' | 'guests' | 'absentees'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -42,6 +43,13 @@ const EventAttendance = () => {
   const [branches, setBranches] = useState<any[]>([]);
   const [selectedBranch, setSelectedBranch] = useState('');
   const [converting, setConverting] = useState(false);
+  
+  // Absentees
+  const [absentees, setAbsentees] = useState<any[]>([]);
+  const [checkingInAbsentee, setCheckingInAbsentee] = useState<string | null>(null);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [pendingCheckInAbsentee, setPendingCheckInAbsentee] = useState<any>(null);
+  const [stats, setStats] = useState({ total: 0, members: 0, guests: 0, absentees: 0 });
 
   useEffect(() => {
     if (id) {
@@ -51,12 +59,34 @@ const EventAttendance = () => {
   }, [id, activeTab, currentPage]);
 
   useEffect(() => {
+    if (event && id) {
+      fetchAbsentees();
+    }
+  }, [event, id]);
+
+  useEffect(() => {
     handleSearch();
-  }, [searchQuery, attendance]);
+  }, [searchQuery, attendance, absentees, activeTab]);
+
+  useEffect(() => {
+    // Update stats whenever attendance or absentees change
+    setStats({
+      total: attendance.length,
+      members: attendance.filter(a => a.attendeeType === 'member').length,
+      guests: attendance.filter(a => a.attendeeType === 'guest').length,
+      absentees: absentees.length
+    });
+  }, [attendance, absentees]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      let isClickInside = false;
+      menuRefs.current.forEach((ref) => {
+        if (ref && ref.contains(event.target as Node)) {
+          isClickInside = true;
+        }
+      });
+      if (!isClickInside) {
         setOpenMenuId(null);
       }
     };
@@ -81,7 +111,7 @@ const EventAttendance = () => {
         setInstances([]);
       }
     } catch (error: any) {
-      showToast.error('Failed to load event details');
+      showToast.error('Failed to load service details');
     }
   };
 
@@ -90,16 +120,14 @@ const EventAttendance = () => {
       setLoading(true);
       let response;
       if (isRecurring && selectedInstanceId) {
-        // Fetch attendance for selected instance of recurring event
+        // Fetch attendance for selected instance of recurring service
         response = await eventAPI.getAttendance(selectedInstanceId, {
-          attendeeType: activeTab !== 'all' ? activeTab.slice(0, -1) : undefined,
           page: currentPage,
           limit: 20
         });
       } else {
-        // One-time event or all instances
+        // One-time service or all instances
         response = await eventAPI.getAttendance(id!, {
-          attendeeType: activeTab !== 'all' ? activeTab.slice(0, -1) : undefined,
           page: currentPage,
           limit: 20
         });
@@ -114,13 +142,71 @@ const EventAttendance = () => {
     }
   };
 
+  const fetchAbsentees = async () => {
+    try {
+      if (!event || !event.branch) return;
+      
+      const branchId = event.branch._id || event.branch;
+      
+      // Fetch all members from the event's branch
+      const membersResponse = await memberAPI.getMembers({ 
+        branch: branchId,
+        status: 'active',
+        limit: 1000
+      });
+      const branchMembers = membersResponse.data.data.members || [];
+      
+      // Get IDs of members who checked in
+      const checkedInMemberIds = attendance
+        .filter(a => a.attendeeType === 'member')
+        .map(a => a.member?._id)
+        .filter(Boolean);
+      
+      // Find members who didn't check in
+      const absenteeList = branchMembers.filter(
+        member => !checkedInMemberIds.includes(member._id)
+      );
+      
+      setAbsentees(absenteeList);
+    } catch (error: any) {
+      // Silently fail - absentees is optional
+      console.error('Failed to fetch absentees:', error);
+      setAbsentees([]);
+    }
+  };
+
   const handleSearch = () => {
-    if (!searchQuery.trim()) {
-      setFilteredAttendance(attendance);
+    if (activeTab === 'absentees') {
+      // Search within absentees
+      if (!searchQuery.trim()) {
+        setFilteredAttendance(absentees.map(a => ({ ...a, attendeeType: 'absentee' })));
+        return;
+      }
+      
+      const filtered = absentees.filter((member) => {
+        const name = `${member.firstName} ${member.lastName}`.toLowerCase();
+        const phone = member.phone || '';
+        return name.includes(searchQuery.toLowerCase()) || phone.includes(searchQuery);
+      });
+      
+      setFilteredAttendance(filtered.map(a => ({ ...a, attendeeType: 'absentee' })));
       return;
     }
 
-    const filtered = attendance.filter((record) => {
+    // For other tabs, first filter by attendee type
+    let dataToSearch = attendance;
+    if (activeTab === 'members') {
+      dataToSearch = attendance.filter(a => a.attendeeType === 'member');
+    } else if (activeTab === 'guests') {
+      dataToSearch = attendance.filter(a => a.attendeeType === 'guest');
+    }
+
+    if (!searchQuery.trim()) {
+      setFilteredAttendance(dataToSearch);
+      return;
+    }
+
+    const filtered = dataToSearch.filter((record) => {
       const name = record.attendeeType === 'member'
         ? `${record.member?.firstName} ${record.member?.lastName}`.toLowerCase()
         : `${record.guest?.firstName} ${record.guest?.lastName}`.toLowerCase();
@@ -177,22 +263,33 @@ const EventAttendance = () => {
     }
   };
 
-  const getTabCount = (tab: string) => {
-    if (tab === 'all') return attendance.length;
-    return attendance.filter(a => 
-      a.attendeeType === (tab === 'members' ? 'member' : 'guest')
-    ).length;
+  const handleCheckInAbsentee = (absentee: any) => {
+    setPendingCheckInAbsentee(absentee);
+    setShowCheckInModal(true);
   };
 
-  const getStats = () => {
-    return {
-      total: attendance.length,
-      members: attendance.filter(a => a.attendeeType === 'member').length,
-      guests: attendance.filter(a => a.attendeeType === 'guest').length
-    };
+  const confirmCheckInAbsentee = async () => {
+    if (!pendingCheckInAbsentee) return;
+    setCheckingInAbsentee(pendingCheckInAbsentee._id);
+    try {
+      await eventAPI.checkInAttendance(id!, {
+        memberId: pendingCheckInAbsentee._id,
+        attendeeType: 'member',
+        method: 'manual'
+      });
+      showToast.success(`${pendingCheckInAbsentee.firstName} ${pendingCheckInAbsentee.lastName} checked in successfully`);
+      setOpenMenuId(null);
+      setShowCheckInModal(false);
+      setPendingCheckInAbsentee(null);
+      // Refresh attendance and absentees
+      await fetchAttendance();
+      await fetchAbsentees();
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to check in member');
+    } finally {
+      setCheckingInAbsentee(null);
+    }
   };
-
-  const stats = getStats();
 
   const formatCheckInTime = (timestamp: string) => {
     return format(new Date(timestamp), 'MMM dd, yyyy HH:mm');
@@ -203,10 +300,10 @@ const EventAttendance = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-0 dark:bg-gray-900">
       {/* Recurring event instance selector */}
       {isRecurring && instances.length > 0 && (
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-8xl mx-auto py-4">
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Event Instance</label>
             <select
@@ -228,12 +325,12 @@ const EventAttendance = () => {
         </div>
       )}
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="bg-white dark:bg-gray-800 dark:border-gray-700 sticky top-0">
+        <div className="max-w-8xl mx-auto py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate(`/events/${id}`)}
+                onClick={() => navigate(`/services/${id}`)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -268,9 +365,9 @@ const EventAttendance = () => {
         </div>
       </div>
 
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-8xl mx-auto py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
@@ -306,6 +403,18 @@ const EventAttendance = () => {
               </div>
             </div>
           </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Absentees</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.absentees}</p>
+              </div>
+              <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                <UserX className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -329,11 +438,12 @@ const EventAttendance = () => {
             {[
               { key: 'all', label: 'All', icon: Users, color: 'blue' },
               { key: 'members', label: 'Members', icon: UserCheck, color: 'green' },
-              { key: 'guests', label: 'Guests', icon: UserX, color: 'purple' }
+              { key: 'guests', label: 'Guests', icon: UserX, color: 'purple' },
+              { key: 'absentees', label: 'Absentees', icon: UserX, color: 'red' }
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.key;
-              const count = tab.key === 'all' ? stats.total : tab.key === 'members' ? stats.members : stats.guests;
+              const count = tab.key === 'all' ? stats.total : tab.key === 'members' ? stats.members : tab.key === 'guests' ? stats.guests : stats.absentees;
               
               return (
                 <button
@@ -400,18 +510,21 @@ const EventAttendance = () => {
                     </thead>
                     <tbody>
                       {filteredAttendance.map((record) => {
+                        const isAbsentee = record.attendeeType === 'absentee';
                         const isGuest = record.attendeeType === 'guest';
-                        const name = isGuest
-                          ? `${record.guest?.firstName} ${record.guest?.lastName}`
-                          : `${record.member?.firstName} ${record.member?.lastName}`;
-                        const phone = isGuest ? record.guest?.phone : record.member?.phone;
-                        const email = isGuest ? record.guest?.email : record.member?.email;
+                        const name = isAbsentee
+                          ? `${record.firstName} ${record.lastName}`
+                          : isGuest
+                            ? `${record.guest?.firstName} ${record.guest?.lastName}`
+                            : `${record.member?.firstName} ${record.member?.lastName}`;
+                        const phone = isAbsentee ? record.phone : (isGuest ? record.guest?.phone : record.member?.phone);
+                        const email = isAbsentee ? record.email : (isGuest ? record.guest?.email : record.member?.email);
                         
                         return (
-                          <tr key={record._id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                          <tr key={record._id || record.email} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                             <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">
                               <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${isGuest ? 'bg-purple-500' : 'bg-green-500'}`}></div>
+                                <div className={`w-2 h-2 rounded-full ${isAbsentee ? 'bg-red-500' : isGuest ? 'bg-purple-500' : 'bg-green-500'}`}></div>
                                 {name}
                               </div>
                             </td>
@@ -419,65 +532,124 @@ const EventAttendance = () => {
                               {phone || '-'}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                              {email ? <a href={`mailto:${email}`} className="text-blue-600 dark:text-blue-400 hover:underline">{email}</a> : '-'}
+                              {email ? (
+                                <a 
+                                  href={`mailto:${email}`} 
+                                  className="text-blue-600 dark:text-blue-400 hover:underline truncate block w-32"
+                                  title={email}
+                                >
+                                  {email}
+                                </a>
+                              ) : '-'}
                             </td>
                             <td className="px-6 py-4 text-sm">
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                isGuest
-                                  ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                                  : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                isAbsentee
+                                  ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                                  : isGuest
+                                    ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                    : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                               }`}>
-                                {isGuest ? 'Guest' : 'Member'}
+                                {isAbsentee ? 'Absent' : isGuest ? 'Guest' : 'Member'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                              {format(new Date(record.checkIn?.timestamp || record.createdAt), 'MMM dd, yyyy HH:mm')}
-                            </td>
-                            <td className="px-6 py-4 text-sm">
-                              <span className={`px-3 py-1 rounded text-xs font-medium ${
-                                record.checkIn?.method === 'qr'
-                                  ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                              }`}>
-                                {record.checkIn?.method ? record.checkIn.method.toUpperCase() : 'UNKNOWN'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm">
-                              {isGuest && record.guest?.convertedToMember ? (
-                                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-full font-medium">
-                                  Converted
-                                </span>
-                              ) : (
-                                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full font-medium">
-                                  Checked In
-                                </span>
-                              )}
-                            </td>
+                            {!isAbsentee && (
+                              <>
+                                <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                  <div>
+                                    <div>{format(new Date(record.checkIn?.timestamp || record.createdAt), 'MMM dd, yyyy')}</div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-500">{format(new Date(record.checkIn?.timestamp || record.createdAt), 'hh:mm a')}</div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-sm">
+                                  <span className={`px-3 py-1 rounded text-xs font-medium ${
+                                    record.checkIn?.method === 'qr'
+                                      ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                  }`}>
+                                    {record.checkIn?.method ? record.checkIn.method.toUpperCase() : 'UNKNOWN'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-sm">
+                                  {isGuest && record.guest?.convertedToMember ? (
+                                    <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-full font-medium">
+                                      Converted
+                                    </span>
+                                  ) : (
+                                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full font-medium">
+                                      Checked In
+                                    </span>
+                                  )}
+                                </td>
+                              </>
+                            )}
+                            {isAbsentee && (
+                              <>
+                                <td></td>
+                                <td></td>
+                                <td className="px-6 py-4 text-sm">
+                                  <span className="px-3 py-1 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs rounded-full font-medium">
+                                    Not Checked In
+                                  </span>
+                                </td>
+                              </>
+                            )}
                             <td className="px-6 py-4 text-right">
-                              <div className="relative" ref={menuRef}>
+                              <div 
+                                className="relative" 
+                                ref={(el) => {
+                                  if (el) {
+                                    menuRefs.current.set(record._id || record.email, el);
+                                  } else {
+                                    menuRefs.current.delete(record._id || record.email);
+                                  }
+                                }}
+                              >
                                 <button
-                                  onClick={() => setOpenMenuId(openMenuId === record._id ? null : record._id)}
+                                  onClick={() => setOpenMenuId(openMenuId === (record._id || record.email) ? null : (record._id || record.email))}
                                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
                                 >
                                   <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                                 </button>
 
-                                {openMenuId === record._id && (
+                                {openMenuId === (record._id || record.email) && (
                                   <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 min-w-max">
-                                    {isGuest && !record.guest?.convertedToMember && (
+                                    {isAbsentee ? (
                                       <button
-                                        onClick={() => handleConvertGuest(record)}
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 first:rounded-t-lg"
+                                        onClick={() => handleCheckInAbsentee(record)}
+                                        disabled={checkingInAbsentee === record._id}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 first:rounded-t-lg disabled:opacity-50"
                                       >
-                                        <ArrowUpCircle className="w-4 h-4" />
-                                        Convert to Member
+                                        {checkingInAbsentee === record._id ? (
+                                          <>
+                                            <Loader className="w-4 h-4 animate-spin" />
+                                            Checking in...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <UserCheck className="w-4 h-4" />
+                                            Check In Now
+                                          </>
+                                        )}
                                       </button>
-                                    )}
-                                    {isGuest && record.guest?.convertedToMember && (
-                                      <div className="px-4 py-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-                                        <UserCheck className="w-4 h-4" />
-                                        Already Converted
-                                      </div>
+                                    ) : (
+                                      <>
+                                        {isGuest && !record.guest?.convertedToMember && (
+                                          <button
+                                            onClick={() => handleConvertGuest(record)}
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 first:rounded-t-lg"
+                                          >
+                                            <ArrowUpCircle className="w-4 h-4" />
+                                            Convert to Member
+                                          </button>
+                                        )}
+                                        {isGuest && record.guest?.convertedToMember && (
+                                          <div className="px-4 py-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                                            <UserCheck className="w-4 h-4" />
+                                            Already Converted
+                                          </div>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 )}
@@ -584,6 +756,22 @@ const EventAttendance = () => {
           </div>
         </div>
       )}
+
+      {/* ConfirmModal for Absentee Check-In */}
+      <ConfirmModal
+        isOpen={showCheckInModal && !!pendingCheckInAbsentee}
+        onClose={() => {
+          setShowCheckInModal(false);
+          setPendingCheckInAbsentee(null);
+        }}
+        onConfirm={confirmCheckInAbsentee}
+        title="Confirm Check-In"
+        message={pendingCheckInAbsentee ? `Are you sure you want to manually check in ${pendingCheckInAbsentee.firstName} ${pendingCheckInAbsentee.lastName}?` : ''}
+        confirmText="Confirm Check-In"
+        cancelText="Cancel"
+        type="warning"
+        isLoading={checkingInAbsentee === pendingCheckInAbsentee?._id}
+      />
     </div>
   );
 };

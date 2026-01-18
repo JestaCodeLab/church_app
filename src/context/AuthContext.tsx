@@ -12,7 +12,20 @@ interface Role {
   description?: string;
   type: 'system' | 'custom';
   level: number;
-  permissions: {
+  // New architecture: Array of permission references (populated from Permission model)
+  permissions: Array<{
+    permissionId: {
+      _id: string;
+      category: string;
+      action: string;
+      displayName: string;
+      description?: string;
+      isActive: boolean;
+    };
+    assignedAt: string;
+    assignedBy?: string;
+  }> | {
+    // Fallback for legacy boolean-based permissions structure
     members?: Record<string, boolean>;
     departments?: Record<string, boolean>;
     branches?: Record<string, boolean>;
@@ -261,6 +274,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser(user);
       setIsAuthenticated(true);
+
+      // ✅ CRITICAL: Fetch full user data with populated permissions
+      // Login response might not include fully populated role.permissions
+      try {
+        const fullUserResponse = await authAPI.getCurrentUser();
+        const fullUser = fullUserResponse.data.data.user;
+        setUser(fullUser);
+        await setSecureItem('user', fullUser);
+      } catch (error) {
+        console.warn('Could not fetch full user data after login:', error);
+        // Continue anyway, user data from login should be usable
+      }
 
       // ADD: Fetch subscription data after login
       if (user.merchant) {

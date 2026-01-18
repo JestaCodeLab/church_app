@@ -22,6 +22,7 @@ import { departmentAPI } from '../../../services/api';
 import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 interface Department {
   _id: string;
@@ -143,6 +144,7 @@ const AllDepartments = () => {
           </p>
         </div>
         <div className="flex flex-col items-end space-y-2">
+          <PermissionGuard permission="departments.create">
           <button
             onClick={handleAddDepartmentClick}
             className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
@@ -150,6 +152,7 @@ const AllDepartments = () => {
             <Plus className="w-5 h-5 mr-2" />
             Add Department
           </button>
+          </PermissionGuard>
           {departmentLimit && (
             <p className="text-xs text-gray-600 dark:text-gray-400">
               {departmentLimit?.current} / {departmentLimit?.limit || '∞'} used
@@ -249,6 +252,7 @@ const AllDepartments = () => {
             {searchTerm ? 'Try adjusting your search' : 'Get started by creating your first department'}
           </p>
           {!searchTerm && (
+            <PermissionGuard permission="departments.create">
             <button
               onClick={() => navigate('/departments/new')}
               className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
@@ -256,6 +260,7 @@ const AllDepartments = () => {
               <Plus className="w-5 h-5 mr-2" />
               Add Department
             </button>
+            </PermissionGuard>
           )}
         </div>
       ) : viewMode === 'grid' ? (
@@ -336,7 +341,7 @@ const AllDepartments = () => {
                 </div>
 
                 {/* Leader Info */}
-                {dept.leader && (
+                {/* {dept.leader && (
                   <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/10 rounded-lg">
                     <div className="flex items-center text-sm">
                       <UserCheck className="w-4 h-4 text-primary-600 dark:text-primary-400 mr-2 flex-shrink-0" />
@@ -348,23 +353,28 @@ const AllDepartments = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 pt-4">
+                  <PermissionGuard permission="departments.view">
                   <button
                     onClick={() => navigate(`/departments/${dept._id}`)}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500 text-white text-sm font-semibold rounded-lg transition-colors"
+                    className="inline-flex items-center justify-center px-3 py-2 bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500 text-white text-sm font-semibold rounded-lg transition-colors"
                   >
                     <Eye className="w-4 h-4 mr-1" />
                     View
                   </button>
+                  </PermissionGuard>
+                  <PermissionGuard permission="departments.edit">
                   <button
                     onClick={() => navigate(`/departments/${dept._id}/edit`)}
                     className="inline-flex items-center justify-center px-3 py-2 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-semibold rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
+                  </PermissionGuard>
+                  <PermissionGuard permission="departments.delete">
                   <button
                     onClick={() => {
                       setDepartmentToDelete(dept);
@@ -374,6 +384,7 @@ const AllDepartments = () => {
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
+                  </PermissionGuard>
                 </div>
               </div>
             </div>
@@ -457,6 +468,7 @@ const AllDepartments = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <PermissionGuard permission="departments.edit">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -467,6 +479,8 @@ const AllDepartments = () => {
                         >
                           <Edit className="w-5 h-5" />
                         </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="departments.delete">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -478,6 +492,7 @@ const AllDepartments = () => {
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
+                        </PermissionGuard>
                       </div>
                     </td>
                   </tr>

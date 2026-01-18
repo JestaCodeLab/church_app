@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, AlertCircle, Search, Loader, Inbox, Check, TrendingUp, DollarSign, BarChart3, Target, Filter, ChevronDown, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertCircle, Search, Loader, Inbox, Check, TrendingUp, DollarSign, BarChart3, Target, Filter, ChevronDown, CheckCircle2, Clock, Download } from 'lucide-react';
 import { financeAPI } from '../../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 interface Income {
   _id: string;
@@ -20,7 +21,7 @@ const INCOME_CATEGORIES = [
   { value: 'offering', label: 'Offering' },
   { value: 'fundraising', label: 'Fundraising' },
   { value: 'donation', label: 'Donation' },
-  { value: 'grants', label: 'Grants' },
+  { value: 'pledge', label: 'Pledge' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -28,12 +29,15 @@ const Income: React.FC = () => {
   const [incomeList, setIncomeList] = useState<Income[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -57,7 +61,10 @@ const Income: React.FC = () => {
     try {
       setLoading(true);
       const response = await financeAPI.income.getAll({ page, limit: 20 });
-      setIncomeList(Array.isArray(response.data.data) ? response.data.data : response.data.data?.income || []);
+      const data = Array.isArray(response.data.data) ? response.data.data : response.data.data?.income || [];
+      setIncomeList(data);
+      setTotalPages(response.data.data?.pagination?.pages || 1);
+      setTotalCount(response.data.data?.pagination?.total || data.length);
     } catch (err) {
       toast.error('Failed to load income records');
     } finally {
@@ -108,6 +115,7 @@ const Income: React.FC = () => {
 
   const confirmBulkDelete = async () => {
     if (selectedIds.size === 0) return;
+    setIsBulkDeleting(true);
     try {
       await Promise.all(Array.from(selectedIds).map(id => financeAPI.income.delete(id)));
       toast.success(`Deleted ${selectedIds.size} records`);
@@ -116,10 +124,47 @@ const Income: React.FC = () => {
       fetchIncome();
     } catch (err) {
       toast.error('Failed to delete some records');
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
   const formatCurrencyValue = (value: number) => formatCurrency(value, getMerchantCurrency());
+
+  const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+  const handleExport = () => {
+    if (filteredIncome.length === 0) {
+      toast.error('No records to export');
+      return;
+    }
+
+    // Prepare CSV content
+    const headers = ['Date', 'Source', 'Category', 'Status', 'Amount'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredIncome.map(income => [
+        new Date(income.date).toLocaleDateString(),
+        `"${income.source}"`,
+        INCOME_CATEGORIES.find(c => c.value === income.category)?.label || income.category,
+        income.status === 'verified' ? 'Cleared' : income.status === 'pending' ? 'Pending' : 'Failed',
+        income.amount.toString()
+      ].join(','))
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `income-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('Income records exported successfully');
+  };
 
   if (loading) return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-blue-600" /></div>;
 
@@ -155,10 +200,24 @@ const Income: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Income Tracking</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">Manage and track your revenue streams efficiently.</p>
         </div>
-        <button onClick={() => { setEditingId(null); setFormData({ category: '', amount: '', source: '', description: '', date: new Date().toISOString().split('T')[0] }); setShowModal(true); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
-          <Plus className="h-4 w-4" />
-          Add Income
-        </button>
+        <div className="flex items-center gap-2">
+          <PermissionGuard permission="finance.export">
+          <button 
+            onClick={handleExport}
+            disabled={incomeList.length === 0}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </button>
+          </PermissionGuard>
+          <PermissionGuard permission="finance.addIncome">
+          <button onClick={() => { setEditingId(null); setFormData({ category: '', amount: '', source: '', description: '', date: new Date().toISOString().split('T')[0] }); setShowModal(true); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+            <Plus className="h-4 w-4" />
+            Add Income
+          </button>
+          </PermissionGuard>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -371,7 +430,9 @@ const Income: React.FC = () => {
                     <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">CATEGORY</th>
                     <th className="text-left py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">STATUS</th>
                     <th className="text-right py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">AMOUNT</th>
+                    <PermissionGuard permissions={['finance.editIncome','finance.delete']}>
                     <th className="text-center py-3 px-6 font-semibold text-gray-900 dark:text-white text-sm">ACTIONS</th>
+                    </PermissionGuard>
                   </tr>
                 </thead>
                 <tbody>
@@ -402,19 +463,50 @@ const Income: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right font-semibold text-green-600 dark:text-green-400">+{formatCurrencyValue(income.amount)}</td>
-                      <td className="py-4 px-6 flex justify-center gap-2">
-                        <button onClick={() => { setEditingId(income._id); setFormData({ category: income.category, amount: income.amount.toString(), source: income.source, description: income.description, date: new Date(income.date).toISOString().split('T')[0] }); setShowModal(true); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => setDeletingId(income._id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
+                      <PermissionGuard permissions={['finance.editIncome','finance.delete']}>
+                        <td className="py-4 px-6 flex justify-center gap-2">
+                          <button onClick={() => { setEditingId(income._id); setFormData({ category: income.category, amount: income.amount.toString(), source: income.source, description: income.description, date: new Date(income.date).toISOString().split('T')[0] }); setShowModal(true); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => setDeletingId(income._id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </PermissionGuard>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Showing page <span className="font-semibold">{page}</span> of <span className="font-semibold">{totalPages}</span> 
+                  <span className="ml-4">Total: <span className="font-semibold">{totalCount}</span> records</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 px-2">
+                    Page {page}
+                  </span>
+                  <button
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <div className="text-center py-12">
@@ -447,11 +539,11 @@ const Income: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-                <input type="text" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Add any notes..." className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Add any notes..." className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
-                <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} max={getTodayDate()} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div className="flex gap-2 pt-4">
                 <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">{editingId ? 'Update' : 'Create'}</button>
@@ -495,6 +587,7 @@ const Income: React.FC = () => {
         confirmText="Delete All"
         cancelText="Cancel"
         type="danger"
+        isLoading={isBulkDeleting}
       />
     </div>
   );

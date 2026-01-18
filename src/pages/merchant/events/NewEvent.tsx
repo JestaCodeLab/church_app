@@ -11,6 +11,7 @@ import AddSpeakerModal from '../../../components/modals/AddSpeakerModal';
 import ImageUploader, { GalleryUploader } from '../../../components/modals/ImageUploader';
 import FeatureGate from '../../../components/access/FeatureGate';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
+import { PermissionRoute } from '../../../components/guards/PermissionRoute';
 
 interface FormData {
   title: string;
@@ -317,11 +318,12 @@ const NewEvent: React.FC = () => {
         newErrors['recurrence.daysOfWeek'] = 'Select at least one day';
       }
     } else {
-      if (!formData.eventDate) newErrors.eventDate = 'Event date is required';
+      if (!formData.eventDate) newErrors.eventDate = 'Service date is required';
       if (!formData.startTime) newErrors.startTime = 'Start time is required';
     }
     
     if (!formData.location.venue.trim()) newErrors['location.venue'] = 'Venue is required';
+    if (!formData.branch) newErrors.branch = 'Branch is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -424,11 +426,11 @@ const NewEvent: React.FC = () => {
         response = await eventAPI.createEvent(submitData);
       }
       
-      showToast.success(isEdit ? 'Event updated successfully' : 'Event created successfully');
-      navigate(`/events/${response.data.data.event._id}`);
+      showToast.success(isEdit ? 'Service updated successfully' : 'Service created successfully');
+      navigate(`/services/${response.data.data.event._id}`);
       
     } catch (error: any) {
-      showToast.error(error.response?.data?.message || 'Failed to save event');
+      showToast.error(error.response?.data?.message || 'Failed to save service');
       console.error('Submit error:', error);
     } finally {
       setSubmitting(false);
@@ -440,667 +442,672 @@ const NewEvent: React.FC = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading events...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading service...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <FeatureGate feature={'eventManagement'} usageExceeded={!eventLimit?.canCreate}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mb-8">
-            <button
-              onClick={() => navigate('/events')}
-              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Events</span>
-            </button>
-            
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {isEdit ? 'Edit Event' : 'Create New Event'}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              {isEdit ? 'Update event details' : 'Fill in the details to create a new event'}
-            </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Information */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
-                <Calendar className="w-5 h-5" />
-                <span>Basic Information</span>
-              </h3>
+    <PermissionRoute permissions={['events.create', 'events.edit']} redirectTo={`/services/${id}`}>
+      <FeatureGate feature={'eventManagement'} usageExceeded={!eventLimit?.canCreate}>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Header */}
+            <div className="mb-8">
+              <button
+                onClick={() => navigate('/services')}
+                className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Services</span>
+              </button>
               
-              <div className="space-y-4">
-                {/* Title */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Event Title *
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    placeholder="e.g., Sunday Morning Service"
-                  />
-                  {errors.title && (
-                    <p className="text-sm text-red-600 mt-1">{errors.title}</p>
-                  )}
-                </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {isEdit ? 'Edit Service' : 'New Service'}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-0">
+                {isEdit ? 'Update service details' : 'Fill in the details to create a new service'}
+              </p>
+            </div>
 
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
-                    placeholder="Describe the event..."
-                  />
-                </div>
-
-                {/* Recurring Event */}
-                <div>
-                  <div className="flex items-center mb-4">
-                    <input
-                      type="checkbox"
-                      id="isRecurring"
-                      checked={formData.isRecurring}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        isRecurring: e.target.checked
-                      }))}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    />
-                    <label htmlFor="isRecurring" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Recurring Event (e.g., Sunday Services)
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Basic Information */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                  <Calendar className="w-5 h-5" />
+                  <span>Basic Information</span>
+                </h3>
+                
+                <div className="space-y-4">
+                  {/* Title */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Service Title *
                     </label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="e.g., Sunday Morning Service"
+                    />
+                    {errors.title && (
+                      <p className="text-sm text-red-600 mt-1">{errors.title}</p>
+                    )}
                   </div>
 
-                  {formData.isRecurring && (
-                    <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      {/* Frequency */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Recurrence Pattern
-                        </label>
-                        <select
-                          value={formData.recurrence?.frequency || 'weekly'}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            recurrence: { ...prev.recurrence!, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' }
-                          }))}
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        >
-                          <option value="daily">Daily</option>
-                          <option value="weekly">Weekly</option>
-                          <option value="monthly">Monthly</option>
-                        </select>
-                      </div>
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
+                      placeholder="Describe the service..."
+                    />
+                  </div>
 
-                      {/* Days of Week (for weekly) */}
-                      {formData.recurrence?.frequency === 'weekly' && (
+                  {/* Recurring Event */}
+                  <div>
+                    <div className="flex items-center mb-4">
+                      <input
+                        type="checkbox"
+                        id="isRecurring"
+                        checked={formData.isRecurring}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          isRecurring: e.target.checked
+                        }))}
+                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      />
+                      <label htmlFor="isRecurring" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Recurring Event (e.g., Sunday Services)
+                      </label>
+                    </div>
+
+                    {formData.isRecurring && (
+                      <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        {/* Frequency */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Days of Week
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Recurrence Pattern
                           </label>
-                          <div className="grid grid-cols-7 gap-2">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                              <button
-                                key={index}
-                                type="button"
-                                onClick={() => {
-                                  const days = formData.recurrence?.daysOfWeek || [];
-                                  const updated = days.includes(index)
-                                    ? days.filter(d => d !== index)
-                                    : [...days, index];
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    recurrence: { ...prev.recurrence!, daysOfWeek: updated }
-                                  }));
-                                }}
-                                className={`py-2 rounded-lg font-medium text-sm transition-colors ${
-                                  (formData.recurrence?.daysOfWeek || []).includes(index)
-                                    ? 'bg-primary-600 text-white'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                                }`}
-                              >
-                                {day}
-                              </button>
-                            ))}
+                          <select
+                            value={formData.recurrence?.frequency || 'weekly'}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              recurrence: { ...prev.recurrence!, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' }
+                            }))}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          >
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                          </select>
+                        </div>
+
+                        {/* Days of Week (for weekly) */}
+                        {formData.recurrence?.frequency === 'weekly' && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Days of Week
+                            </label>
+                            <div className="grid grid-cols-7 gap-2">
+                              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => {
+                                    const days = formData.recurrence?.daysOfWeek || [];
+                                    const updated = days.includes(index)
+                                      ? days.filter(d => d !== index)
+                                      : [...days, index];
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      recurrence: { ...prev.recurrence!, daysOfWeek: updated }
+                                    }));
+                                  }}
+                                  className={`py-2 rounded-lg font-medium text-sm transition-colors ${
+                                    (formData.recurrence?.daysOfWeek || []).includes(index)
+                                      ? 'bg-primary-600 text-white'
+                                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Service Time */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Service Start Time *
+                            </label>
+                            <input
+                              type="time"
+                              value={formData.recurrence?.baseTime || '09:00'}
+                              onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                recurrence: { ...prev.recurrence!, baseTime: e.target.value }
+                              }))}
+                              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Service End Time (Optional)
+                            </label>
+                            <input
+                              type="time"
+                              value={formData.recurrence?.baseEndTime || ''}
+                              onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                recurrence: { ...prev.recurrence!, baseEndTime: e.target.value }
+                              }))}
+                              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            />
                           </div>
                         </div>
-                      )}
 
-                      {/* Service Time */}
-                      <div className="grid grid-cols-2 gap-4">
+                        {/* Start Date */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Service Start Time *
+                            Start Date *
                           </label>
                           <input
-                            type="time"
-                            value={formData.recurrence?.baseTime || '09:00'}
+                            type="date"
+                            value={formData.recurrence?.startDate || ''}
                             onChange={(e) => setFormData(prev => ({
                               ...prev,
-                              recurrence: { ...prev.recurrence!, baseTime: e.target.value }
+                              recurrence: { ...prev.recurrence!, startDate: e.target.value }
                             }))}
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           />
                         </div>
+
+                        {/* End Date (Optional) */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Service End Time (Optional)
+                            End Date (Optional - leave empty for ongoing)
                           </label>
                           <input
-                            type="time"
-                            value={formData.recurrence?.baseEndTime || ''}
+                            type="date"
+                            value={formData.recurrence?.endDate || ''}
                             onChange={(e) => setFormData(prev => ({
                               ...prev,
-                              recurrence: { ...prev.recurrence!, baseEndTime: e.target.value }
+                              recurrence: { ...prev.recurrence!, endDate: e.target.value }
                             }))}
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           />
                         </div>
-                      </div>
 
-                      {/* Start Date */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Start Date *
-                        </label>
-                        <input
-                          type="date"
-                          value={formData.recurrence?.startDate || ''}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            recurrence: { ...prev.recurrence!, startDate: e.target.value }
-                          }))}
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        />
-                      </div>
-
-                      {/* End Date (Optional) */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          End Date (Optional - leave empty for ongoing)
-                        </label>
-                        <input
-                          type="date"
-                          value={formData.recurrence?.endDate || ''}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            recurrence: { ...prev.recurrence!, endDate: e.target.value }
-                          }))}
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        />
-                      </div>
-
-                      {/* Self Check-in */}
-                      <div className="flex items-center pt-2">
-                        <input
-                          type="checkbox"
-                          id="allowSelfCheckin"
-                          checked={formData.allowSelfCheckin || false}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            allowSelfCheckin: e.target.checked
-                          }))}
-                          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                        />
-                        <label htmlFor="allowSelfCheckin" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Allow members to self check-in via QR code or event code
-                        </label>
-                      </div>
-
-                      {/* Recurrence Pattern Display */}
-                      <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Pattern: {formData.recurrence?.frequency === 'weekly'
-                            ? `Every ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                                .filter((_, i) => (formData.recurrence?.daysOfWeek || []).includes(i))
-                                .join(', ')} at ${formData.recurrence?.baseTime || '09:00'}${formData.recurrence?.baseEndTime ? ` - ${formData.recurrence.baseEndTime}` : ''}`
-                            : `${formData.recurrence?.frequency === 'daily' ? 'Daily' : 'Monthly'} at ${formData.recurrence?.baseTime || '09:00'}${formData.recurrence?.baseEndTime ? ` - ${formData.recurrence.baseEndTime}` : ''}`
-                          }
-                        </p>
-                        {formData.recurrence?.startDate && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            Starting {new Date(formData.recurrence.startDate).toLocaleDateString()} {formData.recurrence?.endDate ? `until ${new Date(formData.recurrence.endDate).toLocaleDateString()}` : '(ongoing)'}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Event Type & Category */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Event Type *
-                    </label>
-                    <select
-                      name="eventType"
-                      value={formData.eventType}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    >
-                      <option value="service">Service</option>
-                      <option value="meeting">Meeting</option>
-                      <option value="conference">Conference</option>
-                      <option value="workshop">Workshop</option>
-                      <option value="social">Social Event</option>
-                      <option value="outreach">Outreach</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Category *
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    >
-                      <option value="general">General</option>
-                      <option value="worship">Worship</option>
-                      <option value="prayer">Prayer</option>
-                      <option value="leadership">Leadership</option>
-                      <option value="youth">Youth</option>
-                      <option value="children">Children</option>
-                      <option value="men">Men</option>
-                      <option value="women">Women</option>
-                      <option value="special">Special</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Date & Time - Only for one-time events */}
-                {!formData.isRecurring && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Event Date *
-                      </label>
-                      <input
-                        type="date"
-                        name="eventDate"
-                        value={formData.eventDate}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                      {errors.eventDate && (
-                        <p className="text-sm text-red-600 mt-1">{errors.eventDate}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Start Time *
-                      </label>
-                      <input
-                        type="time"
-                        name="startTime"
-                        value={formData.startTime}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                      {errors.startTime && (
-                        <p className="text-sm text-red-600 mt-1">{errors.startTime}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        End Time
-                      </label>
-                      <input
-                        type="time"
-                        name="endTime"
-                        value={formData.endTime}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Branch */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Branch (Optional)
-                  </label>
-                  <select
-                    name="branch"
-                    value={formData.branch}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="">All Branches</option>
-                    {branches.map(branch => (
-                      <option key={branch._id} value={branch._id}>
-                        {branch.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Status & Visibility */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Status
-                    </label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="completed">Completed</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center pt-7">
-                    <input
-                      type="checkbox"
-                      name="isPublic"
-                      checked={formData.isPublic}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    />
-                    <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Public Event (visible to non-members)
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Location */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
-                <MapPin className="w-5 h-5" />
-                <span>Location</span>
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Venue *
-                  </label>
-                  <input
-                    type="text"
-                    name="location.venue"
-                    value={formData.location.venue}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    placeholder="e.g., Main Sanctuary, Fellowship Hall"
-                  />
-                  {errors['location.venue'] && (
-                    <p className="text-sm text-red-600 mt-1">{errors['location.venue']}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Street Address
-                    </label>
-                    <input
-                      type="text"
-                      name="location.address.street"
-                      value={formData.location.address.street}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      name="location.address.city"
-                      value={formData.location.address.city}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Cover Image */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
-                <ImageIcon className="w-5 h-5" />
-                <span>Cover Image</span>
-              </h3>
-              <ImageUploader
-                label="Event Cover Image (Optional)"
-                preview={coverImagePreview}
-                onImageSelect={handleCoverImageSelect}
-                onImageRemove={removeCoverImage}
-                maxSize={5}
-              />
-            </div>
-
-            {/* Gallery */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Gallery Images
-              </h3>
-              <GalleryUploader
-                label="Event Gallery (Optional)"
-                previews={galleryPreviews}
-                onImagesSelect={handleGalleryImagesSelect}
-                onImageRemove={removeGalleryImage}
-                maxImages={10}
-                maxSize={5}
-              />
-            </div>
-
-            {/* Hosts */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
-                  <Users className="w-5 h-5" />
-                  <span>Event Hosts (Optional)</span>
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setShowAddHostModal(true)}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Host</span>
-                </button>
-              </div>
-              
-              {hosts.length > 0 ? (
-                <div className="space-y-2">
-                  {hosts.map((host, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {host.type === 'member' && host.member?.photo ? (
-                          <img
-                            src={host.member.photo}
-                            alt={`${host.member.firstName} ${host.member.lastName}`}
-                            className="w-10 h-10 rounded-full object-cover"
+                        {/* Self Check-in */}
+                        <div className="flex items-center pt-2">
+                          <input
+                            type="checkbox"
+                            id="allowSelfCheckin"
+                            checked={formData.allowSelfCheckin || false}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              allowSelfCheckin: e.target.checked
+                            }))}
+                            className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                           />
-                        ) : (
-                          <UserCircle className="w-10 h-10 text-gray-400" />
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">
-                            {host.type === 'member' 
-                              ? `${host.member.firstName} ${host.member.lastName}`
-                              : host.externalHost.name
-                            }
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {host.type === 'member' 
-                              ? 'Church Member'
-                              : `${host.externalHost.title}${host.externalHost.organization ? ` • ${host.externalHost.organization}` : ''}`
-                            }
-                          </p>
+                          <label htmlFor="allowSelfCheckin" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Allow members to self check-in via QR code or service code
+                          </label>
                         </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeHost(index)}
-                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                      >
-                        <X className="w-4 h-4 text-red-600" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  No hosts added yet
-                </p>
-              )}
-            </div>
 
-            {/* Speakers */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
-                  <Mic className="w-5 h-5" />
-                  <span>Event Speakers (Optional)</span>
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setShowAddSpeakerModal(true)}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Speaker</span>
-                </button>
-              </div>
-              
-              {speakers.length > 0 ? (
-                <div className="space-y-2">
-                  {speakers.map((speaker, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {speaker.type === 'member' && speaker.member?.photo ? (
-                          <img
-                            src={speaker.member.photo}
-                            alt={`${speaker.member.firstName} ${speaker.member.lastName}`}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <UserCircle className="w-10 h-10 text-gray-400" />
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">
-                            {speaker.type === 'member' 
-                              ? `${speaker.member.firstName} ${speaker.member.lastName}`
-                              : speaker.externalSpeaker.name
-                            }
-                          </p>
+                        {/* Recurrence Pattern Display */}
+                        <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {speaker.type === 'member' 
-                              ? 'Church Member'
-                              : speaker.externalSpeaker.title
+                            Pattern: {formData.recurrence?.frequency === 'weekly'
+                              ? `Every ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                                  .filter((_, i) => (formData.recurrence?.daysOfWeek || []).includes(i))
+                                  .join(', ')} at ${formData.recurrence?.baseTime || '09:00'}${formData.recurrence?.baseEndTime ? ` - ${formData.recurrence.baseEndTime}` : ''}`
+                              : `${formData.recurrence?.frequency === 'daily' ? 'Daily' : 'Monthly'} at ${formData.recurrence?.baseTime || '09:00'}${formData.recurrence?.baseEndTime ? ` - ${formData.recurrence.baseEndTime}` : ''}`
                             }
                           </p>
-                          {speaker.type === 'external' && speaker.externalSpeaker.topic && (
-                            <p className="text-xs text-gray-500 dark:text-gray-500">
-                              Topic: {speaker.externalSpeaker.topic}
+                          {formData.recurrence?.startDate && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              Starting {new Date(formData.recurrence.startDate).toLocaleDateString()} {formData.recurrence?.endDate ? `until ${new Date(formData.recurrence.endDate).toLocaleDateString()}` : '(ongoing)'}
                             </p>
                           )}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeSpeaker(index)}
-                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    )}
+                  </div>
+
+                  {/* Event Type & Category */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Service Type *
+                      </label>
+                      <select
+                        name="eventType"
+                        value={formData.eventType}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
-                        <X className="w-4 h-4 text-red-600" />
-                      </button>
+                        <option value="service">Service</option>
+                        <option value="meeting">Meeting</option>
+                        <option value="conference">Conference</option>
+                        <option value="workshop">Workshop</option>
+                        <option value="social">Social Event</option>
+                        <option value="outreach">Outreach</option>
+                        <option value="other">Other</option>
+                      </select>
                     </div>
-                  ))}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Category *
+                      </label>
+                      <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="general">General</option>
+                        <option value="worship">Worship</option>
+                        <option value="prayer">Prayer</option>
+                        <option value="leadership">Leadership</option>
+                        <option value="youth">Youth</option>
+                        <option value="children">Children</option>
+                        <option value="men">Men</option>
+                        <option value="women">Women</option>
+                        <option value="special">Special</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Date & Time - Only for one-time events */}
+                  {!formData.isRecurring && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Service Date *
+                        </label>
+                        <input
+                          type="date"
+                          name="eventDate"
+                          value={formData.eventDate}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                        {errors.eventDate && (
+                          <p className="text-sm text-red-600 mt-1">{errors.eventDate}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Start Time *
+                        </label>
+                        <input
+                          type="time"
+                          name="startTime"
+                          value={formData.startTime}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                        {errors.startTime && (
+                          <p className="text-sm text-red-600 mt-1">{errors.startTime}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          End Time
+                        </label>
+                        <input
+                          type="time"
+                          name="endTime"
+                          value={formData.endTime}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Branch */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Branch *
+                    </label>
+                    <select
+                      name="branch"
+                      value={formData.branch}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                      <option value="">Select a Branch</option>
+                      {branches.map(branch => (
+                        <option key={branch._id} value={branch._id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.branch && (
+                      <p className="text-sm text-red-600 mt-1">{errors.branch}</p>
+                    )}
+                  </div>
+
+                  {/* Status & Visibility */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Status
+                      </label>
+                      <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center pt-7">
+                      <input
+                        type="checkbox"
+                        name="isPublic"
+                        checked={formData.isPublic}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      />
+                      <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Public Service (visible to non-members)
+                      </label>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  No speakers added yet
-                </p>
-              )}
-            </div>
+              </div>
 
-            {/* Submit Buttons */}
-            <div className="flex items-center justify-end space-x-4">
-              <button
-                type="button"
-                onClick={() => navigate('/events')}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white rounded-lg flex items-center space-x-2 transition-colors disabled:cursor-not-allowed"
-              >
-                {submitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Saving...</span>
-                  </>
+              {/* Location */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                  <MapPin className="w-5 h-5" />
+                  <span>Location</span>
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Venue *
+                    </label>
+                    <input
+                      type="text"
+                      name="location.venue"
+                      value={formData.location.venue}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="e.g., Main Sanctuary, Fellowship Hall"
+                    />
+                    {errors['location.venue'] && (
+                      <p className="text-sm text-red-600 mt-1">{errors['location.venue']}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Street Address
+                      </label>
+                      <input
+                        type="text"
+                        name="location.address.street"
+                        value={formData.location.address.street}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        name="location.address.city"
+                        value={formData.location.address.city}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cover Image */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                  <ImageIcon className="w-5 h-5" />
+                  <span>Cover Image</span>
+                </h3>
+                <ImageUploader
+                  label="Service Cover Image (Optional)"
+                  preview={coverImagePreview}
+                  onImageSelect={handleCoverImageSelect}
+                  onImageRemove={removeCoverImage}
+                  maxSize={5}
+                />
+              </div>
+
+              {/* Gallery */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  Gallery Images
+                </h3>
+                <GalleryUploader
+                  label="Service Gallery (Optional)"
+                  previews={galleryPreviews}
+                  onImagesSelect={handleGalleryImagesSelect}
+                  onImageRemove={removeGalleryImage}
+                  maxImages={10}
+                  maxSize={5}
+                />
+              </div>
+
+              {/* Hosts */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
+                    <Users className="w-5 h-5" />
+                    <span>Service Hosts (Optional)</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddHostModal(true)}
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Host</span>
+                  </button>
+                </div>
+                
+                {hosts.length > 0 ? (
+                  <div className="space-y-2">
+                    {hosts.map((host, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          {host.type === 'member' && host.member?.photo ? (
+                            <img
+                              src={host.member.photo}
+                              alt={`${host.member.firstName} ${host.member.lastName}`}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <UserCircle className="w-10 h-10 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">
+                              {host.type === 'member' 
+                                ? `${host.member.firstName} ${host.member.lastName}`
+                                : host.externalHost.name
+                              }
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {host.type === 'member' 
+                                ? 'Church Member'
+                                : `${host.externalHost.title}${host.externalHost.organization ? ` • ${host.externalHost.organization}` : ''}`
+                              }
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeHost(index)}
+                          className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    <span>{isEdit ? 'Update Event' : 'Create Event'}</span>
-                  </>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    No hosts added yet
+                  </p>
                 )}
-              </button>
-            </div>
-          </form>
+              </div>
 
-          {/* Modals */}
-          <AddHostModal
-            isOpen={showAddHostModal}
-            onClose={() => setShowAddHostModal(false)}
-            onAddMemberHost={addMemberHost}
-            onAddExternalHost={addExternalHost}
-            members={members}
-            existingHosts={hosts}
-          />
+              {/* Speakers */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
+                    <Mic className="w-5 h-5" />
+                    <span>Service Speakers (Optional)</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSpeakerModal(true)}
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Speaker</span>
+                  </button>
+                </div>
+                
+                {speakers.length > 0 ? (
+                  <div className="space-y-2">
+                    {speakers.map((speaker, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          {speaker.type === 'member' && speaker.member?.photo ? (
+                            <img
+                              src={speaker.member.photo}
+                              alt={`${speaker.member.firstName} ${speaker.member.lastName}`}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <UserCircle className="w-10 h-10 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">
+                              {speaker.type === 'member' 
+                                ? `${speaker.member.firstName} ${speaker.member.lastName}`
+                                : speaker.externalSpeaker.name
+                              }
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {speaker.type === 'member' 
+                                ? 'Church Member'
+                                : speaker.externalSpeaker.title
+                              }
+                            </p>
+                            {speaker.type === 'external' && speaker.externalSpeaker.topic && (
+                              <p className="text-xs text-gray-500 dark:text-gray-500">
+                                Topic: {speaker.externalSpeaker.topic}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeSpeaker(index)}
+                          className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    No speakers added yet
+                  </p>
+                )}
+              </div>
 
-          <AddSpeakerModal
-            isOpen={showAddSpeakerModal}
-            onClose={() => setShowAddSpeakerModal(false)}
-            onAddMemberSpeaker={addMemberSpeaker}
-            onAddExternalSpeaker={addExternalSpeaker}
-            members={members}
-            existingSpeakers={speakers}
-          />
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/services')}
+                  className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white rounded-lg flex items-center space-x-2 transition-colors disabled:cursor-not-allowed"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>{isEdit ? 'Update Service' : 'Create Service'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* Modals */}
+            <AddHostModal
+              isOpen={showAddHostModal}
+              onClose={() => setShowAddHostModal(false)}
+              onAddMemberHost={addMemberHost}
+              onAddExternalHost={addExternalHost}
+              members={members}
+              existingHosts={hosts}
+            />
+
+            <AddSpeakerModal
+              isOpen={showAddSpeakerModal}
+              onClose={() => setShowAddSpeakerModal(false)}
+              onAddMemberSpeaker={addMemberSpeaker}
+              onAddExternalSpeaker={addExternalSpeaker}
+              members={members}
+              existingSpeakers={speakers}
+            />
+          </div>
         </div>
-      </div>
-    </FeatureGate>
+      </FeatureGate>
+    </PermissionRoute>
   );
 };
 

@@ -21,6 +21,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 interface Birthday {
   _id: string;
@@ -207,6 +208,7 @@ const Birthdays: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <PermissionGuard permission="members.exportBirthdays">
           <button
             onClick={exportBirthdays}
             className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -214,6 +216,7 @@ const Birthdays: React.FC = () => {
             <Download className="w-4 h-4 mr-2" />
             Export
           </button>
+          </PermissionGuard>
         </div>
       </div>
 

@@ -685,8 +685,13 @@ export const messagingAPI = {
     getHistory: (params?: any) => api.get('/sms/history', { params }),
     getLogs: (params?: any) => api.get('/sms/logs', { params }),
     getLog: (id: string) => api.get(`/sms/logs/${id}`),
+    getScheduled: (params?: any) => api.get('/sms/scheduled', { params }),
+    cancelScheduled: (messageId: string) => api.delete(`/sms/scheduled/${messageId}`),
     getStatistics: (params?: any) => api.get('/sms/statistics', { params }),
   },
+
+  // ✅ AI Message Generation
+  generateMessage: (data: any) => api.post('/sms/generate-message', data),
 
   // Credits
   credits: {

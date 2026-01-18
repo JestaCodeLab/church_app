@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, CheckCircle, Loader, AlertCircle, Clock, ArrowLeft, Phone, Mail, User } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle, Loader, AlertCircle, Clock, ArrowLeft, Phone, User } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import ThemeToggle from '../../components/ui/ThemeToggle';
+import { validatePhone } from '../../utils/validators';
 
 const EventCheckIn = () => {
   // Support both old (qrData) and new (eventId) params
@@ -25,8 +26,7 @@ const EventCheckIn = () => {
     phone: '',
     code: '', // For new system: event code
     firstName: '', // For old system: guest first name
-    lastName: '', // For old system: guest last name
-    email: ''
+    lastName: '' // For old system: guest last name
   });
 
   useEffect(() => {
@@ -92,6 +92,13 @@ const EventCheckIn = () => {
           return;
         }
 
+        const phoneValidation = validatePhone(formData.phone);
+        if (!phoneValidation.valid) {
+          toast.error(phoneValidation.error || 'Invalid phone number');
+          setSubmitting(false);
+          return;
+        }
+
         const deviceId = localStorage.getItem('deviceId') || 'web-' + Date.now();
         localStorage.setItem('deviceId', deviceId);
 
@@ -107,7 +114,7 @@ const EventCheckIn = () => {
           setSuccess(true);
           setCheckinData(response.data.data.attendance);
           toast.success('Successfully checked in!');
-          setFormData({ phone: '', code: '', firstName: '', lastName: '', email: '' });
+          setFormData({ phone: '', code: '', firstName: '', lastName: '' });
         }
       } else {
         // Old system: check-in with guest details
@@ -117,18 +124,24 @@ const EventCheckIn = () => {
           return;
         }
 
+        const phoneValidation = validatePhone(formData.phone);
+        if (!phoneValidation.valid) {
+          toast.error(phoneValidation.error || 'Invalid phone number');
+          setSubmitting(false);
+          return;
+        }
+
         const response = await axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, {
           firstName: formData.firstName,
           lastName: formData.lastName,
-          phone: formData.phone,
-          email: formData.email
+          phone: formData.phone
         });
 
         if (response.data.success) {
           setSuccess(true);
           setCheckinData(response.data.data?.attendance);
           toast.success('Successfully checked in!');
-          setFormData({ phone: '', code: '', firstName: '', lastName: '', email: '' });
+          setFormData({ phone: '', code: '', firstName: '', lastName: '' });
         }
       }
     } catch (error: any) {
@@ -192,13 +205,13 @@ const EventCheckIn = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
           <AlertCircle className="w-20 h-20 mx-auto text-red-600 mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Event Not Found
+            Service Not Found
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {error}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-500">
-            Please check the QR code or contact the event organizer
+            Please check the QR code or contact the service organizer
           </p>
           <button
             onClick={() => navigate('/')}
@@ -219,7 +232,7 @@ const EventCheckIn = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
           <CheckCircle className="w-20 h-20 mx-auto text-green-600 mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Welcome!
+            Welcome {checkinData?.firstName || ''}!
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             You've successfully checked in to
@@ -245,7 +258,7 @@ const EventCheckIn = () => {
               <button
                 onClick={() => {
                   setSuccess(false);
-                  setFormData({ phone: '', code: '', firstName: '', lastName: '', email: '' });
+                  setFormData({ phone: '', code: '', firstName: '', lastName: '' });
                 }}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
@@ -279,16 +292,16 @@ const EventCheckIn = () => {
               <div className="w-full h-full flex items-center justify-center">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-900 dark:to-blue-950"></div>
                 <div className="absolute inset-0 opacity-20">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,transparent_10%,rgba(0,0,0,0.5)_100%)]"></div>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,transparent_10%,rgba(0, 0, 0, 0.1)_100%)]"></div>
                 </div>
               </div>
             )}
             
             {/* Black Gradient Overlay - Bottom to Top */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent"></div>
             
             {/* Title Overlay */}
-            <div className="absolute inset-0 bg-black/20 dark:bg-black/40 flex items-end">
+            <div className="absolute inset-0 bg-black/10 dark:bg-black/10 flex items-end">
               <div className="w-full p-6 sm:p-8 text-white">
                 <h1 className="text-2xl sm:text-3xl font-bold mb-2">{event?.title}</h1>
                 
@@ -341,7 +354,7 @@ const EventCheckIn = () => {
                   {/* Event Code Field - Prominent */}
                   <div>
                     <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-3">
-                      Event Code <span className="text-red-500">*</span>
+                      Service Code <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -372,9 +385,8 @@ const EventCheckIn = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        placeholder="+233 50 123 4567"
+                        placeholder="024XXXXXXX"
                         className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
-                        
                       />
                     </div>
                   </div>
@@ -432,26 +444,7 @@ const EventCheckIn = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        placeholder="+233 50 123 4567"
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1">
-                      Email <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        placeholder="your@email.com"
+                        placeholder="024XXXXXXX"
                         className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
                         required
                       />

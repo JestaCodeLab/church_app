@@ -10,6 +10,7 @@ import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import RegistrationSettingsPanel from '../../../components/modals/RegistrationSettingsPanel';
 import { useAuth } from '../../../context/AuthContext';
+import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 const AllMembers = () => {
   const { user, fetchAndUpdateSubscription } = useAuth();
@@ -355,6 +356,7 @@ const AllMembers = () => {
         <div className="flex items-center space-x-3">
 
         {/* Export Button */}
+        <PermissionGuard permission="members.export">
           <button
             onClick={handleExport}
             disabled={isExporting || members.length === 0}
@@ -363,8 +365,10 @@ const AllMembers = () => {
             <Download className="w-4 h-4 mr-2" />
             {isExporting ? 'Exporting...' : 'Export'}
           </button>
+          </PermissionGuard>
 
           {/* Import Button */}
+          <PermissionGuard permission="members.import">
           <button
             onClick={() => setShowImportModal(true)}
             className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
@@ -372,8 +376,10 @@ const AllMembers = () => {
             <Upload className="w-4 h-4 mr-2" />
             Import
           </button>
+          </PermissionGuard>
 
           {/* Add Member Button */}
+          <PermissionGuard permission="members.create">
           <button
             onClick={handleAddMemberClick}
             className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -391,6 +397,7 @@ const AllMembers = () => {
               </span>
             )}
           </button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -420,6 +427,7 @@ const AllMembers = () => {
                   Share this link for members to self-register online. They can choose to register as members or mark themselves as first-time visitors.
                 </p>
                 <div className="flex items-start gap-3 mt-4">
+                  <PermissionGuard permission="members.registrationLink">
                   <button
                     onClick={() => setShowLinkModal(true)}
                     className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center space-x-2"
@@ -427,7 +435,8 @@ const AllMembers = () => {
                     <Share2 className="h-4 w-4" />
                     <span>Get Link</span>
                   </button>
-                  
+                  </PermissionGuard>
+                  <PermissionGuard permission="members.registrationSettings">
                   <button
                     onClick={() => setShowSettingsModal(true)}
                     className="px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center space-x-2"
@@ -436,6 +445,7 @@ const AllMembers = () => {
                     <Settings className="h-4 w-4" />
                     <span>Settings</span>
                   </button>
+                  </PermissionGuard>
                 </div>
               </div>
             </div>
@@ -626,6 +636,7 @@ const AllMembers = () => {
                 className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
               {selectedMembers.size > 0 && (
+                <PermissionGuard permission="members.delete">
                 <button
                   onClick={handleBulkDelete}
                   disabled={isDeleting}
@@ -646,6 +657,7 @@ const AllMembers = () => {
                     </>
                   )}
                 </button>
+                </PermissionGuard>
               )}
             </div>
           </div>
@@ -657,9 +669,24 @@ const AllMembers = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
           </div>
         ) : members.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 flex flex-col items-center justify-center">
             <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No members found</p>
+            <p className="text-gray-500 mb-2 dark:text-gray-400">No members found</p>
+            {/* Add Member Button */}
+            <PermissionGuard permission="members.create">
+            <button
+              onClick={handleAddMemberClick}
+              className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                memberLimit.canCreate
+                  ? 'text-white bg-primary-600 hover:bg-primary-700'
+                  : 'text-gray-400 bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
+              }`}
+              title={!memberLimit.canCreate ? `Member limit reached (${memberLimit.current}/${memberLimit.limit})` : ''}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Member
+            </button>
+            </PermissionGuard>
           </div>
         ) : (
           <>
@@ -704,16 +731,17 @@ const AllMembers = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {members.map((member) => (
-                    <tr key={member._id} onClick={() => navigate(`/members/${member._id}`)} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group ${
+                    <tr key={member._id} onClick={(e) => { e?.stopPropagation(); navigate(`/members/${member._id}`)}} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group ${
                       selectedMembers.has(member._id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                     }`}>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <label className="inline-flex items-center cursor-pointer group">
+                        <label className="inline-flex items-center cursor-pointer group" onClick={(e) => e.stopPropagation()}>
                           <div className="relative">
                             <input
                               type="checkbox"
                               checked={selectedMembers.has(member._id)}
-                              onChange={() => toggleMemberSelection(member._id)}
+                              onChange={() => {toggleMemberSelection(member._id)} }
+                              onClick={(e) => e.stopPropagation()}
                               className="sr-only peer"
                             />
                             <div className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 peer-checked:bg-primary-600 peer-checked:border-primary-600 dark:peer-checked:bg-primary-600 dark:peer-checked:border-primary-600 transition-all peer-focus:ring-1 peer-focus:ring-primary-500 peer-focus:ring-offset-2 dark:peer-focus:ring-offset-gray-900 peer-focus:ring-offset-0 dark:peer-focus:ring-offset-0 group-hover:border-primary-400 dark:group-hover:border-primary-500"></div>
@@ -755,6 +783,7 @@ const AllMembers = () => {
                       
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
+                          <PermissionGuard permission="members.edit">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -765,6 +794,8 @@ const AllMembers = () => {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="members.delete">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -775,6 +806,7 @@ const AllMembers = () => {
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
+                          </PermissionGuard>
                         </div>
                       </td>
                     </tr>

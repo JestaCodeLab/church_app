@@ -4,6 +4,7 @@ import { ArrowLeft, Save, User, Upload, X } from 'lucide-react';
 import { memberAPI, branchAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
+import { PermissionRoute } from '../../../components/guards/PermissionRoute';
 
 const EditMember = () => {
   const navigate = useNavigate();
@@ -208,6 +209,7 @@ const EditMember = () => {
   }
 
   return (
+    <PermissionRoute permission="members.edit" redirectTo={`/${`members/${id}`}`}>
     <FeatureGate feature={'memberManagement'}>
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
@@ -637,25 +639,7 @@ const EditMember = () => {
                               Select which branch this member belongs to
                             </p>
                           </div>
-          
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Membership Status
-                            </label>
-                            <select
-                              name="membershipStatus"
-                              value={formData.membershipStatus}
-                              onChange={handleChange}
-                              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-colors"
-                            >
-                              <option value="active">Active</option>
-                              <option value="inactive">Inactive</option>
-                              <option value="visitor">Visitor</option>
-                              <option value="new_convert">New Convert</option>
-                              <option value="transferred">Transferred</option>
-                            </select>
-                          </div>
-          
+                              
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Membership Type
@@ -673,9 +657,28 @@ const EditMember = () => {
                               <option value="deacon">Deacon</option>
                               <option value="youth">Youth</option>
                               <option value="children">Children</option>
-                              <option value="visitor">Visitor</option>
                             </select>
                           </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Membership Status
+                            </label>
+                            <select
+                              name="membershipStatus"
+                              value={formData.membershipStatus}
+                              onChange={handleChange}
+                              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-colors"
+                            >
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                              {/* <option value="visitor">Visitor</option>
+                              <option value="new_convert">New Convert</option> */}
+                              <option value="transferred">Transferred</option>
+                            </select>
+                          </div>
+          
+                          
           
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -855,6 +858,7 @@ const EditMember = () => {
       </div>
     </div>
     </FeatureGate>
+    </PermissionRoute>
   );
 };
 
