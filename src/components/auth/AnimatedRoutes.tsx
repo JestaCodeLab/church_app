@@ -269,7 +269,7 @@ const AnimatedRoutes = () => {
 
         {/* Default */}
         <Route path="/login" element={<Login />} />
-        <Route path="*" element={<NotFound />} />
+        {!isMainDomain && <Route path="*" element={<NotFound />} />}
       </Routes>
     </AnimatePresence>
   );
