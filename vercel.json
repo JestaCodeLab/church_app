@@ -6,76 +6,79 @@
     },
     {
       "source": "/login",
-      "destination": "/login"
+      "destination": "/index.html"
     },
     {
       "source": "/register/:path*",
-      "destination": "/register/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/auth-redirect",
-      "destination": "/auth-redirect"
+      "destination": "/index.html"
     },
     {
       "source": "/forgot-password",
-      "destination": "/forgot-password"
+      "destination": "/index.html"
     },
     {
       "source": "/reset-password",
-      "destination": "/reset-password"
+      "destination": "/index.html"
     },
     {
       "source": "/verify-email",
-      "destination": "/verify-email"
+      "destination": "/index.html"
     },
     {
       "source": "/dashboard/:path*",
-      "destination": "/dashboard/:path*"
+      "destination": "/index.html"
     },
-
     {
       "source": "/service/:path*",
-      "destination": "/service/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/onboarding/:path*",
-      "destination": "/onboarding/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/donate/:path*",
-      "destination": "/donate/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/finance/:path*",
-      "destination": "/finance/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/admin/:path*",
-      "destination": "/admin/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/settings/:path*",
-      "destination": "/settings/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/members/:path*",
-      "destination": "/members/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/branches/:path*",
-      "destination": "/branches/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/departments/:path*",
-      "destination": "/departments/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/services/:path*",
-      "destination": "/services/:path*"
+      "destination": "/index.html"
     },
     {
       "source": "/messaging/:path*",
-      "destination": "/messaging/:path*"
+      "destination": "/index.html"
+    },
+    {
+      "source": "/select-church",
+      "destination": "/index.html"
     },
     {
       "source": "/:path*",
