@@ -251,7 +251,7 @@ const MerchantLayout = () => {
             requiresFeature: 'financialManagement',
             requiredPermissions: ['finance.expenses'],
             lockedFeature: 'expenseTracking'
-          },
+          }, 
           // {
           //   name: 'Tithing',
           //   href: '/finance/tithing',
