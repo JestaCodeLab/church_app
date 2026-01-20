@@ -1,0 +1,96 @@
+{
+  "rewrites": [
+    {
+      "source": "/login",
+      "destination": "/login"
+    },
+    {
+      "source": "/register/:path*",
+      "destination": "/register/:path*"
+    },
+    {
+      "source": "/auth-redirect",
+      "destination": "/auth-redirect"
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/forgot-password"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/reset-password"
+    },
+    {
+      "source": "/verify-email",
+      "destination": "/verify-email"
+    },
+    {
+      "source": "/dashboard/:path*",
+      "destination": "/dashboard/:path*"
+    },
+
+    {
+      "source": "/service/:path*",
+      "destination": "/service/:path*"
+    },
+    {
+      "source": "/onboarding/:path*",
+      "destination": "/onboarding/:path*"
+    },
+    {
+      "source": "/donate/:path*",
+      "destination": "/donate/:path*"
+    },
+    {
+      "source": "/finance/:path*",
+      "destination": "/finance/:path*"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/admin/:path*"
+    },
+    {
+      "source": "/settings/:path*",
+      "destination": "/settings/:path*"
+    },
+    {
+      "source": "/members/:path*",
+      "destination": "/members/:path*"
+    },
+    {
+      "source": "/branches/:path*",
+      "destination": "/branches/:path*"
+    },
+    {
+      "source": "/departments/:path*",
+      "destination": "/departments/:path*"
+    },
+    {
+      "source": "/services/:path*",
+      "destination": "/services/:path*"
+    },
+    {
+      "source": "/messaging/:path*",
+      "destination": "/messaging/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://YOUR_WORDPRESS_IP/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/:path*",
+      "headers": [
+        {
+          "key": "X-Forwarded-Host",
+          "value": "thechurchhq.com"
+        },
+        {
+          "key": "X-Forwarded-Proto",
+          "value": "https"
+        }
+      ]
+    }
+  ]
+}

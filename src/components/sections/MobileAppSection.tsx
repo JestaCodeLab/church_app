@@ -21,7 +21,7 @@ const MobileAppSection: React.FC = () => {
             <Smartphone className="w-4 h-4 text-cyan-600 dark:text-[#00f0ff]" />
             <span className="text-sm font-semibold text-cyan-600 dark:text-[#00f0ff] uppercase tracking-wider">Mobile App</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 dark:text-white mb-6 leading-[1.1]" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+          <h2 className="text-4xl sm:text-5xl lg:text-5xl font-bold tracking-tight text-gray-900 dark:text-white mb-6 leading-[1.1]" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
             Stay Connected,<br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-gray-900 dark:via-white to-pink-600 dark:to-[#ff00a0] animate-pulse">Anytime, Anywhere</span>
           </h2>

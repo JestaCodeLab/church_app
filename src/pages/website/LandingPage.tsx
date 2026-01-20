@@ -8,13 +8,13 @@ import {
   ChevronLeft, ChevronRight, Facebook, Twitter, Linkedin, Instagram, Mail, Send,
   Church
 } from 'lucide-react';
-import api from '../services/api';
-import ThemeToggle from '../components/ui/ThemeToggle';
-import { useTheme } from '../context/ThemeContext';
-import MobileAppSection from '../components/sections/MobileAppSection';
-import useSEO from '../hooks/useSEO';
-import PageTransition from '../components/auth/PageTransition';
-import FeatureShowcase from '../components/sections/FeatureSection';
+import api from '../../services/api';
+import ThemeToggle from '../../components/ui/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
+import MobileAppSection from '../../components/sections/MobileAppSection';
+import useSEO from '../../hooks/useSEO';
+import PageTransition from '../../components/auth/PageTransition';
+import FeatureShowcase from '../../components/sections/FeatureSection';
 
 // Counter Component
 const CounterStat: React.FC<{ value: number; suffix: string; format?: string }> = ({ value, suffix, format }) => {
@@ -471,7 +471,7 @@ const LandingPage: React.FC = () => {
               <span className="text-sm text-blue-600 dark:text-blue-400 font-bold">Organize . Connect . Grow</span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Ministry Made Simple, <br/>Connection Made Strong
             </h1>
 
@@ -492,7 +492,7 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* Hero Image - Full Width Centered */}
-          <div className="relative mb-12 border-8 border-white dark:border-blue-900 rounded-[30px] shadow-2xl mx-auto max-w-6xl">
+          <div className="relative mb-12 border-8 border-white dark:border-blue-900 rounded-[30px] shadow-2xl mx-auto max-w-5xl">
             <div className="absolute -inset-4 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-3xl blur-3xl opacity-60"></div>
             <div className="relative rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
               <img 
@@ -615,7 +615,7 @@ const LandingPage: React.FC = () => {
       <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Powerful Features
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-normal">
@@ -675,7 +675,7 @@ const LandingPage: React.FC = () => {
       <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Transparent Pricing
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400">
@@ -791,7 +791,7 @@ const LandingPage: React.FC = () => {
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               What Our Users Say
             </h2>
           </div>
@@ -875,7 +875,7 @@ const LandingPage: React.FC = () => {
       <section id="faqs" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
               Frequently Asked
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 font-normal">
@@ -922,7 +922,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-3" style={{ fontFamily: "'Rethink Sans', sans-serif" }}>
             Ready to Transform Your Church?
           </h2>
           <p className="text-xl text-blue-100 mb-12 font-normal">
