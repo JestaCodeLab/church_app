@@ -138,7 +138,7 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         {/* Landing Page - Main Domain */}
-        {/* {isMainDomain && <Route path="/" element={<LandingPage />} />} */}
+        {isMainDomain && <Route path="/" element={<LandingPage />} />}
 
         {/* Public Routes */}
         <Route element={<PublicRoute />}>
@@ -268,8 +268,8 @@ const AnimatedRoutes = () => {
         </Route>
 
         {/* Default */}
-        <Route path="/login" element={<Login />} />
-        {!isMainDomain && <Route path="*" element={<NotFound />} />}
+        <Route path="/" element={isMainDomain ? <Navigate to="/" replace /> : <Navigate to="/login" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
   );
