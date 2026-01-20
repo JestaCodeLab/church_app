@@ -75,7 +75,7 @@
     },
     {
       "source": "/:path*",
-      "destination": "https://YOUR_WORDPRESS_IP/:path*"
+      "destination": "https://server197.web-hosting.com/thecctgf/:path*"
     }
   ],
   "headers": [
