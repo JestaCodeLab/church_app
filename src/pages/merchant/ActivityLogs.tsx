@@ -141,17 +141,17 @@ const ActivityLogs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen dark:bg-slate-900">
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div className="max-w-8xl mx-auto px-4 sm:px-4 py-4 sm:py-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                 <Activity className="text-blue-600 dark:text-blue-400" size={24} />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+                <h1 className="text-xl sm:text-xl font-bold text-slate-900 dark:text-white">
                   Activity Logs
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
@@ -163,13 +163,13 @@ const ActivityLogs = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="max-w-8xl mx-auto px-2 sm:px-2 py-6 sm:py-4">
         {/* Filters Section */}
         <div className="bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
+          {/* <div className="flex items-center gap-2 mb-4">
             <Filter size={18} className="text-slate-600 dark:text-slate-400" />
             <h2 className="font-semibold text-slate-900 dark:text-white">Filters</h2>
-          </div>
+          </div> */}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Action Filter */}
