@@ -41,12 +41,21 @@ interface WithdrawalRequest {
   amount: number;
   fee: number;
   totalAmount: number;
-  method: string;
+  paymentMethodId?: {
+    type: string;
+    accountName: string;
+    accountNumber: string;
+    bankName?: string;
+    provider?: string;
+  };
   reason?: string;
-  status: 'pending' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed';
+  transactionReference?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'cancelled';
   requestedAt: string;
   processedAt?: string;
   processedBy?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
 }
 
 interface WalletStats {
@@ -57,6 +66,7 @@ interface WalletStats {
   totalWithdrawn: number;
   pendingWithdrawals: number;
   lastPayoutDate?: string;
+  withdrawalFeePercentage?: number;
 }
 
 const Wallet = () => {
@@ -72,7 +82,8 @@ const Wallet = () => {
     eventDonations: 0,
     totalWithdrawn: 0,
     pendingWithdrawals: 0,
-    lastPayoutDate: undefined
+    lastPayoutDate: undefined,
+    withdrawalFeePercentage: 1.5
   });
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -82,6 +93,10 @@ const Wallet = () => {
   const [showAddMethodModal, setShowAddMethodModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [methodToDelete, setMethodToDelete] = useState<string | null>(null);
+  const [showCancelWithdrawalConfirm, setShowCancelWithdrawalConfirm] = useState(false);
+  const [withdrawalToCancel, setWithdrawalToCancel] = useState<WithdrawalRequest | null>(null);
+  const [cancelWithdrawalReason, setCancelWithdrawalReason] = useState('');
+  const [cancelWithdrawalLoading, setCancelWithdrawalLoading] = useState(false);
 
   const [withdrawalStep, setWithdrawalStep] = useState(1); // 1: Select Method, 2: Enter Amount, 3: Review
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
@@ -148,6 +163,41 @@ const Wallet = () => {
         text: 'text-white',
         icon: 'text-white'
       };
+    }
+  };
+
+  const handleCancelWithdrawal = (withdrawal: WithdrawalRequest) => {
+    // Check if withdrawal can be cancelled
+    if (!['pending', 'approved'].includes(withdrawal.status)) {
+      toast.error(`Cannot cancel withdrawal with status: ${withdrawal.status}`);
+      return;
+    }
+    setWithdrawalToCancel(withdrawal);
+    setShowCancelWithdrawalConfirm(true);
+  };
+
+  const confirmCancelWithdrawal = async () => {
+    if (!withdrawalToCancel) return;
+    try {
+      setCancelWithdrawalLoading(true);
+      const res = await api.patch(`/wallet/withdrawal-request/${withdrawalToCancel._id}/cancel`, {
+        reason: cancelWithdrawalReason
+      });
+      
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setShowCancelWithdrawalConfirm(false);
+        setWithdrawalToCancel(null);
+        setCancelWithdrawalReason('');
+        // Reload withdrawal history and wallet data
+        loadWithdrawalHistory();
+        loadWalletData();
+      }
+    } catch (error: any) {
+      console.error('Failed to cancel withdrawal:', error);
+      toast.error(error?.response?.data?.message || 'Failed to cancel withdrawal');
+    } finally {
+      setCancelWithdrawalLoading(false);
     }
   };
 
@@ -311,7 +361,10 @@ const Wallet = () => {
         setShowWithdrawalModal(false);
         resetWithdrawalForm();
         setHistoryPage(1);
-        await loadWithdrawalHistory();
+        await Promise.all([
+          loadWalletData(),
+          loadWithdrawalHistory()
+        ]);
       }
     } catch (error: any) {
       console.error('Failed to request withdrawal:', error);
@@ -329,8 +382,8 @@ const Wallet = () => {
   };
 
   const calculateFee = (amount: number) => {
-    // 1.5% fee
-    return amount * 0.015;
+    const feePercentage = stats.withdrawalFeePercentage || 1.5;
+    return amount * (feePercentage / 100);
   };
 
   const withdrawalAmount_num = parseFloat(withdrawalAmount) || 0;
@@ -347,6 +400,7 @@ const Wallet = () => {
       case 'processing': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
       case 'rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
       case 'failed': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      case 'cancelled': return 'bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-400';
       default: return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
     }
   };
@@ -595,6 +649,7 @@ const Wallet = () => {
                         <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">METHOD</th>
                         <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">AMOUNT</th>
                         <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">STATUS</th>
+                        <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -608,14 +663,24 @@ const Wallet = () => {
                               {new Date(withdrawal.requestedAt).toLocaleDateString()}
                             </div>
                             <div className="text-xs text-slate-600 dark:text-slate-400">
-                              {new Date(withdrawal.requestedAt).toLocaleTimeString()}
+                              {new Date(withdrawal.requestedAt).toLocaleTimeString('en-US', { 
+                                hour: 'numeric', 
+                                minute: '2-digit', 
+                                hour12: true 
+                              })}
                             </div>
                           </td>
                           <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm font-mono text-slate-900 dark:text-white">
                             {withdrawal._id}
                           </td>
                           <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                            {withdrawal.method}
+                            {withdrawal.paymentMethodId ? (
+                              <span className="font-medium">
+                                {withdrawal.paymentMethodId.type === 'momo' ? 'Momo' : 'Bank'}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">N/A</span>
+                            )}
                           </td>
                           <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                             {formatCurrency(withdrawal.amount, merchantCurrency)}
@@ -624,6 +689,19 @@ const Wallet = () => {
                             <span className={`inline-block px-2 py-1 rounded-full font-bold text-xs ${getStatusColor(withdrawal.status)}`}>
                               {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
                             </span>
+                          </td>
+                          <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
+                            {['pending', 'approved'].includes(withdrawal.status) ? (
+                              <button
+                                onClick={() => handleCancelWithdrawal(withdrawal)}
+                                disabled={cancelWithdrawalLoading}
+                                className="px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Cancel
+                              </button>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -660,6 +738,77 @@ const Wallet = () => {
           </div>
         </div>
       </main>
+
+      {/* Cancel Withdrawal Confirmation Modal */}
+      {showCancelWithdrawalConfirm && withdrawalToCancel && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl max-w-sm w-full shadow-xl">
+            {/* Header */}
+            <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                Cancel Withdrawal Request?
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Reference: {withdrawalToCancel.transactionReference || withdrawalToCancel._id}
+              </p>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 sm:p-6 space-y-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                <p className="text-sm text-red-800 dark:text-red-300">
+                  <strong>Amount:</strong> {formatCurrency(withdrawalToCancel.amount, merchantCurrency)}
+                </p>
+                <p className="text-xs text-red-700 dark:text-red-400 mt-2">
+                  This amount will be returned to your available balance.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  Reason (optional)
+                </label>
+                <textarea
+                  value={cancelWithdrawalReason}
+                  onChange={(e) => setCancelWithdrawalReason(e.target.value)}
+                  placeholder="Tell us why you're cancelling this request..."
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-700 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCancelWithdrawalConfirm(false);
+                  setWithdrawalToCancel(null);
+                  setCancelWithdrawalReason('');
+                }}
+                disabled={cancelWithdrawalLoading}
+                className="flex-1 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Keep Request
+              </button>
+              <button
+                onClick={confirmCancelWithdrawal}
+                disabled={cancelWithdrawalLoading}
+                className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {cancelWithdrawalLoading ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    <span>Cancelling...</span>
+                  </>
+                ) : (
+                  'Yes, Cancel'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Withdrawal Request Modal */}
       {showWithdrawalModal && (
@@ -887,7 +1036,9 @@ const Wallet = () => {
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">Transaction Fee (1.5%)</span>
+                        <span className="text-slate-600 dark:text-slate-400">
+                          Transaction Fee ({stats.withdrawalFeePercentage || 1.5}%)
+                        </span>
                         <span className="font-bold text-red-600 dark:text-red-400">
                           -{formatCurrency(fee, merchantCurrency)}
                         </span>
@@ -949,6 +1100,19 @@ const Wallet = () => {
                       <p className="text-sm text-slate-700 dark:text-slate-300 italic">{withdrawalReason}</p>
                     </div>
                   )}
+                  
+                  {/* Disbursement Notice */}
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">Disbursement Timeline</p>
+                      <p className="text-sm text-green-700 dark:text-green-300">Your funds will be disbursed to your account within 24 hours.</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

@@ -89,6 +89,7 @@ import AdminRolesPage from '../../pages/admin/AdminRolesPage';
 import Donations from '../../pages/merchant/finance/Donations';
 import CampaignDetails from '../../pages/merchant/finance/CampaignDetails';
 import Wallet from '../../pages/merchant/finance/Wallet';
+import ActivityLogs from '../../pages/merchant/ActivityLogs';
 import WithdrawalManagement from '../../pages/admin/WithdrawalManagement';
 
 // Add this wrapper component
@@ -233,6 +234,7 @@ const AnimatedRoutes = () => {
             <Route path="/finance/donations/:campaignId" element={<CampaignDetails />} />
 
 
+            <Route path="/activity-logs" element={<ActivityLogs />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
