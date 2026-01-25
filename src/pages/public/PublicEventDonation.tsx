@@ -110,7 +110,7 @@ const PublicEventDonation: React.FC = () => {
   });
 
   // Preset amounts
-  const presetAmounts = [10, 25, 50, 100, 200, 500];
+  const presetAmounts = [10, 20, 50, 100, 200, 500];
 
   const loadEventData = useCallback(async () => {
     try {
@@ -323,9 +323,12 @@ const PublicEventDonation: React.FC = () => {
                 <input
                   type="number"
                   min="10"
-                  step="10"
+                  step="5"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  onWheel={
+                    (e) => (e.target as HTMLInputElement).blur()
+                  }
                   placeholder="Enter custom amount"
                   required
                   className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500"

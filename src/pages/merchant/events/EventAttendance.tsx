@@ -111,7 +111,7 @@ const EventAttendance = () => {
         setInstances([]);
       }
     } catch (error: any) {
-      showToast.error('Failed to load service details');
+      showToast.error('Failed to load event details');
     }
   };
 
@@ -120,13 +120,13 @@ const EventAttendance = () => {
       setLoading(true);
       let response;
       if (isRecurring && selectedInstanceId) {
-        // Fetch attendance for selected instance of recurring service
+        // Fetch attendance for selected instance of recurring event
         response = await eventAPI.getAttendance(selectedInstanceId, {
           page: currentPage,
           limit: 20
         });
       } else {
-        // One-time service or all instances
+        // One-time event or all instances
         response = await eventAPI.getAttendance(id!, {
           page: currentPage,
           limit: 20
@@ -330,7 +330,7 @@ const EventAttendance = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate(`/services/${id}`)}
+                onClick={() => navigate(`/events/${id}`)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />

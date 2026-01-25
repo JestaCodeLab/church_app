@@ -365,10 +365,18 @@ export const adminAPI = {
   deleteMerchant: (id: any) => api.delete(`/admin/merchants/${id}`),
   getAllUsers: (params: any) => api.get('/admin/users', { params }),
   getMerchantUsers: (merchantId: any, params: any) => api.get(`/admin/merchants/${merchantId}/users`, { params }),
+  
+  // Feature Management
   getFeatures: () => api.get('/admin/features'),
   getFeatureStats: () => api.get('/admin/features/stats'),
-  updatePlanFeatures: (planId: any, data: any) => api.put(`/admin/plans/${planId}/features`, data),
+  createFeature: (data: any) => api.post('/admin/features', data),
+  updateFeature: (featureId: any, data: any) => api.put(`/admin/features/${featureId}`, data),
+  deleteFeature: (featureId: any) => api.delete(`/admin/features/${featureId}`),
+  
+  // Plan Feature Management
+  updatePlanFeatures: (planId: any, data: any) => api.patch(`/admin/plans/${planId}/features`, data),
   overrideMerchantFeatures: (merchantId: any, data: any) => api.put(`/admin/merchants/${merchantId}/features`, data),
+  
   getAllBranches: (params: any) => api.get('/admin/branches', { params }),
   getUserById: (id: any) => api.get(`/admin/users/${id}`),
   lockUser: (id: any, data: any) => api.patch(`/admin/users/${id}/lock`, data),

@@ -43,7 +43,7 @@ const SMSSettings = () => {
   };
 
   const checkAccess = async () => {
-    const hasAccess = await checkFeatureAccess('smsSenderID', {
+    const hasAccess = await checkFeatureAccess('smsSenderId', {
         showErrorToast: false,
       });
     setHasAccess(hasAccess);
@@ -100,7 +100,7 @@ const SMSSettings = () => {
   }
 
   return (
-    <FeatureGate feature="smsSenderID" showUpgrade={!hasAccess}>
+    <FeatureGate feature="smsSenderId" showUpgrade={!hasAccess}>
       <div className="max-w-8xl">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           {/* Header */}

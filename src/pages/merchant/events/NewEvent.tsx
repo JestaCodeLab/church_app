@@ -318,7 +318,7 @@ const NewEvent: React.FC = () => {
         newErrors['recurrence.daysOfWeek'] = 'Select at least one day';
       }
     } else {
-      if (!formData.eventDate) newErrors.eventDate = 'Service date is required';
+      if (!formData.eventDate) newErrors.eventDate = 'Event date is required';
       if (!formData.startTime) newErrors.startTime = 'Start time is required';
     }
     
@@ -426,11 +426,11 @@ const NewEvent: React.FC = () => {
         response = await eventAPI.createEvent(submitData);
       }
       
-      showToast.success(isEdit ? 'Service updated successfully' : 'Service created successfully');
-      navigate(`/services/${response.data.data.event._id}`);
+      showToast.success(isEdit ? 'Event updated successfully' : 'Event created successfully');
+      navigate(`/events/${response.data.data.event._id}`);
       
     } catch (error: any) {
-      showToast.error(error.response?.data?.message || 'Failed to save service');
+      showToast.error(error.response?.data?.message || 'Failed to save event');
       console.error('Submit error:', error);
     } finally {
       setSubmitting(false);
@@ -442,32 +442,32 @@ const NewEvent: React.FC = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading service...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading event...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <PermissionRoute permissions={['events.create', 'events.edit']} redirectTo={`/services/${id}`}>
+    <PermissionRoute permissions={['events.create', 'events.edit']} redirectTo={`/events/${id}`}>
       <FeatureGate feature={'eventManagement'} usageExceeded={!eventLimit?.canCreate}>
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
           <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header */}
             <div className="mb-8">
               <button
-                onClick={() => navigate('/services')}
+                onClick={() => navigate('/events')}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span>Back to Services</span>
+                <span>Back to Events</span>
               </button>
               
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {isEdit ? 'Edit Service' : 'New Service'}
+                {isEdit ? 'Edit Event' : 'New Event'}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-0">
-                {isEdit ? 'Update service details' : 'Fill in the details to create a new service'}
+                {isEdit ? 'Update event details' : 'Fill in the details to create a new event'}
               </p>
             </div>
 
@@ -484,7 +484,7 @@ const NewEvent: React.FC = () => {
                   {/* Title */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Service Title *
+                      Event Title *
                     </label>
                     <input
                       type="text"
@@ -510,7 +510,7 @@ const NewEvent: React.FC = () => {
                       onChange={handleChange}
                       rows={4}
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
-                      placeholder="Describe the service..."
+                      placeholder="Describe the event..."
                     />
                   </div>
 
@@ -591,7 +591,7 @@ const NewEvent: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Service Start Time *
+                              Event Start Time *
                             </label>
                             <input
                               type="time"
@@ -605,7 +605,7 @@ const NewEvent: React.FC = () => {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Service End Time (Optional)
+                              Event End Time (Optional)
                             </label>
                             <input
                               type="time"
@@ -664,7 +664,7 @@ const NewEvent: React.FC = () => {
                             className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                           />
                           <label htmlFor="allowSelfCheckin" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Allow members to self check-in via QR code or service code
+                            Allow members to self check-in via QR code or event code
                           </label>
                         </div>
 
@@ -692,7 +692,7 @@ const NewEvent: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Service Type *
+                        Event Type *
                       </label>
                       <select
                         name="eventType"
@@ -738,7 +738,7 @@ const NewEvent: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Service Date *
+                          Event Date *
                         </label>
                         <input
                           type="date"
@@ -834,7 +834,7 @@ const NewEvent: React.FC = () => {
                         className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                       />
                       <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Public Service (visible to non-members)
+                        Public Event (visible to non-members)
                       </label>
                     </div>
                   </div>
@@ -903,7 +903,7 @@ const NewEvent: React.FC = () => {
                   <span>Cover Image</span>
                 </h3>
                 <ImageUploader
-                  label="Service Cover Image (Optional)"
+                  label="Event Cover Image (Optional)"
                   preview={coverImagePreview}
                   onImageSelect={handleCoverImageSelect}
                   onImageRemove={removeCoverImage}
@@ -917,7 +917,7 @@ const NewEvent: React.FC = () => {
                   Gallery Images
                 </h3>
                 <GalleryUploader
-                  label="Service Gallery (Optional)"
+                  label="Event Gallery (Optional)"
                   previews={galleryPreviews}
                   onImagesSelect={handleGalleryImagesSelect}
                   onImageRemove={removeGalleryImage}
@@ -931,7 +931,7 @@ const NewEvent: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
                     <Users className="w-5 h-5" />
-                    <span>Service Hosts (Optional)</span>
+                    <span>Event Hosts (Optional)</span>
                   </h3>
                   <button
                     type="button"
@@ -994,7 +994,7 @@ const NewEvent: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
                     <Mic className="w-5 h-5" />
-                    <span>Service Speakers (Optional)</span>
+                    <span>Event Speakers (Optional)</span>
                   </h3>
                   <button
                     type="button"
@@ -1061,7 +1061,7 @@ const NewEvent: React.FC = () => {
               <div className="flex items-center justify-end space-x-4">
                 <button
                   type="button"
-                  onClick={() => navigate('/services')}
+                  onClick={() => navigate('/events')}
                   className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancel
@@ -1079,7 +1079,7 @@ const NewEvent: React.FC = () => {
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>{isEdit ? 'Update Service' : 'Create Service'}</span>
+                      <span>{isEdit ? 'Update Event' : 'Create Event'}</span>
                     </>
                   )}
                 </button>
