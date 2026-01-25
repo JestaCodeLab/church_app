@@ -32,7 +32,8 @@ import {
   Send,
   FileChartColumn,
   HandHeart,
-  Coins
+  Coins,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -42,6 +43,7 @@ import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
 import SubscriptionAlert from '../components/ui/SubscriptionAlert';
 import ChurchSelector from '../components/selectors/ChurchSelector';
+import NotificationCenter from '../components/ui/NotificationCenter';
 
 interface NavigationItem {
   name: string;
@@ -554,6 +556,21 @@ const MerchantLayout = () => {
         {/* Bottom Links - Fixed at bottom */}
         <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
           <Link
+            to="/activity-logs"
+            onClick={() => setSidebarOpen(false)}
+            className={`
+              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+              transition-all duration-200
+              ${isActive('/activity-logs')
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }
+            `}
+          >
+            <Activity className="w-5 h-5 mr-3" />
+            Activity Logs
+          </Link>
+          <Link
             to="/settings"
             onClick={() => setSidebarOpen(false)}
             className={`
@@ -624,10 +641,7 @@ const MerchantLayout = () => {
               <ThemeToggle />
               
               {/* Notification Bell */}
-              <button className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              <NotificationCenter />
 
               {/* User Menu */}
               <div className="pl-3 border-l border-gray-200 dark:border-gray-700">
