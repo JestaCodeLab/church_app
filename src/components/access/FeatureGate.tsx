@@ -89,8 +89,6 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
     return <>{fallback}</>;
   }
 
-  // Show upgrade prompt if enabled
-  if (showUpgrade) {
     return (
       <div className="dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="max-w-md w-full -mt-15 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
@@ -129,10 +127,6 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
         </div>
       </div>
     );
-  }
-
-  // Show nothing if showUpgrade is false
-  return <p>Access to this feature is restricted.</p>;
 };
 
 export default FeatureGate;

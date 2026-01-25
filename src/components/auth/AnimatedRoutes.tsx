@@ -72,19 +72,24 @@ import BranchMembers from '../../pages/merchant/branches/BranchMembers';
 import BirthdaySettings from '../../pages/merchant/members/BirthdaySettings';
 import AdminLogs from '../../pages/admin/logs/AdminLogs';
 import PublicEventDonation from '../../pages/public/PublicEventDonation';
+import PublicCampaignDonation from '../../pages/public/PublicCampaignDonation';
 import DonationStatus from '../../pages/public/DonationStatus';
+import CampaignDonationStatus from '../../pages/public/CampaignDonationStatus';
 import SMSSettings from '../../pages/merchant/messaging/SMSSettings';
 import AdminSenderIds from '../../pages/admin/sms/AdminSenderIds';
 import SelectChurch from '../../pages/admin/SelectChurch';
 import FinanceOverview from '../../pages/merchant/finance/FinanceOverview';
 import Income from '../../pages/merchant/finance/Income';
 import Expenses from '../../pages/merchant/finance/Expenses';
-import Transactions from '../../pages/merchant/finance/Transactions';
 import FinancialReports from '../../pages/merchant/finance/FinancialReports';
 import TithingTransactions from '../../pages/merchant/finance/Tithing';
 import LandingPage from '../../pages/website/LandingPage';
 import AuthRedirect from '../../pages/auth/AuthRedirect';
 import AdminRolesPage from '../../pages/admin/AdminRolesPage';
+import Donations from '../../pages/merchant/finance/Donations';
+import CampaignDetails from '../../pages/merchant/finance/CampaignDetails';
+import Wallet from '../../pages/merchant/finance/Wallet';
+import WithdrawalManagement from '../../pages/admin/WithdrawalManagement';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -152,11 +157,13 @@ const AnimatedRoutes = () => {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/service/attend/:qrData" element={<EventCheckIn />} />
-          <Route path="/service/attend/:eventId" element={<EventCheckIn />} />
+          <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
+          <Route path="/events/attend/:eventId" element={<EventCheckIn />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
           <Route path="/donate/:uniqueId" element={<PublicEventDonation />} />
           <Route path="/donate/:uniqueId/status" element={<DonationStatus />} />
+          <Route path="/campaign/:campaignId" element={<PublicCampaignDonation />} />
+          <Route path="/campaign-status/:campaignId" element={<CampaignDonationStatus />} />
         </Route>
 
         {/* Onboarding Route - Requires auth but not completed onboarding */}
@@ -186,13 +193,13 @@ const AnimatedRoutes = () => {
             <Route path="/members/birthdays" element={<Birthdays />} />
             <Route path="/members/birthdays/settings" element={<BirthdaySettings />} />
 
-            <Route path="/services" element={<AllEvents />} />
-            <Route path="/services/new" element={<NewEvent />} />
-            <Route path="/services/:id" element={<EventDetails />} />
-            <Route path="/services/:id/edit" element={<NewEvent />} />
-            <Route path="/services/:id/attendance" element={<EventAttendance />} />
-            <Route path="/services/:id/donations" element={<EventDonations />} />
-            <Route path="/services/guests" element={<GuestManagement />} />
+            <Route path="/events" element={<AllEvents />} />
+            <Route path="/events/new" element={<NewEvent />} />
+            <Route path="/events/:id" element={<EventDetails />} />
+            <Route path="/events/:id/edit" element={<NewEvent />} />
+            <Route path="/events/:id/attendance" element={<EventAttendance />} />
+            <Route path="/events/:id/donations" element={<EventDonations />} />
+            <Route path="/events/guests" element={<GuestManagement />} />
             
             
             <Route 
@@ -219,9 +226,11 @@ const AnimatedRoutes = () => {
             <Route path="/finance/overview" element={<FinanceOverview />} />
             <Route path="/finance/income" element={<Income />} />
             <Route path="/finance/expenses" element={<Expenses />} />
-            <Route path="/finance/transactions" element={<Transactions />} />
+            <Route path="/finance/wallet" element={<Wallet />} />
             <Route path="/finance/reports" element={<FinancialReports />} />
             <Route path="/finance/tithing" element={<TithingTransactions />} />
+            <Route path="/finance/donations" element={<Donations />} />
+            <Route path="/finance/donations/:campaignId" element={<CampaignDetails />} />
 
 
             <Route path="/settings" element={<Settings />} />
@@ -262,6 +271,9 @@ const AnimatedRoutes = () => {
 
             {/* Roles & Permissions */}
             <Route path="/admin/roles" element={<AdminRolesPage />} />
+
+            {/* Withdrawal Management */}
+            <Route path="/admin/withdrawals" element={<WithdrawalManagement />} />
 
             <Route path="/admin/logs" element={<AdminLogs />} />
           </Route>

@@ -200,25 +200,25 @@ const MerchantLayout = () => {
         ]
       },
       { 
-        name: 'Services', 
+        name: 'Events', 
         icon: Calendar,
         requiresFeature: 'eventManagement',
         requiredPermissions: ['events.view'],
         children: [
           {
-            name: 'All Services',
-            href: '/services',
+            name: 'All Events',
+            href: '/events',
             icon: Calendar,
             requiresFeature: 'eventManagement',
             requiredPermissions: ['events.view']
           },
           {
             name: 'Attendance',
-            href: '/services/attendance',
+            href: '/events/attendance',
             icon: CheckCircle2,
             requiresFeature: 'eventManagement',
             requiredPermissions: ['events.viewAttendance'],
-            lockedFeature: 'eventAttendanceTracking'
+            lockedFeature: 'attendanceTracking'
           },
         ]
       },
@@ -252,14 +252,14 @@ const MerchantLayout = () => {
             requiredPermissions: ['finance.expenses'],
             lockedFeature: 'expenseTracking'
           }, 
-          // {
-          //   name: 'Tithing',
-          //   href: '/finance/tithing',
-          //   icon: Coins,
-          //   requiresFeature: 'financialManagement',
-          //   requiredPermissions: ['finance.tithing'],
-          //   lockedFeature: 'tithingManagement'
-          // },
+          {
+            name: 'Tithing',
+            href: '/finance/tithing',
+            icon: Coins,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.tithing'],
+            lockedFeature: 'tithingManagement'
+          },
           {
             name: 'Reports',
             href: '/finance/reports',
@@ -282,7 +282,7 @@ const MerchantLayout = () => {
             icon: Wallet,
             requiresFeature: 'financialManagement',
             requiredPermissions: ['finance.wallet'],
-            lockedFeature: 'financeAccounts'
+            lockedFeature: 'financeWallet'
           }
         ]
       },
@@ -296,7 +296,7 @@ const MerchantLayout = () => {
             name: 'Analytics',
             href: '/messaging/analytics',
             icon: BarChart3,
-            requiresFeature: 'smsCommunications',
+            requiresFeature: 'smsAnalytics',
             requiredPermissions: ['communications.analytics'],
             lockedFeature: 'smsAnalytics'
           },
@@ -304,7 +304,7 @@ const MerchantLayout = () => {
             name: 'Send SMS',
             href: '/messaging/send',
             icon: Mail,
-            requiresFeature: 'smsCommunications',
+            requiresFeature: 'smsSend',
             requiredPermissions: ['communications.sendSMS'],
             lockedFeature: 'smsSend'
           },
@@ -312,7 +312,7 @@ const MerchantLayout = () => {
             name: 'History',
             href: '/messaging/history',
             icon: History,
-            requiresFeature: 'smsCommunications',
+            requiresFeature: 'smsHistory',
             requiredPermissions: ['communications.history'],
             lockedFeature: 'smsHistory'
           },
@@ -320,7 +320,7 @@ const MerchantLayout = () => {
             name: 'Templates',
             href: '/messaging/templates',
             icon: FileText,
-            requiresFeature: 'smsCommunications',
+            requiresFeature: 'smsTemplates',
             requiredPermissions: ['communications.templates'],
             lockedFeature: 'smsTemplates'
           },
@@ -328,7 +328,7 @@ const MerchantLayout = () => {
             name: 'Credits',
             href: '/messaging/credits',
             icon: CreditCard,
-            requiresFeature: 'smsCommunications',
+            requiresFeature: 'smsCredits',
             requiredPermissions: ['communications.smsCredits'],
             lockedFeature: 'smsCredits'
           },
@@ -336,9 +336,9 @@ const MerchantLayout = () => {
             name: 'Sender ID',
             href: '/messaging/sender-id',
             icon: Send,
-            requiresFeature: 'smsCommunications',
+            requiresFeature: 'smsSenderId',
             requiredPermissions: ['communications.smsSenderID'],
-            lockedFeature: 'smsSenderID'
+            lockedFeature: 'smsSenderId'
           }
         ]
       },

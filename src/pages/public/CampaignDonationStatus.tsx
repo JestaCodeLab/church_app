@@ -1,62 +1,90 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2, Heart, ArrowLeft } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+interface DonationData {
+  _id: string;
+  reference?: string;
+  payment: {
+    status: 'completed' | 'pending' | 'failed';
+    amount: number;
+    currency: string;
+  };
+  donor: {
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  createdAt: string;
+  campaignName?: string;
+}
 
-const DonationStatus: React.FC = () => {
-  const { uniqueId } = useParams<{ uniqueId: string }>();
+const CampaignDonationStatus: React.FC = () => {
+  const { campaignId } = useParams<{ campaignId?: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const reference = searchParams.get('reference');
+  const location = useLocation();
 
   const [loading, setLoading] = useState(true);
-  const [donation, setDonation] = useState<any>(null);
-  const [event, setEvent] = useState<any>(null);
+  const [donation, setDonation] = useState<DonationData | null>(location.state?.donation || null);
   const [error, setError] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
 
   const verifyDonation = useCallback(async () => {
     try {
-      // URL encode the reference to handle special characters
-      const encodedReference = encodeURIComponent(reference || '');
-      const response = await axios.post(
-        `${API_BASE_URL}/public/events/donate/verify/${encodedReference}`
-      );
-
-      if (response.data.success) {
-        setDonation(response.data.data.donation);
-        setEvent(response.data.data.event);
-        // Stop polling once we have verified the donation
-        if (response.data.data.donation?.payment?.status === 'completed') {
+      setLoading(true);
+      
+      if (location.state?.donation) {
+        // Already have donation in state
+        setLoading(false);
+        setIsVerified(true);
+      } else if (campaignId) {
+        // Fetch from API
+        const res = await api.get(`/public/donations/${campaignId}`);
+        
+        if (res.data.data) {
+          const donationData = res.data.data;
+          const mappedDonation: DonationData = {
+            _id: donationData._id,
+            reference: donationData.payment?.paystackReference || donationData.reference || '',
+            payment: {
+              status: donationData.payment?.status || 'pending',
+              amount: donationData.payment?.amount || donationData.amount || 0,
+              currency: donationData.payment?.currency || donationData.currency || 'GHS'
+            },
+            donor: {
+              name: donationData.donor?.name || 'Donor',
+              email: donationData.donor?.email || '',
+              phone: donationData.donor?.phone || ''
+            },
+            createdAt: donationData.createdAt || new Date().toISOString(),
+            campaignName: typeof donationData.campaign === 'string' 
+              ? donationData.campaign 
+              : donationData.campaign?.name || 'Campaign'
+          };
+          
+          setDonation(mappedDonation);
+          setLoading(false);
           setIsVerified(true);
         }
       } else {
-        setError(response.data.message || 'Failed to verify donation');
+        setError('Invalid campaign ID');
+        setLoading(false);
         setIsVerified(true);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to verify donation');
-      setIsVerified(true);
-    } finally {
+      console.error('Donation verification error:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to verify donation');
       setLoading(false);
+      setIsVerified(true);
     }
-  }, [reference]);
+  }, [campaignId, location.state?.donation]);
 
   useEffect(() => {
-    if (reference && !isVerified) {
+    if (!isVerified) {
       verifyDonation();
-      // Poll for verification status every 2 seconds until verified
-      const interval = setInterval(() => {
-        verifyDonation();
-      }, 2000);
-      return () => clearInterval(interval);
-    } else if (!reference) {
-      setError('No payment reference found');
-      setLoading(false);
     }
-  }, [reference, isVerified, verifyDonation]);
+  }, [verifyDonation, isVerified]);
 
   if (loading) {
     return (
@@ -79,10 +107,32 @@ const DonationStatus: React.FC = () => {
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <button
-            onClick={() => navigate(`/donate/${uniqueId}`)}
+            onClick={() => navigate('/')}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!donation) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+          <XCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Campaign Donation Not Found
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            We couldn't find the donation information. Please try again.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go Home
           </button>
         </div>
       </div>
@@ -98,7 +148,7 @@ const DonationStatus: React.FC = () => {
           {/* Header */}
           <div className={`p-8 text-center ${isSuccess ? 'bg-green-50 dark:bg-green-900/20' : 'bg-yellow-50 dark:bg-yellow-900/20'}`}>
             {isSuccess ? (
-              <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-4" />
             ) : (
               <Loader2 className="w-20 h-20 text-yellow-600 mx-auto mb-4 animate-spin" />
             )}
@@ -116,13 +166,17 @@ const DonationStatus: React.FC = () => {
           {/* Donation Details */}
           <div className="p-8">
             <div className="space-y-4 mb-6">
-              <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Event</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {event?.title || 'N/A'}
-                </span>
-              </div>
+              {/* Campaign Name */}
+              {donation?.campaignName && (
+                <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400">Campaign</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {donation.campaignName}
+                  </span>
+                </div>
+              )}
 
+              {/* Amount */}
               <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-gray-600 dark:text-gray-400">Amount</span>
                 <span className="font-semibold text-gray-900 dark:text-white text-xl">
@@ -130,7 +184,8 @@ const DonationStatus: React.FC = () => {
                 </span>
               </div>
 
-              {!donation?.isAnonymous && donation?.donor?.name && (
+              {/* Donor Name */}
+              {donation.donor?.name && (
                 <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
                   <span className="text-gray-600 dark:text-gray-400">Donor</span>
                   <span className="font-semibold text-gray-900 dark:text-white">
@@ -139,13 +194,17 @@ const DonationStatus: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Transaction Reference</span>
-                <span className="font-mono text-sm text-gray-900 dark:text-white">
-                  {reference}
-                </span>
-              </div>
+              {/* Transaction Reference */}
+              {(donation?.reference) && (
+                <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400">Transaction Reference</span>
+                  <span className="font-mono text-sm text-gray-900 dark:text-white break-all">
+                    {donation.reference}
+                  </span>
+                </div>
+              )}
 
+              {/* Status */}
               <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-gray-600 dark:text-gray-400">Status</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -157,11 +216,12 @@ const DonationStatus: React.FC = () => {
                 </span>
               </div>
 
-              {donation?.payment?.paidAt && (
+              {/* Date & Time */}
+              {donation.createdAt && (
                 <div className="flex justify-between items-center py-3">
                   <span className="text-gray-600 dark:text-gray-400">Date & Time</span>
                   <span className="text-gray-900 dark:text-white">
-                    {new Date(donation.payment.paidAt).toLocaleDateString('en-US', {
+                    {new Date(donation.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
@@ -175,11 +235,11 @@ const DonationStatus: React.FC = () => {
             </div>
 
             {/* Success Message */}
-            {isSuccess && (
+            {isSuccess && donation.donor?.email && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                 <p className="text-sm text-blue-800 dark:text-blue-300">
                   <Heart className="w-4 h-4 inline mr-2" />
-                  A receipt has been sent to <strong>{donation?.donor?.email}</strong>
+                  A receipt has been sent to <strong>{donation.donor.email}</strong>
                 </p>
               </div>
             )}
@@ -187,15 +247,15 @@ const DonationStatus: React.FC = () => {
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => navigate(`/donate/${uniqueId}`)}
+                onClick={() => navigate('/')}
                 className="flex-1 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span>Back to Event</span>
+                <span>Back Home</span>
               </button>
               {isSuccess && (
                 <button
-                  onClick={() => navigate(`/donate/${uniqueId}`)}
+                  onClick={() => navigate('/')}
                   className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
                 >
                   <Heart className="w-5 h-5" />
@@ -210,4 +270,4 @@ const DonationStatus: React.FC = () => {
   );
 };
 
-export default DonationStatus;
+export default CampaignDonationStatus;

@@ -82,8 +82,8 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           </head>
           <body>
             <h1>${eventTitle}</h1>
-            <p>Scan this QR code to check in to the service</p>
-            <img src="${qrCodeUrl}" alt="Service QR Code" />
+            <p>Scan this QR code to check in to the event</p>
+            <img src="${qrCodeUrl}" alt="Event QR Code" />
           </body>
         </html>
       `);
@@ -140,7 +140,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
       {/* Instructions */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
         <p className="text-sm text-blue-800 dark:text-blue-300 text-center">
-          Attendees can scan this QR code to check in to the service
+          Attendees can scan this QR code to check in to the event quickly and easily.
         </p>
       </div>
 

@@ -162,7 +162,7 @@ const EventDetails: React.FC = () => {
         });
       }
     } catch (error: any) {
-      showToast.error('Failed to load service details');
+      showToast.error('Failed to load event details');
       navigate('/events');
     } finally {
       setLoading(false);
@@ -185,10 +185,10 @@ const EventDetails: React.FC = () => {
     try {
       setDeleting(true);
       await eventAPI.deleteEvent(id!);
-      showToast.success('Service deleted successfully');
+      showToast.success('Event deleted successfully');
       navigate('/events');
     } catch (error: any) {
-      showToast.error('Failed to delete service');
+      showToast.error('Failed to delete event');
     } finally {
       setDeleting(false);
       setShowDeleteModal(false);
@@ -211,9 +211,9 @@ const EventDetails: React.FC = () => {
       setShowRegenerateModal(false);
       const response = await eventCodeAPI.regenerateCodes(id!);
       await fetchAllEventCodes(id!);
-      showToast.success(response.data.message || 'Service codes regenerated successfully');
+      showToast.success(response.data.message || 'Event codes regenerated successfully');
     } catch (error: any) {
-      showToast.error('Failed to regenerate service codes');
+      showToast.error('Failed to regenerate event codes');
     } finally {
       setRegeneratingCodes(false);
     }
@@ -246,9 +246,9 @@ const EventDetails: React.FC = () => {
 
   const getCheckInUrl = () => {
     if (event.isRecurring) {
-      return `${window.location.origin}/service/attend/${event._id}`;
+      return `${window.location.origin}/events/attend/${event._id}`;
     } else {
-      return `${window.location.origin}/service/attend/${event.qrCode?.data}`;
+      return `${window.location.origin}/events/attend/${event.qrCode?.data}`;
     }
   };
 
@@ -272,7 +272,7 @@ const EventDetails: React.FC = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading service...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading event...</p>
         </div>
       </div>
     );
@@ -282,7 +282,7 @@ const EventDetails: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">Service not found</p>
+          <p className="text-gray-600 dark:text-gray-400">Event not found</p>
         </div>
       </div>
     );
@@ -294,11 +294,11 @@ const EventDetails: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/services')}
+            onClick={() => navigate('/events')}
             className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Back to Service</span>
+            <span>Back to Events</span>
           </button>
 
           <div className="flex items-start justify-between">
@@ -325,7 +325,7 @@ const EventDetails: React.FC = () => {
             <div className="flex items-center space-x-2">
               <PermissionGuard permission="events.edit">
               <button
-                onClick={() => navigate(`/services/${id}/edit`)}
+                onClick={() => navigate(`/events/${id}/edit`)}
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
               >
                 <Edit className="w-4 h-4" />
@@ -334,7 +334,7 @@ const EventDetails: React.FC = () => {
               </PermissionGuard>
               <PermissionGuard permission="events.viewAttendance">
               <button
-                onClick={() => navigate(`/services/${id}/attendance`)}
+                onClick={() => navigate(`/events/${id}/attendance`)}
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
               >
                 <span>Attendance</span>
@@ -344,7 +344,7 @@ const EventDetails: React.FC = () => {
               <PermissionGuard permission="events.viewDonations">
               {(features.eventDonations && event.donations?.enabled) && (
                 <button
-                  onClick={() => navigate(`/services/${id}/donations`)}
+                  onClick={() => navigate(`/events/${id}/donations`)}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
                 >
                   <DollarSign className="w-4 h-4" />
@@ -386,7 +386,7 @@ const EventDetails: React.FC = () => {
             {event.description && (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                  About This Service
+                  About This Event
                 </h2>
                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                   {event.description}
@@ -399,7 +399,7 @@ const EventDetails: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
                   <ImageIcon className="w-5 h-5" />
-                  <span>Service Gallery</span>
+                  <span>Event Gallery</span>
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {event.images.map((image: any, index: number) => (
@@ -426,7 +426,7 @@ const EventDetails: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
                   <Users className="w-5 h-5" />
-                  <span>Service Hosts</span>
+                  <span>Event Hosts</span>
                 </h2>
                 <div className="space-y-4">
                   {event.hosts.map((host: any, index: number) => (
@@ -477,7 +477,7 @@ const EventDetails: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
                   <Mic className="w-5 h-5" />
-                  <span>Service Speakers</span>
+                  <span>Event Speakers</span>
                 </h2>
                 <div className="space-y-4">
                   {event.speakers.map((speaker: any, index: number) => (
@@ -542,7 +542,7 @@ const EventDetails: React.FC = () => {
                     onClick={() => setShowRegenerateModal(true)}
                     disabled={regeneratingCodes}
                     className="p-2 bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={regeneratingCodes ? 'Regenerating...' : 'Regenerate all service codes'}
+                    title={regeneratingCodes ? 'Regenerating...' : 'Regenerate all event codes'}
                   >
                     <RotateCw className={`w-5 h-5 text-orange-600 ${regeneratingCodes ? 'animate-spin' : ''}`} />
                   </button>
@@ -615,7 +615,7 @@ const EventDetails: React.FC = () => {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No service codes have been generated for this service yet.
+                    No event codes have been generated for this event yet.
                   </p>
                 )}
               </div>
@@ -718,8 +718,8 @@ const EventDetails: React.FC = () => {
                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                       </svg>
                     </div>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">Service Donations</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Upgrade your plan to access Service Donations</p>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">Event Donations</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Upgrade your plan to access Event Donations</p>
                   </div>
                 </div>
                 
@@ -782,7 +782,7 @@ const EventDetails: React.FC = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
                   <DollarSign className="w-5 h-5 text-green-600" />
-                  <span>Service Donations</span>
+                  <span>Event Donations</span>
                 </h2>
                 <button
                   onClick={handleSaveSettings}
@@ -1018,19 +1018,19 @@ const EventDetails: React.FC = () => {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
-        title="Delete Service"
+        title="Delete Event"
         message={`Are you sure you want to delete "${event.title}"? This action cannot be undone and will also delete all attendance records.`}
         type="danger"
         isLoading={deleting}
       />
 
-      {/* Regenerate Service Codes Modal */}
+      {/* Regenerate Event Codes Modal */}
       <ConfirmModal
         isOpen={showRegenerateModal}
         onClose={() => setShowRegenerateModal(false)}
         onConfirm={handleRegenerateEventCodes}
-        title="Regenerate Service Codes"
-        message={`Are you sure you want to regenerate service codes for "${event.title}"? This will delete all existing codes for upcoming dates and generate new ones. Anyone with old codes will need the new codes to check in.`}
+        title="Regenerate Event Codes"
+        message={`Are you sure you want to regenerate event codes for "${event.title}"? This will delete all existing codes for upcoming dates and generate new ones. Anyone with old codes will need the new codes to check in.`}
         type="warning"
         isLoading={regeneratingCodes}
       />
