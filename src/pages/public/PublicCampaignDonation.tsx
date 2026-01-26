@@ -4,50 +4,7 @@ import { Heart, Calendar, Users, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../utils/currency';
-
-// SEO utility function
-const updateMetaTags = (campaign: any, merchant: any) => {
-  const pageUrl = window.location.href;
-  const title = `${campaign.name} - Support this campaign`;
-  const description = campaign.description || `Support ${campaign.name} campaign organized by ${merchant.name}. Help us reach our goal of ${formatCurrency(campaign.goal?.targetAmount, campaign.goal?.currency || 'GHS')}.`;
-  const image = campaign.metadata?.image || `${window.location.origin}/logo.png`;
-
-  // Update title
-  document.title = title;
-
-  // Remove existing og:* meta tags to avoid duplicates
-  const existingMetaTags = document.querySelectorAll('[property^="og:"], [name^="twitter:"]');
-  existingMetaTags.forEach(tag => tag.remove());
-
-  // Helper function to add meta tag
-  const addMetaTag = (name: string, content: string, isProperty = false) => {
-    const meta = document.createElement('meta');
-    if (isProperty) {
-      meta.setAttribute('property', name);
-    } else {
-      meta.setAttribute('name', name);
-    }
-    meta.content = content;
-    document.head.appendChild(meta);
-  };
-
-  // Add Open Graph meta tags
-  addMetaTag('og:title', title, true);
-  addMetaTag('og:description', description, true);
-  addMetaTag('og:image', image, true);
-  addMetaTag('og:url', pageUrl, true);
-  addMetaTag('og:type', 'website', true);
-  addMetaTag('og:site_name', merchant.name, true);
-
-  // Add Twitter Card meta tags
-  addMetaTag('twitter:card', 'summary_large_image');
-  addMetaTag('twitter:title', title);
-  addMetaTag('twitter:description', description);
-  addMetaTag('twitter:image', image);
-
-  // Add standard meta tags
-  addMetaTag('description', description);
-};
+import useSEO from '../../hooks/useSEO';
 
 interface Campaign {
   _id: string;
@@ -112,6 +69,23 @@ const PublicCampaignDonation: React.FC = () => {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
+  // Update SEO when campaign and merchant data is available
+  useSEO({
+    title: campaign && merchant ? `${campaign.name} - Support this campaign` : 'Support a Campaign',
+    description: campaign && merchant ? campaign.description || `Support ${campaign.name} campaign organized by ${merchant.name}. Help us reach our goal of ${formatCurrency(campaign.goal?.targetAmount, campaign.goal?.currency || 'GHS')}.` : 'Support charitable campaigns with secure payments',
+    keywords: campaign && merchant ? `donation, fundraiser, campaign, ${campaign.name}, ${merchant.name}` : 'donation, fundraiser, campaign',
+    ogTitle: campaign && merchant ? `${campaign.name} - Support this campaign` : 'Support a Campaign',
+    ogDescription: campaign && merchant ? campaign.description || `Support ${campaign.name} campaign organized by ${merchant.name}. Help us reach our goal of ${formatCurrency(campaign.goal?.targetAmount, campaign.goal?.currency || 'GHS')}.` : 'Support charitable campaigns with secure payments',
+    ogImage: campaign?.metadata?.image || `${window.location.origin}/logo.png`,
+    ogUrl: window.location.href,
+    ogType: 'website',
+    twitterTitle: campaign && merchant ? `${campaign.name} - Support this campaign` : 'Support a Campaign',
+    twitterDescription: campaign && merchant ? campaign.description || `Support ${campaign.name} campaign organized by ${merchant.name}. Help us reach our goal of ${formatCurrency(campaign.goal?.targetAmount, campaign.goal?.currency || 'GHS')}.` : 'Support charitable campaigns with secure payments',
+    twitterImage: campaign?.metadata?.image || `${window.location.origin}/logo.png`,
+    twitterCard: 'summary_large_image',
+    canonicalUrl: window.location.href
+  });
+
   // Load Paystack script on mount
   useEffect(() => {
     if ((window as any).PaystackPop) {
@@ -154,13 +128,6 @@ const PublicCampaignDonation: React.FC = () => {
       verifyPaymentFromRedirect(reference);
     }
   }, [campaignId, searchParams]);
-
-  // Update meta tags for social sharing when campaign loads
-  useEffect(() => {
-    if (campaign && merchant) {
-      updateMetaTags(campaign, merchant);
-    }
-  }, [campaign, merchant]);
 
   const verifyPaymentFromRedirect = async (reference: string) => {
     try {
@@ -266,6 +233,17 @@ const PublicCampaignDonation: React.FC = () => {
         amount: parseFloat(amount) * 100, // Convert to kobo
         currency: getMerchantCurrency(),
         ref: res.data.data.reference,
+        phone: donor.phone,
+        metadata: {
+          donor_phone: donor.phone,
+          custom_fields: [
+            {
+              display_name: 'Mobile Money Number',
+              variable_name: 'mobile_money_number',
+              value: donor.phone
+            }
+          ]
+        },
         onClose: () => {
           setPaymentInitialized(false);
           toast.error('Payment cancelled');
