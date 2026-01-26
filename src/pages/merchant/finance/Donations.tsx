@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Plus,
   Share2,
@@ -26,6 +26,7 @@ import toast from 'react-hot-toast';
 import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import api from '../../../services/api';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
+import ImageUploader from '../../../components/modals/ImageUploader';
 
 // Types
 interface Campaign {
@@ -136,12 +137,37 @@ const Donations = () => {
     startDate: new Date().toISOString().split('T')[0],
     endDate: ''
   });
+  const [campaignImageFile, setCampaignImageFile] = useState<File | null>(null);
+  const [campaignImagePreview, setCampaignImagePreview] = useState('');
 
   const merchantCurrency = getMerchantCurrency();
+  const location = useLocation();
 
   useEffect(() => {
     loadDonationsData();
   }, []);
+
+  // Handle edit campaign from route state
+  useEffect(() => {
+    if (location.state?.campaignToEdit) {
+      const campaign = location.state.campaignToEdit;
+      setSelectedCampaign(campaign);
+      setFormData({
+        name: campaign.name,
+        description: campaign.description || '',
+        targetAmount: campaign.goal?.targetAmount?.toString() || '',
+        status: campaign.status,
+        startDate: campaign.dates?.startDate ? new Date(campaign.dates.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        endDate: campaign.dates?.endDate ? new Date(campaign.dates.endDate).toISOString().split('T')[0] : ''
+      });
+      if (campaign.image) {
+        setCampaignImagePreview(campaign.image);
+      }
+      setShowCampaignModal(true);
+      // Clear the state so it doesn't persist on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const loadDonationsData = async () => {
     try {
@@ -226,27 +252,59 @@ const Donations = () => {
 
     try {
       setModalLoading(true);
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        targetAmount: parseFloat(formData.targetAmount),
-        status: formData.status,
-        dates: {
-          startDate: formData.startDate,
-          endDate: formData.endDate || undefined
-        }
-      };
-      await api.post('/donations/campaigns', payload);
-      toast.success('Campaign created successfully');
+      
+      // Use FormData to send file if present
+      const payload = new FormData();
+      payload.append('name', formData.name);
+      payload.append('description', formData.description);
+      payload.append('targetAmount', formData.targetAmount);
+      payload.append('status', formData.status);
+      payload.append('startDate', formData.startDate);
+      payload.append('endDate', formData.endDate || '');
+      
+      if (campaignImageFile) {
+        payload.append('image', campaignImageFile);
+      }
+
+      if (selectedCampaign) {
+        // Update existing campaign
+        await api.put(`/donations/campaigns/${selectedCampaign._id}`, payload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        toast.success('Campaign updated successfully');
+      } else {
+        // Create new campaign
+        await api.post('/donations/campaigns', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        toast.success('Campaign created successfully');
+      }
+
       setShowCampaignModal(false);
+      setCampaignImageFile(null);
+      setCampaignImagePreview('');
       setFormData({ name: '', description: '', targetAmount: '', status: 'draft', startDate: new Date().toISOString().split('T')[0], endDate: '' });
       await loadDonationsData();
     } catch (error) {
-      console.error('Failed to create campaign:', error);
-      toast.error(error.response?.data?.message || 'Failed to create campaign');
+      console.error('Failed to save campaign:', error);
+      toast.error(error.response?.data?.message || 'Failed to save campaign');
     } finally {
       setModalLoading(false);
     }
+  };
+
+  const handleImageSelect = (file: File) => {
+    setCampaignImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCampaignImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageRemove = () => {
+    setCampaignImageFile(null);
+    setCampaignImagePreview('');
   };
 
   const handleShareCampaign = () => {
@@ -686,6 +744,8 @@ const Donations = () => {
               <button
                 onClick={() => {
                   setSelectedCampaign(null);
+                  setCampaignImageFile(null);
+                  setCampaignImagePreview('');
                   setFormData({ name: '', description: '', targetAmount: '', status: 'draft', startDate: new Date().toISOString().split('T')[0], endDate: '' });
                   setShowCampaignModal(true);
                 }}
@@ -828,6 +888,20 @@ const Donations = () => {
 
             <div className="overflow-y-auto flex-1 p-4 sm:p-6">
               <div className="space-y-3 sm:space-y-4">
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-2">
+                  Campaign Image
+                </label>
+                <ImageUploader
+                  label=""
+                  preview={campaignImagePreview}
+                  onImageSelect={handleImageSelect}
+                  onImageRemove={handleImageRemove}
+                  maxSize={5}
+                  helperText="Upload a campaign image (max 5MB)"
+                />
+              </div>
+
               <div>
                 <label className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-2">
                   Campaign Name *

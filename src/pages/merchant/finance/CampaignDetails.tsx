@@ -32,6 +32,9 @@ interface Campaign {
   };
   status: 'draft' | 'active' | 'paused' | 'completed';
   publicUrl?: string;
+  metadata?: {
+    image?: string;
+  };
   dates?: {
     startDate?: string;
     endDate?: string;
@@ -128,6 +131,10 @@ const CampaignDetails = () => {
     return Math.min((raised / target) * 100, 100);
   };
 
+  const handleEditCampaign = () => {
+    navigate('/finance/donations', { state: { campaignToEdit: campaign } });
+  };
+
   const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('en-NG', {
       month: 'short',
@@ -197,59 +204,72 @@ const CampaignDetails = () => {
     <div className="min-h-screen dark:bg-slate-900">
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 border-b rounded-lg border-slate-200 dark:border-slate-700">
-        <div className="max-w-8xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-6 mb-4">
-            <div className="flex items-center gap-3">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 mb-4">
+            <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
               <button
                 onClick={() => navigate('/finance/donations')}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
               >
                 <ArrowLeft className="text-slate-600 dark:text-slate-300" size={24} />
               </button>
-              <div>
-                <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 mb-1">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-600 dark:text-blue-400 mb-1">
                   <span className="hover:underline cursor-pointer" onClick={() => navigate('/finance/donations')}>
                     Campaigns
                   </span>
-                  <span>/</span>
-                  <span>Details</span>
+                  <span className="hidden sm:inline">/</span>
+                  <span className="hidden sm:inline">Details</span>
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{campaign?.name}</h1>
-                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Campaign ID: {campaign._id} • Started {campaign?.dates?.startDate ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(campaign.dates.startDate)) : 'N/A'}
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{campaign?.name}</h1>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                    Started {campaign?.dates?.startDate ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(campaign.dates.startDate)) : 'N/A'}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <button 
                 onClick={loadCampaignDetails}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                className="flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm sm:text-base flex-1 sm:flex-none"
               >
                 <RefreshCw size={16} />
-                Refresh
+                <span className="hidden sm:inline">Refresh</span>
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all">
+              <button className="flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all text-sm sm:text-base flex-1 sm:flex-none">
                 <Download size={16} />
-                Export CSV
+                <span className="hidden sm:inline">Export</span>
               </button>
             </div>
           </div>
-         
         </div>
       </div>
 
-      <main className="max-w-8xl mx-auto px-0 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-8xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Campaign Image */}
+            {campaign.metadata?.image && (
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                <img
+                  src={campaign.metadata.image}
+                  alt={campaign.name}
+                  className="w-full h-64 object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+
             {/* Current Funding Section */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-8 shadow-sm">
               <div className="space-y-6">
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                  <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                     Current Funding
                   </p>
-                  <p className="text-4xl font-bold text-slate-900 dark:text-white">
+                  <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
                     {formatCurrency(campaign.goal?.raisedAmount || 0, campaign.goal?.currency || merchantCurrency)}
                   </p>
                 </div>
@@ -261,33 +281,33 @@ const CampaignDetails = () => {
                       style={{ width: `${calculateProgress(campaign.goal?.raisedAmount || 0, campaign.goal?.targetAmount || 1)}%` }}
                     />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center gap-2 font-semibold">
                       <div className="w-3 h-3 rounded-full bg-blue-600" />
-                      <span className="font-semibold">
+                      <span>
                         {Math.round(calculateProgress(campaign.goal?.raisedAmount || 0, campaign.goal?.targetAmount || 1))}% of target reached
                       </span>
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                    <p>
                       {donations.length} Total Donors
                     </p>
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between pt-4 border-t border-slate-200 dark:border-slate-700 gap-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                       Goal
                     </p>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                       {formatCurrency(campaign.goal?.targetAmount || 0, campaign.goal?.currency || merchantCurrency)}
                     </p>
                   </div>
-                  <div>
+                  <div className="text-right">
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                       Raised
                     </p>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                       {formatCurrency(campaign.goal?.raisedAmount || 0, campaign.goal?.currency || merchantCurrency)}
                     </p>
                   </div>
@@ -296,26 +316,26 @@ const CampaignDetails = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                   Avg. Donation
                 </p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                   {formatCurrency(avgDonation, merchantCurrency)}
                 </p>
               </div>
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                   Days Remaining
                 </p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{daysRemaining} Days</p>
+                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{daysRemaining}</p>
               </div>
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                   Status
                 </p>
-                <span className={`inline-flex px-3 py-1 rounded-lg text-sm font-bold ${getStatusColor(campaign.status)}`}>
+                <span className={`inline-flex px-3 py-1 rounded-lg text-xs sm:text-sm font-bold ${getStatusColor(campaign.status)}`}>
                   {getStatusLabel(campaign.status)}
                 </span>
               </div>
@@ -323,99 +343,143 @@ const CampaignDetails = () => {
 
             {/* Recent Donations */}
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Donations</h2>
+              <div className="px-4 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Donations</h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                        Donor
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                        Amount
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                        Date & Time
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {Array.isArray(donations) && donations.length > 0 ? (
-                      donations.map(donation => (
-                        <tr key={donation._id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                                <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">
-                                  {donation.donor?.name?.split(' ').map((n: string) => n[0]).join('') || 'A'}
-                                </span>
-                              </div>
-                              <div className="ml-4">
-                                <p className="text-sm font-medium text-slate-900 dark:text-white">{donation.donor?.name || 'Anonymous'}</p>
-                                <p className="text-xs text-slate-600 dark:text-slate-400">REF: {donation.payment?.paystackReference || 'N/A'}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
-                            {formatCurrency(donation.payment?.amount || 0, donation.payment?.currency || merchantCurrency)}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                            {formatDate(donation.createdAt)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
-                              donation.payment?.status === 'completed'
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : donation.payment?.status === 'pending'
-                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                            }`}>
-                              {donation.payment?.status ? donation.payment.status.charAt(0).toUpperCase() + donation.payment.status.slice(1) : 'Unknown'}
-                            </span>
-                          </td>
+              {Array.isArray(donations) && donations.length > 0 ? (
+                <>
+                  {/* Desktop Table View */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                            Donor
+                          </th>
+                          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                            Amount
+                          </th>
+                          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                            Date & Time
+                          </th>
+                          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                            Status
+                          </th>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="px-6 py-8 text-center">
-                          <div className="flex flex-col items-center justify-center">
-                            <AlertCircle className="text-slate-400 dark:text-slate-500 mb-2" size={32} />
-                            <p className="text-slate-600 dark:text-slate-400 font-medium">No donations yet</p>
-                            <p className="text-slate-500 dark:text-slate-500 text-sm">Donations will appear here once they are received</p>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                        {donations.map(donation => (
+                          <tr key={donation._id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                            <td className="px-4 sm:px-6 py-4">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                                  <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">
+                                    {donation.donor?.name?.split(' ').map((n: string) => n[0]).join('') || 'A'}
+                                  </span>
+                                </div>
+                                <div className="ml-3">
+                                  <p className="text-sm font-medium text-slate-900 dark:text-white">{donation.donor?.name || 'Anonymous'}</p>
+                                  <p className="text-xs text-slate-600 dark:text-slate-400">REF: {donation.payment?.paystackReference || 'N/A'}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
+                              {formatCurrency(donation.payment?.amount || 0, donation.payment?.currency || merchantCurrency)}
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                              {formatDate(donation.createdAt)}
+                            </td>
+                            <td className="px-4 sm:px-6 py-4">
+                              <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
+                                donation.payment?.status === 'completed'
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : donation.payment?.status === 'pending'
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              }`}>
+                                {donation.payment?.status ? donation.payment.status.charAt(0).toUpperCase() + donation.payment.status.slice(1) : 'Unknown'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Mobile Card View */}
+                  <div className="sm:hidden divide-y divide-slate-200 dark:divide-slate-700">
+                    {donations.map(donation => (
+                      <div key={donation._id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex-shrink-0 h-10 w-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                              <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">
+                                {donation.donor?.name?.split(' ').map((n: string) => n[0]).join('') || 'A'}
+                              </span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{donation.donor?.name || 'Anonymous'}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 truncate">REF: {donation.payment?.paystackReference || 'N/A'}</p>
+                            </div>
                           </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                          <span className={`ml-2 inline-flex px-2 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
+                            donation.payment?.status === 'completed'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : donation.payment?.status === 'pending'
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          }`}>
+                            {donation.payment?.status ? donation.payment.status.charAt(0).toUpperCase() + donation.payment.status.slice(1) : 'Unknown'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <div>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Amount</p>
+                            <p className="font-bold text-slate-900 dark:text-white">
+                              {formatCurrency(donation.payment?.amount || 0, donation.payment?.currency || merchantCurrency)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Date & Time</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              {formatDate(donation.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="px-4 sm:px-6 py-8 text-center">
+                  <div className="flex flex-col items-center justify-center">
+                    <AlertCircle className="text-slate-400 dark:text-slate-500 mb-2" size={32} />
+                    <p className="text-slate-600 dark:text-slate-400 font-medium">No donations yet</p>
+                    <p className="text-slate-500 dark:text-slate-500 text-sm">Donations will appear here once they are received</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Public Link Section */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <Globe className="text-blue-600" size={20} />
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Public Link</h3>
+                <Globe className="text-blue-600 flex-shrink-0" size={20} />
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Public Link</h3>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-4">
                 Share this with your congregation
               </p>
               <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3 mb-4 break-all">
-                <p className="text-xs text-slate-600 dark:text-slate-300 font-mono">
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-mono line-clamp-2">
                   {campaign.publicUrl || 'https://donate.church.org/campaign/...'}
                 </p>
               </div>
               <button
                 onClick={handleCopyLink}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md hover:shadow-lg transition-all"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md hover:shadow-lg transition-all text-sm"
               >
                 {copiedUrl ? <Check size={18} /> : <Copy size={18} />}
                 {copiedUrl ? 'Copied!' : 'Copy Link'}
@@ -423,9 +487,9 @@ const CampaignDetails = () => {
             </div>
 
             {/* Quick Share */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Quick Share</h3>
-              <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-sm">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4">Quick Share</h3>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <button className="flex items-center justify-center px-3 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                   <Users size={20} />
                 </button>
@@ -439,8 +503,8 @@ const CampaignDetails = () => {
             </div>
 
             {/* Merchant Settings */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Merchant Settings</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-sm">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4">Merchant Settings</h3>
               <div className="space-y-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
@@ -463,9 +527,12 @@ const CampaignDetails = () => {
                   </p>
                 </div>
               </div>
-              <button className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-bold">
+              <button 
+                onClick={handleEditCampaign}
+                className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-bold text-sm">
                 <Edit2 size={16} />
-                Edit Campaign Details
+                <span className="hidden sm:inline">Edit Campaign Details</span>
+                <span className="sm:hidden">Edit</span>
               </button>
             </div>
           </div>
