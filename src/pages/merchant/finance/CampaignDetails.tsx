@@ -17,6 +17,16 @@ import toast from 'react-hot-toast';
 import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import api from '../../../services/api';
 
+interface Tier {
+  _id: string;
+  name: string;
+  minimumAmount: number;
+  description?: string;
+  benefits?: string[];
+  badgeColor?: string;
+  displayOrder?: number;
+}
+
 interface Campaign {
   _id: string;
   name: string;
@@ -31,6 +41,10 @@ interface Campaign {
     uniqueCount: number;
   };
   status: 'draft' | 'active' | 'paused' | 'completed';
+  settings?: {
+    tiersEnabled: boolean;
+  };
+  tiers?: Tier[];
   publicUrl?: string;
   metadata?: {
     image?: string;
@@ -47,6 +61,11 @@ interface Donation {
   _id: string;
   campaign?: string;
   merchant?: string;
+  tier?: {
+    _id: string;
+    name: string;
+    minimumAmount: number;
+  };
   donor: {
     type: string;
     name: string;
@@ -189,6 +208,17 @@ const CampaignDetails = () => {
     ? donations.reduce((sum, d) => sum + (d.payment?.amount || 0), 0) / donations.length 
     : 0;
 
+  // Calculate tier statistics
+  const tierStats = campaign?.tiers?.map(tier => {
+    const tierDonations = donations.filter(d => d.tier?._id === tier._id);
+    const totalAmount = tierDonations.reduce((sum, d) => sum + (d.payment?.amount || 0), 0);
+    return {
+      ...tier,
+      donationCount: tierDonations.length,
+      totalAmount
+    };
+  }) || [];
+
   const daysRemaining = (() => {
     if (!campaign?.dates?.endDate) return 0;
     const endDate = new Date(campaign.dates.endDate);
@@ -315,6 +345,28 @@ const CampaignDetails = () => {
               </div>
             </div>
 
+            {/* Tier Statistics */}
+            {campaign?.settings?.tiersEnabled && tierStats.length > 0 && (
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-8 shadow-sm">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4">Tier Breakdown</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  {tierStats.map((tier) => (
+                    <div key={tier._id} className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                        {tier.name}
+                      </p>
+                      <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">
+                        {formatCurrency(tier.totalAmount, campaign.goal?.currency || merchantCurrency)}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {tier.donationCount} {tier.donationCount === 1 ? 'donation' : 'donations'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-sm">
@@ -359,6 +411,11 @@ const CampaignDetails = () => {
                           <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                             Amount
                           </th>
+                          {campaign?.settings?.tiersEnabled && (
+                            <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                              Tier
+                            </th>
+                          )}
                           <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                             Date & Time
                           </th>
@@ -386,6 +443,11 @@ const CampaignDetails = () => {
                             <td className="px-4 sm:px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
                               {formatCurrency(donation.payment?.amount || 0, donation.payment?.currency || merchantCurrency)}
                             </td>
+                            {campaign?.settings?.tiersEnabled && (
+                              <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                                {donation.tier?.name || '—'}
+                              </td>
+                            )}
                             <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                               {formatDate(donation.createdAt)}
                             </td>
@@ -431,14 +493,22 @@ const CampaignDetails = () => {
                             {donation.payment?.status ? donation.payment.status.charAt(0).toUpperCase() + donation.payment.status.slice(1) : 'Unknown'}
                           </span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
                             <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Amount</p>
                             <p className="font-bold text-slate-900 dark:text-white">
                               {formatCurrency(donation.payment?.amount || 0, donation.payment?.currency || merchantCurrency)}
                             </p>
                           </div>
-                          <div className="text-right">
+                          {campaign?.settings?.tiersEnabled && (
+                            <div>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Tier</p>
+                              <p className="font-bold text-slate-900 dark:text-white">
+                                {donation.tier?.name || '—'}
+                              </p>
+                            </div>
+                          )}
+                          <div className={!campaign?.settings?.tiersEnabled ? 'col-span-2' : ''}>
                             <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Date & Time</p>
                             <p className="text-xs text-slate-600 dark:text-slate-400">
                               {formatDate(donation.createdAt)}
