@@ -266,6 +266,12 @@ const PublicCampaignDonation: React.FC = () => {
         amount: parseFloat(amount) * 100, // Convert to kobo
         currency: getMerchantCurrency(),
         ref: res.data.data.reference,
+        metadata: {
+          donor_phone: donor.phone,
+          mobile_money: {
+            mobile_number: donor.phone
+          }
+        },
         onClose: () => {
           setPaymentInitialized(false);
           toast.error('Payment cancelled');
