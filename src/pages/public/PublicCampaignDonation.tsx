@@ -5,6 +5,50 @@ import toast from 'react-hot-toast';
 import api from '../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../utils/currency';
 
+// SEO utility function
+const updateMetaTags = (campaign: any, merchant: any) => {
+  const pageUrl = window.location.href;
+  const title = `${campaign.name} - Support this campaign`;
+  const description = campaign.description || `Support ${campaign.name} campaign organized by ${merchant.name}. Help us reach our goal of ${formatCurrency(campaign.goal?.targetAmount, campaign.goal?.currency || 'GHS')}.`;
+  const image = campaign.metadata?.image || `${window.location.origin}/logo.png`;
+
+  // Update title
+  document.title = title;
+
+  // Remove existing og:* meta tags to avoid duplicates
+  const existingMetaTags = document.querySelectorAll('[property^="og:"], [name^="twitter:"]');
+  existingMetaTags.forEach(tag => tag.remove());
+
+  // Helper function to add meta tag
+  const addMetaTag = (name: string, content: string, isProperty = false) => {
+    const meta = document.createElement('meta');
+    if (isProperty) {
+      meta.setAttribute('property', name);
+    } else {
+      meta.setAttribute('name', name);
+    }
+    meta.content = content;
+    document.head.appendChild(meta);
+  };
+
+  // Add Open Graph meta tags
+  addMetaTag('og:title', title, true);
+  addMetaTag('og:description', description, true);
+  addMetaTag('og:image', image, true);
+  addMetaTag('og:url', pageUrl, true);
+  addMetaTag('og:type', 'website', true);
+  addMetaTag('og:site_name', merchant.name, true);
+
+  // Add Twitter Card meta tags
+  addMetaTag('twitter:card', 'summary_large_image');
+  addMetaTag('twitter:title', title);
+  addMetaTag('twitter:description', description);
+  addMetaTag('twitter:image', image);
+
+  // Add standard meta tags
+  addMetaTag('description', description);
+};
+
 interface Campaign {
   _id: string;
   name: string;
@@ -24,6 +68,9 @@ interface Campaign {
     startDate: string;
     createdAt: string;
     updatedAt: string;
+  };
+  metadata?: {
+    image?: string;
   };
   merchant: {
     _id: string;
@@ -108,6 +155,13 @@ const PublicCampaignDonation: React.FC = () => {
     }
   }, [campaignId, searchParams]);
 
+  // Update meta tags for social sharing when campaign loads
+  useEffect(() => {
+    if (campaign && merchant) {
+      updateMetaTags(campaign, merchant);
+    }
+  }, [campaign, merchant]);
+
   const verifyPaymentFromRedirect = async (reference: string) => {
     try {
       setVerifying(true);
@@ -117,7 +171,7 @@ const PublicCampaignDonation: React.FC = () => {
       
       if (res.data.success) {
         toast.success('Payment verified successfully!');
-        navigate(`/donation-status/${res.data.data.donationId || res.data.data._id}`, { 
+        navigate(`/campaign-status/${campaignId}`, { 
           state: { donation: res.data.data } 
         });
       } else {
@@ -276,6 +330,20 @@ const PublicCampaignDonation: React.FC = () => {
           </div>
         )}
 
+        {/* Campaign Image */}
+        {campaign.metadata?.image && (
+          <div className="mb-6 rounded-lg overflow-hidden shadow-sm">
+            <img
+              src={campaign.metadata.image}
+              alt={campaign.name}
+              className="w-full h-64 object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-center space-x-3 mb-4">
@@ -344,14 +412,14 @@ const PublicCampaignDonation: React.FC = () => {
           )}
           
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Make a Donation
+            Make a Contribution
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6" style={{ opacity: verifying ? 0.5 : 1, pointerEvents: verifying ? 'none' : 'auto' }}>
             {/* Amount */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Donation Amount ({campaign.goal?.currency || 'GHS'})
+                Contribution Amount ({campaign.goal?.currency || 'GHS'})
               </label>
 
               {/* Preset Amounts */}
@@ -401,7 +469,7 @@ const PublicCampaignDonation: React.FC = () => {
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor="anonymous" className="text-sm text-gray-700 dark:text-gray-300">
-                Make this an anonymous donation
+                Make this an anonymous contribution
               </label>
             </div>
 
@@ -490,7 +558,7 @@ const PublicCampaignDonation: React.FC = () => {
               ) : (
                 <>
                   <Heart className="w-5 h-5" />
-                  <span>Donate {amount ? `${campaign.goal?.currency || 'GHS'} ${amount}` : 'Now'}</span>
+                  <span>Partner With Us {amount ? `${campaign.goal?.currency || 'GHS'} ${amount}` : ''}</span>
                 </>
               )}
             </button>
