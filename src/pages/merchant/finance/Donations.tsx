@@ -783,7 +783,7 @@ const Donations = () => {
                 <Calendar className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
                 <p className="text-slate-600 dark:text-slate-400 text-sm">No events with donations enabled yet.</p>
                 <button
-                  onClick={() => navigate('/services/new')}
+                  onClick={() => navigate('/events/new')}
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   <Plus size={16} />
@@ -844,7 +844,7 @@ const Donations = () => {
                       {/* Actions */}
                       <div className="flex items-center justify-end gap-1 sm:gap-2 flex-wrap mt-auto">
                         <button
-                          onClick={() => navigate(`/services/${event._id}/donations`)}
+                          onClick={() => navigate(`/events/${event._id}/donations`)}
                           className="flex items-center justify-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs sm:text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                         >
                           <Eye className="hidden sm:block" size={14} />
@@ -853,7 +853,7 @@ const Donations = () => {
                           <span className="sm:hidden">View</span>
                         </button>
                         <button
-                          onClick={() => navigate(`/services/${event._id}/edit`)}
+                          onClick={() => navigate(`/events/${event._id}/edit`)}
                           className="flex items-center justify-center px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                           title="Edit"
                         >
