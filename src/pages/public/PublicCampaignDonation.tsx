@@ -266,11 +266,16 @@ const PublicCampaignDonation: React.FC = () => {
         amount: parseFloat(amount) * 100, // Convert to kobo
         currency: getMerchantCurrency(),
         ref: res.data.data.reference,
+        phone: donor.phone,
         metadata: {
           donor_phone: donor.phone,
-          mobile_money: {
-            mobile_number: donor.phone
-          }
+          custom_fields: [
+            {
+              display_name: 'Mobile Money Number',
+              variable_name: 'mobile_money_number',
+              value: donor.phone
+            }
+          ]
         },
         onClose: () => {
           setPaymentInitialized(false);
