@@ -255,7 +255,7 @@ const CampaignDonationStatus: React.FC = () => {
               </button>
               {isSuccess && (
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate(`/campaign/${campaignId}`)}
                   className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
                 >
                   <Heart className="w-5 h-5" />

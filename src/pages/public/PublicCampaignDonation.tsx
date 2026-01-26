@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import api from '../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../utils/currency';
 import useSEO from '../../hooks/useSEO';
+import TierCard from '../../components/campaign/TierCard';
 
 interface Campaign {
   _id: string;
@@ -21,6 +22,10 @@ interface Campaign {
   status: 'draft' | 'active' | 'paused' | 'completed';
   visibility: 'public' | 'private';
   publicUrl?: string;
+  settings?: {
+    tiersEnabled: boolean;
+  };
+  tiers?: Tier[];
   dates?: {
     startDate: string;
     createdAt: string;
@@ -34,6 +39,15 @@ interface Campaign {
     name: string;
     subdomain: string;
   };
+}
+
+interface Tier {
+  _id: string;
+  name: string;
+  minimumAmount: number;
+  description?: string;
+  benefits?: string[];
+  badgeColor?: string;
 }
 
 interface MerchantData {
@@ -110,6 +124,7 @@ const PublicCampaignDonation: React.FC = () => {
 
   // Form state
   const [amount, setAmount] = useState<string>('');
+  const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [donor, setDonor] = useState({
     name: '',
@@ -177,6 +192,21 @@ const PublicCampaignDonation: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check if tiers are enabled and validate tier selection
+    if (campaign?.settings?.tiersEnabled && campaign?.tiers && campaign.tiers.length > 0) {
+      if (!selectedTierId) {
+        toast.error('Please select a donation tier');
+        return;
+      }
+
+      // Get selected tier and validate amount
+      const selectedTier = campaign.tiers.find(t => t._id === selectedTierId);
+      if (selectedTier && parseFloat(amount) < selectedTier.minimumAmount) {
+        toast.error(`Minimum donation for ${selectedTier.name} tier is ${getCurrencySymbol(campaign.goal?.currency)} ${selectedTier.minimumAmount}`);
+        return;
+      }
+    }
+
     // Validation
     if (!amount || parseFloat(amount) < 1) {
       toast.error('Please enter a valid donation amount');
@@ -198,6 +228,7 @@ const PublicCampaignDonation: React.FC = () => {
 
       const payload = {
         amount: parseFloat(amount),
+        tierId: selectedTierId,
         donorName: isAnonymous ? 'Anonymous' : donor.name,
         donorEmail: donor.email,
         donorPhone: donor.phone || '',
@@ -297,6 +328,8 @@ const PublicCampaignDonation: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+      
+      
       <div className="max-w-xl mx-auto">
         {/* Merchant Name */}
         {merchant && (
@@ -394,47 +427,105 @@ const PublicCampaignDonation: React.FC = () => {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6" style={{ opacity: verifying ? 0.5 : 1, pointerEvents: verifying ? 'none' : 'auto' }}>
+            {/* Tier Selection (if enabled) */}
+            {campaign?.settings?.tiersEnabled && campaign?.tiers && campaign.tiers.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Select a Contribution Tier
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {campaign.tiers
+                    .sort((a, b) => a.minimumAmount - b.minimumAmount)
+                    .map((tier) => (
+                      <TierCard
+                        key={tier._id}
+                        _id={tier._id}
+                        name={tier.name}
+                        minimumAmount={tier.minimumAmount}
+                        description={tier.description}
+                        benefits={tier.benefits || []}
+                        badgeColor={tier.badgeColor || 'gray'}
+                        isSelected={selectedTierId === tier._id}
+                        currency={campaign.goal?.currency || 'GHS'}
+                        onSelect={(id) => {
+                          setSelectedTierId(id);
+                          // Auto-fill amount with tier minimum
+                          setAmount(tier.minimumAmount.toString());
+                        }}
+                      />
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* Amount */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Contribution Amount ({campaign.goal?.currency || 'GHS'})
               </label>
 
-              {/* Preset Amounts */}
-              <div className="grid grid-cols-3 gap-3 mb-3">
-                {presetAmounts.map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setAmount(preset.toString())}
-                    className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
-                      amount === preset.toString()
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-600'
-                    }`}
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium">
-                    {getCurrencySymbol(campaign.goal?.currency)}
-                  </span>
+              {/* Preset Amounts (only show if no tiers) */}
+              {!(campaign?.settings?.tiersEnabled && campaign?.tiers && campaign.tiers.length > 0) && (
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  {presetAmounts.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setAmount(preset.toString())}
+                      className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
+                        amount === preset.toString()
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-600'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
                 </div>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter custom amount"
-                  required
-                  className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              )}
+
+              {/* Custom Amount Input */}
+              {!(campaign?.settings?.tiersEnabled && campaign?.tiers && campaign.tiers.length > 0) && (
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400 font-medium">
+                      {getCurrencySymbol(campaign.goal?.currency)}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                    placeholder="Enter custom amount"
+                    required
+                    className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+
+              {/* Amount Input for Tiered Campaigns */}
+              {campaign?.settings?.tiersEnabled && campaign?.tiers && campaign.tiers.length > 0 && (
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400 font-medium">
+                      {getCurrencySymbol(campaign.goal?.currency)}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min={selectedTierId ? campaign.tiers.find(t => t._id === selectedTierId)?.minimumAmount || 1 : 1}
+                    step="1"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder={selectedTierId ? `Minimum ${getCurrencySymbol(campaign.goal?.currency)} ${campaign.tiers.find(t => t._id === selectedTierId)?.minimumAmount}` : 'Enter amount'}
+                    required
+                    className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Anonymous Toggle */}
