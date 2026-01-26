@@ -27,6 +27,7 @@ import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import api from '../../../services/api';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import ImageUploader from '../../../components/modals/ImageUploader';
+import TierForm from '../../../components/campaign/TierForm';
 
 // Types
 interface Campaign {
@@ -45,6 +46,10 @@ interface Campaign {
   status: 'draft' | 'active' | 'paused' | 'completed';
   visibility: 'public' | 'private';
   publicUrl?: string;
+  settings?: {
+    tiersEnabled: boolean;
+  };
+  tiers?: Tier[];
   dates?: {
     startDate: string;
     endDate?: string;
@@ -53,6 +58,16 @@ interface Campaign {
   };
   createdAt?: string;
   updatedAt?: string;
+}
+
+interface Tier {
+  _id?: string;
+  name: string;
+  minimumAmount: number;
+  description: string;
+  benefits: string[];
+  badgeColor: string;
+  displayOrder: number;
 }
 
 interface Donation {
@@ -139,6 +154,8 @@ const Donations = () => {
   });
   const [campaignImageFile, setCampaignImageFile] = useState<File | null>(null);
   const [campaignImagePreview, setCampaignImagePreview] = useState('');
+  const [tiersEnabled, setTiersEnabled] = useState(false);
+  const [tiers, setTiers] = useState<Tier[]>([]);
 
   const merchantCurrency = getMerchantCurrency();
   const location = useLocation();
@@ -160,6 +177,8 @@ const Donations = () => {
         startDate: campaign.dates?.startDate ? new Date(campaign.dates.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         endDate: campaign.dates?.endDate ? new Date(campaign.dates.endDate).toISOString().split('T')[0] : ''
       });
+      setTiersEnabled(campaign.settings?.tiersEnabled || false);
+      setTiers(campaign.tiers || []);
       if (campaign.image) {
         setCampaignImagePreview(campaign.image);
       }
@@ -261,6 +280,12 @@ const Donations = () => {
       payload.append('status', formData.status);
       payload.append('startDate', formData.startDate);
       payload.append('endDate', formData.endDate || '');
+      payload.append('tiersEnabled', tiersEnabled.toString());
+      
+      // Add tiers as JSON
+      if (tiersEnabled && tiers.length > 0) {
+        payload.append('tiers', JSON.stringify(tiers));
+      }
       
       if (campaignImageFile) {
         payload.append('image', campaignImageFile);
@@ -283,6 +308,8 @@ const Donations = () => {
       setShowCampaignModal(false);
       setCampaignImageFile(null);
       setCampaignImagePreview('');
+      setTiersEnabled(false);
+      setTiers([]);
       setFormData({ name: '', description: '', targetAmount: '', status: 'draft', startDate: new Date().toISOString().split('T')[0], endDate: '' });
       await loadDonationsData();
     } catch (error) {
@@ -902,6 +929,45 @@ const Donations = () => {
                 />
               </div>
 
+              {/* Tiered Donations Toggle */}
+              <div>
+                <div className="flex items-start gap-3">
+                  <input
+                    id="tiersToggle"
+                    type="checkbox"
+                    checked={tiersEnabled}
+                    onChange={(e) => {
+                      setTiersEnabled(e.target.checked);
+                      if (!e.target.checked) {
+                        setTiers([]);
+                      }
+                    }}
+                    className="w-5 h-5 rounded border-slate-300 text-primary-600 mt-1 focus:ring-primary"
+                  />
+                  <div>
+                    <label htmlFor="tiersToggle" className="flex-1 text-xs sm:text-sm font-bold text-slate-900 dark:text-white cursor-pointer">
+                      Enable Tiered Donations?
+                    </label>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Allow donors to choose from different contribution levels with specific benefits
+                    </p>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* Tier Management */}
+              {tiersEnabled && (
+                <div>
+                  <TierForm
+                    tiers={tiers}
+                    onTiersChange={setTiers}
+                    currency={merchantCurrency}
+                    disabled={modalLoading}
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-2">
                   Campaign Name *
@@ -935,6 +1001,7 @@ const Donations = () => {
                 <input
                   type="number"
                   min="0"
+                  onWheel={e => (e.target as HTMLInputElement).blur()}
                   value={formData.targetAmount}
                   onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
                   className="w-full px-3 sm:px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -986,18 +1053,18 @@ const Donations = () => {
               </div>
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 p-4 sm:p-6 flex flex-col xs:flex-row gap-2 sm:gap-3 flex-shrink-0\">
+            <div className="flex justify-end gap-2 mt-6 sm:gap-3  flex-shrink-0">
               <button
                 onClick={() => setShowCampaignModal(false)}
                 disabled={modalLoading}
-                className="flex-1 px-3 sm:px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 sm:px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateCampaign}
                 disabled={modalLoading}
-                className="flex-1 px-3 sm:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                className="px-3 sm:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center justify-center gap-2"
               >
                   {modalLoading ? (
                     <>
@@ -1006,7 +1073,7 @@ const Donations = () => {
                       <span className="sm:hidden">...</span>
                     </>
                   ) : (
-                    selectedCampaign ? 'Update' : 'Create'
+                    selectedCampaign ? 'Update Campaign' : 'Create Campaign'
                   )}
                 </button>
               </div>
