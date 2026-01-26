@@ -56,6 +56,9 @@ interface Campaign {
     createdAt: string;
     updatedAt: string;
   };
+  metadata?: {
+    image?: string;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -747,6 +750,11 @@ const Donations = () => {
                           startDate: campaign.dates?.startDate ? new Date(campaign.dates.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                           endDate: campaign.dates?.endDate ? new Date(campaign.dates.endDate).toISOString().split('T')[0] : ''
                         });
+                        setTiersEnabled(campaign.settings?.tiersEnabled || false);
+                        setTiers(campaign.tiers || []);
+                        if (campaign.metadata?.image) {
+                          setCampaignImagePreview(campaign.metadata.image);
+                        }
                         setShowCampaignModal(true);
                       }}
                       className="flex items-center justify-center px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
