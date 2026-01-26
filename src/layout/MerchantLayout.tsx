@@ -33,7 +33,8 @@ import {
   FileChartColumn,
   HandHeart,
   Coins,
-  Activity
+  Activity,
+  Music
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -224,6 +225,13 @@ const MerchantLayout = () => {
           },
         ]
       },
+       { 
+        name: 'Sermons', 
+        href: '/sermons', 
+        icon: Music,
+        requiresFeature: 'sermonManagement',
+        requiredPermissions: ['sermons.view']
+      },
       { 
         name: 'Finance', 
         icon: HandCoins,
@@ -343,7 +351,7 @@ const MerchantLayout = () => {
             lockedFeature: 'smsSenderId'
           }
         ]
-      },
+      }
     ];
 
     return filterNavigation(allNavigation);

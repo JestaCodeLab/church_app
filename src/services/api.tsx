@@ -788,4 +788,23 @@ export const financeAPI = {
   },
 };
 
+// Sermon API
+export const sermonAPI = {
+  getUploadToken: () => api.post('/sermons/upload-token'),
+  
+  getSermons: (params?: any) => api.get('/sermons', { params }),
+  
+  getSermon: (id: string) => api.get(`/sermons/${id}`),
+  
+  createSermon: (data: any) => api.post('/sermons', data),
+  
+  updateSermon: (id: string, data: any) => api.put(`/sermons/${id}`, data),
+  
+  updateSermonFile: (id: string, data: any) => api.post(`/sermons/${id}/update-file`, data),
+  
+  deleteSermon: (id: string) => api.delete(`/sermons/${id}`),
+  
+  getVaultUsage: () => api.get('/sermons/vault/usage'),
+};
+
 export default api;
