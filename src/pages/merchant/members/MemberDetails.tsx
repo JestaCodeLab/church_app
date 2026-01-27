@@ -13,7 +13,10 @@ import {
   Users,
   AlertCircle,
   FileText,
-  Building2
+  Building2,
+  Award,
+  Diamond,
+  Gem
 } from 'lucide-react';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -178,20 +181,36 @@ const MemberDetails = () => {
           <div className="px-6 pb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6 -mt-16">
               {/* Profile Photo */}
-              <div className="w-32 h-32 rounded-full bg-white dark:bg-gray-800 p-2 shadow-lg">
-                <div className="w-full h-full rounded-full bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center overflow-hidden">
-                  {member?.photo ? (
-                    <img 
-                      src={member?.photo} 
-                      alt={`${member.firstName} ${member.lastName}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-4xl font-semibold text-primary-600 dark:text-primary-400">
-                      {member?.firstName}{member?.lastName}
-                    </span>
-                  )}
+              <div className="relative w-32 h-32">
+                <div className="w-32 h-32 rounded-full bg-white dark:bg-gray-800 p-2 shadow-lg">
+                  <div className="w-full h-full rounded-full bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center overflow-hidden">
+                    {member?.photo ? (
+                      <img 
+                        src={member?.photo} 
+                        alt={`${member.firstName} ${member.lastName}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-4xl font-semibold text-primary-600 dark:text-primary-400">
+                        {member?.firstName[0]}{member?.lastName[0]}
+                      </span>
+                    )}
+                  </div>
                 </div>
+                {/* Tier Donations Badge */}
+                {member?.tierDonations && member.tierDonations.length > 0 && (
+                  <div className={`absolute bottom-1 -right-1 text-white rounded-full p-2 shadow-lg ring-2 ring-white dark:ring-gray-800 ${
+                    member.tierDonations.length === 1 
+                      ? 'bg-orange-500' 
+                      : 'bg-blue-600'
+                  }`} title={`Donated to ${member.tierDonations.length} tier${member.tierDonations.length > 1 ? 's' : ''}`}>
+                    {member.tierDonations.length === 1 ? (
+                      <Award className="w-5 h-5" />
+                    ) : (
+                      <Diamond className="w-5 h-5" />
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Name and Status */}
@@ -210,6 +229,17 @@ const MemberDetails = () => {
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                       {age} years old
                     </span>
+                  )}
+                  {member?.tierDonations && member.tierDonations.length > 0 && (
+                    member.tierDonations.map((tier, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex items-center gap-1"
+                      >
+                        <Gem className="w-3 h-3" />
+                        {tier.tierName}
+                      </span>
+                    ))
                   )}
                 </div>
               </div>
