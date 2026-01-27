@@ -571,11 +571,12 @@ const PublicCampaignDonation: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email
+                    Email *
                   </label>
                   <input
                     type="email"
                     value={donor.email}
+                    required
                     onChange={(e) => setDonor({ ...donor, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
