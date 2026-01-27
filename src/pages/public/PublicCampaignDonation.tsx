@@ -128,7 +128,7 @@ const PublicCampaignDonation: React.FC = () => {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [donor, setDonor] = useState({
     name: '',
-    email: '',
+    email: 'thechurchhq@gmail.com',
     phone: ''
   });
 
@@ -260,7 +260,7 @@ const PublicCampaignDonation: React.FC = () => {
 
       PaystackPop.setup({
         key: process.env.REACT_APP_PAYSTACK_PUBLIC_KEY,
-        email: donor.email,
+        email: "thechurchhq@gmail.com",  //donor.email,
         amount: parseFloat(amount) * 100, // Convert to kobo
         currency: getMerchantCurrency(),
         ref: res.data.data.reference,
@@ -569,7 +569,7 @@ const PublicCampaignDonation: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email *
                   </label>
@@ -580,14 +580,14 @@ const PublicCampaignDonation: React.FC = () => {
                     onChange={(e) => setDonor({ ...donor, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
+                </div> */}
                 
               </div>
             )}
 
             {isAnonymous && (
               <div className="space-y-4">
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email (for receipt) *
                   </label>
@@ -598,7 +598,7 @@ const PublicCampaignDonation: React.FC = () => {
                     required
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Phone (for receipt) *
