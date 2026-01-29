@@ -788,4 +788,35 @@ export const financeAPI = {
   },
 };
 
+// Partnership API
+export const partnershipAPI = {
+  // Programme Management
+  getAll: (params?: any) => api.get('/partnerships', { params }),
+  getOne: (id: string) => api.get(`/partnerships/${id}`),
+  create: (data: any) => api.post('/partnerships', data),
+  update: (id: string, data: any) => api.put(`/partnerships/${id}`, data),
+  delete: (id: string) => api.delete(`/partnerships/${id}`),
+  
+  // Transactions
+  getTransactions: (id: string, params?: any) => 
+    api.get(`/partnerships/${id}/transactions`, { params }),
+  exportTransactions: (id: string) => 
+    api.get(`/partnerships/${id}/transactions/export`, { responseType: 'blob' }),
+  
+  // Partners/Registrations
+  getPartners: (id: string, params?: any) => 
+    api.get(`/partnerships/${id}/partners`, { params }),
+  registerPartner: (id: string, data: any) => 
+    api.post(`/partnerships/${id}/register`, data),
+  
+  // Public Routes (no auth required)
+  getPublicProgramme: (merchantId: string, programmeId: string) => 
+    api.get(`/partnerships/public/${merchantId}/${programmeId}`),
+  registerPublicPartner: (merchantId: string, programmeId: string, data: any) => 
+    api.post(`/partnerships/public/${merchantId}/${programmeId}/register`, data),
+  
+  // Statistics
+  refreshStats: (id: string) => api.post(`/partnerships/${id}/refresh`),
+};
+
 export default api;
