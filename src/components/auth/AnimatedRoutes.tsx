@@ -70,6 +70,10 @@ import AdminSMSBalance from '../../pages/admin/sms/AdminSMSBalance';
 import Birthdays from '../../pages/merchant/members/Birthdays';
 import BranchMembers from '../../pages/merchant/branches/BranchMembers';
 import BirthdaySettings from '../../pages/merchant/members/BirthdaySettings';
+import PartnershipProgrammes from '../../pages/merchant/members/partnership/PartnershipProgrammes';
+import NewPartnership from '../../pages/merchant/members/partnership/NewPartnership';
+import PartnershipDetails from '../../pages/merchant/members/partnership/PartnershipDetails';
+import PublicPartnershipRegistration from '../../pages/public/PublicPartnershipRegistration';
 import AdminLogs from '../../pages/admin/logs/AdminLogs';
 import PublicEventDonation from '../../pages/public/PublicEventDonation';
 import PublicCampaignDonation from '../../pages/public/PublicCampaignDonation';
@@ -166,6 +170,7 @@ const AnimatedRoutes = () => {
           <Route path="/donate/:uniqueId/status" element={<DonationStatus />} />
           <Route path="/campaign/:campaignId" element={<PublicCampaignDonation />} />
           <Route path="/campaign-status/:campaignId" element={<CampaignDonationStatus />} />
+          <Route path="/partnership/register/:merchantId/:programmeId" element={<PublicPartnershipRegistration />} />
         </Route>
 
         {/* Onboarding Route - Requires auth but not completed onboarding */}
@@ -194,6 +199,10 @@ const AnimatedRoutes = () => {
             <Route path="/members/:id/edit" element={<EditMember />} />
             <Route path="/members/birthdays" element={<Birthdays />} />
             <Route path="/members/birthdays/settings" element={<BirthdaySettings />} />
+            <Route path="/members/partnership" element={<PartnershipProgrammes />} />
+            <Route path="/members/partnership/new" element={<NewPartnership />} />
+            <Route path="/members/partnership/:id" element={<PartnershipDetails />} />
+            <Route path="/members/partnership/:id/edit" element={<NewPartnership />} />
 
             <Route path="/events" element={<AllEvents />} />
             <Route path="/events/new" element={<NewEvent />} />

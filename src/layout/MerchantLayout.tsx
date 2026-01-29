@@ -200,6 +200,13 @@ const MerchantLayout = () => {
             requiresFeature: 'memberManagement',
             requiredPermissions: ['members.viewBirthdays']
           },
+          {
+            name: 'Partnership',
+            href: '/members/partnership',
+            icon: HandHeart,
+            requiresFeature: 'memberManagement',
+            requiredPermissions: ['members.viewPartnership']
+          },
         ]
       },
       { 
