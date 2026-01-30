@@ -61,6 +61,7 @@ const SMSHistory = () => {
   const [regularTotalItems, setRegularTotalItems] = useState(0);
   const [scheduledTotalItems, setScheduledTotalItems] = useState(0);
   const [failedTotalItems, setFailedTotalItems] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const PAGE_SIZE = 20;
   const prevMessageTypeRef = useRef<'regular' | 'scheduled' | 'failed' | null>(null);
 
@@ -133,6 +134,7 @@ const SMSHistory = () => {
 
   const fetchLogs = async () => {
     try {
+      setRefreshing(true);
       if (messageType === 'regular') {
         const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE });
         console.log('Regular SMS Response:', res);
@@ -166,6 +168,7 @@ const SMSHistory = () => {
       showToast.error('Failed to load SMS history');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -234,9 +237,21 @@ const SMSHistory = () => {
         </h2>
         <button
           onClick={fetchLogs}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          disabled={refreshing}
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+            refreshing
+              ? 'bg-gray-400 text-white cursor-not-allowed'
+              : 'bg-primary-600 text-white hover:bg-primary-700'
+          }`}
         >
-          Refresh
+          {refreshing ? (
+            <>
+              <Loader className="w-4 h-4 animate-spin" />
+              Refreshing...
+            </>
+          ) : (
+            'Refresh'
+          )}
         </button>
       </div>
 
