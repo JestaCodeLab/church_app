@@ -60,6 +60,30 @@ interface Credits {
   merchantId: string;
 }
 
+interface PartnershipProgramme {
+  _id: string;
+  name: string;
+  stats?: {
+    totalPartners?: number;
+  };
+}
+
+interface PartnershipPartner {
+  _id: string;
+  partnerType: 'member' | 'guest';
+  partner: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+  };
+  member?: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+  };
+}
+
 interface SenderIdStatus {
   hasCustomSenderId: boolean;
   customSenderId: string | null;
@@ -68,7 +92,7 @@ interface SenderIdStatus {
   platformSenderId: string;
 }
 
-type SendType = 'single' | 'bulk' | 'members' | 'department' | 'branch' | 'all';
+type SendType = 'single' | 'bulk' | 'members' | 'department' | 'branch' | 'all' | 'partnership';
 
 const SendSMS = () => {
   // Send type and recipients
@@ -108,6 +132,10 @@ const SendSMS = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [credits, setCredits] = useState<Credits | null>(null);
   const [senderIdStatus, setSenderIdStatus] = useState<SenderIdStatus | null>(null);
+  const [partnerships, setPartnerships] = useState<PartnershipProgramme[]>([]);
+  const [selectedPartnership, setSelectedPartnership] = useState('');
+  const [partnershipPartners, setPartnershipPartners] = useState<PartnershipPartner[]>([]);
+  const [loadingPartners, setLoadingPartners] = useState(false);
 
   // UI state
   const [loading, setLoading] = useState(true);
@@ -159,17 +187,19 @@ const SendSMS = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [deptsRes, branchesRes, templatesRes, creditsRes] = await Promise.all([
+      const [deptsRes, branchesRes, templatesRes, creditsRes, partnershipsRes] = await Promise.all([
         departmentAPI.getDepartments(),
         branchAPI.getBranches({ limit: 100 }),
         messagingAPI.templates.getAll(),
-        messagingAPI.credits.get()
+        messagingAPI.credits.get(),
+        (window as any).partnershipAPI?.getAll?.({ limit: 100 }).catch(() => ({ data: { data: { programmes: [] } } }))
       ]);
 
       setDepartments(deptsRes.data.data.departments || []);
       setBranches(branchesRes.data.data.branches || []);
       setTemplates(templatesRes.data.data.templates || []);
       setCredits(creditsRes.data.data.credits);
+      setPartnerships(partnershipsRes?.data?.data?.programmes || partnershipsRes?.data?.data?.data || []);
     } catch (error: any) {
       showToast.error('Failed to load data');
       console.error(error);
@@ -202,6 +232,43 @@ const SendSMS = () => {
       setSenderIdStatus(response.data.data);
     } catch (error) {
       console.log('Sender ID not configured');
+    }
+  };
+
+  // Fetch partners for selected partnership
+  const fetchPartnershipPartners = async (partnershipId: string) => {
+    try {
+      setLoadingPartners(true);
+      // Directly call the partnership API through messagingAPI or use a route
+      const response = await fetch(`/api/v1/partnerships/${partnershipId}/partners?limit=1000`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken') || ''}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch partners');
+      }
+      
+      const data = await response.json();
+      setPartnershipPartners(data.data?.partners || []);
+    } catch (error: any) {
+      showToast.error('Failed to load partnership partners');
+      console.error(error);
+      setPartnershipPartners([]);
+    } finally {
+      setLoadingPartners(false);
+    }
+  };
+
+  // Handle partnership selection
+  const handlePartnershipSelect = (partnershipId: string) => {
+    setSelectedPartnership(partnershipId);
+    setSelectedMembers([]); // Clear previous selections
+    if (partnershipId) {
+      fetchPartnershipPartners(partnershipId);
+    } else {
+      setPartnershipPartners([]);
     }
   };
 
@@ -276,6 +343,8 @@ const SendSMS = () => {
         return dept?.memberCount || 0;
       case 'branch':
         return members.filter(m => m).length;
+      case 'partnership':
+        return selectedMembers.length;
       case 'all':
         return members.length;
       default:
@@ -421,6 +490,30 @@ const SendSMS = () => {
           });
           break;
 
+        case 'partnership':
+          if (!selectedPartnership) {
+            showToast.error('Select a partnership programme');
+            return;
+          }
+          if (selectedMembers.length === 0) {
+            showToast.error('Select at least one partner');
+            return;
+          }
+          response = await messagingAPI.sms.sendBulk({
+            phones: selectedMembers.map(partnerId => {
+              const partner = partnershipPartners.find(p => p._id === partnerId);
+              if (!partner) return '';
+              return partner.partnerType === 'member' && partner.member
+                ? partner.member.phone
+                : partner.partner?.phone;
+            }).filter(p => p),
+            message,
+            category,
+            templateId: selectedTemplate || undefined,
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
+          });
+          break;
+
         case 'all':
           response = await messagingAPI.sms.sendToAll({
             message,
@@ -454,6 +547,8 @@ const SendSMS = () => {
         setSelectedMembers([]);
         setSelectedDepartment('');
         setSelectedBranch('');
+        setSelectedPartnership('');
+        setPartnershipPartners([]);
         setSelectedTemplate('');
         setMemberSearchTerm('');
         setSendType('single');
@@ -560,6 +655,7 @@ const SendSMS = () => {
                   { value: 'members', label: 'Members', icon: Users },
                   { value: 'department', label: 'Department', icon: Building2 },
                   { value: 'branch', label: 'Branch', icon: Building2 },
+                  { value: 'partnership', label: 'Partnership', icon: Users },
                   { value: 'all', label: 'All Members', icon: Users }
                 ].map((type) => {
                   const Icon = type.icon;
@@ -746,6 +842,103 @@ const SendSMS = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+
+              {sendType === 'partnership' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Select Partnership Programme
+                    </label>
+                    <select
+                      value={selectedPartnership}
+                      onChange={(e) => handlePartnershipSelect(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
+                      required
+                    >
+                      <option value="">Choose a partnership programme</option>
+                      {partnerships.map((prog) => (
+                        <option key={prog._id} value={prog._id}>
+                          {prog.name} ({prog.stats?.totalPartners || 0} partners)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedPartnership && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Select Partners
+                      </label>
+                      <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-64 overflow-y-auto bg-white dark:bg-gray-700">
+                        {loadingPartners ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader className="w-6 h-6 animate-spin text-primary-600" />
+                          </div>
+                        ) : partnershipPartners.length === 0 ? (
+                          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                            No partners found in this programme
+                          </p>
+                        ) : (
+                          <div className="space-y-2">
+                            <label className="flex items-center py-2 hover:bg-gray-50 dark:hover:bg-gray-600 rounded px-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedMembers.length === partnershipPartners.length && partnershipPartners.length > 0}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedMembers(partnershipPartners.map(p => p._id));
+                                  } else {
+                                    setSelectedMembers([]);
+                                  }
+                                }}
+                                className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                              />
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                Select All ({partnershipPartners.length})
+                              </span>
+                            </label>
+                            <hr className="border-gray-200 dark:border-gray-600" />
+                            {partnershipPartners.map((partner) => {
+                              const name = partner.partnerType === 'member' && partner.member
+                                ? `${partner.member.firstName} ${partner.member.lastName}`
+                                : `${partner.partner?.firstName} ${partner.partner?.lastName}`;
+                              const phone = partner.partnerType === 'member' && partner.member
+                                ? partner.member.phone
+                                : partner.partner?.phone;
+                              
+                              return (
+                                <label
+                                  key={partner._id}
+                                  className="flex items-center py-2 hover:bg-gray-50 dark:hover:bg-gray-600 rounded px-2 cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedMembers.includes(partner._id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedMembers([...selectedMembers, partner._id]);
+                                      } else {
+                                        setSelectedMembers(selectedMembers.filter(id => id !== partner._id));
+                                      }
+                                    }}
+                                    className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                  />
+                                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                                    {name} - {phone}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        {selectedMembers.length} partner(s) selected
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
