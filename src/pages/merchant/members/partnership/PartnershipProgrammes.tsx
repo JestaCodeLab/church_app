@@ -75,6 +75,7 @@ const PartnershipProgrammes = () => {
       const response = await partnershipAPI.getAll(params);
       const data = response.data.data;
       setProgrammes(data.programmes || []);
+      console.log('Partnership programmes fetched:', data.programmes);
 
       // Calculate stats
       const all = data.programmes || [];
@@ -137,7 +138,7 @@ const PartnershipProgrammes = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
@@ -162,67 +163,67 @@ const PartnershipProgrammes = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Target className="h-6 w-6 text-purple-600" />
+        {/* Total Programmes Card */}
+        <div className="relative overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-purple-200 dark:bg-purple-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+          <div className="relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Programmes</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Programmes</dt>
-                  <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.total}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Partners</dt>
-                  <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalPartners}</dd>
-                </dl>
+              <div className="p-3 bg-purple-600/10 dark:bg-purple-500/10 rounded-lg">
+                <Target className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
+        {/* Total Partners Card */}
+        <div className="relative overflow-hidden rounded-xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-green-200 dark:bg-green-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+          <div className="relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Partners</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.totalPartners}</p>
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Raised</dt>
-                  <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    {formatCurrency(stats.totalRaised, merchantCurrency)}
-                  </dd>
-                </dl>
+              <div className="p-3 bg-green-600/10 dark:bg-green-500/10 rounded-lg">
+                <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <HandHeart className="h-6 w-6 text-pink-600" />
+        {/* Total Raised Card */}
+        <div className="relative overflow-hidden rounded-xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-blue-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+          <div className="relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Raised</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  {formatCurrency(stats.totalRaised, merchantCurrency)}
+                </p>
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Active Programmes</dt>
-                  <dd className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.active}</dd>
-                </dl>
+              <div className="p-3 bg-blue-600/10 dark:bg-blue-500/10 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Programmes Card */}
+        <div className="relative overflow-hidden rounded-xl border border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50 to-pink-100/50 dark:from-pink-900/20 dark:to-pink-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-pink-200 dark:bg-pink-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+          <div className="relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Active Programmes</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.active}</p>
+              </div>
+              <div className="p-3 bg-pink-600/10 dark:bg-pink-500/10 rounded-lg">
+                <HandHeart className="h-6 w-6 text-pink-600 dark:text-pink-400" />
               </div>
             </div>
           </div>
@@ -292,102 +293,119 @@ const PartnershipProgrammes = () => {
             const progress = calculateProgress(raisedAmount, targetAmount);
             
             return (
-              <div key={programme._id} className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow overflow-hidden">
-                {/* Cover Image */}
-                {programme.coverImage?.url && (
-                  <div className="h-40 overflow-hidden bg-gradient-to-r from-purple-600 to-blue-600">
+              <div key={programme._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                onClick={() => navigate(`/members/partnership/${programme._id}`)}>
+                
+                {/* Cover Image with Overlay */}
+                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600">
+                  {programme.coverImage?.url ? (
                     <img
                       src={programme.coverImage.url}
                       alt={programme.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
+                  ) : null}
+                  
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                  
+                  {/* Status Badge */}
+                  <div className="absolute top-4 right-4">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${
+                      programme.status === 'active' ? 'bg-green-500/90 text-white' :
+                      programme.status === 'draft' ? 'bg-gray-500/90 text-white' :
+                      programme.status === 'paused' ? 'bg-yellow-500/90 text-white' :
+                      'bg-blue-500/90 text-white'
+                    }`}>
+                      {programme.status.charAt(0).toUpperCase() + programme.status.slice(1)}
+                    </span>
                   </div>
-                )}
-                
-                <div className="p-6">
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{programme.name}</h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(programme.status)}`}>
-                        {programme.status}
-                      </span>
+                  
+                  {/* Icon Placeholder */}
+                  {!programme.coverImage?.url && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <HandHeart className="w-16 h-16 text-white opacity-30" />
                     </div>
-                    <PermissionGuard permission="members.editPartnership">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/members/partnership/${programme._id}/edit`);
-                        }}
-                        className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                        title="Edit Programme"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                    </PermissionGuard>
-                  </div>
-
-                  {/* Description */}
-                  {programme.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">{programme.description}</p>
                   )}
-
-                  {/* Progress */}
+                </div>
+                
+                {/* Card Content */}
+                <div className="p-6">
+                  {/* Title and Description */}
                   <div className="mb-4">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {formatCurrency(raisedAmount, programme.goal?.currency || merchantCurrency)}
-                      </span>
-                      <span className="text-gray-500 dark:text-gray-400">
-                        of {formatCurrency(targetAmount, programme.goal?.currency || merchantCurrency)}
-                      </span>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      {programme.name}
+                    </h3>
+                    {programme.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                        {programme.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Progress Section */}
+                  <div className="mb-5 pb-5 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">PROGRESS</span>
+                      <span className="text-sm font-bold text-purple-600 dark:text-purple-400">{progress.toFixed(0)}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="bg-purple-600 h-2 rounded-full transition-all"
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 h-2.5 rounded-full transition-all duration-500"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <div className="text-right text-xs text-gray-500 dark:text-gray-400 mt-1">{progress.toFixed(1)}%</div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <div className="text-center">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Tiers</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{programme.tiers?.length || 0}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Partners</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{programme.stats?.totalPartners || 0}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Payments</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{programme.stats?.totalTransactions || 0}</p>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        {formatCurrency(raisedAmount, programme.goal?.currency || merchantCurrency)}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-500">
+                        {formatCurrency(targetAmount, programme.goal?.currency || merchantCurrency)}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex justify-end gap-2">
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-3 gap-3 mb-5">
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-3 text-center">
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tiers</p>
+                      <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{programme.tiers?.length || 0}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-3 text-center">
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Partners</p>
+                      <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{programme.stats?.totalPartners || 0}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-3 text-center">
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Payments</p>
+                      <p className="text-xl font-bold text-green-600 dark:text-green-400">{programme.stats?.totalTransactions || 0}</p>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => navigate(`/members/partnership/${programme._id}`)}
-                      className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                      className="inline-flex items-center justify-center px-3 py-2.5 border border-purple-300 dark:border-purple-700 shadow-sm text-sm font-semibold rounded-lg text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
                     >
-                      <Eye className="w-4 h-4 mr-1" />
+                      <Eye className="w-4 h-4 mr-1.5" />
                       View
                     </button>
                     <PermissionGuard permission="members.update">
                       <button
                         onClick={() => navigate(`/members/partnership/${programme._id}/edit`)}
-                        className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-semibold rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-4 h-4 mr-1.5" />
+                        Edit
                       </button>
                     </PermissionGuard>
                     <PermissionGuard permission="members.delete">
                       <button
                         onClick={() => handleDelete(programme._id, programme.name)}
-                        className="inline-flex items-center justify-center px-3 py-2 border border-red-300 dark:border-red-700 shadow-sm text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="inline-flex items-center justify-center px-3 py-2.5 border border-red-300 dark:border-red-700 shadow-sm text-sm font-semibold rounded-lg text-red-700 dark:text-red-400 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
