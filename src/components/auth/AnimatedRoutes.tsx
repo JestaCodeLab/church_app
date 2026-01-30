@@ -74,6 +74,8 @@ import PartnershipProgrammes from '../../pages/merchant/members/partnership/Part
 import NewPartnership from '../../pages/merchant/members/partnership/NewPartnership';
 import PartnershipDetails from '../../pages/merchant/members/partnership/PartnershipDetails';
 import PublicPartnershipRegistration from '../../pages/public/PublicPartnershipRegistration';
+import PublicPartnershipPayment from '../../pages/public/PublicPartnershipPayment';
+import PartnershipPaymentStatus from '../../pages/public/PartnershipPaymentStatus';
 import AdminLogs from '../../pages/admin/logs/AdminLogs';
 import PublicEventDonation from '../../pages/public/PublicEventDonation';
 import PublicCampaignDonation from '../../pages/public/PublicCampaignDonation';
@@ -171,6 +173,8 @@ const AnimatedRoutes = () => {
           <Route path="/campaign/:campaignId" element={<PublicCampaignDonation />} />
           <Route path="/campaign-status/:campaignId" element={<CampaignDonationStatus />} />
           <Route path="/partnership/register/:merchantId/:programmeId" element={<PublicPartnershipRegistration />} />
+          <Route path="/partnership/payment/:merchantId/:programmeId" element={<PublicPartnershipPayment />} />
+          <Route path="/partnership/payment/:merchantId/:programmeId/status" element={<PartnershipPaymentStatus />} />
         </Route>
 
         {/* Onboarding Route - Requires auth but not completed onboarding */}

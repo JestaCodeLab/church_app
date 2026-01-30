@@ -823,17 +823,28 @@ export const partnershipAPI = {
   exportTransactions: (id: string) =>
     api.get(`/partnerships/${id}/transactions/export`, { responseType: 'blob' }),
 
+  createManualTransaction: (id: string, data: any) =>
+    api.post(`/partnerships/${id}/transactions`, data),
+
   // Partners/Registrations
   getPartners: (id: string, params?: any) =>
     api.get(`/partnerships/${id}/partners`, { params }),
   registerPartner: (id: string, data: any) =>
     api.post(`/partnerships/${id}/register`, data),
 
+  deletePartner: (id: string, partnerId: string) =>
+    api.delete(`/partnerships/${id}/partners/${partnerId}`),
+
   // Public Routes (no auth required)
   getPublicProgramme: (merchantId: string, programmeId: string) =>
     api.get(`/partnerships/public/${merchantId}/${programmeId}`),
   registerPublicPartner: (merchantId: string, programmeId: string, data: any) =>
     api.post(`/partnerships/public/${merchantId}/${programmeId}/register`, data),
+
+  initiatePublicPayment: (merchantId: string, programmeId: string, data: any) =>
+    api.post(`/partnerships/public/${merchantId}/${programmeId}/payment/initiate`, data),
+  verifyPublicPayment: (merchantId: string, programmeId: string, reference: string) =>
+    api.get(`/partnerships/public/${merchantId}/${programmeId}/payment/verify/${reference}`),
 
   // Statistics
   refreshStats: (id: string) => api.post(`/partnerships/${id}/refresh`),
