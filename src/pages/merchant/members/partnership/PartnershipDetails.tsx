@@ -17,6 +17,7 @@ import {
   Plus,
   Trash2,
   X,
+  Settings,
 } from 'lucide-react';
 import { partnershipAPI, memberAPI } from '../../../../services/api';
 import { showToast } from '../../../../utils/toasts';
@@ -51,6 +52,14 @@ interface PartnershipProgramme {
     guestPartners: number;
   };
   status: 'draft' | 'active' | 'paused' | 'completed';
+  smsMessages?: {
+    welcomeMessage?: string;
+    thankYouMessage?: string;
+  };
+  registrationForm?: any;
+  period?: any;
+  isPublic?: boolean;
+  publicSettings?: any;
   dates?: {
     startDate?: string;
     endDate?: string;
@@ -103,7 +112,12 @@ interface Transaction {
       email?: string;
       phone?: string;
     };
-    guestInfo?: { fullName: string };
+    partner?: {
+      firstName: string;
+      lastName: string;
+      email?: string;
+      phone?: string;
+    };
   };
   tier?: Tier;
   amount: number;
@@ -131,7 +145,15 @@ const PartnershipDetails = () => {
   const [loading, setLoading] = useState(true);
   const [loadingPartners, setLoadingPartners] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'partners' | 'transactions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'partners' | 'transactions' | 'messages'>('overview');
+
+  // Messages state
+  const [smsMessages, setSmsMessages] = useState({
+    welcomeMessage: '',
+    thankYouMessage: '',
+  });
+  const [messageSaving, setMessageSaving] = useState(false);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
 
   // Filters
   const [partnerSearch, setPartnerSearch] = useState('');
@@ -146,12 +168,26 @@ const PartnershipDetails = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   // Form states
+  const [partnerTab, setPartnerTab] = useState<'member' | 'guest'>('member');
   const [addPartnerData, setAddPartnerData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
     tierId: programme?.tiers[0]?._id || '',
+  });
+
+  // Member search state for partner modal
+  const [partnerMemberSearchQuery, setPartnerMemberSearchQuery] = useState('');
+  const [partnerMemberSearchResults, setPartnerMemberSearchResults] = useState<any[]>([]);
+  const [showPartnerMemberSearchResults, setShowPartnerMemberSearchResults] = useState(false);
+  const [searchingPartnerMembers, setSearchingPartnerMembers] = useState(false);
+  const [selectedPartnerMember, setSelectedPartnerMember] = useState<any>(null);
+  const [partnerGuestData, setPartnerGuestData] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
   });
 
   const [addTransactionData, setAddTransactionData] = useState({
@@ -168,6 +204,7 @@ const PartnershipDetails = () => {
   const [showMemberSearchResults, setShowMemberSearchResults] = useState(false);
   const [searchingMembers, setSearchingMembers] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [selectedPartnerForTransaction, setSelectedPartnerForTransaction] = useState<any>(null);
   const [transactionTab, setTransactionTab] = useState<'member' | 'guest'>('member');
   const [guestData, setGuestData] = useState({
     fullName: '',
@@ -186,8 +223,26 @@ const PartnershipDetails = () => {
       loadPartners();
     } else if (activeTab === 'transactions') {
       loadTransactions();
+    } else if (activeTab === 'messages') {
+      loadMessages();
     }
   }, [activeTab]);
+
+  // Debounce partner member search
+  useEffect(() => {
+    if (!showAddPartnerModal || partnerTab !== 'member') {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (partnerMemberSearchQuery && partnerMemberSearchQuery.trim().length >= 2) {
+        searchPartnerMembers(partnerMemberSearchQuery);
+        setShowPartnerMemberSearchResults(true);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [partnerMemberSearchQuery, showAddPartnerModal, partnerTab]);
 
   // Debounce member search
   useEffect(() => {
@@ -225,15 +280,52 @@ const PartnershipDetails = () => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      await partnershipAPI.registerPartner(id!, {
-        firstName: addPartnerData.firstName,
-        lastName: addPartnerData.lastName,
-        email: addPartnerData.email,
-        phone: addPartnerData.phone,
-        tierId: addPartnerData.tierId,
-      });
+
+      if (partnerTab === 'member') {
+        if (!selectedPartnerMember || !selectedPartnerMember._id) {
+          showToast.error('Please select a member');
+          return;
+        }
+        if (!addPartnerData.tierId) {
+          showToast.error('Please select a tier');
+          return;
+        }
+
+        await partnershipAPI.registerPartner(id!, {
+          memberId: selectedPartnerMember._id,
+          tierId: addPartnerData.tierId,
+        });
+      } else {
+        // Guest registration
+        if (!partnerGuestData.firstName || !partnerGuestData.lastName || !partnerGuestData.phone) {
+          showToast.error('Please fill in first name, last name, and phone');
+          return;
+        }
+        if (!addPartnerData.tierId) {
+          showToast.error('Please select a tier');
+          return;
+        }
+
+        await partnershipAPI.registerPartner(id!, {
+          firstName: partnerGuestData.firstName,
+          lastName: partnerGuestData.lastName,
+          email: partnerGuestData.email,
+          phone: partnerGuestData.phone,
+          tierId: addPartnerData.tierId,
+        });
+      }
+
       showToast.success('Partner added successfully');
       setShowAddPartnerModal(false);
+      setPartnerTab('member');
+      setSelectedPartnerMember(null);
+      setPartnerMemberSearchQuery('');
+      setPartnerGuestData({
+        firstName: '',
+        lastName: '',
+        phone: '',
+        email: '',
+      });
       setAddPartnerData({
         firstName: '',
         lastName: '',
@@ -244,7 +336,7 @@ const PartnershipDetails = () => {
       await loadPartners();
       await loadProgrammeDetails();
     } catch (error: any) {
-      showToast.error('Failed to add partner');
+      showToast.error(error.response?.data?.message || 'Failed to add partner');
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -426,6 +518,44 @@ const PartnershipDetails = () => {
     }
   };
 
+  const loadMessages = async () => {
+    try {
+      if (programme?.smsMessages) {
+        setSmsMessages({
+          welcomeMessage: programme.smsMessages.welcomeMessage || '',
+          thankYouMessage: programme.smsMessages.thankYouMessage || '',
+        });
+      }
+      setMessagesLoaded(true);
+    } catch (error: any) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  const handleSaveMessages = async () => {
+    try {
+      setMessageSaving(true);
+      
+      // Create FormData and append smsMessages as JSON string
+      const formData = new FormData();
+      formData.append('smsMessages', JSON.stringify(smsMessages));
+      
+      const response = await partnershipAPI.update(id!, formData);
+      
+      if (response.data.data) {
+        setProgramme(response.data.data.programme || response.data.data);
+      }
+      
+      showToast.success('Messages updated successfully');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Failed to update messages';
+      showToast.error(errorMsg);
+      console.error('Error saving messages:', error);
+    } finally {
+      setMessageSaving(false);
+    }
+  };
+
   // Search members by phone or name
   const searchMembers = async (query: string) => {
     if (!query || query.trim().length < 2) {
@@ -435,7 +565,7 @@ const PartnershipDetails = () => {
 
     try {
       setSearchingMembers(true);
-      console.log('Searching members with query:', query);
+      console.log('Searching members and partners with query:', query);
       
       const response = await memberAPI.getMembers({
         search: query,
@@ -450,34 +580,86 @@ const PartnershipDetails = () => {
       
       console.log('Members found:', members);
       
-      // Don't filter - show all members including those already registered
-      // The transaction creation will handle checking if they're already a partner
-      const filteredMembers = Array.isArray(members) ? members : [];
+      // Search existing partners in this programme
+      const matchingPartners = partners.filter(p => {
+        const partnerName = `${p.partner.firstName} ${p.partner.lastName}`;
+        return partnerName.toLowerCase().includes(query.toLowerCase()) ||
+               p.partner.phone.includes(query);
+      });
       
-      console.log('All members available:', filteredMembers);
+      console.log('Partners found:', matchingPartners);
       
-      setMemberSearchResults(filteredMembers);
+      // Combine members (with type: 'member') and partners (with type: 'partner')
+      const combined = [
+        ...(Array.isArray(members) ? members.map(m => ({ ...m, type: 'member' })) : []),
+        ...matchingPartners.map(p => ({ ...p, type: 'partner' }))
+      ];
+      
+      console.log('Combined search results:', combined);
+      
+      setMemberSearchResults(combined);
     } catch (error: any) {
-      console.error('Error searching members:', error);
+      console.error('Error searching members and partners:', error);
       setMemberSearchResults([]);
     } finally {
       setSearchingMembers(false);
     }
   };
 
+  const searchPartnerMembers = async (query: string) => {
+    if (!query || query.trim().length < 2) {
+      setPartnerMemberSearchResults([]);
+      return;
+    }
+
+    try {
+      setSearchingPartnerMembers(true);
+      
+      const response = await memberAPI.getMembers({
+        search: query,
+        limit: 10,
+        status: 'active'
+      });
+      
+      const members = response.data?.data?.members || response.data?.data || [];
+      const filteredMembers = Array.isArray(members) ? members : [];
+      
+      setPartnerMemberSearchResults(filteredMembers);
+    } catch (error: any) {
+      console.error('Error searching partner members:', error);
+      setPartnerMemberSearchResults([]);
+    } finally {
+      setSearchingPartnerMembers(false);
+    }
+  };
+
   // Handle member selection from search results
-  const handleSelectMember = (member: any) => {
-    // Store the selected member
-    setSelectedMember(member);
-    // Store the selected member ID in registrationId
-    setAddTransactionData(prev => ({
-      ...prev,
-      registrationId: member._id,
-    }));
+  const handleSelectMember = (item: any) => {
+    // Check if it's a partner or a member
+    if (item.type === 'partner') {
+      // It's an existing partner from PartnershipRegistration
+      setSelectedPartnerForTransaction(item);
+      setSelectedMember(null);
+      // Use the partner registration ID
+      setAddTransactionData(prev => ({
+        ...prev,
+        registrationId: item._id,
+      }));
+      showToast.success(`Partner ${item.partner.firstName} ${item.partner.lastName} selected`);
+    } else {
+      // It's a member
+      setSelectedMember(item);
+      setSelectedPartnerForTransaction(null);
+      // Use the member ID
+      setAddTransactionData(prev => ({
+        ...prev,
+        registrationId: item._id,
+      }));
+      showToast.success(`${item.firstName} ${item.lastName} selected`);
+    }
     // Close the dropdown and clear search results
     setShowMemberSearchResults(false);
     setMemberSearchResults([]);
-    showToast.success(`${member.firstName} ${member.lastName} selected`);
   };
 
   const handleRefreshStats = async () => {
@@ -747,6 +929,16 @@ const PartnershipDetails = () => {
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Transactions ({programme.stats.totalTransactions})
+          </button>
+          <button
+            onClick={() => setActiveTab('messages')}
+            className={`${
+              activeTab === 'messages'
+                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Messages
           </button>
         </nav>
       </div>
@@ -1191,7 +1383,9 @@ const PartnershipDetails = () => {
                       ? transaction.registration.member
                         ? `${transaction.registration.member.firstName} ${transaction.registration.member.lastName}`
                         : 'N/A'
-                      : transaction.registration.guestInfo?.fullName || 'N/A';
+                      : transaction.registration.partner
+                      ? `${transaction.registration.partner.firstName} ${transaction.registration.partner.lastName}`
+                      : 'N/A';
 
                     return (
                       <tr key={transaction._id}>
@@ -1243,6 +1437,143 @@ const PartnershipDetails = () => {
         </div>
       )}
 
+      {/* Messages Tab */}
+      {activeTab === 'messages' && (
+        <div className="space-y-6 max-w-4xl">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">SMS Messages Configuration</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Configure custom SMS messages for welcome and thank you notifications. If not configured, default messages will be used.
+            </p>
+          </div>
+
+          {/* Available Variables Info */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-5">
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-3">Available Variables</h4>
+              <p className="text-xs text-blue-800 dark:text-blue-300 mb-4">
+                Use these placeholders in your messages and they will be automatically replaced with actual values:
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
+                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[name]</code>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Partner/recipient name</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
+                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[amount]</code>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Transaction amount (thank you only)</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
+                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[currency]</code>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Currency code (GHS, USD, etc)</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
+                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[programme]</code>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Programme/partnership name</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
+                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[church]</code>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Church/merchant name</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
+                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[tier]</code>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Tier name (public payments only)</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+              <h5 className="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">Default Messages</h5>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-xs font-medium text-blue-900 dark:text-blue-200 mb-1">Welcome (when partner registers):</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 rounded px-3 py-2 italic">
+                    "Welcome to [programme] partnership programme at [church]! Thank you for joining us. We're excited to have you as a partner."
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-blue-900 dark:text-blue-200 mb-1">Thank You (after payment):</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 rounded px-3 py-2 italic">
+                    "Thank you for your partnership contribution of [currency] [amount]. Your support to [church]'s [programme] is greatly appreciated."
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {/* Welcome Message */}
+            <div>
+              <label htmlFor="welcomeMessage" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Welcome Message
+              </label>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                Sent when a partner registers for the programme
+              </p>
+              <textarea
+                id="welcomeMessage"
+                value={smsMessages.welcomeMessage}
+                onChange={(e) => setSmsMessages(prev => ({ ...prev, welcomeMessage: e.target.value }))}
+                placeholder="Leave empty to use default message. Example: Hello [name], welcome to [programme] at [church]!"
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {smsMessages.welcomeMessage.length} characters (SMS limit: 160-1000)
+              </p>
+            </div>
+
+            {/* Thank You Message */}
+            <div>
+              <label htmlFor="thankYouMessage" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Thank You Message
+              </label>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                Sent after a partner makes a payment or contribution
+              </p>
+              <textarea
+                id="thankYouMessage"
+                value={smsMessages.thankYouMessage}
+                onChange={(e) => setSmsMessages(prev => ({ ...prev, thankYouMessage: e.target.value }))}
+                placeholder="Leave empty to use default message. Example: Thank you [name] for contributing [currency][amount] to [programme]!"
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {smsMessages.thankYouMessage.length} characters (SMS limit: 160-1000)
+              </p>
+            </div>
+
+            {/* Save Button */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={handleSaveMessages}
+                disabled={messageSaving}
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
+              >
+                {messageSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Settings className="w-4 h-4" />
+                    Save Messages
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -1279,73 +1610,200 @@ const PartnershipDetails = () => {
       {/* Add Partner Modal */}
       {showAddPartnerModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add Partner</h3>
               <button
-                onClick={() => setShowAddPartnerModal(false)}
+                onClick={() => {
+                  setShowAddPartnerModal(false);
+                  setPartnerTab('member');
+                  setSelectedPartnerMember(null);
+                  setPartnerMemberSearchQuery('');
+                  setPartnerGuestData({
+                    firstName: '',
+                    lastName: '',
+                    phone: '',
+                    email: '',
+                  });
+                  setAddPartnerData({
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    phone: '',
+                    tierId: programme?.tiers[0]?._id || '',
+                  });
+                }}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleAddPartner} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  value={addPartnerData.firstName}
-                  onChange={(e) => setAddPartnerData({ ...addPartnerData, firstName: e.target.value })}
-                  required
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  value={addPartnerData.lastName}
-                  onChange={(e) => setAddPartnerData({ ...addPartnerData, lastName: e.target.value })}
-                  required
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              <input
-                type="email"
-                placeholder="Email"
-                value={addPartnerData.email}
-                onChange={(e) => setAddPartnerData({ ...addPartnerData, email: e.target.value })}
-                required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-              />
-
-              <input
-                type="tel"
-                placeholder="Phone"
-                value={addPartnerData.phone}
-                onChange={(e) => setAddPartnerData({ ...addPartnerData, phone: e.target.value })}
-                required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-              />
-
-              <select
-                value={addPartnerData.tierId}
-                onChange={(e) => setAddPartnerData({ ...addPartnerData, tierId: e.target.value })}
-                required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+            {/* Tabs */}
+            <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setPartnerTab('member')}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+                  partnerTab === 'member'
+                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                }`}
               >
-                <option value="">Select Tier</option>
-                {programme?.tiers.map((tier) => (
-                  <option key={tier._id} value={tier._id}>
-                    {tier.name} - {formatCurrency(tier.minimumAmount, merchantCurrency)} min
-                  </option>
-                ))}
-              </select>
+                Member
+              </button>
+              <button
+                onClick={() => setPartnerTab('guest')}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+                  partnerTab === 'guest'
+                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                }`}
+              >
+                Guest
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPartner} className="space-y-4">
+              {/* Member Tab */}
+              {partnerTab === 'member' && (
+                <>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search member or partner by name or phone..."
+                      value={partnerMemberSearchQuery}
+                      onChange={(e) => setPartnerMemberSearchQuery(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                    />
+                    {searchingPartnerMembers && (
+                      <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-gray-400" />
+                    )}
+                  </div>
+
+                  {showPartnerMemberSearchResults && partnerMemberSearchResults.length > 0 && (
+                    <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                      {partnerMemberSearchResults.map((member) => (
+                        <button
+                          key={member._id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPartnerMember(member);
+                            setShowPartnerMemberSearchResults(false);
+                            setPartnerMemberSearchQuery('');
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-200 dark:hover:bg-gray-600 border-b border-gray-200 dark:border-gray-600 last:border-b-0 transition-colors"
+                        >
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
+                            {member.firstName} {member.lastName}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{member.phone}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedPartnerMember && (
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Selected: {selectedPartnerMember.firstName} {selectedPartnerMember.lastName}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{selectedPartnerMember.phone}</p>
+                    </div>
+                  )}
+
+                  <select
+                    value={addPartnerData.tierId}
+                    onChange={(e) => setAddPartnerData({ ...addPartnerData, tierId: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Select Tier</option>
+                    {programme?.tiers.map((tier) => (
+                      <option key={tier._id} value={tier._id}>
+                        {tier.name} - {formatCurrency(tier.minimumAmount, merchantCurrency)} min
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
+              {/* Guest Tab */}
+              {partnerTab === 'guest' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      placeholder="First Name"
+                      value={partnerGuestData.firstName}
+                      onChange={(e) => setPartnerGuestData({ ...partnerGuestData, firstName: e.target.value })}
+                      required
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Last Name"
+                      value={partnerGuestData.lastName}
+                      onChange={(e) => setPartnerGuestData({ ...partnerGuestData, lastName: e.target.value })}
+                      required
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <input
+                    type="tel"
+                    placeholder="Phone"
+                    value={partnerGuestData.phone}
+                    onChange={(e) => setPartnerGuestData({ ...partnerGuestData, phone: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={partnerGuestData.email}
+                    onChange={(e) => setPartnerGuestData({ ...partnerGuestData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+
+                  <select
+                    value={addPartnerData.tierId}
+                    onChange={(e) => setAddPartnerData({ ...addPartnerData, tierId: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Select Tier</option>
+                    {programme?.tiers.map((tier) => (
+                      <option key={tier._id} value={tier._id}>
+                        {tier.name} - {formatCurrency(tier.minimumAmount, merchantCurrency)} min
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowAddPartnerModal(false)}
+                  onClick={() => {
+                    setShowAddPartnerModal(false);
+                    setPartnerTab('member');
+                    setSelectedPartnerMember(null);
+                    setPartnerMemberSearchQuery('');
+                    setPartnerGuestData({
+                      firstName: '',
+                      lastName: '',
+                      phone: '',
+                      email: '',
+                    });
+                    setAddPartnerData({
+                      firstName: '',
+                      lastName: '',
+                      email: '',
+                      phone: '',
+                      tierId: programme?.tiers[0]?._id || '',
+                    });
+                  }}
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
@@ -1399,7 +1857,7 @@ const PartnershipDetails = () => {
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
                 }`}
               >
-                Member
+                Member/Partner
               </button>
               <button
                 onClick={() => setTransactionTab('guest')}
@@ -1419,23 +1877,42 @@ const PartnershipDetails = () => {
                 <div className="space-y-4">
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Search Member
+                      Search Member or Partner
                     </label>
                     
-                    {selectedMember ? (
+                    {selectedMember || selectedPartnerForTransaction ? (
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-blue-900 dark:text-blue-200">
-                            {selectedMember.firstName} {selectedMember.lastName}
-                          </p>
-                          <p className="text-sm text-blue-700 dark:text-blue-300">
-                            {selectedMember.phone}
-                          </p>
+                          {selectedMember ? (
+                            <>
+                              <p className="font-medium text-blue-900 dark:text-blue-200">
+                                {selectedMember.firstName} {selectedMember.lastName}
+                              </p>
+                              <p className="text-sm text-blue-700 dark:text-blue-300">
+                                {selectedMember.phone}
+                              </p>
+                            </>
+                          ) : selectedPartnerForTransaction ? (
+                            <>
+                              <p className="font-medium text-blue-900 dark:text-blue-200">
+                                {selectedPartnerForTransaction.partner.firstName} {selectedPartnerForTransaction.partner.lastName}
+                              </p>
+                              <p className="text-sm text-blue-700 dark:text-blue-300">
+                                {selectedPartnerForTransaction.partner.phone}
+                              </p>
+                              {selectedPartnerForTransaction.tier?.name && (
+                                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                                  {selectedPartnerForTransaction.tier.name}
+                                </p>
+                              )}
+                            </>
+                          ) : null}
                         </div>
                         <button
                           type="button"
                           onClick={() => {
                             setSelectedMember(null);
+                            setSelectedPartnerForTransaction(null);
                             setAddTransactionData(prev => ({ ...prev, registrationId: '' }));
                             setMemberSearchQuery('');
                           }}
@@ -1466,26 +1943,40 @@ const PartnershipDetails = () => {
                           )}
                         </div>
 
-                        {/* Member Search Results Dropdown */}
+                        {/* Member/Partner Search Results Dropdown */}
                         {showMemberSearchResults && memberSearchQuery.length >= 2 && (
                           <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50">
                             {memberSearchResults.length > 0 ? (
                               <ul className="max-h-48 overflow-y-auto">
-                                {memberSearchResults.map((member: any) => (
-                                  <li key={member._id}>
+                                {memberSearchResults.map((item: any) => (
+                                  <li key={item._id}>
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        handleSelectMember(member);
+                                        handleSelectMember(item);
                                         setShowMemberSearchResults(false);
                                       }}
                                       className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0 text-sm"
                                     >
-                                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                                        {member.firstName} {member.lastName}
-                                      </div>
-                                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        {member.phone} {member.email && `• ${member.email}`}
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                                            {item.type === 'partner' 
+                                              ? `${item.partner.firstName} ${item.partner.lastName}`
+                                              : `${item.firstName} ${item.lastName}`
+                                            }
+                                          </div>
+                                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            {item.type === 'partner'
+                                              ? item.partner.phone
+                                              : item.phone
+                                            }
+                                            {item.type === 'partner' && item.tier?.name && ` • Tier: ${item.tier.name}`}
+                                          </div>
+                                        </div>
+                                        <span className="ml-2 px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded">
+                                          {item.type === 'partner' ? 'Partner' : 'Member'}
+                                        </span>
                                       </div>
                                     </button>
                                   </li>
@@ -1493,7 +1984,7 @@ const PartnershipDetails = () => {
                               </ul>
                             ) : (
                               <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                                No members found
+                                No members or partners found
                               </div>
                             )}
                           </div>
@@ -1501,36 +1992,6 @@ const PartnershipDetails = () => {
                       </>
                     )}
                   </div>
-
-                  {/* Fallback: Partner Dropdown */}
-                  {!addTransactionData.registrationId && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Or Select Existing Partner
-                      </label>
-                      <select
-                        value={addTransactionData.registrationId}
-                        onChange={(e) => {
-                          setAddTransactionData({ ...addTransactionData, registrationId: e.target.value });
-                          setMemberSearchQuery('');
-                          setShowMemberSearchResults(false);
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                      >
-                        <option value="">Select a Partner</option>
-                        {partners.map((partner) => {
-                          const name = partner.partner
-                            ? `${partner.partner.firstName} ${partner.partner.lastName}`
-                            : 'N/A';
-                          return (
-                            <option key={partner._id} value={partner._id}>
-                              {name} ({partner.tier?.name})
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-                  )}
                 </div>
               )}
 
