@@ -24,6 +24,7 @@ import { showToast } from '../../../../utils/toasts';
 import { formatCurrency, getMerchantCurrency } from '../../../../utils/currency';
 import PermissionGuard from '../../../../components/guards/PermissionGuard';
 import { useAuth } from '../../../../context/AuthContext';
+import EditPartnerModal from './EditPartnerModal';
 
 interface Tier {
   _id?: string;
@@ -92,6 +93,11 @@ interface Partner {
     email?: string;
   };
   tier: Tier;
+  commitment: {
+    amount: number;
+    frequency: string;
+  };
+  status: string;
   paymentStats?: {
     totalAmount: number;
     totalCount: number;
@@ -166,6 +172,8 @@ const PartnershipDetails = () => {
   const [showAddPartnerModal, setShowAddPartnerModal] = useState(false);
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showEditPartnerModal, setShowEditPartnerModal] = useState(false);
+  const [selectedPartnerForEdit, setSelectedPartnerForEdit] = useState<Partner | null>(null);
 
   // Form states
   const [partnerTab, setPartnerTab] = useState<'member' | 'guest'>('member');
@@ -274,6 +282,11 @@ const PartnershipDetails = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditPartner = (partner: Partner) => {
+    setSelectedPartnerForEdit(partner);
+    setShowEditPartnerModal(true);
   };
 
   const handleAddPartner = async (e: React.FormEvent) => {
@@ -1275,13 +1288,22 @@ const PartnershipDetails = () => {
                           {new Date(partner.registeredAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => setShowDeleteConfirm(partner._id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                            title="Delete partner"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditPartner(partner)}
+                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                              title="Edit partner"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm(partner._id)}
+                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                              title="Delete partner"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1573,6 +1595,22 @@ const PartnershipDetails = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Partner Modal */}
+      <EditPartnerModal
+        isOpen={showEditPartnerModal}
+        partner={selectedPartnerForEdit}
+        programmeId={id || ''}
+        tiers={programme?.tiers || []}
+        onClose={() => {
+          setShowEditPartnerModal(false);
+          setSelectedPartnerForEdit(null);
+        }}
+        onSuccess={() => {
+          loadPartners();
+          loadProgrammeDetails();
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
