@@ -109,31 +109,31 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: (credentials: any) => {
-  // ✅ Extract subdomain from current URL
-  const hostname = window.location.hostname;
-  const parts = hostname.split('.');
-  
-  let subdomain = null;
-  
-  // Check if we're on a subdomain
-  if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
-    // faith.localhost
-    if (parts.length === 2 && parts[0] !== 'localhost') {
+    // ✅ Extract subdomain from current URL
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+
+    let subdomain = null;
+
+    // Check if we're on a subdomain
+    if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+      // faith.localhost
+      if (parts.length === 2 && parts[0] !== 'localhost') {
+        subdomain = parts[0];
+      }
+    } else if (parts.length >= 3) {
+      // faith.thechurchhq.com
       subdomain = parts[0];
     }
-  } else if (parts.length >= 3) {
-    // faith.thechurchhq.com
-    subdomain = parts[0];
-  }
-  
-  console.log('🌐 Frontend subdomain:', subdomain);
-  
-  // ✅ Send subdomain in request body
-  return api.post('/auth/login', {
-    ...credentials,
-    subdomain: subdomain
-  });
-},
+
+    console.log('🌐 Frontend subdomain:', subdomain);
+
+    // ✅ Send subdomain in request body
+    return api.post('/auth/login', {
+      ...credentials,
+      subdomain: subdomain
+    });
+  },
   logout: () => api.post('/auth/logout'),
   getCurrentUser: () => api.get('/auth/me'),
   refreshToken: (refreshToken: any) => api.post('/auth/refresh', { refreshToken }),
@@ -141,9 +141,9 @@ export const authAPI = {
     // ✅ Extract subdomain from current URL
     const hostname = window.location.hostname;
     const parts = hostname.split('.');
-    
+
     let subdomain = null;
-    
+
     // Check if we're on a subdomain
     if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
       // faith.localhost
@@ -154,16 +154,16 @@ export const authAPI = {
       // faith.thechurchhq.com
       subdomain = parts[0];
     }
-    
+
     return api.post('/auth/forgot-password', { email, subdomain });
   },
   resetPassword: (token: string, email: string, newPassword: string, confirmPassword: string) => {
     // ✅ Extract subdomain from current URL
     const hostname = window.location.hostname;
     const parts = hostname.split('.');
-    
+
     let subdomain = null;
-    
+
     // Check if we're on a subdomain
     if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
       // faith.localhost
@@ -174,7 +174,7 @@ export const authAPI = {
       // faith.thechurchhq.com
       subdomain = parts[0];
     }
-    
+
     return api.post('/auth/reset-password', { token, email, newPassword, confirmPassword, subdomain });
   },
 };
@@ -207,7 +207,7 @@ export const memberAPI = {
   getMember: (id: any) => api.get(`/members/${id}`),
   createMember: (data: any) => {
     const formData = new FormData();
-    
+
     // Add all text fields
     formData.append('firstName', data.firstName);
     formData.append('lastName', data.lastName);
@@ -233,32 +233,32 @@ export const memberAPI = {
     if (data.baptismStatus) formData.append('baptismStatus', data.baptismStatus);
     if (data.howDidYouJoin) formData.append('howDidYouJoin', data.howDidYouJoin);
     if (data.howDidYouJoinOther) formData.append('howDidYouJoinOther', data.howDidYouJoinOther);
-    
+
     // Add address as JSON string
     if (data.address) {
       formData.append('address', JSON.stringify(data.address));
     }
-    
+
     // Add emergency contact as JSON string
     if (data.emergencyContact) {
       formData.append('emergencyContact', JSON.stringify(data.emergencyContact));
     }
 
     if (data.departments && Array.isArray(data.departments)) {
-        data.departments.forEach((deptId: string) => {
-          formData.append('departments[]', deptId); 
-        });
-      }
-  
-  if (data.primaryDepartment) {
-    formData.append('primaryDepartment', data.primaryDepartment);
-  }
-    
+      data.departments.forEach((deptId: string) => {
+        formData.append('departments[]', deptId);
+      });
+    }
+
+    if (data.primaryDepartment) {
+      formData.append('primaryDepartment', data.primaryDepartment);
+    }
+
     // ✅ ADD: Photo file if present
     if (data.photo && data.photo instanceof File) {
       formData.append('photo', data.photo);
     }
-    
+
     return api.post('/members', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -270,7 +270,7 @@ export const memberAPI = {
   updateMember: (id: string, data: any) => {
     console.log('update data ==>', data)
     const formData = new FormData();
-    
+
     // Add all text fields
     if (data.firstName) formData.append('firstName', data.firstName);
     if (data.lastName) formData.append('lastName', data.lastName);
@@ -295,17 +295,17 @@ export const memberAPI = {
     if (data.baptismStatus) formData.append('baptismStatus', data.baptismStatus);
     if (data.howDidYouJoin) formData.append('howDidYouJoin', data.howDidYouJoin);
     if (data.howDidYouJoinOther) formData.append('howDidYouJoinOther', data.howDidYouJoinOther);
-    
+
     // Add address as JSON string
     if (data.address) {
       formData.append('address', JSON.stringify(data.address));
     }
-    
+
     // Add emergency contact as JSON string
     if (data.emergencyContact) {
       formData.append('emergencyContact', JSON.stringify(data.emergencyContact));
     }
-    
+
     // Add ministries
     if (data.ministries) {
       if (typeof data.ministries === 'string') {
@@ -316,27 +316,27 @@ export const memberAPI = {
     }
     if (data.departments !== undefined && Array.isArray(data.departments)) {
       console.log('Department is available and array');
-      
+
       if (data.departments.length === 0) {
         // Empty array - clear all departments
         formData.append('departments', JSON.stringify([]));
       } else {
         // Has departments - send each one
         data.departments.forEach((deptId: string) => {
-          formData.append('departments[]', deptId); 
+          formData.append('departments[]', deptId);
         });
       }
     }
-  
+
     if (data.primaryDepartment) {
       formData.append('primaryDepartment', data.primaryDepartment);
     }
-    
+
     // ✅ ADD: Photo file if present
     if (data.photo && data.photo instanceof File) {
       formData.append('photo', data.photo);
     }
-    
+
     return api.put(`/members/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -371,18 +371,18 @@ export const adminAPI = {
   deleteMerchant: (id: any) => api.delete(`/admin/merchants/${id}`),
   getAllUsers: (params: any) => api.get('/admin/users', { params }),
   getMerchantUsers: (merchantId: any, params: any) => api.get(`/admin/merchants/${merchantId}/users`, { params }),
-  
+
   // Feature Management
   getFeatures: () => api.get('/admin/features'),
   getFeatureStats: () => api.get('/admin/features/stats'),
   createFeature: (data: any) => api.post('/admin/features', data),
   updateFeature: (featureId: any, data: any) => api.put(`/admin/features/${featureId}`, data),
   deleteFeature: (featureId: any) => api.delete(`/admin/features/${featureId}`),
-  
+
   // Plan Feature Management
   updatePlanFeatures: (planId: any, data: any) => api.patch(`/admin/plans/${planId}/features`, data),
   overrideMerchantFeatures: (merchantId: any, data: any) => api.put(`/admin/merchants/${merchantId}/features`, data),
-  
+
   getAllBranches: (params: any) => api.get('/admin/branches', { params }),
   getUserById: (id: any) => api.get(`/admin/users/${id}`),
   lockUser: (id: any, data: any) => api.patch(`/admin/users/${id}/lock`, data),
@@ -394,7 +394,7 @@ export const adminAPI = {
   // SMS Sender ID Management
   getSenderIds: (params?: any) => api.get('/admin/sender-ids', { params }),
   approveSenderId: (merchantId: string) => api.post(`/admin/sender-ids/${merchantId}/approve`),
-  rejectSenderId: (merchantId: string, reason: string) => 
+  rejectSenderId: (merchantId: string, reason: string) =>
     api.post(`/admin/sender-ids/${merchantId}/reject`, { reason }),
 
   // Merchant-specific resource creation
@@ -461,15 +461,15 @@ export const settingsAPI = {
   changePassword: (data: any) => api.put('/settings/security/password', data),
   updateNotifications: (category: string, data: any) => api.put(`/settings/notifications/${category}`, data),
   getSubscription: () => api.get('/settings/subscription'),
-  changePlan: (plan: any, discountCode?: string | null) => 
-    api.post('/settings/subscription/change-plan', { 
+  changePlan: (plan: any, discountCode?: string | null) =>
+    api.post('/settings/subscription/change-plan', {
       plan,
       ...(discountCode && { discountCode }) // Only include if provided
     }),
   verifyPayment: (reference: any) => api.post('/settings/subscription/verify-payment', { reference }),
   getBillingHistory: (params?: any) => api.get('/settings/billing-history', { params }),
-  downloadInvoice: (transactionId: string) => 
-    api.get(`/settings/invoice/${transactionId}`, { 
+  downloadInvoice: (transactionId: string) =>
+    api.get(`/settings/invoice/${transactionId}`, {
       responseType: 'blob' // Important for PDF download
     }),
   updatePaymentMethod: (data: any) => api.put('/settings/subscription/payment-method', data),
@@ -526,7 +526,7 @@ export const planAPI = {
   }) => api.post('/admin/plans', data),
 
   updatePlan: (id: string, data: any) => api.put(`/admin/plans/${id}`, data),
-  
+
   updatePlanLimits: (id: string, limits: {
     members?: number | null;
     branches?: number | null;
@@ -577,7 +577,7 @@ export const discountAPI = {
   updateDiscount: (id: string, data: any) => api.put(`/admin/discounts/${id}`, data),
 
   // Delete discount
-  deleteDiscount: (id: string, permanent: boolean = false) => 
+  deleteDiscount: (id: string, permanent: boolean = false) =>
     api.delete(`/admin/discounts/${id}`, { params: { permanent } }),
 
   // Get discount statistics
@@ -597,34 +597,34 @@ export const eventAPI = {
   getEvents: (params?: any) => api.get('/events', { params }),
   getEvent: (id: string) => api.get(`/events/${id}`),
   createEvent: (data: any) => api.post('/events', data, {
-    headers: {'Content-Type': "multipart/form-data"}
+    headers: { 'Content-Type': "multipart/form-data" }
   }),
   updateEvent: (id: string, data: any) => api.put(`/events/${id}`, data, {
-    headers: {'Content-Type': "multipart/form-data"}
+    headers: { 'Content-Type': "multipart/form-data" }
   }),
   deleteEvent: (id: string) => api.delete(`/events/${id}`),
-  
+
   // QR Code
   regenerateQR: (id: string) => api.post(`/events/${id}/regenerate-qr`),
-  
+
   // Attendance
   checkInAttendance: (id: string, data: any) => api.post(`/events/${id}/attendance`, data),
   getAttendance: (id: string, params?: any) => api.get(`/events/${id}/attendance`, { params }),
-  
+
   // Guest Management
   getUnconvertedGuests: (params?: any) => api.get('/events/guests/unconverted', { params }),
-  convertGuestToMember: (attendanceId: string, data: any) => 
+  convertGuestToMember: (attendanceId: string, data: any) =>
     api.post(`/events/attendance/${attendanceId}/convert-to-member`, data),
-  
+
   // Public endpoints (no auth)
-  getEventByQR: (qrData: string) => 
+  getEventByQR: (qrData: string) =>
     axios.get(`${API_BASE_URL}/public/events/qr/${qrData}`),
-  publicCheckIn: (qrData: string, data: any) => 
+  publicCheckIn: (qrData: string, data: any) =>
     axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, data),
 
   //donations
   getDonations: (eventId: string, params?: any) => api.get(`/events/${eventId}/donations`, { params }),
-  exportDonations: (eventId: string) => api.post(`/events/${eventId}/donations/export`, {}, { responseType: 'blob' }),  
+  exportDonations: (eventId: string) => api.post(`/events/${eventId}/donations/export`, {}, { responseType: 'blob' }),
 
 };
 
@@ -637,9 +637,9 @@ export const departmentAPI = {
   }) => api.get('/departments', { params }),
 
   // Get departments for registration
-  getDepartmentsForRegistration: (branchId?: string) => 
-    api.get('/departments/registration', { 
-      params: branchId ? { branchId } : undefined 
+  getDepartmentsForRegistration: (branchId?: string) =>
+    api.get('/departments/registration', {
+      params: branchId ? { branchId } : undefined
     }),
 
   // Get single department
@@ -667,11 +667,11 @@ export const departmentAPI = {
   }) => api.post('/departments', data),
 
   // Update department
-  updateDepartment: (id: string, data: any) => 
+  updateDepartment: (id: string, data: any) =>
     api.put(`/departments/${id}`, data),
 
   // Delete department
-  deleteDepartment: (id: string) => 
+  deleteDepartment: (id: string) =>
     api.delete(`/departments/${id}`),
 
   // Get department members
@@ -682,7 +682,7 @@ export const departmentAPI = {
   }) => api.get(`/departments/${id}/members`, { params }),
 
   // Get department statistics
-  getDepartmentStatistics: (id: string) => 
+  getDepartmentStatistics: (id: string) =>
     api.get(`/departments/${id}/statistics`),
 };
 
@@ -786,9 +786,9 @@ export const financeAPI = {
     create: (data: any) => api.post('/finance/expenses', data),
     getOne: (id: string) => api.get(`/finance/expenses/${id}`),
     update: (id: string, data: any) => api.put(`/finance/expenses/${id}`, data),
-    approve: (id: string, notes?: string) => 
+    approve: (id: string, notes?: string) =>
       api.put(`/finance/expenses/${id}/approve`, { approvalNotes: notes }),
-    reject: (id: string, notes?: string) => 
+    reject: (id: string, notes?: string) =>
       api.put(`/finance/expenses/${id}/reject`, { approvalNotes: notes }),
     delete: (id: string) => api.delete(`/finance/expenses/${id}`),
   },
@@ -802,37 +802,44 @@ export const partnershipAPI = {
   create: (data: any) => api.post('/partnerships', data),
   update: (id: string, data: any) => api.put(`/partnerships/${id}`, data),
   delete: (id: string) => api.delete(`/partnerships/${id}`),
-  
+
   // Transactions
-  getTransactions: (id: string, params?: any) => 
+  getTransactions: (id: string, params?: any) =>
     api.get(`/partnerships/${id}/transactions`, { params }),
-  exportTransactions: (id: string) => 
+  exportTransactions: (id: string) =>
     api.get(`/partnerships/${id}/transactions/export`, { responseType: 'blob' }),
   createManualTransaction: (id: string, data: any) =>
     api.post(`/partnerships/${id}/transactions`, data),
-  
+  deleteTransaction: (id: string, transactionId: string) =>
+    api.delete(`/partnerships/${id}/transactions/${transactionId}`),
+
   // Partners/Registrations
-  getPartners: (id: string, params?: any) => 
+  getPartners: (id: string, params?: any) =>
     api.get(`/partnerships/${id}/partners`, { params }),
-  registerPartner: (id: string, data: any) => 
+  registerPartner: (id: string, data: any) =>
     api.post(`/partnerships/${id}/register`, data),
   editPartner: (id: string, partnerId: string, data: any) =>
     api.put(`/partnerships/${id}/partners/${partnerId}`, data),
   deletePartner: (id: string, partnerId: string) =>
     api.delete(`/partnerships/${id}/partners/${partnerId}`),
-  
+
   // Public Routes (no auth required)
-  getPublicProgramme: (merchantId: string, programmeId: string) => 
+  getPublicProgramme: (merchantId: string, programmeId: string) =>
     api.get(`/partnerships/public/${merchantId}/${programmeId}`),
-  registerPublicPartner: (merchantId: string, programmeId: string, data: any) => 
+  registerPublicPartner: (merchantId: string, programmeId: string, data: any) =>
     api.post(`/partnerships/public/${merchantId}/${programmeId}/register`, data),
-  initiatePublicPayment: (merchantId: string, programmeId: string, data: any) => 
+  initiatePublicPayment: (merchantId: string, programmeId: string, data: any) =>
     api.post(`/partnerships/public/${merchantId}/${programmeId}/payment/initiate`, data),
-  verifyPublicPayment: (merchantId: string, programmeId: string, reference: string) => 
+  verifyPublicPayment: (merchantId: string, programmeId: string, reference: string) =>
     api.get(`/partnerships/public/${merchantId}/${programmeId}/payment/verify/${reference}`),
-  
+
   // Statistics
   refreshStats: (id: string) => api.post(`/partnerships/${id}/refresh`),
+  getTierBreakdown: (id: string) => api.get(`/partnerships/${id}/tier-breakdown`),
+
+  // QR Code Generation
+  generateQRCode: (id: string, type: 'registration' | 'payment', links: { registrationLink: string; paymentLink: string }) =>
+    api.post(`/partnerships/${id}/generate-qr`, { type, ...links }),
 };
 
 export default api;
