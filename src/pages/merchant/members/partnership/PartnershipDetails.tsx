@@ -18,12 +18,15 @@ import {
   Trash2,
   X,
   Settings,
+  QrCode,
 } from 'lucide-react';
 import { partnershipAPI, memberAPI } from '../../../../services/api';
 import { showToast } from '../../../../utils/toasts';
 import { formatCurrency, getMerchantCurrency } from '../../../../utils/currency';
 import PermissionGuard from '../../../../components/guards/PermissionGuard';
 import { useAuth } from '../../../../context/AuthContext';
+import EditPartnerModal from './EditPartnerModal';
+import QRCodeModal from '../../../../components/modals/QRCodeModal';
 
 interface Tier {
   _id?: string;
@@ -92,6 +95,11 @@ interface Partner {
     email?: string;
   };
   tier: Tier;
+  commitment: {
+    amount: number;
+    frequency: string;
+  };
+  status: string;
   paymentStats?: {
     totalAmount: number;
     totalCount: number;
@@ -105,7 +113,7 @@ interface Transaction {
   registration: {
     _id: string;
     partnerType: 'member' | 'guest';
-    member?: { 
+    member?: {
       _id: string;
       firstName: string;
       lastName: string;
@@ -147,6 +155,19 @@ const PartnershipDetails = () => {
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'partners' | 'transactions' | 'messages'>('overview');
 
+  // QR Code state
+  const [qrModal, setQrModal] = useState<{
+    isOpen: boolean;
+    type: 'registration' | 'payment' | null;
+    data: any;
+    loading: boolean;
+  }>({
+    isOpen: false,
+    type: null,
+    data: null,
+    loading: false,
+  });
+
   // Messages state
   const [smsMessages, setSmsMessages] = useState({
     welcomeMessage: '',
@@ -166,6 +187,8 @@ const PartnershipDetails = () => {
   const [showAddPartnerModal, setShowAddPartnerModal] = useState(false);
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showEditPartnerModal, setShowEditPartnerModal] = useState(false);
+  const [selectedPartnerForEdit, setSelectedPartnerForEdit] = useState<Partner | null>(null);
 
   // Form states
   const [partnerTab, setPartnerTab] = useState<'member' | 'guest'>('member');
@@ -213,9 +236,12 @@ const PartnershipDetails = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tierBreakdown, setTierBreakdown] = useState<any[]>([]);
+  const [loadingTierBreakdown, setLoadingTierBreakdown] = useState(false);
 
   useEffect(() => {
     loadProgrammeDetails();
+    loadTierBreakdown();
   }, [id]);
 
   useEffect(() => {
@@ -274,6 +300,11 @@ const PartnershipDetails = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditPartner = (partner: Partner) => {
+    setSelectedPartnerForEdit(partner);
+    setShowEditPartnerModal(true);
   };
 
   const handleAddPartner = async (e: React.FormEvent) => {
@@ -347,9 +378,9 @@ const PartnershipDetails = () => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      
+
       let registrationId = addTransactionData.registrationId;
-      
+
       // Handle guest transaction (need to register as guest first)
       if (transactionTab === 'guest') {
         if (!guestData.fullName || !guestData.phone) {
@@ -377,9 +408,9 @@ const PartnershipDetails = () => {
             email: guestData.email,
             tierId: defaultTier._id,
           });
-          
+
           console.log('Guest registration response:', partnerResponse);
-          
+
           // Handle both new registration and existing registration response structures
           if (partnerResponse.data.isExisting) {
             // Existing registration response: data is the registration directly
@@ -388,13 +419,13 @@ const PartnershipDetails = () => {
             // New registration response: data.registration or data.data._id
             registrationId = partnerResponse.data.data._id || partnerResponse.data.data.registration?._id;
           }
-          
+
           if (!registrationId) {
             showToast.error('Failed to get registration ID for guest');
             console.error('Could not extract registration ID:', partnerResponse.data);
             return;
           }
-          
+
           showToast.success('Guest registered as partner');
         } catch (guestRegError: any) {
           const errorMsg = guestRegError.response?.data?.message || 'Failed to register guest';
@@ -411,7 +442,7 @@ const PartnershipDetails = () => {
 
         // Check if member is already a partner
         const existingPartner = partners.find(p => p.member?._id === registrationId);
-        
+
         if (existingPartner) {
           // Member already registered, use existing registration
           registrationId = existingPartner._id;
@@ -431,9 +462,9 @@ const PartnershipDetails = () => {
               email: selectedMember.email || '',
               tierId: defaultTier._id,
             });
-            
+
             registrationId = partnerResponse.data.data._id;
-            
+
             // Refresh partners list only if it's a new registration
             if (!partnerResponse.data.isExisting) {
               await loadPartners();
@@ -455,7 +486,7 @@ const PartnershipDetails = () => {
         paymentMethod: addTransactionData.paymentMethod,
         notes: addTransactionData.notes,
       });
-      
+
       showToast.success('Transaction created successfully');
       setShowAddTransactionModal(false);
       setAddTransactionData({
@@ -518,7 +549,18 @@ const PartnershipDetails = () => {
     }
   };
 
-  const loadMessages = async () => {
+  const loadTierBreakdown = async () => {
+    try {
+      setLoadingTierBreakdown(true);
+      const response = await partnershipAPI.getTierBreakdown(id!);
+      setTierBreakdown(response.data.data || []);
+    } catch (error: any) {
+      console.error('Failed to load tier breakdown:', error);
+      // Fail silently, will fall back to local calculation
+    } finally {
+      setLoadingTierBreakdown(false);
+    }
+  }; const loadMessages = async () => {
     try {
       if (programme?.smsMessages) {
         setSmsMessages({
@@ -535,17 +577,17 @@ const PartnershipDetails = () => {
   const handleSaveMessages = async () => {
     try {
       setMessageSaving(true);
-      
+
       // Create FormData and append smsMessages as JSON string
       const formData = new FormData();
       formData.append('smsMessages', JSON.stringify(smsMessages));
-      
+
       const response = await partnershipAPI.update(id!, formData);
-      
+
       if (response.data.data) {
         setProgramme(response.data.data.programme || response.data.data);
       }
-      
+
       showToast.success('Messages updated successfully');
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Failed to update messages';
@@ -566,37 +608,37 @@ const PartnershipDetails = () => {
     try {
       setSearchingMembers(true);
       console.log('Searching members and partners with query:', query);
-      
+
       const response = await memberAPI.getMembers({
         search: query,
         limit: 10,
         status: 'active'
       });
-      
+
       console.log('Member search response:', response);
-      
+
       // Handle the response structure from memberAPI
       const members = response.data?.data?.members || response.data?.data || [];
-      
+
       console.log('Members found:', members);
-      
+
       // Search existing partners in this programme
       const matchingPartners = partners.filter(p => {
         const partnerName = `${p.partner.firstName} ${p.partner.lastName}`;
         return partnerName.toLowerCase().includes(query.toLowerCase()) ||
-               p.partner.phone.includes(query);
+          p.partner.phone.includes(query);
       });
-      
+
       console.log('Partners found:', matchingPartners);
-      
+
       // Combine members (with type: 'member') and partners (with type: 'partner')
       const combined = [
         ...(Array.isArray(members) ? members.map(m => ({ ...m, type: 'member' })) : []),
         ...matchingPartners.map(p => ({ ...p, type: 'partner' }))
       ];
-      
+
       console.log('Combined search results:', combined);
-      
+
       setMemberSearchResults(combined);
     } catch (error: any) {
       console.error('Error searching members and partners:', error);
@@ -614,16 +656,16 @@ const PartnershipDetails = () => {
 
     try {
       setSearchingPartnerMembers(true);
-      
+
       const response = await memberAPI.getMembers({
         search: query,
         limit: 10,
         status: 'active'
       });
-      
+
       const members = response.data?.data?.members || response.data?.data || [];
       const filteredMembers = Array.isArray(members) ? members : [];
-      
+
       setPartnerMemberSearchResults(filteredMembers);
     } catch (error: any) {
       console.error('Error searching partner members:', error);
@@ -677,11 +719,27 @@ const PartnershipDetails = () => {
     }
   };
 
+  const handleDeleteTransaction = async (transactionId: string) => {
+    try {
+      setIsSubmitting(true);
+      await partnershipAPI.deleteTransaction(id!, transactionId);
+      showToast.success('Transaction deleted successfully');
+      setShowDeleteConfirm(null);
+      await loadTransactions();
+      await loadProgrammeDetails();
+    } catch (error: any) {
+      showToast.error('Failed to delete transaction');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleExportTransactions = async () => {
     try {
       setIsExporting(true);
       const response = await partnershipAPI.exportTransactions(id!);
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -690,12 +748,52 @@ const PartnershipDetails = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
+
       showToast.success('Transactions exported successfully');
     } catch (error: any) {
       showToast.error('Failed to export transactions');
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleGenerateQR = async (type: 'registration' | 'payment') => {
+    try {
+      setQrModal({
+        isOpen: true,
+        type,
+        data: null,
+        loading: true,
+      });
+
+      const link = type === 'registration' ? publicRegistrationLink : publicPaymentLink;
+      const title = type === 'registration' ? 'Public Registration Link' : 'Public Payment Link';
+
+      // Call backend to generate QR code
+      const response = await partnershipAPI.generateQRCode(id!, type, {
+        registrationLink: publicRegistrationLink,
+        paymentLink: publicPaymentLink,
+      });
+
+      if (response.data.success) {
+        setQrModal({
+          isOpen: true,
+          type,
+          data: {
+            title,
+            qrImage: response.data.data.qrCodeDataUrl, // Base64 image
+            link,
+          },
+          loading: false,
+        });
+        showToast.success('QR code generated successfully!');
+      } else {
+        showToast.error('Failed to generate QR code');
+        setQrModal({ isOpen: false, type: null, data: null, loading: false });
+      }
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to generate QR code');
+      setQrModal({ isOpen: false, type: null, data: null, loading: false });
     }
   };
 
@@ -719,13 +817,13 @@ const PartnershipDetails = () => {
   };
 
   const filteredPartners = partners.filter(partner => {
-    const name = partner.partner 
+    const name = partner.partner
       ? `${partner.partner.firstName} ${partner.partner.lastName}`
       : '';
-    
+
     const matchesSearch = partnerSearch === '' || name.toLowerCase().includes(partnerSearch.toLowerCase());
     const matchesType = partnerTypeFilter === 'all' || partner.partnerType === partnerTypeFilter;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -753,12 +851,12 @@ const PartnershipDetails = () => {
   }
 
   const progress = calculateProgress(
-    programme.goal?.raisedAmount || 0, 
+    programme.goal?.raisedAmount || 0,
     programme.goal?.targetAmount || 0
   );
 
   return (
-    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -771,9 +869,9 @@ const PartnershipDetails = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1">
-            <div className='flex'>
+            <div className='flex gap-2 items-center'>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{programme.name}</h1>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(programme.status)}`}>
+              <span className={`capitalize inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(programme.status)}`}>
                 {programme.status}
               </span>
             </div>
@@ -804,139 +902,149 @@ const PartnershipDetails = () => {
 
       {/* Public Links Section */}
       {programme.status === 'active' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
           {/* Public Registration Link */}
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-6">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 mt-1">
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:space-x-3">
+              <div className="flex-shrink-0 mt-0 sm:mt-1">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                   <Link2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Public Registration Link
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Share this link for people to register as partners in this programme
                 </p>
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="flex-1 flex items-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 mt-4">
+                  <div className="flex-1 flex items-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 min-w-0">
                     <input
                       type="text"
                       value={publicRegistrationLink}
                       readOnly
-                      className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none"
+                      className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none truncate"
                     />
                   </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(publicRegistrationLink);
-                      showToast.success('Link copied to clipboard!');
-                    }}
-                    className="px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
-                  >
-                    <Copy className="h-4 w-4" />
-                    <span>Copy</span>
-                  </button>
-                  <button
-                    onClick={() => window.open(publicRegistrationLink, '_blank')}
-                    className="px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center space-x-2"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    <span>Preview</span>
-                  </button>
+                  <div className="flex gap-2 w-full lg:w-auto lg:flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(publicRegistrationLink);
+                        showToast.success('Link copied to clipboard!');
+                      }}
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span className="hidden lg:inline">Copy</span>
+                    </button>
+                    <button
+                      onClick={() => handleGenerateQR('registration')}
+                      disabled={qrModal.loading}
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {qrModal.loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <QrCode className="h-4 w-4" />
+                      )}
+                      <span className="hidden lg:inline">{qrModal.loading ? 'Generating...' : 'Generate QR'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Public Payment Link */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 mt-1">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:space-x-3">
+              <div className="flex-shrink-0 mt-0 sm:mt-1">
                 <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
                   <CreditCard className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Public Payment Link
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Share this link for people to make partnership contributions
                 </p>
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="flex-1 flex items-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 mt-4">
+                  <div className="flex-1 flex items-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 min-w-0">
                     <input
                       type="text"
                       value={publicPaymentLink}
                       readOnly
-                      className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none"
+                      className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none truncate"
                     />
                   </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(publicPaymentLink);
-                      showToast.success('Link copied to clipboard!');
-                    }}
-                    className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center space-x-2"
-                  >
-                    <Copy className="h-4 w-4" />
-                    <span>Copy</span>
-                  </button>
-                  <button
-                    onClick={() => window.open(publicPaymentLink, '_blank')}
-                    className="px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center space-x-2"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    <span>Preview</span>
-                  </button>
+                  <div className="flex gap-2 w-full lg:w-auto lg:flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(publicPaymentLink);
+                        showToast.success('Link copied to clipboard!');
+                      }}
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span className="hidden lg:inline">Copy</span>
+                    </button>
+                    <button
+                      onClick={() => handleGenerateQR('payment')}
+                      disabled={qrModal.loading}
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {qrModal.loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <QrCode className="h-4 w-4" />
+                      )}
+                      <span className="hidden lg:inline">{qrModal.loading ? 'Generating...' : 'Generate QR'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-min">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`${
-              activeTab === 'overview'
-                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            className={`${activeTab === 'overview'
+              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab('partners')}
-            className={`${
-              activeTab === 'partners'
-                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            className={`${activeTab === 'partners'
+              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Partners ({programme.stats.totalPartners})
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`${
-              activeTab === 'transactions'
-                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            className={`${activeTab === 'transactions'
+              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Transactions ({programme.stats.totalTransactions})
           </button>
           <button
             onClick={() => setActiveTab('messages')}
-            className={`${
-              activeTab === 'messages'
-                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            className={`${activeTab === 'messages'
+              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Messages
           </button>
@@ -1043,15 +1151,68 @@ const PartnershipDetails = () => {
             </div>
           </div>
 
+          {/* Tier Totals Breakdown */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-all">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tier Totals Breakdown</h3>
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 min-w-min">
+                {loadingTierBreakdown ? (
+                  <div className="flex items-center justify-center w-full py-8">
+                    <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+                  </div>
+                ) : tierBreakdown.length > 0 ? (
+                  tierBreakdown.map((tier) => (
+                    <div
+                      key={tier._id}
+                      className="flex-1 border rounded-lg p-4 transition-all hover:shadow-md"
+                      style={{
+                        borderColor: tier.badgeColor || '#9333EA',
+                        backgroundColor: `${tier.badgeColor || '#9333EA'}08`
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded-full shadow-sm"
+                            style={{ backgroundColor: tier.badgeColor || '#9333EA' }}
+                          />
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{tier.name}</h4>
+                        </div>
+                      </div>
+                      <div className="gap-4">
+                        <div className="flex flex-row justify-between min-w-max">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Total Raised</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {formatCurrency(tier.totalRaised, tier.currency)}
+                          </p>
+                        </div>
+                        <div className="flex flex-row justify-between min-w-max">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Partners</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{tier.partnerCount}</p>
+                        </div>
+                        <div className="flex flex-row justify-between min-w-max">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Transactions</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{tier.transactionCount}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400">No tier data available</p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Tiers */}
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-all">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Partnership Tiers</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {programme.tiers.map((tier, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="border-2 rounded-lg p-4 transition-all hover:shadow-md relative overflow-hidden"
-                  style={{ 
+                  style={{
                     borderColor: tier.badgeColor || '#9333EA',
                     backgroundColor: `${tier.badgeColor || '#9333EA'}08`
                   }}
@@ -1142,7 +1303,7 @@ const PartnershipDetails = () => {
         <div className="space-y-4">
           {/* Filters */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -1153,27 +1314,29 @@ const PartnershipDetails = () => {
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              <select
-                value={partnerTypeFilter}
-                onChange={(e) => setPartnerTypeFilter(e.target.value)}
-                className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="all">All Types</option>
-                <option value="member">Members</option>
-                <option value="guest">Guests</option>
-              </select>
-              <button
-                onClick={() => setShowAddPartnerModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Partner</span>
-              </button>
+              <div className="flex gap-3 flex-shrink-0">
+                <select
+                  value={partnerTypeFilter}
+                  onChange={(e) => setPartnerTypeFilter(e.target.value)}
+                  className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                >
+                  <option value="all">All Types</option>
+                  <option value="member">Members</option>
+                  <option value="guest">Guests</option>
+                </select>
+                <button
+                  onClick={() => setShowAddPartnerModal(true)}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Partner</span>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Partners Table */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
@@ -1254,11 +1417,10 @@ const PartnershipDetails = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs capitalize font-semibold rounded-full ${
-                            partner.partnerType === 'member'
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          }`}>
+                          <span className={`inline-flex px-2 py-1 text-xs capitalize font-semibold rounded-full ${partner.partnerType === 'member'
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                            }`}>
                             {partner.partnerType}
                           </span>
                         </td>
@@ -1275,13 +1437,22 @@ const PartnershipDetails = () => {
                           {new Date(partner.registeredAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => setShowDeleteConfirm(partner._id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                            title="Delete partner"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditPartner(partner)}
+                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                              title="Edit partner"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm(partner._id)}
+                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                              title="Delete partner"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1297,11 +1468,11 @@ const PartnershipDetails = () => {
       {activeTab === 'transactions' && (
         <div className="space-y-4">
           {/* Actions */}
-          <div className="flex justify-between items-center flex-wrap gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center flex-wrap gap-3">
             <select
               value={transactionStatusFilter}
               onChange={(e) => setTransactionStatusFilter(e.target.value)}
-              className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+              className="flex-1 sm:flex-none px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
             >
               <option value="all">All Status</option>
               <option value="completed">Completed</option>
@@ -1309,10 +1480,10 @@ const PartnershipDetails = () => {
               <option value="failed">Failed</option>
             </select>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setShowAddTransactionModal(true)}
-                className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Transaction
@@ -1320,7 +1491,7 @@ const PartnershipDetails = () => {
               <button
                 onClick={handleExportTransactions}
                 disabled={isExporting}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
               >
                 <Download className="w-4 h-4 mr-2" />
                 {isExporting ? 'Exporting...' : 'Export to Excel'}
@@ -1329,7 +1500,7 @@ const PartnershipDetails = () => {
           </div>
 
           {/* Transactions Table */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
@@ -1351,12 +1522,15 @@ const PartnershipDetails = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {loadingTransactions ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-16">
+                    <td colSpan={7} className="px-6 py-16">
                       <div className="flex flex-col items-center justify-center">
                         <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-3" />
                         <p className="text-sm text-gray-500 dark:text-gray-400">Updating transactions...</p>
@@ -1365,7 +1539,7 @@ const PartnershipDetails = () => {
                   </tr>
                 ) : filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-16">
+                    <td colSpan={7} className="px-6 py-16">
                       <div className="flex flex-col items-center justify-center text-center">
                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
                           <TrendingUp className="w-8 h-8 text-gray-400 dark:text-gray-500" />
@@ -1384,8 +1558,8 @@ const PartnershipDetails = () => {
                         ? `${transaction.registration.member.firstName} ${transaction.registration.member.lastName}`
                         : 'N/A'
                       : transaction.registration.partner
-                      ? `${transaction.registration.partner.firstName} ${transaction.registration.partner.lastName}`
-                      : 'N/A';
+                        ? `${transaction.registration.partner.firstName} ${transaction.registration.partner.lastName}`
+                        : 'N/A';
 
                     return (
                       <tr key={transaction._id}>
@@ -1414,18 +1588,26 @@ const PartnershipDetails = () => {
                           {transaction.paymentMethod}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            transaction.status === 'completed'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                              : transaction.status === 'pending'
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${transaction.status === 'completed'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : transaction.status === 'pending'
                               ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
                               : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                          }`}>
+                            }`}>
                             {transaction.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {new Date(transaction.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button
+                            onClick={() => setShowDeleteConfirm(transaction._id)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                            title="Delete transaction"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -1455,7 +1637,7 @@ const PartnershipDetails = () => {
                 Use these placeholders in your messages and they will be automatically replaced with actual values:
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
@@ -1471,7 +1653,7 @@ const PartnershipDetails = () => {
                   <p className="text-xs text-blue-600 dark:text-blue-400">Currency code (GHS, USD, etc)</p>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
                   <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[programme]</code>
@@ -1574,6 +1756,22 @@ const PartnershipDetails = () => {
         </div>
       )}
 
+      {/* Edit Partner Modal */}
+      <EditPartnerModal
+        isOpen={showEditPartnerModal}
+        partner={selectedPartnerForEdit}
+        programmeId={id || ''}
+        tiers={programme?.tiers || []}
+        onClose={() => {
+          setShowEditPartnerModal(false);
+          setSelectedPartnerForEdit(null);
+        }}
+        onSuccess={() => {
+          loadPartners();
+          loadProgrammeDetails();
+        }}
+      />
+
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -1643,21 +1841,19 @@ const PartnershipDetails = () => {
             <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setPartnerTab('member')}
-                className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                  partnerTab === 'member'
-                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                }`}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${partnerTab === 'member'
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
               >
                 Member
               </button>
               <button
                 onClick={() => setPartnerTab('guest')}
-                className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                  partnerTab === 'guest'
-                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                }`}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${partnerTab === 'guest'
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
               >
                 Guest
               </button>
@@ -1851,21 +2047,19 @@ const PartnershipDetails = () => {
             <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setTransactionTab('member')}
-                className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                  transactionTab === 'member'
-                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                }`}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${transactionTab === 'member'
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
               >
                 Member/Partner
               </button>
               <button
                 onClick={() => setTransactionTab('guest')}
-                className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                  transactionTab === 'guest'
-                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                }`}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${transactionTab === 'guest'
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
               >
                 Guest
               </button>
@@ -1879,7 +2073,7 @@ const PartnershipDetails = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Search Member or Partner
                     </label>
-                    
+
                     {selectedMember || selectedPartnerForTransaction ? (
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-center justify-between">
                         <div>
@@ -1961,7 +2155,7 @@ const PartnershipDetails = () => {
                                       <div className="flex items-center justify-between">
                                         <div>
                                           <div className="font-medium text-gray-900 dark:text-gray-100">
-                                            {item.type === 'partner' 
+                                            {item.type === 'partner'
                                               ? `${item.partner.firstName} ${item.partner.lastName}`
                                               : `${item.firstName} ${item.lastName}`
                                             }
@@ -2096,6 +2290,64 @@ const PartnershipDetails = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={qrModal.isOpen}
+        onClose={() => setQrModal({ isOpen: false, type: null, data: null, loading: false })}
+        qrCodeData={qrModal.data}
+        isLoading={qrModal.loading}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 text-center mb-2">
+                Delete Item?
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
+                This action cannot be undone. This will permanently delete the item and all associated data.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    // Check if it's a transaction or partner delete
+                    const isTransaction = transactions.some(t => t._id === showDeleteConfirm);
+                    const isPartner = partners.some(p => p._id === showDeleteConfirm);
+
+                    if (isTransaction) {
+                      handleDeleteTransaction(showDeleteConfirm);
+                    } else if (isPartner) {
+                      handleDeletePartner(showDeleteConfirm);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
