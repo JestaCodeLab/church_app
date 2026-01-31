@@ -831,11 +831,8 @@ export const partnershipAPI = {
 
   createManualTransaction: (id: string, data: any) =>
     api.post(`/partnerships/${id}/transactions`, data),
-<<<<<<< HEAD
-=======
   deleteTransaction: (id: string, transactionId: string) =>
     api.delete(`/partnerships/${id}/transactions/${transactionId}`),
->>>>>>> feat: add QRCodeModal component for displaying and managing QR codes
 
   // Partners/Registrations
   getPartners: (id: string, params?: any) =>
@@ -853,10 +850,7 @@ export const partnershipAPI = {
     api.get(`/partnerships/public/${merchantId}/${programmeId}`),
   registerPublicPartner: (merchantId: string, programmeId: string, data: any) =>
     api.post(`/partnerships/public/${merchantId}/${programmeId}/register`, data),
-<<<<<<< HEAD
 
-=======
->>>>>>> feat: add QRCodeModal component for displaying and managing QR codes
   initiatePublicPayment: (merchantId: string, programmeId: string, data: any) =>
     api.post(`/partnerships/public/${merchantId}/${programmeId}/payment/initiate`, data),
   verifyPublicPayment: (merchantId: string, programmeId: string, reference: string) =>
