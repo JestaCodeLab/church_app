@@ -553,7 +553,7 @@ const PartnershipDetails = () => {
     try {
       setLoadingTierBreakdown(true);
       const response = await partnershipAPI.getTierBreakdown(id!);
-      setTierBreakdown(response.data.data || []);
+      setTierBreakdown(response.data.data?.tierBreakdown || []);
     } catch (error: any) {
       console.error('Failed to load tier breakdown:', error);
       // Fail silently, will fall back to local calculation
