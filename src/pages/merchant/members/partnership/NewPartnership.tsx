@@ -135,14 +135,14 @@ const NewPartnership = () => {
         showToast.error('Please select an image file');
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) {
         showToast.error('Image size should be less than 5MB');
         return;
       }
 
       setImageFile(file);
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -176,7 +176,7 @@ const NewPartnership = () => {
   };
 
   const handleTierChange = (index: number, field: keyof Tier, value: any) => {
-    setTiers(prev => prev.map((tier, i) => 
+    setTiers(prev => prev.map((tier, i) =>
       i === index ? { ...tier, [field]: value } : tier
     ));
   };
@@ -193,7 +193,7 @@ const NewPartnership = () => {
   };
 
   const handleAddTierBenefit = (tierIndex: number) => {
-    setTiers(prev => prev.map((tier, i) => 
+    setTiers(prev => prev.map((tier, i) =>
       i === tierIndex ? { ...tier, benefits: [...tier.benefits, ''] } : tier
     ));
   };
@@ -227,7 +227,7 @@ const NewPartnership = () => {
   };
 
   const handleFormFieldChange = (index: number, field: keyof FormField, value: any) => {
-    setRegistrationForm(prev => prev.map((formField, i) => 
+    setRegistrationForm(prev => prev.map((formField, i) =>
       i === index ? { ...formField, [field]: value } : formField
     ));
   };
@@ -343,7 +343,7 @@ const NewPartnership = () => {
         {/* Basic Information */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Basic Information</h2>
-          
+
           <div className="space-y-4">
             {/* Cover Image Upload */}
             <div className="pb-6 border-b border-gray-200 dark:border-gray-700">
@@ -352,9 +352,9 @@ const NewPartnership = () => {
                 <div className="relative">
                   <div className="w-32 h-32 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600">
                     {imagePreview ? (
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -440,6 +440,9 @@ const NewPartnership = () => {
                   name="targetAmount"
                   value={formData.targetAmount}
                   onChange={handleChange}
+                  onWheel={
+                    (e) => (e.target as HTMLInputElement).blur()
+                  }
                   required
                   min="1"
                   step="0.01"

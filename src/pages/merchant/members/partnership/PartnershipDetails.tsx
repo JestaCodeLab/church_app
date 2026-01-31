@@ -133,6 +133,7 @@ interface Transaction {
   paymentMethod: string;
   status: 'completed' | 'pending' | 'failed';
   transactionReference?: string;
+  transactionCode?: string;
   createdAt: string;
 }
 
@@ -240,8 +241,19 @@ const PartnershipDetails = () => {
   const [loadingTierBreakdown, setLoadingTierBreakdown] = useState(false);
 
   useEffect(() => {
-    loadProgrammeDetails();
-    loadTierBreakdown();
+    const initializeData = async () => {
+      // First, refresh stats to recalculate raised amount from transactions
+      try {
+        await partnershipAPI.refreshStats(id!);
+      } catch (error) {
+        console.error('Failed to refresh stats on load:', error);
+      }
+      // Then load the updated programme details
+      await loadProgrammeDetails();
+      await loadTierBreakdown();
+    };
+
+    initializeData();
   }, [id]);
 
   useEffect(() => {
@@ -553,7 +565,7 @@ const PartnershipDetails = () => {
     try {
       setLoadingTierBreakdown(true);
       const response = await partnershipAPI.getTierBreakdown(id!);
-      setTierBreakdown(response.data.data || []);
+      setTierBreakdown(response.data.data?.tierBreakdown || []);
     } catch (error: any) {
       console.error('Failed to load tier breakdown:', error);
       // Fail silently, will fall back to local calculation
@@ -1505,6 +1517,9 @@ const PartnershipDetails = () => {
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Transaction ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Partner
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1530,7 +1545,7 @@ const PartnershipDetails = () => {
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {loadingTransactions ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-16">
+                    <td colSpan={8} className="px-6 py-16">
                       <div className="flex flex-col items-center justify-center">
                         <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-3" />
                         <p className="text-sm text-gray-500 dark:text-gray-400">Updating transactions...</p>
@@ -1539,7 +1554,7 @@ const PartnershipDetails = () => {
                   </tr>
                 ) : filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-16">
+                    <td colSpan={8} className="px-6 py-16">
                       <div className="flex flex-col items-center justify-center text-center">
                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
                           <TrendingUp className="w-8 h-8 text-gray-400 dark:text-gray-500" />
@@ -1563,6 +1578,11 @@ const PartnershipDetails = () => {
 
                     return (
                       <tr key={transaction._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-mono font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-2 py-1 rounded">
+                            {transaction.transactionCode || transaction._id.slice(-8).toUpperCase()}
+                          </div>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">

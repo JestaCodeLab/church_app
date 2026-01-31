@@ -144,239 +144,238 @@ const Branches = () => {
 
   return (
     <FeatureGate feature={'branchManagement'}>
-    <div className="min-h-screen dark:bg-gray-900">
-      <div className='rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700'>
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                Branches
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Manage your church locations and campuses
-              </p>
-            </div>
-            <PermissionGuard permission="branches.create">
-            <div className="flex flex-col items-end">
-              <button
-                onClick={handleAddBranchClick}
-                className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Branch
-              </button>
-              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {branchLimit.current} / {branchLimit.limit || '∞'} used
-              </span>
-            </div>
-            </PermissionGuard>
-          </div>
-
-        </div>
-
-        {/* Filters & Search */}
-        <div className="bg-white dark:bg-gray-800 dark:border-gray-700 px-6 py-4">
-          <div className="flex justify-between items-center space-x-4">
-          {/* Tabs */}
-          <div className="flex items-center space-x-1 mt-0">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                {tab.label}
-                {tab.count !== undefined && (
-                  <span className="ml-2 px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs">
-                    {tab.count}
+      <div className="min-h-screen dark:bg-gray-900">
+        <div className='rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700'>
+          {/* Header */}
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                  Branches
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Manage your church locations and campuses
+                </p>
+              </div>
+              <PermissionGuard permission="branches.create">
+                <div className="flex flex-col items-start sm:items-end">
+                  <button
+                    onClick={handleAddBranchClick}
+                    className="flex items-center px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors text-sm sm:text-base whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                    Add Branch
+                  </button>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {branchLimit.current} / {branchLimit.limit || '∞'} used
                   </span>
-                )}
-              </button>
-            ))}
+                </div>
+              </PermissionGuard>
+            </div>
+
           </div>
-            
-            {/* Search */}
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search branches..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-                />
+
+          {/* Filters & Search */}
+          <div className="bg-white dark:bg-gray-800 dark:border-gray-700 px-4 sm:px-6 py-4">
+            <div className="flex flex-col gap-4">
+              {/* Tabs */}
+              <div className="flex items-center space-x-1 overflow-x-auto pb-2 sm:pb-0">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${activeTab === tab.id
+                      ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                  >
+                    {tab.label}
+                    {tab.count !== undefined && (
+                      <span className="ml-1 sm:ml-2 px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs">
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search */}
+              <div className="w-full sm:max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search branches..."
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 text-sm"
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Grid View */}
-      <div className="px-0 py-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          </div>
-        ) : branches.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-            <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No branches found</p>
-            <button
-              onClick={() => navigate('/branches/new')}
-              className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-            >
-              Add Your First Branch
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {branches.map((branch) => (
-                <div
-                  key={branch._id}
-                  onClick={() => handleView(branch._id)}
-                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all cursor-pointer group"
-                >
-                  {/* Header with Church Name and Icon */}
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Church className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                          {branch.name}
-                        </h3>
-                        <div className="mt-0 flex items-center space-x-2">
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getTypeBadgeColor(branch.type)}`}>
-                            {branch.type.charAt(0).toUpperCase() + branch.type.slice(1)}
-                          </span>
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadgeColor(branch.status)}`}>
-                            {branch.status.charAt(0).toUpperCase() + branch.status.slice(1)}
-                          </span>
+        {/* Grid View */}
+        <div className="px-4 sm:px-6 py-6 sm:py-8">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+          ) : branches.length === 0 ? (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
+              <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">No branches found</p>
+              <button
+                onClick={() => navigate('/branches/new')}
+                className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+              >
+                Add Your First Branch
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {branches.map((branch) => (
+                  <div
+                    key={branch._id}
+                    onClick={() => handleView(branch._id)}
+                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all cursor-pointer group"
+                  >
+                    {/* Header with Church Name and Icon */}
+                    <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Church className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                            {branch.name}
+                          </h3>
+                          <div className="mt-0 flex items-center space-x-2">
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getTypeBadgeColor(branch.type)}`}>
+                              {branch.type.charAt(0).toUpperCase() + branch.type.slice(1)}
+                            </span>
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadgeColor(branch.status)}`}>
+                              {branch.status.charAt(0).toUpperCase() + branch.status.slice(1)}
+                            </span>
                           </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Content */}
-                  <div className="p-6">
-                    {/* Members Count Box */}
-                    <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-xl p-4 mb-6 flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
-                        <span className="text-sm text-green-700 dark:text-green-300 font-medium">Total Members</span>
-                      </div>
-                      <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                        {branch.statistics?.memberCount || 0}
-                      </p>
-                    </div>
-
-                    {/* Location */}
-                    <div className="mb-4">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase mb-2">Location</p>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
-                          {branch.address?.street && branch.address?.city
-                            ? `${branch.address.street}, ${branch.address.city}`
-                            : 'Location not specified'}
+                    {/* Content */}
+                    <div className="p-6">
+                      {/* Members Count Box */}
+                      <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-xl p-4 mb-6 flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          <span className="text-sm text-green-700 dark:text-green-300 font-medium">Total Members</span>
+                        </div>
+                        <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                          {branch.statistics?.memberCount || 0}
                         </p>
                       </div>
+
+                      {/* Location */}
+                      <div className="mb-4">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase mb-2">Location</p>
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
+                            {branch.address?.street && branch.address?.city
+                              ? `${branch.address.street}, ${branch.address.city}`
+                              : 'Location not specified'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions Footer */}
+                    <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2">
+                      <PermissionGuard permission="branches.edit">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(branch._id);
+                          }}
+                          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="branches.delete">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(branch);
+                          }}
+                          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </div>
+                ))}
+              </div>
 
-                  {/* Actions Footer */}
-                  <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2">
-                    <PermissionGuard permission="branches.edit">
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-800 px-4 sm:px-6 py-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left">
+                    Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalBranches)} of {totalBranches} branches
+                  </p>
+                  <div className="flex items-center justify-center space-x-2">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(branch._id);
-                      }}
-                      className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                      title="Edit"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      Previous
                     </button>
-                    </PermissionGuard>
-                    <PermissionGuard permission="branches.delete">
+                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      Page {currentPage} of {totalPages}
+                    </span>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(branch);
-                      }}
-                      className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                      title="Delete"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      Next
                     </button>
-                    </PermissionGuard>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
+          )}
+        </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-800 px-6 py-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalBranches)} of {totalBranches} branches
-                </p>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
+        {/* Delete Modal */}
+        <DeleteBranchModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedBranch(null);
+          }}
+          onDelete={handleDeleteSuccess}
+          branchName={selectedBranch?.name || ''}
+          memberCount={selectedBranch?.memberCount || 0}
+          isDeleting={isDeleting}
+        />
+
+        {/* Limit Modal */}
+        <LimitReachedModal
+          isOpen={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          resourceType="branches"
+          planName={plan}
+          current={branchLimit.current}
+          limit={branchLimit.limit || 0}
+        />
       </div>
-
-      {/* Delete Modal */}
-      <DeleteBranchModal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setSelectedBranch(null);
-        }}
-        onDelete={handleDeleteSuccess}
-        branchName={selectedBranch?.name || ''}
-        memberCount={selectedBranch?.memberCount || 0}
-        isDeleting={isDeleting}
-      />
-
-      {/* Limit Modal */}
-      <LimitReachedModal
-        isOpen={showLimitModal}
-        onClose={() => setShowLimitModal(false)}
-        resourceType="branches"
-        planName={plan}
-        current={branchLimit.current}
-        limit={branchLimit.limit || 0}
-      />
-    </div>
     </FeatureGate>
   );
 };

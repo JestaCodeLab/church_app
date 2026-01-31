@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
+import {
+  LayoutDashboard,
+  Users,
   Calendar,
   MessageSquare,
   Settings,
@@ -82,7 +82,7 @@ const MerchantLayout = () => {
   const expirationStatus = (subscriptionData as any)?.expirationStatus;
   const planName = subscriptionData?.plan || 'starter';
   const expiryDate = (subscriptionData as any)?.expirationDate;
-  
+
   // Calculate days until expiry
   const getDaysUntilExpiry = (): number => {
     if (!expiryDate) return 0;
@@ -106,7 +106,7 @@ const MerchantLayout = () => {
   const [showAlert, setShowAlert] = useState(true);
 
   useEffect(() => {
-    window.scrollTo({top: 0, behavior: 'smooth'});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const alertStatus = getAlertStatus();
@@ -137,12 +137,12 @@ const MerchantLayout = () => {
         if (item.requiresFeature && !hasFeature(item.requiresFeature as any)) {
           return false;
         }
-        
+
         // Check permission requirement (AND logic - all must be present)
         if (!checkPermission(item.requiredPermissions)) {
           return false;
         }
-        
+
         return true;
       })
       .map(item => {
@@ -159,29 +159,29 @@ const MerchantLayout = () => {
   // ✅ UNIFIED NAVIGATION - Single config with permission-based access
   const navigation = useMemo(() => {
     const allNavigation: NavigationItem[] = [
-      { 
-        name: 'Dashboard', 
-        href: '/dashboard', 
+      {
+        name: 'Dashboard',
+        href: '/dashboard',
         icon: LayoutDashboard,
         requiresFeature: null,
         requiredPermissions: ['dashboard.view']
       },
-      { 
-        name: 'Branches', 
-        href: '/branches', 
+      {
+        name: 'Branches',
+        href: '/branches',
         icon: Church,
         requiresFeature: 'branchManagement',
         requiredPermissions: ['branches.view']
       },
-      { 
-        name: 'Departments', 
-        href: '/departments', 
+      {
+        name: 'Departments',
+        href: '/departments',
         icon: FolderKanban,
         requiresFeature: 'departmentManagement',
         requiredPermissions: ['departments.view']
       },
-      { 
-        name: 'Members', 
+      {
+        name: 'Members',
         icon: Users,
         requiresFeature: 'memberManagement',
         requiredPermissions: ['members.view'],
@@ -209,8 +209,8 @@ const MerchantLayout = () => {
           },
         ]
       },
-      { 
-        name: 'Events', 
+      {
+        name: 'Events',
         icon: Calendar,
         requiresFeature: 'eventManagement',
         requiredPermissions: ['events.view'],
@@ -232,15 +232,15 @@ const MerchantLayout = () => {
           },
         ]
       },
-       { 
-        name: 'Sermons', 
-        href: '/sermons', 
+      {
+        name: 'Sermons',
+        href: '/sermons',
         icon: Music,
         requiresFeature: 'sermonManagement',
         requiredPermissions: ['sermons.view']
       },
-      { 
-        name: 'Finance', 
+      {
+        name: 'Finance',
         icon: HandCoins,
         requiresFeature: 'financialManagement',
         requiredPermissions: ['finance.view'],
@@ -268,7 +268,7 @@ const MerchantLayout = () => {
             requiresFeature: 'financialManagement',
             requiredPermissions: ['finance.expenses'],
             lockedFeature: 'expenseTracking'
-          }, 
+          },
           {
             name: 'Tithing',
             href: '/finance/tithing',
@@ -303,8 +303,8 @@ const MerchantLayout = () => {
           }
         ]
       },
-      { 
-        name: 'Messaging', 
+      {
+        name: 'Messaging',
         icon: MessageSquare,
         requiresFeature: 'smsCommunications',
         requiredPermissions: ['communications.view'],
@@ -406,8 +406,8 @@ const MerchantLayout = () => {
   };
 
   const toggleMenu = (menuName: string) => {
-    setExpandedMenus(prev => 
-      prev.includes(menuName) 
+    setExpandedMenus(prev =>
+      prev.includes(menuName)
         ? prev.filter(name => name !== menuName)
         : [...prev, menuName]
     );
@@ -465,7 +465,7 @@ const MerchantLayout = () => {
                       </div>
                       <div className="relative flex items-center">
                         <Lock className="w-4 h-4 text-yellow-400 group-hover:scale-125 transition-transform cursor-help" />
-                        
+
                         <div className="absolute right-0 bottom-full mb-3 hidden group-hover:block">
                           {/* Tooltip Container */}
                           <div className="bg-white rounded-lg px-2 py-1 whitespace-nowrap animate-in fade-in zoom-in-95 duration-200">
@@ -473,7 +473,7 @@ const MerchantLayout = () => {
                               Upgrade to unlock
                             </div>
                           </div>
-                          
+
                           {/* Arrow Pointer */}
                           <div className="absolute right-3 top-full w-2 h-2 bg-white transform rotate-45 -mt-1 border-r border-b border-gray-200"></div>
                         </div>
@@ -542,8 +542,8 @@ const MerchantLayout = () => {
         <div className="h-20 flex items-center px-6 border-b border-gray-800 dark:border-gray-900 flex-shrink-0">
           <div className="flex items-center space-x-3">
             {user?.merchant?.branding?.logo ? (
-              <img 
-                src={user.merchant.branding.logo} 
+              <img
+                src={user.merchant.branding.logo}
                 alt={user.merchant.name}
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -605,7 +605,7 @@ const MerchantLayout = () => {
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -637,8 +637,8 @@ const MerchantLayout = () => {
               )}
 
               {/* Search Bar */}
-              <div className="flex-1 max-w-md">
-                <div className="relative">
+              <div className="hidden sm:flex flex-1 max-w-md">
+                <div className="relative w-full">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
@@ -652,9 +652,9 @@ const MerchantLayout = () => {
             </div>
 
             {/* Right: Theme + Notification + User */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1 sm:space-x-0">
               <ThemeToggle />
-              
+
               {/* Notification Bell */}
               <NotificationCenter />
 
