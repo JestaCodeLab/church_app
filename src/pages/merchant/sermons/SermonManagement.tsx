@@ -177,7 +177,7 @@ const SermonManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -185,7 +185,7 @@ const SermonManagement: React.FC = () => {
             <Music className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sermon Vault</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sermon Vault</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">Manage and organize your sermons</p>
           </div>
         </div>
@@ -288,13 +288,12 @@ const SermonManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <span
-                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        sermon.visibility === 'public'
-                          ? 'bg-green-100 text-green-800'
-                          : sermon.visibility === 'members-only'
+                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${sermon.visibility === 'public'
+                        ? 'bg-green-100 text-green-800'
+                        : sermon.visibility === 'members-only'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-purple-100 text-purple-800'
-                      }`}
+                        }`}
                     >
                       {sermon.visibility}
                     </span>

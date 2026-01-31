@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Send, 
-  Users, 
-  Phone, 
-  Building2, 
-  FileText, 
-  AlertCircle, 
+import {
+  Send,
+  Users,
+  Phone,
+  Building2,
+  FileText,
+  AlertCircle,
   CheckCircle,
   Loader,
   RefreshCw,
@@ -21,7 +21,7 @@ import {
   Lock
 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
-import { merchantAPI } from '../../../services/api';
+import { merchantAPI, partnershipAPI } from '../../../services/api';
 import { memberAPI, departmentAPI, branchAPI, messagingAPI } from '../../../services/api';
 import { Link } from 'react-router-dom';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
@@ -192,14 +192,14 @@ const SendSMS = () => {
         branchAPI.getBranches({ limit: 100 }),
         messagingAPI.templates.getAll(),
         messagingAPI.credits.get(),
-        (window as any).partnershipAPI?.getAll?.({ limit: 100 }).catch(() => ({ data: { data: { programmes: [] } } }))
+        partnershipAPI.getAll({})
       ]);
 
       setDepartments(deptsRes.data.data.departments || []);
       setBranches(branchesRes.data.data.branches || []);
       setTemplates(templatesRes.data.data.templates || []);
       setCredits(creditsRes.data.data.credits);
-      setPartnerships(partnershipsRes?.data?.data?.programmes || partnershipsRes?.data?.data?.data || []);
+      setPartnerships(partnershipsRes.data.data.programmes || []);
     } catch (error: any) {
       showToast.error('Failed to load data');
       console.error(error);
@@ -212,8 +212,8 @@ const SendSMS = () => {
   const fetchMembers = async (searchTerm: string = '') => {
     try {
       setSearchingMembers(true);
-      const response = await memberAPI.getMembers({ 
-        limit: 100,
+      const response = await memberAPI.getMembers({
+        limit: 5000,
         search: searchTerm || undefined,
         status: 'active'
       });
@@ -239,19 +239,8 @@ const SendSMS = () => {
   const fetchPartnershipPartners = async (partnershipId: string) => {
     try {
       setLoadingPartners(true);
-      // Directly call the partnership API through messagingAPI or use a route
-      const response = await fetch(`/api/v1/partnerships/${partnershipId}/partners?limit=1000`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken') || ''}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch partners');
-      }
-      
-      const data = await response.json();
-      setPartnershipPartners(data.data?.partners || []);
+      const response = await partnershipAPI.getPartners(partnershipId, { limit: 5000 });
+      setPartnershipPartners(response.data.data.partners || []);
     } catch (error: any) {
       showToast.error('Failed to load partnership partners');
       console.error(error);
@@ -315,7 +304,7 @@ const SendSMS = () => {
   // ✅ Clear states when send type changes
   const handleSendTypeChange = (newType: SendType) => {
     setSendType(newType);
-    
+
     // Clear all recipient-specific states
     setPhone('');
     setPhones('');
@@ -323,7 +312,7 @@ const SendSMS = () => {
     setSelectedDepartment('');
     setSelectedBranch('');
     setMemberSearchTerm('');
-    
+
     // Load members if switching to members type or all type - pass empty string explicitly
     if (newType === 'members' || newType === 'all') {
       fetchMembers('');
@@ -355,13 +344,13 @@ const SendSMS = () => {
   const calculateCredits = (messageText: string, recipients: number): number => {
     const messageLength = messageText.length;
     let segments = 1;
-    
+
     if (messageLength <= 160) {
       segments = 1;
     } else {
       segments = Math.ceil(messageLength / 153);
     }
-    
+
     return segments * recipients;
   };
 
@@ -499,18 +488,47 @@ const SendSMS = () => {
             showToast.error('Select at least one partner');
             return;
           }
+          const partnershipPhones = [];
+          const partnershipNames = [];
+          const partnershipFirstNames = [];
+          const partnershipLastNames = [];
+
+          selectedMembers.forEach(partnerId => {
+            const partner = partnershipPartners.find(p => p._id === partnerId);
+            if (!partner) return;
+
+            const phone = partner.partnerType === 'member' && partner.member
+              ? partner.member.phone
+              : partner.partner?.phone;
+
+            const firstName = partner.partnerType === 'member' && partner.member
+              ? partner.member.firstName
+              : partner.partner?.firstName || '';
+
+            const lastName = partner.partnerType === 'member' && partner.member
+              ? partner.member.lastName
+              : partner.partner?.lastName || '';
+
+            if (phone) {
+              partnershipPhones.push(phone);
+              partnershipNames.push(`${firstName} ${lastName}`.trim());
+              partnershipFirstNames.push(firstName);
+              partnershipLastNames.push(lastName);
+            }
+          });
+
           response = await messagingAPI.sms.sendBulk({
-            phones: selectedMembers.map(partnerId => {
-              const partner = partnershipPartners.find(p => p._id === partnerId);
-              if (!partner) return '';
-              return partner.partnerType === 'member' && partner.member
-                ? partner.member.phone
-                : partner.partner?.phone;
-            }).filter(p => p),
+            phones: partnershipPhones,
             message,
             category,
             templateId: selectedTemplate || undefined,
-            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined,
+            metadata: {
+              partnershipProgrammeId: selectedPartnership,
+              recipientNames: partnershipNames,
+              firstNames: partnershipFirstNames,
+              lastNames: partnershipLastNames
+            }
           });
           break;
 
@@ -530,7 +548,7 @@ const SendSMS = () => {
 
       if (response.data.success) {
         const data = response.data.data;
-        
+
         showToast.success(
           `SMS ${isScheduled ? 'scheduled' : 'sent'} successfully! 
            ${data.successCount ? `Sent to ${data.successCount} recipients` : 'Message submitted'}
@@ -664,11 +682,10 @@ const SendSMS = () => {
                       key={type.value}
                       type="button"
                       onClick={() => handleSendTypeChange(type.value as SendType)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        sendType === type.value
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                          : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
-                      }`}
+                      className={`p-3 rounded-lg border-2 transition-all ${sendType === type.value
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                        }`}
                     >
                       <Icon className="w-5 h-5 mx-auto mb-1" />
                       <span className="text-xs font-medium">{type.label}</span>
@@ -723,7 +740,7 @@ const SendSMS = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Select Members
                   </label>
-                  
+
                   {/* ✅ Search Input */}
                   <div className="mb-3">
                     <div className="relative">
@@ -773,8 +790,8 @@ const SendSMS = () => {
                         </label>
                         <hr className="border-gray-200 dark:border-gray-600" />
                         {members.map((member) => (
-                          <label 
-                            key={member._id} 
+                          <label
+                            key={member._id}
                             className="flex items-center py-2 hover:bg-gray-50 dark:hover:bg-gray-600 rounded px-2 cursor-pointer"
                           >
                             <input
@@ -907,7 +924,7 @@ const SendSMS = () => {
                               const phone = partner.partnerType === 'member' && partner.member
                                 ? partner.member.phone
                                 : partner.partner?.phone;
-                              
+
                               return (
                                 <label
                                   key={partner._id}
@@ -951,7 +968,7 @@ const SendSMS = () => {
                         Send to All Members
                       </p>
                       <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                        This will send the message to all {members.length} active members. 
+                        This will send the message to all {members.length} active members.
                         This will use {creditsNeeded} credits.
                       </p>
                     </div>
@@ -978,11 +995,11 @@ const SendSMS = () => {
                     </option>
                   ))}
                 </select>
-              
+
                 {selectedTemplate && (
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded mt-2">
                     <p className="text-sm text-blue-900 dark:text-blue-100">
-                      Variables will be auto-filled: 
+                      Variables will be auto-filled:
                       {templates?.find(t => t._id === selectedTemplate)?.variables?.join(', ')}
                     </p>
                   </div>
@@ -1002,11 +1019,10 @@ const SendSMS = () => {
                 <button
                   type="button"
                   onClick={() => setMessageTab('write')}
-                  className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
-                    messageTab === 'write'
-                      ? 'border-primary-600 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
+                  className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 ${messageTab === 'write'
+                    ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    }`}
                 >
                   <FileText className="w-4 h-4 inline mr-2" />
                   Write it myself
@@ -1246,11 +1262,10 @@ const SendSMS = () => {
               <button
                 type="submit"
                 disabled={sending || !message.trim() || hasInsufficientCredits}
-                className={`px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors ${
-                  sending || !message.trim() || hasInsufficientCredits
-                    ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    : 'bg-primary-600 hover:bg-primary-700 text-white'
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors ${sending || !message.trim() || hasInsufficientCredits
+                  ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  : 'bg-primary-600 hover:bg-primary-700 text-white'
+                  }`}
               >
                 {sending ? (
                   <>

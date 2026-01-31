@@ -111,10 +111,10 @@ const PartnershipProgrammes = () => {
   };
 
   const filteredProgrammes = programmes.filter((programme) => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       programme.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       programme.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return matchesSearch;
   });
 
@@ -138,7 +138,7 @@ const PartnershipProgrammes = () => {
   };
 
   return (
-    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+    <div className="max-w-8xl mx-auto px-2 sm:px-6 lg:px-4 py-3">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
@@ -291,11 +291,11 @@ const PartnershipProgrammes = () => {
             const raisedAmount = programme.goal?.raisedAmount || 0;
             const targetAmount = programme.goal?.targetAmount || 0;
             const progress = calculateProgress(raisedAmount, targetAmount);
-            
+
             return (
               <div key={programme._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer"
                 onClick={() => navigate(`/members/partnership/${programme._id}`)}>
-                
+
                 {/* Cover Image with Overlay */}
                 <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600">
                   {programme.coverImage?.url ? (
@@ -308,22 +308,21 @@ const PartnershipProgrammes = () => {
                       }}
                     />
                   ) : null}
-                  
+
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                  
+
                   {/* Status Badge */}
                   <div className="absolute top-4 right-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${
-                      programme.status === 'active' ? 'bg-green-500/90 text-white' :
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${programme.status === 'active' ? 'bg-green-500/90 text-white' :
                       programme.status === 'draft' ? 'bg-gray-500/90 text-white' :
-                      programme.status === 'paused' ? 'bg-yellow-500/90 text-white' :
-                      'bg-blue-500/90 text-white'
-                    }`}>
+                        programme.status === 'paused' ? 'bg-yellow-500/90 text-white' :
+                          'bg-blue-500/90 text-white'
+                      }`}>
                       {programme.status.charAt(0).toUpperCase() + programme.status.slice(1)}
                     </span>
                   </div>
-                  
+
                   {/* Icon Placeholder */}
                   {!programme.coverImage?.url && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -331,7 +330,7 @@ const PartnershipProgrammes = () => {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Card Content */}
                 <div className="p-6">
                   {/* Title and Description */}
