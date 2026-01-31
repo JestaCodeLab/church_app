@@ -816,6 +816,8 @@ export const partnershipAPI = {
     api.get(`/partnerships/${id}/partners`, { params }),
   registerPartner: (id: string, data: any) => 
     api.post(`/partnerships/${id}/register`, data),
+  editPartner: (id: string, partnerId: string, data: any) =>
+    api.put(`/partnerships/${id}/partners/${partnerId}`, data),
   deletePartner: (id: string, partnerId: string) =>
     api.delete(`/partnerships/${id}/partners/${partnerId}`),
   
