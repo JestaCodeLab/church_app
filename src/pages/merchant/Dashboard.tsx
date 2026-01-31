@@ -117,37 +117,37 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions Banner */}
-        <div className="mb-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 rounded-xl shadow-lg p-6">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-4 md:mb-0 text-center md:text-left">
-              <h2 className="text-xl font-bold text-white mb-1">
+        <div className="mb-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+            <div className="w-full md:w-auto text-center md:text-left">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
                 Ready to grow your church?
               </h2>
-              <p className="text-primary-100 text-sm">
+              <p className="text-primary-100 text-xs sm:text-sm">
                 Add members, create services, and manage your church effectively.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3 justify-center">
+            <div className="w-full md:w-auto flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => navigate('/members/new')}
-                className="inline-flex items-center px-4 py-2 bg-white text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors shadow-sm"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-white text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors shadow-sm text-sm"
               >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Add Member
+                <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="truncate">Add Member</span>
               </button>
               <button
-                onClick={() => navigate('/services/new')}
-                className="inline-flex items-center px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30"
+                onClick={() => navigate('/events/new')}
+                className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30 text-sm"
               >
-                <CalendarDays className="w-4 h-4 mr-2" />
-                New Service
+                <CalendarDays className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="truncate">New Service</span>
               </button>
               <button
                 onClick={() => navigate('/messaging/send')}
-                className="inline-flex items-center px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30 text-sm"
               >
-                <Send className="w-4 h-4 mr-2" />
-                Send SMS
+                <Send className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="truncate">Send SMS</span>
               </button>
             </div>
           </div>
@@ -290,7 +290,7 @@ const Dashboard = () => {
                 {/* Branch Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {stats.membersByBranch.slice(0, 4).map((branch: any, index: number) => {
-                    const percentage = stats.totalMembers > 0 
+                    const percentage = stats.totalMembers > 0
                       ? ((branch.count / stats.totalMembers) * 100).toFixed(1)
                       : 0;
 
@@ -301,7 +301,7 @@ const Dashboard = () => {
                       { bg: 'bg-green-50 dark:bg-green-900/10', text: 'text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
                       { bg: 'bg-teal-50 dark:bg-teal-900/10', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-800' },
                     ];
-                    
+
                     const colorScheme = colors[index % colors.length];
 
                     return (
@@ -408,8 +408,8 @@ const Dashboard = () => {
                         </h4>
                         <div className="flex items-center mt-1 text-sm text-gray-600 dark:text-gray-400">
                           <Clock className="w-4 h-4 mr-1" />
-                          {new Date(event.date).toLocaleDateString('en-US', { 
-                            month: 'short', 
+                          {new Date(event.date).toLocaleDateString('en-US', {
+                            month: 'short',
                             day: 'numeric',
                             year: 'numeric'
                           })}

@@ -182,9 +182,9 @@ const AnimatedRoutes = () => {
           <Route path="/onboarding" element={<Onboarding />} />
         </Route>
 
-         {/* Pending Approval Route - NEW! */}
+        {/* Pending Approval Route - NEW! */}
         <Route element={<PendingApprovalRoute />}>
-            <Route path="/onboarding/success" element={<OnboardingSuccess />} />
+          <Route path="/onboarding/success" element={<OnboardingSuccess />} />
         </Route>
 
         {/* Protected Routes - Church Dashboard */}
@@ -205,8 +205,8 @@ const AnimatedRoutes = () => {
             <Route path="/members/birthdays/settings" element={<BirthdaySettings />} />
             <Route path="/members/partnership" element={<PartnershipProgrammes />} />
             <Route path="/members/partnership/new" element={<NewPartnership />} />
-            <Route path="/members/partnership/:id" element={<PartnershipDetails />} />
             <Route path="/members/partnership/:id/edit" element={<NewPartnership />} />
+            <Route path="/members/partnership/:id" element={<PartnershipDetails />} />
 
             <Route path="/events" element={<AllEvents />} />
             <Route path="/events/new" element={<NewEvent />} />
@@ -215,27 +215,27 @@ const AnimatedRoutes = () => {
             <Route path="/events/:id/attendance" element={<EventAttendance />} />
             <Route path="/events/:id/donations" element={<EventDonations />} />
             <Route path="/events/guests" element={<GuestManagement />} />
-            
-            
-            <Route 
-              path="/departments" 
+
+
+            <Route
+              path="/departments"
               element={
-                user?.role?.slug === 'dept_admin' 
-                  ? <DepartmentAdminDashboard /> 
+                user?.role?.slug === 'dept_admin'
+                  ? <DepartmentAdminDashboard />
                   : <AllDepartments />
-              } 
+              }
             />
             <Route path="/departments/new" element={<DepartmentForm />} />
             <Route path="/departments/:id" element={<DepartmentDetails />} />
             <Route path="/departments/:id/edit" element={<DepartmentForm />} />
 
             {/* SMS Routes */}
-          <Route path="/messaging/analytics" element={<SMSDashboard />} />
-          <Route path="/messaging/send" element={<SendSMS />} />
-          <Route path="/messaging/templates" element={<SMSTemplates />} />
-          <Route path="/messaging/history" element={<SMSHistory />} />
-          <Route path="/messaging/credits" element={<SMSCredits />} />
-          <Route path="/messaging/sender-id" element={<SMSSettings />} />
+            <Route path="/messaging/analytics" element={<SMSDashboard />} />
+            <Route path="/messaging/send" element={<SendSMS />} />
+            <Route path="/messaging/templates" element={<SMSTemplates />} />
+            <Route path="/messaging/history" element={<SMSHistory />} />
+            <Route path="/messaging/credits" element={<SMSCredits />} />
+            <Route path="/messaging/sender-id" element={<SMSSettings />} />
 
             {/* Finance Routes */}
             <Route path="/finance/overview" element={<FinanceOverview />} />
@@ -259,7 +259,7 @@ const AnimatedRoutes = () => {
         <Route element={<ProtectedRoute requiredRole="super_admin" />}>
           {/* Church Selection Route - Before accessing merchant features */}
           <Route path="/select-church" element={<SelectChurch />} />
-          
+
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/churches" element={<AdminMerchants />} />
@@ -268,13 +268,13 @@ const AnimatedRoutes = () => {
             <Route path="/admin/users/:id" element={<AdminUserDetails />} />
             <Route path="/admin/branches" element={<AdminBranches />} />
             <Route path="/admin/features" element={<AdminFeatures />} />
-            
+
             {/* Plans */}
             <Route path="/admin/plans" element={<AdminPlans />} />
             <Route path="/admin/plans/new" element={<AdminCreatePlan />} />
             <Route path="/admin/plans/:id" element={<AdminPlanDetails />} />
             <Route path="/admin/plans/:id/edit" element={<AdminPlanEdit />} />
-            
+
             {/* Discounts */}
             <Route path="/admin/discounts" element={<AdminDiscounts />} />
             <Route path="/admin/discounts/new" element={<AdminCreateDiscount />} />

@@ -16,10 +16,10 @@ const AllMembers = () => {
   const { user, fetchAndUpdateSubscription } = useAuth();
   const plan = user?.merchant?.subscription?.plan;
   const merchantId = user?.merchant?.id;
-  const merchantName = user?.merchant?.name || 'Church'; 
+  const merchantName = user?.merchant?.name || 'Church';
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [members, setMembers] = useState<any[]>([]);
@@ -28,7 +28,7 @@ const AllMembers = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  
+
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -36,11 +36,11 @@ const AllMembers = () => {
     visitors: 0,
     male: 0,
     female: 0,
-    leaders: { pastors: 0, elders: 0, deacons: 0, leaders: 0, total: 0},
+    leaders: { pastors: 0, elders: 0, deacons: 0, leaders: 0, total: 0 },
     members: 0,
-    firstTimersCount: 0, 
+    firstTimersCount: 0,
   });
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -98,7 +98,7 @@ const AllMembers = () => {
       if (filters.status) params.status = filters.status;
       if (filters.gender) params.gender = filters.gender;
       if (filters.branch) params.branch = filters.branch;
-      
+
       if (filters.membershipType && activeTab === 'all') {
         params.membershipType = filters.membershipType;
       }
@@ -126,7 +126,7 @@ const AllMembers = () => {
         acc[item._id] = item.count;
         return acc;
       }, {});
-      
+
       const genderMap = data.byGender.reduce((acc: any, item: any) => {
         acc[item._id] = item.count;
         return acc;
@@ -141,7 +141,7 @@ const AllMembers = () => {
         female: genderMap.female || 0,
         leaders: data?.leaders,
         members: data?.regularMembers || 0,
-        firstTimersCount: data?.firstTimersCount || 0, 
+        firstTimersCount: data?.firstTimersCount || 0,
       });
     } catch (error) {
       console.error('Failed to load stats');
@@ -160,7 +160,7 @@ const AllMembers = () => {
     try {
       setIsExporting(true);
       const response = await memberAPI.exportMembers();
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -169,7 +169,7 @@ const AllMembers = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
+
       showToast.success('Members exported successfully!');
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to export members');
@@ -219,15 +219,16 @@ const AllMembers = () => {
     setIsDeleting(true);
     try {
       const memberIds = Array.from(selectedMembers);
-      
+
       // Delete members one by one
       for (const memberId of memberIds) {
-        await memberAPI.deleteMember(memberId);
+        await memberAPI.deleteMember(memberId, permanent);
       }
-      
+
       showToast.success(`${selectedMembers.size} member(s) deleted successfully`);
       setSelectedMembers(new Set());
       setShowBulkDeleteModal(false);
+      await fetchAndUpdateSubscription();
       await fetchMembers();
       await fetchStats();
     } catch (error: any) {
@@ -237,12 +238,14 @@ const AllMembers = () => {
     }
   };
 
-  const handleSuccess = async() => {
-    await memberAPI.deleteMember(selectedMember.id);
+  const handleSuccess = async (permanent: boolean = false) => {
+    await memberAPI.deleteMember(selectedMember.id, permanent);
     showToast.success('Member deleted successfully');
     setShowDeleteModal(false);
     setSelectedMember(null);
-    window.location.reload();
+    await fetchAndUpdateSubscription();
+    await fetchMembers();
+    await fetchStats();
   };
 
   const copyRegistrationLink = () => {
@@ -305,7 +308,7 @@ const AllMembers = () => {
   const handleTabClick = (tab: any) => {
     setActiveTab(tab.id);
     setCurrentPage(1);
-    
+
     setFilters(prev => ({
       ...prev,
       registrationType: '',
@@ -323,7 +326,7 @@ const AllMembers = () => {
       youth: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
       children: 'bg-pink-100 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300',
       visitor: 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300',
-      
+
     };
     return colors[role] || colors.visitor;
   };
@@ -342,407 +345,360 @@ const AllMembers = () => {
 
   return (
     <FeatureGate feature={'memberManagement'}>
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Member Management
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your church members and their information
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-
-        {/* Export Button */}
-        <PermissionGuard permission="members.export">
-          <button
-            onClick={handleExport}
-            disabled={isExporting || members.length === 0}
-            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {isExporting ? 'Exporting...' : 'Export'}
-          </button>
-          </PermissionGuard>
-
-          {/* Import Button */}
-          <PermissionGuard permission="members.import">
-          <button
-            onClick={() => setShowImportModal(true)}
-            className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </button>
-          </PermissionGuard>
-
-          {/* Add Member Button */}
-          <PermissionGuard permission="members.create">
-          <button
-            onClick={handleAddMemberClick}
-            className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              memberLimit.canCreate
-                ? 'text-white bg-primary-600 hover:bg-primary-700'
-                : 'text-gray-400 bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
-            }`}
-            title={!memberLimit.canCreate ? `Member limit reached (${memberLimit.current}/${memberLimit.limit})` : ''}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Member
-            {memberLimit.isNearLimit && memberLimit.canCreate && (
-              <span className="ml-2 px-2 py-0.5 text-xs bg-orange-500 text-white rounded-full">
-                {memberLimit.remaining} left
-              </span>
-            )}
-          </button>
-          </PermissionGuard>
-        </div>
-      </div>
-
-      {/* Member Usage Card - Progressive status with visual feedback */}
-      <div className={`rounded-xl p-6 border-[1px] transition-all ${
-        !memberLimit.canCreate 
-          ? 'bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800' 
-          : memberLimit.isNearLimit 
-          ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-300 dark:border-orange-800'
-          : 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800'
-      }`}>
-        {/* Top Section: Registration Link and Usage Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left: Public Registration */}
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-start space-x-3 mb-4">
-              <div className="flex-shrink-0 mt-1">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Link2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Member Management
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Manage your church members and their information
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+
+            {/* Export Button */}
+            <PermissionGuard permission="members.export">
+              <button
+                onClick={handleExport}
+                disabled={isExporting || members.length === 0}
+                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isExporting ? 'Exporting...' : 'Export'}
+              </button>
+            </PermissionGuard>
+
+            {/* Import Button */}
+            <PermissionGuard permission="members.import">
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Import
+              </button>
+            </PermissionGuard>
+
+            {/* Add Member Button */}
+            <PermissionGuard permission="members.create">
+              <button
+                onClick={handleAddMemberClick}
+                className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${memberLimit.canCreate
+                  ? 'text-white bg-primary-600 hover:bg-primary-700'
+                  : 'text-gray-400 bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
+                  }`}
+                title={!memberLimit.canCreate ? `Member limit reached (${memberLimit.current}/${memberLimit.limit})` : ''}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Member
+                {memberLimit.isNearLimit && memberLimit.canCreate && (
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-orange-500 text-white rounded-full">
+                    {memberLimit.remaining} left
+                  </span>
+                )}
+              </button>
+            </PermissionGuard>
+          </div>
+        </div>
+
+        {/* Member Usage Card - Progressive status with visual feedback */}
+        <div className={`rounded-xl p-6 border-[1px] transition-all ${!memberLimit.canCreate
+          ? 'bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800'
+          : memberLimit.isNearLimit
+            ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-300 dark:border-orange-800'
+            : 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800'
+          }`}>
+          {/* Top Section: Registration Link and Usage Stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left: Public Registration */}
+            <div>
+              <div className="flex items-start space-x-3 mb-4">
+                <div className="flex-shrink-0 mt-1">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Link2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Public Registration
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Share this link for members to self-register online. They can choose to register as members or mark themselves as first-time visitors.
-                </p>
-                <div className="flex items-start gap-3 mt-4">
-                  <PermissionGuard permission="members.registrationLink">
-                  <button
-                    onClick={() => setShowLinkModal(true)}
-                    className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center space-x-2"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    <span>Get Link</span>
-                  </button>
-                  </PermissionGuard>
-                  <PermissionGuard permission="members.registrationSettings">
-                  <button
-                    onClick={() => setShowSettingsModal(true)}
-                    className="px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center space-x-2"
-                    title="Registration Settings"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </button>
-                  </PermissionGuard>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Public Registration
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Share this link for members to self-register online. They can choose to register as members or mark themselves as first-time visitors.
+                  </p>
+                  <div className="flex items-start gap-3 mt-4">
+                    <PermissionGuard permission="members.registrationLink">
+                      <button
+                        onClick={() => setShowLinkModal(true)}
+                        className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center space-x-2"
+                      >
+                        <Share2 className="h-4 w-4" />
+                        <span>Get Link</span>
+                      </button>
+                    </PermissionGuard>
+                    <PermissionGuard permission="members.registrationSettings">
+                      <button
+                        onClick={() => setShowSettingsModal(true)}
+                        className="px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center space-x-2"
+                        title="Registration Settings"
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
+                      </button>
+                    </PermissionGuard>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Right: Member Usage */}
-          <div className="lg:border-l lg:border-gray-300 dark:lg:border-gray-600 lg:pl-6">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className={`p-3 rounded-lg ${
-                !memberLimit.canCreate 
-                  ? 'bg-red-100 dark:bg-red-900/30' 
-                  : memberLimit.isNearLimit 
-                  ? 'bg-orange-100 dark:bg-orange-900/30'
-                  : 'bg-blue-100 dark:bg-blue-900/30'
-              }`}>
-                <Users className={`h-6 w-6 ${
-                  !memberLimit.canCreate 
-                    ? 'text-red-600 dark:text-red-400' 
-                    : memberLimit.isNearLimit 
-                    ? 'text-orange-600 dark:text-orange-400'
-                    : 'text-blue-600 dark:text-blue-400'
-                }`} />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Member Usage
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {memberLimit.limit === null || memberLimit.limit === undefined ? 'Unlimited' : `${memberLimit.current} of ${memberLimit.limit} members used`}
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  {memberLimit.current}
-                  {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
-                    <span className="text-lg text-gray-500 dark:text-gray-400">/{memberLimit.limit}</span>
-                  )}
+            {/* Right: Member Usage */}
+            <div className="lg:border-l lg:border-gray-300 dark:lg:border-gray-600 lg:pl-6">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className={`p-3 rounded-lg ${!memberLimit.canCreate
+                  ? 'bg-red-100 dark:bg-red-900/30'
+                  : memberLimit.isNearLimit
+                    ? 'bg-orange-100 dark:bg-orange-900/30'
+                    : 'bg-blue-100 dark:bg-blue-900/30'
+                  }`}>
+                  <Users className={`h-6 w-6 ${!memberLimit.canCreate
+                    ? 'text-red-600 dark:text-red-400'
+                    : memberLimit.isNearLimit
+                      ? 'text-orange-600 dark:text-orange-400'
+                      : 'text-blue-600 dark:text-blue-400'
+                    }`} />
                 </div>
-                {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
-                  <div className="text-sm mt-1">
-                    {!memberLimit.canCreate ? (
-                      <span className="text-red-600 dark:text-red-400 font-semibold">
-                        Limit Reached
-                      </span>
-                    ) : memberLimit.isNearLimit ? (
-                      <span className="text-orange-600 dark:text-orange-400 font-semibold">
-                        {memberLimit.remaining} remaining
-                      </span>
-                    ) : (
-                      <span className="text-blue-600 dark:text-blue-400 font-semibold">
-                        {memberLimit.remaining} remaining
-                      </span>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Member Usage
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {memberLimit.limit === null || memberLimit.limit === undefined ? 'Unlimited' : `${memberLimit.current} of ${memberLimit.limit} members used`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    {memberLimit.current}
+                    {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
+                      <span className="text-lg text-gray-500 dark:text-gray-400">/{memberLimit.limit}</span>
                     )}
                   </div>
-                )}
+                  {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
+                    <div className="text-sm mt-1">
+                      {!memberLimit.canCreate ? (
+                        <span className="text-red-600 dark:text-red-400 font-semibold">
+                          Limit Reached
+                        </span>
+                      ) : memberLimit.isNearLimit ? (
+                        <span className="text-orange-600 dark:text-orange-400 font-semibold">
+                          {memberLimit.remaining} remaining
+                        </span>
+                      ) : (
+                        <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                          {memberLimit.remaining} remaining
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            {/* Progress Bar */}
-            {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
-              <div className="space-y-2">
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      !memberLimit.canCreate
+
+              {/* Progress Bar */}
+              {(memberLimit.limit !== null && memberLimit.limit !== undefined) && (
+                <div className="space-y-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${!memberLimit.canCreate
                         ? 'bg-gradient-to-r from-red-500 to-red-600'
                         : memberLimit.isNearLimit
-                        ? 'bg-gradient-to-r from-orange-400 to-orange-500'
-                        : 'bg-gradient-to-r from-blue-500 to-indigo-600'
-                    }`}
-                    style={{ width: `${Math.min((memberLimit.current / memberLimit.limit) * 100, 100)}%` }}
-                  />
+                          ? 'bg-gradient-to-r from-orange-400 to-orange-500'
+                          : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                        }`}
+                      style={{ width: `${Math.min((memberLimit.current / memberLimit.limit) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {((memberLimit.current / memberLimit.limit) * 100).toFixed(1)}% used
+                    </span>
+                    {!memberLimit.canCreate && (
+                      <button
+                        onClick={() => navigate('/settings?tab=billing')}
+                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold flex items-center space-x-1"
+                      >
+                        <span>Upgrade Plan</span>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {((memberLimit.current / memberLimit.limit) * 100).toFixed(1)}% used
-                  </span>
-                  {!memberLimit.canCreate && (
-                    <button
-                      onClick={() => navigate('/settings?tab=billing')}
-                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold flex items-center space-x-1"
-                    >
-                      <span>Upgrade Plan</span>
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Members</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.total}</p>
-            </div>
-            <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
-              <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.active}</p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.male}</p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Female</p>
-              <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mt-1">{stats.female}</p>
-            </div>
-            <div className="p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
-              <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        {/* Tabs and Search */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            {/* Tabs */}
-            <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabClick(tab)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                  }`}
-                >
-                  {tab.label}
-                  {tab.count !== undefined && (
-                    <span className="ml-2 text-xs">({tab.count})</span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Search */}
-            <div className="relative flex items-center space-x-3">
-              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search members..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-              {selectedMembers.size > 0 && (
-                <PermissionGuard permission="members.delete">
-                <button
-                  onClick={handleBulkDelete}
-                  disabled={isDeleting}
-                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:hover:bg-red-500 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isDeleting ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete {selectedMembers.size}
-                    </>
-                  )}
-                </button>
-                </PermissionGuard>
               )}
             </div>
           </div>
         </div>
 
-        {/* Table */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Members</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.total}</p>
+              </div>
+              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+                <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
           </div>
-        ) : members.length === 0 ? (
-          <div className="text-center py-12 flex flex-col items-center justify-center">
-            <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500 mb-2 dark:text-gray-400">No members found</p>
-            {/* Add Member Button */}
-            <PermissionGuard permission="members.create">
-            <button
-              onClick={handleAddMemberClick}
-              className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                memberLimit.canCreate
-                  ? 'text-white bg-primary-600 hover:bg-primary-700'
-                  : 'text-gray-400 bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
-              }`}
-              title={!memberLimit.canCreate ? `Member limit reached (${memberLimit.current}/${memberLimit.limit})` : ''}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Member
-            </button>
-            </PermissionGuard>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.active}</p>
+              </div>
+              <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
-                      <label className="inline-flex items-center cursor-pointer group">
-                        <div className="relative">
-                          <input
-                            type="checkbox"
-                            checked={members.length > 0 && selectedMembers.size === members.length}
-                            onChange={toggleSelectAll}
-                            className="sr-only peer"
-                            title="Select all members"
-                          />
-                          <div className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 peer-checked:bg-primary-600 peer-checked:border-primary-600 dark:peer-checked:bg-primary-600 dark:peer-checked:border-primary-600 transition-all peer-focus:ring-1 peer-focus:ring-primary-500 peer-focus:ring-offset-2 dark:peer-focus:ring-offset-gray-900 peer-focus:ring-offset-0 dark:peer-focus:ring-offset-0 group-hover:border-primary-400 dark:group-hover:border-primary-500"></div>
-                          <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-white hidden peer-checked:block pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.male}</p>
+              </div>
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Female</p>
+                <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mt-1">{stats.female}</p>
+              </div>
+              <div className="p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
+                <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          {/* Tabs and Search */}
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Tabs */}
+              <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg overflow-x-auto">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabClick(tab)}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${activeTab === tab.id
+                      ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                      }`}
+                  >
+                    {tab.label}
+                    {tab.count !== undefined && (
+                      <span className="ml-2 text-xs">({tab.count})</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search */}
+              <div className="relative flex items-center space-x-3">
+                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+                {selectedMembers.size > 0 && (
+                  <PermissionGuard permission="members.delete">
+                    <button
+                      onClick={handleBulkDelete}
+                      disabled={isDeleting}
+                      className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:hover:bg-red-500 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                        </div>
-                      </label>
-                    </th>
-                    <th className="px-2 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
-                      Member
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
-                      Branch
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
-                      Role
-                    </th>
-                   
-                    <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {members.map((member) => (
-                    <tr key={member._id} onClick={(e) => { e?.stopPropagation(); navigate(`/members/${member._id}`)}} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group ${
-                      selectedMembers.has(member._id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                    }`}>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <label className="inline-flex items-center cursor-pointer group" onClick={(e) => e.stopPropagation()}>
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete {selectedMembers.size}
+                        </>
+                      )}
+                    </button>
+                  </PermissionGuard>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
+            </div>
+          ) : members.length === 0 ? (
+            <div className="text-center py-12 flex flex-col items-center justify-center">
+              <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500 mb-2 dark:text-gray-400">No members found</p>
+              {/* Add Member Button */}
+              <PermissionGuard permission="members.create">
+                <button
+                  onClick={handleAddMemberClick}
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${memberLimit.canCreate
+                    ? 'text-white bg-primary-600 hover:bg-primary-700'
+                    : 'text-gray-400 bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
+                    }`}
+                  title={!memberLimit.canCreate ? `Member limit reached (${memberLimit.current}/${memberLimit.limit})` : ''}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Member
+                </button>
+              </PermissionGuard>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                        <label className="inline-flex items-center cursor-pointer group">
                           <div className="relative">
                             <input
                               type="checkbox"
-                              checked={selectedMembers.has(member._id)}
-                              onChange={() => {toggleMemberSelection(member._id)} }
-                              onClick={(e) => e.stopPropagation()}
+                              checked={members.length > 0 && selectedMembers.size === members.length}
+                              onChange={toggleSelectAll}
                               className="sr-only peer"
+                              title="Select all members"
                             />
                             <div className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 peer-checked:bg-primary-600 peer-checked:border-primary-600 dark:peer-checked:bg-primary-600 dark:peer-checked:border-primary-600 transition-all peer-focus:ring-1 peer-focus:ring-primary-500 peer-focus:ring-offset-2 dark:peer-focus:ring-offset-gray-900 peer-focus:ring-offset-0 dark:peer-focus:ring-offset-0 group-hover:border-primary-400 dark:group-hover:border-primary-500"></div>
                             <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-white hidden peer-checked:block pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
@@ -750,275 +706,314 @@ const AllMembers = () => {
                             </svg>
                           </div>
                         </label>
-                      </td>
-                      <td className="px-2 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {member.photo ? (
-                            <img 
-                              src={member.photo} 
-                              alt={member.fullName || `${member.firstName} ${member.lastName}`}
-                              className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                            />
-                          ) : (
-                            <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
-                              <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm">
-                                {member.firstName[0]}{member.lastName[0]}
-                              </span>
+                      </th>
+                      <th className="px-2 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                        Member
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                        Branch
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                        Role
+                      </th>
+
+                      <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {members.map((member) => (
+                      <tr key={member._id} onClick={(e) => { e?.stopPropagation(); navigate(`/members/${member._id}`) }} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group ${selectedMembers.has(member._id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                        }`}>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <label className="inline-flex items-center cursor-pointer group" onClick={(e) => e.stopPropagation()}>
+                            <div className="relative">
+                              <input
+                                type="checkbox"
+                                checked={selectedMembers.has(member._id)}
+                                onChange={() => { toggleMemberSelection(member._id) }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="sr-only peer"
+                              />
+                              <div className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 peer-checked:bg-primary-600 peer-checked:border-primary-600 dark:peer-checked:bg-primary-600 dark:peer-checked:border-primary-600 transition-all peer-focus:ring-1 peer-focus:ring-primary-500 peer-focus:ring-offset-2 dark:peer-focus:ring-offset-gray-900 focus:ring-offset-0 dark:peer-focus:ring-offset-0 group-hover:border-primary-400 dark:group-hover:border-primary-500"></div>
+                              <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-white hidden peer-checked:block pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path>
+                              </svg>
                             </div>
-                          )}
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {member.fullName || `${member.firstName} ${member.lastName}`}
-                            </div>
+                          </label>
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {member.photo ? (
+                              <img
+                                src={member.photo}
+                                alt={member.fullName || `${member.firstName} ${member.lastName}`}
+                                className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                              />
+                            ) : (
+                              <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
+                                <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm">
+                                  {member.firstName[0]}{member.lastName[0]}
+                                </span>
+                              </div>
+                            )}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {member.fullName || `${member.firstName} ${member.lastName}`}
+                              </div>
                               <div className="text-xs capitalize text-gray-500 dark:text-gray-400">
                                 {member.gender}
                               </div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">{member.email || 'N/A'}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{member.phone || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {member.branch?.name || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(member.membershipType)}`}>
-                          {member.membershipType?.charAt(0).toUpperCase() + member.membershipType?.slice(1)}
-                        </span>
-                      </td>
-                      
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <PermissionGuard permission="members.edit">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/members/${member._id}/edit`);
-                            }}
-                            className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          </PermissionGuard>
-                          <PermissionGuard permission="members.delete">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(member);
-                            }}
-                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          </PermissionGuard>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900 dark:text-gray-100">{member.email || 'N/A'}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{member.phone || 'N/A'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                          {member.branch?.name || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(member.membershipType)}`}>
+                            {member.membershipType?.charAt(0).toUpperCase() + member.membershipType?.slice(1)}
+                          </span>
+                        </td>
 
-            {/* Pagination */}
-            {/* Selection Info Bar */}
-            {selectedMembers.size > 0 && (
-              <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-700 flex items-center justify-between">
-                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  {selectedMembers.size} member{selectedMembers.size !== 1 ? 's' : ''} selected
-                </span>
-                <button
-                  onClick={() => setSelectedMembers(new Set())}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Clear selection
-                </button>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-2">
+                            <PermissionGuard permission="members.edit">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/members/${member._id}/edit`);
+                                }}
+                                className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            </PermissionGuard>
+                            <PermissionGuard permission="members.delete">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(member);
+                                }}
+                                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </PermissionGuard>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
 
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalMembers)} of {totalMembers} members
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Next
-                    </button>
+              {/* Pagination */}
+              {/* Selection Info Bar */}
+              {selectedMembers.size > 0 && (
+                <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-700 flex items-center justify-between">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    {selectedMembers.size} member{selectedMembers.size !== 1 ? 's' : ''} selected
+                  </span>
+                  <button
+                    onClick={() => setSelectedMembers(new Set())}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Clear selection
+                  </button>
+                </div>
+              )}
+
+              {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalMembers)} of {totalMembers} members
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              )}
+            </>
+          )}
+        </div>
 
-      {/* ⭐ UPDATED: Registration Link Modal with Share Options */}
-      {showLinkModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Share Registration Link
-              </h3>
-              <button
-                onClick={() => setShowLinkModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Share this link with members so they can register themselves. They can choose between member registration or first-timer forms.
-            </p>
-
-            <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 mb-4">
-              <code className="text-sm text-gray-800 dark:text-gray-200 break-all">
-                {registrationLink}
-              </code>
-            </div>
-
-            {/* ⭐ NEW: Action Buttons Grid */}
-            <div className="space-y-3">
-              {/* Copy and Open buttons */}
-              <div className="grid grid-cols-2 gap-3">
+        {/* ⭐ UPDATED: Registration Link Modal with Share Options */}
+        {showLinkModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Share Registration Link
+                </h3>
                 <button
-                  onClick={copyRegistrationLink}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                  onClick={() => setShowLinkModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  <Copy className="h-4 w-4" />
-                  <span>Copy Link</span>
-                </button>
-                
-                <button
-                  onClick={() => window.open(registrationLink, '_blank')}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  <span>Open</span>
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
 
-              {/* Share options divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Share this link with members so they can register themselves. They can choose between member registration or first-timer forms.
+              </p>
+
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 mb-4">
+                <code className="text-sm text-gray-800 dark:text-gray-200 break-all">
+                  {registrationLink}
+                </code>
+              </div>
+
+              {/* ⭐ NEW: Action Buttons Grid */}
+              <div className="space-y-3">
+                {/* Copy and Open buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={copyRegistrationLink}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span>Copy Link</span>
+                  </button>
+
+                  <button
+                    onClick={() => window.open(registrationLink, '_blank')}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span>Open</span>
+                  </button>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                    Share via
-                  </span>
+
+                {/* Share options divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                      Share via
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {/* ⭐ NEW: Share via buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* WhatsApp */}
-                <button
-                  onClick={shareViaWhatsApp}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span>WhatsApp</span>
-                </button>
+                {/* ⭐ NEW: Share via buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* WhatsApp */}
+                  <button
+                    onClick={shareViaWhatsApp}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>WhatsApp</span>
+                  </button>
 
-                {/* SMS */}
-                <button
-                  onClick={shareViaSMS}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span>SMS</span>
-                </button>
+                  {/* SMS */}
+                  <button
+                    onClick={shareViaSMS}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>SMS</span>
+                  </button>
 
-                {/* Email */}
-                <button
-                  onClick={shareViaEmail}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Mail className="h-4 w-4" />
-                  <span>Email</span>
-                </button>
+                  {/* Email */}
+                  <button
+                    onClick={shareViaEmail}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span>Email</span>
+                  </button>
 
-                {/* Native Share (if supported) */}
-                <button
-                  onClick={handleNativeShare}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Share2 className="h-4 w-4" />
-                  <span>More</span>
-                </button>
+                  {/* Native Share (if supported) */}
+                  <button
+                    onClick={handleNativeShare}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    <span>More</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Modals */}
-      <DeleteMemberModal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setSelectedMember(null);
-        }}
-        onDelete={handleSuccess}
-        memberName={selectedMember?.name}
-        isLoading={isDeleting}
-      />
+        {/* Modals */}
+        <DeleteMemberModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedMember(null);
+          }}
+          onDelete={handleSuccess}
+          memberName={selectedMember?.name}
+          isLoading={isDeleting}
+        />
 
-      {/* Bulk Delete Modal */}
-      <DeleteMemberModal
-        isOpen={showBulkDeleteModal}
-        onClose={() => {
-          setShowBulkDeleteModal(false);
-        }}
-        onDelete={confirmBulkDelete}
-        memberName={`${selectedMembers.size} member${selectedMembers.size !== 1 ? 's' : ''}`}
-        isLoading={isDeleting}
-      />
+        {/* Bulk Delete Modal */}
+        <DeleteMemberModal
+          isOpen={showBulkDeleteModal}
+          onClose={() => {
+            setShowBulkDeleteModal(false);
+          }}
+          onDelete={confirmBulkDelete}
+          memberName={`${selectedMembers.size} member${selectedMembers.size !== 1 ? 's' : ''}`}
+          isLoading={isDeleting}
+        />
 
-      <ImportMembersModal
-        isOpen={showImportModal}
-        onClose={() => { fetchAndUpdateSubscription(); setShowImportModal(false)}  }
-        onImportComplete={handleImportComplete}
-      />
+        <ImportMembersModal
+          isOpen={showImportModal}
+          onClose={() => { fetchAndUpdateSubscription(); setShowImportModal(false) }}
+          onImportComplete={handleImportComplete}
+        />
 
-      <LimitReachedModal
-        isOpen={showLimitModal}
-        onClose={() => setShowLimitModal(false)}
-        resourceType="members"
-        planName={plan}
-        current={memberLimit.current}
-        limit={memberLimit.limit || 0}
-      />
+        <LimitReachedModal
+          isOpen={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          resourceType="members"
+          planName={plan}
+          current={memberLimit.current}
+          limit={memberLimit.limit || 0}
+        />
 
-      {/* Registration Settings Modal */}
-      <RegistrationSettingsPanel
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-      />
-    </div>
+        {/* Registration Settings Modal */}
+        <RegistrationSettingsPanel
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+        />
+      </div>
     </FeatureGate>
   );
 };
