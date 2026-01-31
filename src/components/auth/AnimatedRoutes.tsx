@@ -97,6 +97,7 @@ import CampaignDetails from '../../pages/merchant/finance/CampaignDetails';
 import Wallet from '../../pages/merchant/finance/Wallet';
 import ActivityLogs from '../../pages/merchant/ActivityLogs';
 import WithdrawalManagement from '../../pages/admin/WithdrawalManagement';
+import SermonManagement from '../../pages/merchant/sermons/SermonManagement';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -246,6 +247,8 @@ const AnimatedRoutes = () => {
             <Route path="/finance/donations" element={<Donations />} />
             <Route path="/finance/donations/:campaignId" element={<CampaignDetails />} />
 
+            {/* Sermon Routes */}
+            <Route path="/sermons" element={<SermonManagement />} />
 
             <Route path="/activity-logs" element={<ActivityLogs />} />
             <Route path="/settings" element={<Settings />} />

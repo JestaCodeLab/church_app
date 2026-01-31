@@ -794,6 +794,26 @@ export const financeAPI = {
   },
 };
 
+// Sermon API
+export const sermonAPI = {
+  getUploadToken: () => api.post('/sermons/upload-token'),
+
+  getSermons: (params?: any) => api.get('/sermons', { params }),
+
+  getSermon: (id: string) => api.get(`/sermons/${id}`),
+
+  createSermon: (data: any) => api.post('/sermons', data),
+
+  updateSermon: (id: string, data: any) => api.put(`/sermons/${id}`, data),
+
+  updateSermonFile: (id: string, data: any) => api.post(`/sermons/${id}/update-file`, data),
+
+  deleteSermon: (id: string) => api.delete(`/sermons/${id}`),
+
+  getVaultUsage: () => api.get('/sermons/vault/usage')
+
+};
+
 // Partnership API
 export const partnershipAPI = {
   // Programme Management
@@ -808,6 +828,7 @@ export const partnershipAPI = {
     api.get(`/partnerships/${id}/transactions`, { params }),
   exportTransactions: (id: string) =>
     api.get(`/partnerships/${id}/transactions/export`, { responseType: 'blob' }),
+
   createManualTransaction: (id: string, data: any) =>
     api.post(`/partnerships/${id}/transactions`, data),
   deleteTransaction: (id: string, transactionId: string) =>
@@ -818,6 +839,7 @@ export const partnershipAPI = {
     api.get(`/partnerships/${id}/partners`, { params }),
   registerPartner: (id: string, data: any) =>
     api.post(`/partnerships/${id}/register`, data),
+
   editPartner: (id: string, partnerId: string, data: any) =>
     api.put(`/partnerships/${id}/partners/${partnerId}`, data),
   deletePartner: (id: string, partnerId: string) =>
@@ -828,6 +850,7 @@ export const partnershipAPI = {
     api.get(`/partnerships/public/${merchantId}/${programmeId}`),
   registerPublicPartner: (merchantId: string, programmeId: string, data: any) =>
     api.post(`/partnerships/public/${merchantId}/${programmeId}/register`, data),
+
   initiatePublicPayment: (merchantId: string, programmeId: string, data: any) =>
     api.post(`/partnerships/public/${merchantId}/${programmeId}/payment/initiate`, data),
   verifyPublicPayment: (merchantId: string, programmeId: string, reference: string) =>
