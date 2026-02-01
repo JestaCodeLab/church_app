@@ -30,6 +30,7 @@ interface Programme {
   merchant: {
     name: string;
     logo?: string;
+    email?: string;
   };
   status: string;
 }
@@ -87,6 +88,8 @@ const PublicPartnershipPayment = () => {
       const response = await partnershipAPI.getPublicProgramme(merchantId!, programmeId!);
       const programmeData = response.data.data.programme;
       setProgramme(programmeData);
+      // Pre-fill email with merchant email
+      setEmail(programmeData.merchant.email || '');
     } catch (error: any) {
       showToast.error('Failed to load partnership programme');
       console.error(error);
@@ -103,7 +106,7 @@ const PublicPartnershipPayment = () => {
       return;
     }
 
-    if (!fullName || !phone || !email) {
+    if (!fullName || !phone) {
       showToast.error('Please fill in all required fields');
       return;
     }
@@ -241,23 +244,13 @@ const PublicPartnershipPayment = () => {
               </div>
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-                />
-              </div>
-            </div>
+            {/* Email - Hidden field, pre-filled with merchant email */}
+            <input
+              type="email"
+              hidden
+              value={email}
+              readOnly
+            />
 
             {/* Tiers */}
             <div>

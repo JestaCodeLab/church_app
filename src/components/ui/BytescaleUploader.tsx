@@ -1,6 +1,7 @@
-import React, { useRef, useState, useCallback } from 'react';
-import { Upload, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { Upload, AlertCircle, CheckCircle, Loader, RotateCcw } from 'lucide-react';
 import { sermonAPI } from '../../services/api';
+import * as Bytescale from '@bytescale/sdk';
 
 interface UploadProgress {
   loaded: number;
@@ -23,7 +24,7 @@ interface BytescaleUploaderProps {
 
 /**
  * BytescaleUploader Component
- * Direct browser upload to Bytescale for sermon audio/video files
+ * Direct browser upload to Bytescale using Bytescale SDK
  * Supports audio and video uploads with progress tracking
  */
 const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
@@ -35,6 +36,7 @@ const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
   className = ''
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadManagerRef = useRef<Bytescale.UploadManager | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [uploadedFile, setUploadedFile] = useState<{
@@ -50,79 +52,37 @@ const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
     video: 'video/mp4,video/quicktime,video/x-msvideo,video/webm'
   };
 
-  const getUploadToken = useCallback(async () => {
-    try {
-      const response = await sermonAPI.getUploadToken();
-      return response.data;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to get upload token';
-      setError(errorMsg);
-      onError?.(errorMsg);
-      throw err;
-    }
+  // Initialize Bytescale SDK with upload manager
+  useEffect(() => {
+    const initializeUploadManager = async () => {
+      try {
+        const response = await sermonAPI.getUploadToken();
+        const { publicApiKey, merchantId } = response.data.data;
+
+        uploadManagerRef.current = new Bytescale.UploadManager({
+          apiKey: publicApiKey // Public API key for browser uploads
+        });
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to initialize upload manager';
+        setError(errorMsg);
+        onError?.(errorMsg);
+      }
+    };
+
+    initializeUploadManager();
   }, [onError]);
-
-  const uploadToBytescale = useCallback(
-    async (file: File, uploadToken: string, accountId: string) => {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      return new Promise<{
-        fileUrl: string;
-        fileSize: number;
-      }>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        // Track upload progress
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const percentage = Math.round((e.loaded / e.total) * 100);
-            setProgress({
-              loaded: e.loaded,
-              total: e.total,
-              percentage
-            });
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              const fileUrl = `https://cdn.bytescale.com/b/${accountId}/${response.fileUrl}`;
-              resolve({
-                fileUrl,
-                fileSize: file.size
-              });
-            } catch (err) {
-              reject(new Error('Invalid response from Bytescale'));
-            }
-          } else {
-            reject(new Error(`Bytescale upload failed: ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          reject(new Error('Network error during upload'));
-        });
-
-        xhr.addEventListener('abort', () => {
-          reject(new Error('Upload cancelled'));
-        });
-
-        const bytescaleUrl = `https://api.bytescale.com/v2/accounts/${accountId}/uploads`;
-        xhr.open('POST', bytescaleUrl);
-        xhr.setRequestHeader('Authorization', `Bearer ${uploadToken}`);
-        xhr.send(formData);
-      });
-    },
-    []
-  );
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
+
+      if (!uploadManagerRef.current) {
+        const errorMsg = 'Upload manager not initialized';
+        setError(errorMsg);
+        onError?.(errorMsg);
+        return;
+      }
 
       setError(null);
       setProgress(null);
@@ -139,26 +99,35 @@ const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
       try {
         setUploading(true);
 
-        // Get upload token from backend
-        const tokenData = await getUploadToken();
-        const { uploadToken, accountId } = tokenData;
-
-        // Upload to Bytescale
-        const { fileUrl, fileSize } = await uploadToBytescale(file, uploadToken, accountId);
+        // Upload using Bytescale SDK
+        const result = await uploadManagerRef.current.upload({
+          data: file,
+          mime: file.type,
+          originalFileName: file.name,
+          onProgress: ({ progress }) => {
+            // progress is a number between 0 and 1, cap at 100%
+            const percentage = Math.min(Math.round(progress * 100), 100);
+            setProgress({
+              loaded: Math.round(file.size * progress),
+              total: file.size,
+              percentage
+            });
+          }
+        });
 
         // Track uploaded file
         setUploadedFile({
           name: file.name,
           type: acceptType,
-          size: fileSize,
-          url: fileUrl
+          size: file.size,
+          url: result.fileUrl
         });
 
         // Call callback with upload result
         onUploadComplete({
           type: acceptType,
-          url: fileUrl,
-          size: fileSize
+          url: result.fileUrl,
+          size: file.size
         });
 
         // Reset file input
@@ -174,7 +143,7 @@ const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
         setProgress(null);
       }
     },
-    [acceptType, maxFileSize, getUploadToken, uploadToBytescale, onUploadComplete, onError]
+    [acceptType, maxFileSize, onUploadComplete, onError]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -273,23 +242,29 @@ const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
             )}
           </>
         ) : (
-          <>
-            <CheckCircle className="w-12 h-12 mx-auto mb-2 text-secondary-600 dark:text-secondary-400" />
-            <p className="text-sm font-medium text-secondary-700 dark:text-secondary-300">{uploadedFile.name}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{formatFileSize(uploadedFile.size)}</p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setUploadedFile(null);
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = '';
-                }
-              }}
-              className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 mt-2"
-            >
-              Choose different file
-            </button>
-          </>
+          <div className="w-full">
+            <div className="p-4 bg-secondary-50 dark:bg-secondary-900/20 rounded-lg border border-secondary-200 dark:border-secondary-700/50 flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-secondary-600 dark:text-secondary-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-secondary-800 dark:text-secondary-300">File uploaded successfully</p>
+                <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
+                  {uploadedFile.name} • {formatFileSize(uploadedFile.size)}
+                </p>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setUploadedFile(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+                className="text-secondary-600 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 flex-shrink-0"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
