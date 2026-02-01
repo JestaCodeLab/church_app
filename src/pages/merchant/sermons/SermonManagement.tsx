@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Loader, Music, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader, Music, CheckCircle, Play, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sermonAPI } from '../../../services/api';
 import BytescaleUploader from '../../../components/ui/BytescaleUploader';
+import AudioPlayer from '../../../components/ui/AudioPlayer';
+import VideoPlayer from '../../../components/ui/VideoPlayer';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import { showToast } from '../../../utils/toasts';
 
@@ -46,6 +48,7 @@ const SermonManagement: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [sermonToDelete, setSermonToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [previewSermon, setPreviewSermon] = useState<Sermon | null>(null);
 
   // Fetch sermons and vault usage on mount
   useEffect(() => {
@@ -303,6 +306,13 @@ const SermonManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
                     <button
+                      onClick={() => setPreviewSermon(sermon)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
+                      title="Preview sermon"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => navigate(`/sermons/${sermon._id}/edit`)}
                       className="inline-flex items-center gap-1 px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
                     >
@@ -503,6 +513,34 @@ const SermonManagement: React.FC = () => {
         type="danger"
         isLoading={deleting}
       />
+
+      {/* Preview Sermon Modal */}
+      {previewSermon && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+
+            {/* Media Player */}
+            <div>
+              {previewSermon.audioUrl ? (
+                <AudioPlayer
+                  src={previewSermon.audioUrl}
+                  title={previewSermon.title}
+                  preacher={previewSermon.preacher}
+                  series={previewSermon.series}
+                  date={new Date(previewSermon.createdAt).toLocaleDateString()}
+                  onClose={() => setPreviewSermon(null)}
+                />
+              ) : previewSermon.videoUrl ? (
+                <VideoPlayer src={previewSermon.videoUrl} title={previewSermon.title} />
+              ) : (
+                <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  No media available
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
