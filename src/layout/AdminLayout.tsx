@@ -67,6 +67,7 @@ const AdminLayout = () => {
 
   // Finance submenu items
   const financeSubmenu = [
+    { name: 'Transactions', href: '/admin/transactions', icon: FileText },
     { name: 'Withdrawals', href: '/admin/withdrawals', icon: DollarSign },
   ];
 

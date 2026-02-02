@@ -98,6 +98,7 @@ import Wallet from '../../pages/merchant/finance/Wallet';
 import ActivityLogs from '../../pages/merchant/ActivityLogs';
 import WithdrawalManagement from '../../pages/admin/WithdrawalManagement';
 import SermonManagement from '../../pages/merchant/sermons/SermonManagement';
+import TransactionManagement from '../../pages/admin/TransactionManagement';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -290,7 +291,8 @@ const AnimatedRoutes = () => {
             {/* Roles & Permissions */}
             <Route path="/admin/roles" element={<AdminRolesPage />} />
 
-            {/* Withdrawal Management */}
+            {/* Finance Management */}
+            <Route path="/admin/transactions" element={<TransactionManagement />} />
             <Route path="/admin/withdrawals" element={<WithdrawalManagement />} />
 
             <Route path="/admin/logs" element={<AdminLogs />} />

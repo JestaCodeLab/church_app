@@ -4,6 +4,7 @@ import { Heart, User, Phone, Mail, DollarSign, CheckCircle2, AlertCircle, Loader
 import { partnershipAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { formatCurrency } from '../../utils/currency';
+import useSEO from '../../hooks/useSEO';
 
 interface Tier {
   _id: string;
@@ -65,6 +66,43 @@ const PublicPartnershipRegistration = () => {
   useEffect(() => {
     loadProgramme();
   }, [merchantId, programmeId]);
+
+  // SEO Configuration - Updates when programme data changes
+  useEffect(() => {
+    if (programme) {
+      const title = `${programme.name} - Partner Registration | ${programme.merchant.name}`;
+      const description = `Join ${programme.merchant.name} as a ${programme.name} partner. Register now to become part of our community.`;
+      const ogImage = programme.coverImage?.url || programme.merchant.logo || '/default-og-image.png';
+      const pageUrl = window.location.href;
+
+      useSEO({
+        title,
+        description,
+        ogTitle: title,
+        ogDescription: description,
+        ogImage,
+        ogUrl: pageUrl,
+        image: ogImage,
+        canonicalUrl: pageUrl,
+        keywords: `partnership registration, ${programme.name}, ${programme.merchant.name}, community partnership`,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: programme.name,
+          description: programme.description || description,
+          image: ogImage,
+          organizer: {
+            '@type': 'Organization',
+            name: programme.merchant.name,
+            logo: programme.merchant.logo || ''
+          },
+          url: pageUrl,
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode'
+        }
+      });
+    }
+  }, [programme, merchantId, programmeId]);
 
   const loadProgramme = async () => {
     try {
