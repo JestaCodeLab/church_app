@@ -4,6 +4,7 @@ import { Heart, User, Phone, Mail, Loader2, Check, ArrowLeft, AlertCircle } from
 import { partnershipAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { formatCurrency } from '../../utils/currency';
+import useSEO from '../../hooks/useSEO';
 
 interface Tier {
   _id: string;
@@ -81,6 +82,53 @@ const PublicPartnershipPayment = () => {
       navigate(`/partnership/payment/${merchantId}/${programmeId}/status?reference=${reference}`);
     }
   }, [merchantId, programmeId, navigate]);
+
+  // SEO Configuration - Updates when programme data changes
+  useEffect(() => {
+    if (programme) {
+      const title = `${programme.name} - Make a Partnership Contribution | ${programme.merchant.name}`;
+      const description = `Support ${programme.merchant.name} by contributing to ${programme.name}. Make your payment securely online.`;
+      const ogImage = programme.coverImage?.url || programme.merchant.logo || '/default-og-image.png';
+      const pageUrl = window.location.href;
+
+      useSEO({
+        title,
+        description,
+        ogTitle: title,
+        ogDescription: description,
+        ogImage,
+        ogUrl: pageUrl,
+        image: ogImage,
+        canonicalUrl: pageUrl,
+        keywords: `partnership donation, ${programme.name}, ${programme.merchant.name}, contribute`,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@type': ['Event', 'DonationCampaign'],
+          name: programme.name,
+          description: programme.description || description,
+          image: ogImage,
+          organizer: {
+            '@type': 'Organization',
+            name: programme.merchant.name,
+            logo: programme.merchant.logo || ''
+          },
+          url: pageUrl,
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+          fundingGoal: {
+            '@type': 'PriceSpecification',
+            priceCurrency: programme.goal.currency,
+            price: programme.goal.targetAmount.toString()
+          },
+          amountRaised: {
+            '@type': 'PriceSpecification',
+            priceCurrency: programme.goal.currency,
+            price: programme.goal.raisedAmount.toString()
+          }
+        }
+      });
+    }
+  }, [programme, merchantId, programmeId]);
 
   const loadProgramme = async () => {
     try {

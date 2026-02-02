@@ -19,10 +19,13 @@ import {
   X,
   Settings,
   QrCode,
+  DollarSign,
 } from 'lucide-react';
 import { partnershipAPI, memberAPI } from '../../../../services/api';
+import api from '../../../../services/api';
 import { showToast } from '../../../../utils/toasts';
 import { formatCurrency, getMerchantCurrency } from '../../../../utils/currency';
+import { format } from 'date-fns';
 import PermissionGuard from '../../../../components/guards/PermissionGuard';
 import { useAuth } from '../../../../context/AuthContext';
 import EditPartnerModal from './EditPartnerModal';
@@ -551,7 +554,15 @@ const PartnershipDetails = () => {
   const loadTransactions = async () => {
     try {
       setLoadingTransactions(true);
-      const response = await partnershipAPI.getTransactions(id!);
+      // Use unified transactions endpoint with programme filter
+      const params = new URLSearchParams({
+        programme: id!,
+        transactionType: 'partnership_payment',
+        limit: '100',
+        sortBy: 'transactionDate',
+        sortOrder: 'desc'
+      });
+      const response = await api.get(`/transactions?${params}`);
       setTransactions(response.data.data.transactions || []);
     } catch (error: any) {
       showToast.error('Failed to load transactions');
@@ -1514,16 +1525,16 @@ const PartnershipDetails = () => {
           {/* Transactions Table */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
+              <thead className="bg-gray-50 dark:bg-gray-700 ">
+                <tr className='dark:text-white'>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction ID
+                    Ref / Code
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Partner
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tier
+                    Contact
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
@@ -1567,45 +1578,42 @@ const PartnershipDetails = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredTransactions.map((transaction) => {
-                    const partnerName = transaction.registration.partnerType === 'member'
-                      ? transaction.registration.member
-                        ? `${transaction.registration.member.firstName} ${transaction.registration.member.lastName}`
-                        : 'N/A'
-                      : transaction.registration.partner
-                        ? `${transaction.registration.partner.firstName} ${transaction.registration.partner.lastName}`
-                        : 'N/A';
-
+                  filteredTransactions.map((transaction: any) => {
                     return (
-                      <tr key={transaction._id}>
+                      <tr key={transaction._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-mono font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-2 py-1 rounded">
-                            {transaction.transactionCode || transaction._id.slice(-8).toUpperCase()}
+                          <div className="text-sm font-mono font-medium dark:text-white px-2 py-1 rounded">
+                            {transaction.paymentReference || transaction.transactionCode || transaction._id?.substring(0, 8)}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                              {partnerName.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{partnerName}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {transaction.registration.partnerType === 'member' ? 'Member' : 'Guest'}
-                              </div>
-                            </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {transaction.paymentMethod?.toUpperCase()}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {transaction.tier && (
-                            <span className="text-sm text-gray-900 dark:text-gray-100">{transaction.tier.name}</span>
+                          {transaction.partnerType && (
+                            <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                              {transaction.partnerType === 'member' ? 'Member' : 'Guest'}
+                            </div>
                           )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{transaction.payerName || 'Unknown'}</div>
+                          {transaction.memberId && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">ID: {transaction.memberId}</div>
+                          )}
+                          {transaction.tier && (
+                            <div className="text-xs text-purple-600 dark:text-purple-400">{transaction.tier}</div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                            {transaction.payerEmail && <div>{transaction.payerEmail}</div>}
+                            {transaction.payerPhone && <div>{transaction.payerPhone}</div>}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           {formatCurrency(transaction.amount, transaction.currency)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {transaction.paymentMethod}
+                        <td className="capitalize px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                          {transaction.paymentMethod?.replace(/_/g, ' ')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${transaction.status === 'completed'
@@ -1614,17 +1622,23 @@ const PartnershipDetails = () => {
                               ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
                               : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                             }`}>
-                            {transaction.status}
+                            {transaction.status?.toUpperCase()}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(transaction.createdAt).toLocaleDateString()}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900 dark:text-white">
+                            {format(new Date(transaction.transactionDate), 'MMM dd, yyyy')}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {format(new Date(transaction.transactionDate), 'HH:mm')}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
                             onClick={() => setShowDeleteConfirm(transaction._id)}
                             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
                             title="Delete transaction"
+                            disabled={isSubmitting}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
