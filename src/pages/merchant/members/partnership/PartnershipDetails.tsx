@@ -399,115 +399,64 @@ const PartnershipDetails = () => {
     try {
       setIsSubmitting(true);
 
-      let registrationId = addTransactionData.registrationId;
+      const defaultTier = programme?.tiers[0];
+      if (!defaultTier) {
+        showToast.error('No tier available');
+        return;
+      }
 
-      // Handle guest transaction (need to register as guest first)
+      // Prepare transaction data
+      const transactionData: any = {
+        amount: parseFloat(addTransactionData.amount),
+        currency: addTransactionData.currency,
+        paymentMethod: addTransactionData.paymentMethod,
+        notes: addTransactionData.notes,
+      };
+
       if (transactionTab === 'guest') {
+        // Guest transaction - send guest details for auto-registration
         if (!guestData.fullName || !guestData.phone) {
           showToast.error('Please fill in fullname and phone for guest');
           return;
         }
 
-        // Split fullName into first and last name
         const nameParts = guestData.fullName.trim().split(' ');
-        const firstName = nameParts[0];
-        const lastName = nameParts.slice(1).join(' ') || 'Guest';
+        const firstName = nameParts[0] || guestData.fullName;
+        const lastName = nameParts.slice(1).join(' ') || '';
 
-        // Register guest as a partner first with default tier
-        const defaultTier = programme?.tiers[0];
-        if (!defaultTier) {
-          showToast.error('No tier available for registration');
-          return;
-        }
-
-        try {
-          const partnerResponse = await partnershipAPI.registerPartner(id!, {
-            firstName,
-            lastName,
-            phone: guestData.phone,
-            email: guestData.email,
-            tierId: defaultTier._id,
-          });
-
-          console.log('Guest registration response:', partnerResponse);
-
-          // Handle both new registration and existing registration response structures
-          if (partnerResponse.data.isExisting) {
-            // Existing registration response: data is the registration directly
-            registrationId = partnerResponse.data.data._id;
-          } else {
-            // New registration response: data.registration or data.data._id
-            registrationId = partnerResponse.data.data._id || partnerResponse.data.data.registration?._id;
-          }
-
-          if (!registrationId) {
-            showToast.error('Failed to get registration ID for guest');
-            console.error('Could not extract registration ID:', partnerResponse.data);
-            return;
-          }
-
-          showToast.success('Guest registered as partner');
-        } catch (guestRegError: any) {
-          const errorMsg = guestRegError.response?.data?.message || 'Failed to register guest';
-          showToast.error(errorMsg);
-          console.error('Guest registration error:', guestRegError);
-          return;
-        }
+        transactionData.phone = guestData.phone;
+        transactionData.firstName = firstName;
+        transactionData.lastName = lastName;
+        transactionData.email = guestData.email;
+        transactionData.tierId = defaultTier._id;
       } else {
-        // Handle member transaction
-        if (!registrationId) {
+        // Member transaction
+        if (!selectedMember) {
           showToast.error('Please select a member');
           return;
         }
 
-        // Check if member is already a partner
-        const existingPartner = partners.find(p => p.member?._id === registrationId);
+        // Send member details for auto-registration if not registered
+        transactionData.memberId = selectedMember._id;
+        transactionData.phone = selectedMember.phone;
+        transactionData.firstName = selectedMember.firstName;
+        transactionData.lastName = selectedMember.lastName;
+        transactionData.email = selectedMember.email;
+        transactionData.tierId = defaultTier._id;
 
+        // If we already have a registrationId, include it (backend will use it)
+        const existingPartner = partners.find(p => p.member?._id === selectedMember._id);
         if (existingPartner) {
-          // Member already registered, use existing registration
-          registrationId = existingPartner._id;
-        } else if (selectedMember) {
-          // Member may or may not be registered, try to register/get registration
-          const defaultTier = programme?.tiers[0];
-          if (!defaultTier) {
-            showToast.error('No tier available for registration');
-            return;
-          }
-
-          try {
-            const partnerResponse = await partnershipAPI.registerPartner(id!, {
-              firstName: selectedMember.firstName,
-              lastName: selectedMember.lastName,
-              phone: selectedMember.phone,
-              email: selectedMember.email || '',
-              tierId: defaultTier._id,
-            });
-
-            registrationId = partnerResponse.data.data._id;
-
-            // Refresh partners list only if it's a new registration
-            if (!partnerResponse.data.isExisting) {
-              await loadPartners();
-              showToast.success('Member registered as partner');
-            }
-          } catch (regError: any) {
-            const errorMsg = regError.response?.data?.message || 'Failed to register member';
-            showToast.error(errorMsg);
-            return;
-          }
+          transactionData.registrationId = existingPartner._id;
         }
       }
 
-      // Now create the transaction
-      await partnershipAPI.createManualTransaction(id!, {
-        registrationId: registrationId,
-        amount: parseFloat(addTransactionData.amount),
-        currency: addTransactionData.currency,
-        paymentMethod: addTransactionData.paymentMethod,
-        notes: addTransactionData.notes,
-      });
+      // Create transaction - backend will auto-register if needed
+      const response = await partnershipAPI.createManualTransaction(id!, transactionData);
 
-      showToast.success('Transaction created successfully');
+      const successMessage = response.data.message || 'Transaction created successfully';
+      showToast.success(successMessage);
+
       setShowAddTransactionModal(false);
       setAddTransactionData({
         registrationId: '',
@@ -520,10 +469,17 @@ const PartnershipDetails = () => {
       setSelectedMember(null);
       setGuestData({ fullName: '', phone: '', email: '' });
       setTransactionTab('member');
+      
       await loadTransactions();
       await loadProgrammeDetails();
+      
+      // Refresh partners if new registration was created
+      if (response.data.data?.registration) {
+        await loadPartners();
+      }
     } catch (error: any) {
-      showToast.error('Failed to create transaction');
+      const errorMsg = error.response?.data?.message || 'Failed to create transaction';
+      showToast.error(errorMsg);
       console.error(error);
     } finally {
       setIsSubmitting(false);
