@@ -183,6 +183,7 @@ const PartnershipDetails = () => {
   // Filters
   const [partnerSearch, setPartnerSearch] = useState('');
   const [partnerTypeFilter, setPartnerTypeFilter] = useState('all');
+  const [transactionSearch, setTransactionSearch] = useState('');
   const [transactionStatusFilter, setTransactionStatusFilter] = useState('all');
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPartners, setIsExportingPartners] = useState(false);
@@ -273,6 +274,17 @@ const PartnershipDetails = () => {
       loadMessages();
     }
   }, [activeTab]);
+
+  // Reload transactions when search or status filter changes
+  useEffect(() => {
+    if (activeTab === 'transactions') {
+      const timer = setTimeout(() => {
+        loadTransactions();
+      }, 300); // Debounce search by 300ms
+
+      return () => clearTimeout(timer);
+    }
+  }, [transactionSearch, transactionStatusFilter]);
 
   // Debounce partner member search
   useEffect(() => {
@@ -515,15 +527,21 @@ const PartnershipDetails = () => {
   const loadTransactions = async () => {
     try {
       setLoadingTransactions(true);
-      // Use unified transactions endpoint with programme filter
-      const params = new URLSearchParams({
-        programme: id!,
-        transactionType: 'partnership_payment',
-        limit: '100',
-        sortBy: 'transactionDate',
-        sortOrder: 'desc'
-      });
-      const response = await api.get(`/transactions?${params}`);
+      const params: any = {
+        limit: 100,
+      };
+
+      // Add search filter if present
+      if (transactionSearch.trim()) {
+        params.search = transactionSearch.trim();
+      }
+
+      // Add status filter if not 'all'
+      if (transactionStatusFilter !== 'all') {
+        params.status = transactionStatusFilter;
+      }
+
+      const response = await partnershipAPI.getTransactions(id!, params);
       setTransactions(response.data.data.transactions || []);
     } catch (error: any) {
       showToast.error('Failed to load transactions');
@@ -840,9 +858,7 @@ const PartnershipDetails = () => {
   );
   const partnersTotalPages = Math.ceil(filteredPartners.length / partnersPerPage);
 
-  const filteredTransactions = transactions.filter(transaction => {
-    return transactionStatusFilter === 'all' || transaction.status === transactionStatusFilter;
-  });
+  // Transactions are already filtered on backend, no need for client-side filtering
 
   if (loading) {
     return (
@@ -1324,14 +1340,14 @@ const PartnershipDetails = () => {
                   placeholder="Search partners..."
                   value={partnerSearch}
                   onChange={(e) => setPartnerSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
               <div className="flex gap-3 flex-shrink-0">
                 <select
                   value={partnerTypeFilter}
                   onChange={(e) => setPartnerTypeFilter(e.target.value)}
-                  className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                  className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
                 >
                   <option value="all">All Types</option>
                   <option value="member">Members</option>
@@ -1524,20 +1540,38 @@ const PartnershipDetails = () => {
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
         <div className="space-y-4">
+          {/* Filters */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name, phone, email, or reference..."
+                  value={transactionSearch}
+                  onChange={(e) => setTransactionSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex gap-3 flex-shrink-0">
+                <select
+                  value={transactionStatusFilter}
+                  onChange={(e) => setTransactionStatusFilter(e.target.value)}
+                  className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                >
+                  <option value="all">All Status</option>
+                  <option value="completed">Completed</option>
+                  <option value="pending">Pending</option>
+                  <option value="failed">Failed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* Actions */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center flex-wrap gap-3">
-            <select
-              value={transactionStatusFilter}
-              onChange={(e) => setTransactionStatusFilter(e.target.value)}
-              className="flex-1 sm:flex-none px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
-            >
-              <option value="all">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-            </select>
 
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto ml-auto">
               <button
                 onClick={() => setShowAddTransactionModal(true)}
                 className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
@@ -1597,7 +1631,7 @@ const PartnershipDetails = () => {
                       </div>
                     </td>
                   </tr>
-                ) : filteredTransactions.length === 0 ? (
+                ) : transactions.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-16">
                       <div className="flex flex-col items-center justify-center text-center">
@@ -1612,7 +1646,19 @@ const PartnershipDetails = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredTransactions.map((transaction: any) => {
+                  transactions.map((transaction: any) => {
+                    // Extract partner details from nested structure
+                    const isGuest = transaction.registration?.partnerType === 'guest';
+                    const partnerData = isGuest 
+                      ? transaction.registration?.partner 
+                      : transaction.registration?.member;
+                    
+                    const payerName = partnerData 
+                      ? `${partnerData.firstName} ${partnerData.lastName}` 
+                      : (transaction.payerName || 'Unknown');
+                    const payerEmail = partnerData?.email || transaction.payerEmail;
+                    const payerPhone = partnerData?.phone || transaction.payerPhone;
+                    
                     return (
                       <tr key={transaction._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -1622,25 +1668,29 @@ const PartnershipDetails = () => {
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {transaction.paymentMethod?.toUpperCase()}
                           </div>
-                          {transaction.partnerType && (
+                          {transaction.registration?.partnerType && (
                             <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                              {transaction.partnerType === 'member' ? 'Member' : 'Guest'}
+                              {transaction.registration.partnerType === 'member' ? 'Member' : 'Guest'}
                             </div>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{transaction.payerName || 'Unknown'}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{payerName}</div>
                           {transaction.memberId && (
                             <div className="text-xs text-gray-500 dark:text-gray-400">ID: {transaction.memberId}</div>
                           )}
-                          {transaction.tier && (
-                            <div className="text-xs text-purple-600 dark:text-purple-400">{transaction.tier}</div>
+                          {(transaction.registration?.tier || transaction.tier) && (
+                            <div className="text-xs text-purple-600 dark:text-purple-400">
+                              {typeof (transaction.registration?.tier || transaction.tier) === 'object' 
+                                ? (transaction.registration?.tier?.name || transaction.tier?.name)
+                                : (transaction.registration?.tier || transaction.tier)}
+                            </div>
                           )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-xs text-gray-600 dark:text-gray-300">
-                            {transaction.payerEmail && <div>{transaction.payerEmail}</div>}
-                            {transaction.payerPhone && <div>{transaction.payerPhone}</div>}
+                            {payerEmail && <div>{payerEmail}</div>}
+                            {payerPhone && <div>{payerPhone}</div>}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
