@@ -845,6 +845,8 @@ export const partnershipAPI = {
   // Partners/Registrations
   getPartners: (id: string, params?: any) =>
     api.get(`/partnerships/${id}/partners`, { params }),
+  exportPartners: (id: string) =>
+    api.get(`/partnerships/${id}/partners/export`, { responseType: 'blob' }),
   registerPartner: (id: string, data: any) =>
     api.post(`/partnerships/${id}/register`, data),
 

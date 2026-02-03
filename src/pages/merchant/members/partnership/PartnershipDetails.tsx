@@ -185,7 +185,12 @@ const PartnershipDetails = () => {
   const [partnerTypeFilter, setPartnerTypeFilter] = useState('all');
   const [transactionStatusFilter, setTransactionStatusFilter] = useState('all');
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingPartners, setIsExportingPartners] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Pagination
+  const [partnersCurrentPage, setPartnersCurrentPage] = useState(1);
+  const partnersPerPage = 10;
 
   // Modals
   const [showAddPartnerModal, setShowAddPartnerModal] = useState(false);
@@ -780,6 +785,28 @@ const PartnershipDetails = () => {
     }
   };
 
+  const handleExportPartners = async () => {
+    try {
+      setIsExportingPartners(true);
+      const response = await partnershipAPI.exportPartners(id!);
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `partnership_partners_${id}_${new Date().getTime()}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      showToast.success('Partners exported successfully');
+    } catch (error: any) {
+      showToast.error('Failed to export partners');
+    } finally {
+      setIsExportingPartners(false);
+    }
+  };
+
   const handleGenerateQR = async (type: 'registration' | 'payment') => {
     try {
       setQrModal({
@@ -849,6 +876,13 @@ const PartnershipDetails = () => {
 
     return matchesSearch && matchesType;
   });
+
+  // Pagination for partners
+  const paginatedPartners = filteredPartners.slice(
+    (partnersCurrentPage - 1) * partnersPerPage,
+    partnersCurrentPage * partnersPerPage
+  );
+  const partnersTotalPages = Math.ceil(filteredPartners.length / partnersPerPage);
 
   const filteredTransactions = transactions.filter(transaction => {
     return transactionStatusFilter === 'all' || transaction.status === transactionStatusFilter;
@@ -1348,6 +1382,23 @@ const PartnershipDetails = () => {
                   <option value="guest">Guests</option>
                 </select>
                 <button
+                  onClick={handleExportPartners}
+                  disabled={isExportingPartners || partners.length === 0}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isExportingPartners ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      <span>Export</span>
+                    </>
+                  )}
+                </button>
+                <button
                   onClick={() => setShowAddPartnerModal(true)}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                 >
@@ -1420,7 +1471,7 @@ const PartnershipDetails = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredPartners.map((partner) => {
+                  paginatedPartners.map((partner) => {
                     const name = partner.partner
                       ? `${partner.partner.firstName} ${partner.partner.lastName}`
                       : 'N/A';
@@ -1484,6 +1535,33 @@ const PartnershipDetails = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {filteredPartners.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-4 flex justify-between items-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Showing {((partnersCurrentPage - 1) * partnersPerPage) + 1} to{' '}
+                {Math.min(partnersCurrentPage * partnersPerPage, filteredPartners.length)} of{' '}
+                {filteredPartners.length} partners
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPartnersCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={partnersCurrentPage === 1}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPartnersCurrentPage(p => Math.min(partnersTotalPages, p + 1))}
+                  disabled={partnersCurrentPage === partnersTotalPages}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
