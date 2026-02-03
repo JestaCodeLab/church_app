@@ -72,11 +72,11 @@ const PublicPartnershipPayment = () => {
 
   useEffect(() => {
     loadProgramme();
-    
+
     // Check if returning from Paystack
     const params = new URLSearchParams(window.location.search);
     const reference = params.get('reference');
-    
+
     if (reference && merchantId && programmeId) {
       // Redirect to status page
       navigate(`/partnership/payment/${merchantId}/${programmeId}/status?reference=${reference}`);
@@ -84,51 +84,55 @@ const PublicPartnershipPayment = () => {
   }, [merchantId, programmeId, navigate]);
 
   // SEO Configuration - Updates when programme data changes
-  useEffect(() => {
-    if (programme) {
-      const title = `${programme.name} - Make a Partnership Contribution | ${programme.merchant.name}`;
-      const description = `Support ${programme.merchant.name} by contributing to ${programme.name}. Make your payment securely online.`;
-      const ogImage = programme.coverImage?.url || programme.merchant.logo || '/default-og-image.png';
-      const pageUrl = window.location.href;
-
-      useSEO({
-        title,
-        description,
-        ogTitle: title,
-        ogDescription: description,
-        ogImage,
-        ogUrl: pageUrl,
-        image: ogImage,
-        canonicalUrl: pageUrl,
-        keywords: `partnership donation, ${programme.name}, ${programme.merchant.name}, contribute`,
-        structuredData: {
-          '@context': 'https://schema.org',
-          '@type': ['Event', 'DonationCampaign'],
-          name: programme.name,
-          description: programme.description || description,
-          image: ogImage,
-          organizer: {
-            '@type': 'Organization',
-            name: programme.merchant.name,
-            logo: programme.merchant.logo || ''
-          },
-          url: pageUrl,
-          eventStatus: 'https://schema.org/EventScheduled',
-          eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
-          fundingGoal: {
-            '@type': 'PriceSpecification',
-            priceCurrency: programme.goal.currency,
-            price: programme.goal.targetAmount.toString()
-          },
-          amountRaised: {
-            '@type': 'PriceSpecification',
-            priceCurrency: programme.goal.currency,
-            price: programme.goal.raisedAmount.toString()
-          }
-        }
-      });
+  const seoConfig = programme ? {
+    title: `${programme.name} - Make a Partnership Contribution | ${programme.merchant.name}`,
+    description: `Support ${programme.merchant.name} by contributing to ${programme.name}. Make your payment securely online.`,
+    ogTitle: `${programme.name} - Make a Partnership Contribution | ${programme.merchant.name}`,
+    ogDescription: `Support ${programme.merchant.name} by contributing to ${programme.name}. Make your payment securely online.`,
+    ogImage: programme.coverImage?.url || programme.merchant.logo || '/default-og-image.png',
+    ogUrl: typeof window !== 'undefined' ? window.location.href : '',
+    image: programme.coverImage?.url || programme.merchant.logo || '/default-og-image.png',
+    canonicalUrl: typeof window !== 'undefined' ? window.location.href : '',
+    keywords: `partnership donation, ${programme.name}, ${programme.merchant.name}, contribute`,
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@type': ['Event', 'DonationCampaign'],
+      name: programme.name,
+      description: programme.description || `Support ${programme.merchant.name} by contributing to ${programme.name}. Make your payment securely online.`,
+      image: programme.coverImage?.url || programme.merchant.logo || '/default-og-image.png',
+      organizer: {
+        '@type': 'Organization',
+        name: programme.merchant.name,
+        logo: programme.merchant.logo || ''
+      },
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+      fundingGoal: {
+        '@type': 'PriceSpecification',
+        priceCurrency: programme.goal.currency,
+        price: programme.goal.targetAmount.toString()
+      },
+      amountRaised: {
+        '@type': 'PriceSpecification',
+        priceCurrency: programme.goal.currency,
+        price: programme.goal.raisedAmount.toString()
+      }
     }
-  }, [programme, merchantId, programmeId]);
+  } : {
+    title: 'Partnership Payment | The Church HQ',
+    description: 'Make a secure payment for your partnership programme.',
+    ogTitle: 'Partnership Payment | The Church HQ',
+    ogDescription: 'Make a secure payment for your partnership programme.',
+    ogImage: '/default-og-image.png',
+    ogUrl: typeof window !== 'undefined' ? window.location.href : '',
+    image: '/default-og-image.png',
+    canonicalUrl: typeof window !== 'undefined' ? window.location.href : '',
+    keywords: 'partnership donation, church payment, contribute'
+  };
+
+  // Call useSEO hook at top level - it will update when seoConfig changes
+  useSEO(seoConfig);
 
   const loadProgramme = async () => {
     try {
