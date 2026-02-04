@@ -2396,7 +2396,7 @@ const PartnershipDetails = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || (transactionTab === 'member' ? !addTransactionData.registrationId : !guestData.fullName || !guestData.phone) || !addTransactionData.amount}
+                  disabled={isSubmitting || (transactionTab === 'member' ? !selectedMember && !selectedPartnerForTransaction : !guestData.fullName || !guestData.phone) || !addTransactionData.amount}
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
