@@ -514,7 +514,7 @@ const PartnershipDetails = () => {
   const loadPartners = async () => {
     try {
       setLoadingPartners(true);
-      const response = await partnershipAPI.getPartners(id!);
+      const response = await partnershipAPI.getPartners(id!, {limit: 20});
       setPartners(response.data.data.partners || []);
     } catch (error: any) {
       showToast.error('Failed to load partners');
@@ -528,7 +528,7 @@ const PartnershipDetails = () => {
     try {
       setLoadingTransactions(true);
       const params: any = {
-        limit: 100,
+        limit: 20,
       };
 
       // Add search filter if present
@@ -661,7 +661,7 @@ const PartnershipDetails = () => {
 
       const response = await memberAPI.getMembers({
         search: query,
-        limit: 10,
+        limit: 20,
         status: 'active'
       });
 
