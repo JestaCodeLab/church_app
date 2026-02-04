@@ -1444,10 +1444,17 @@ const PartnershipDetails = () => {
                   </tr>
                 ) : (
                   paginatedPartners.map((partner) => {
-                    const name = partner.partner
-                      ? `${partner.partner.firstName} ${partner.partner.lastName}`
-                      : 'N/A';
-                    const phone = partner.partner?.phone || 'N/A';
+                    // Get name and phone based on partner type
+                    let name = 'N/A';
+                    let phone = 'N/A';
+                    
+                    if (partner.partnerType === 'member' && partner.member) {
+                      name = `${partner.member.firstName} ${partner.member.lastName}`;
+                      phone = partner.member.phone || 'N/A';
+                    } else if (partner.partner) {
+                      name = `${partner.partner.firstName} ${partner.partner.lastName}`;
+                      phone = partner.partner.phone || 'N/A';
+                    }
 
                     return (
                       <tr key={partner._id}>
