@@ -691,13 +691,13 @@ const PartnershipDetails = () => {
       }));
       showToast.success(`Partner ${item.partner.firstName} ${item.partner.lastName} selected`);
     } else {
-      // It's a member
+      // It's a member (not yet a partner)
       setSelectedMember(item);
       setSelectedPartnerForTransaction(null);
-      // Use the member ID
+      // Don't set registrationId - backend will auto-register using memberId/phone
       setAddTransactionData(prev => ({
         ...prev,
-        registrationId: item._id,
+        registrationId: '', // Clear registrationId so backend uses memberId/phone
       }));
       showToast.success(`${item.firstName} ${item.lastName} selected`);
     }
