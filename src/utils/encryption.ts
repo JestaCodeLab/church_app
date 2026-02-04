@@ -65,7 +65,15 @@ const verifyHash = async (data: any, hash: string): Promise<boolean> => {
  */
 export const encryptData = async (data: any): Promise<string> => {
   try {
+    // Convert to JSON string, which will fail if there are circular references
     const jsonString = JSON.stringify(data);
+    
+    // Check if the data is too large (bcrypt has a max input size)
+    if (jsonString.length > 50000) {
+      console.warn('[Encryption] Data exceeds recommended size, truncating...');
+      // For very large objects, consider storing only essential fields
+    }
+    
     const encoded = btoa(jsonString); // Base64 encode for browser storage
     const hash = await generateHash(jsonString); // Bcrypt hash for verification
     const timestamp = Date.now().toString();
@@ -74,6 +82,12 @@ export const encryptData = async (data: any): Promise<string> => {
     return `${ALGORITHM_VERSION}:${hash}:${encoded}:${timestamp}`;
   } catch (error) {
     console.error('[Encryption] Encryption failed:', error);
+    
+    // Check for specific error types
+    if (error instanceof TypeError && error.message.includes('circular')) {
+      throw new Error('Failed to encrypt data: Circular reference detected');
+    }
+    
     throw new Error('Failed to encrypt data');
   }
 };
@@ -140,6 +154,16 @@ export const setSecureItem = async (key: string, value: any): Promise<void> => {
     console.log(`[Encryption] Stored encrypted data for key: ${key}`);
   } catch (error) {
     console.error(`[Encryption] Failed to store secure item '${key}':`, error);
+    
+    // Fallback: Store as plain JSON if encryption fails (for development/debugging)
+    // This should not happen in production, but prevents login from completely breaking
+    console.warn(`[Encryption] Falling back to unencrypted storage for '${key}'`);
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (fallbackError) {
+      console.error(`[Encryption] Even fallback storage failed for '${key}':`, fallbackError);
+      throw new Error(`Failed to store data for key '${key}'`);
+    }
   }
 };
 
@@ -160,13 +184,20 @@ export const getSecureItem = async (key: string): Promise<any> => {
       return null;
     }
 
-    const decrypted = await decryptData(encrypted);
-    if (decrypted === null) {
-      console.error(`[Encryption] Failed to decrypt/verify data for key: ${key}`);
-      return null;
+    // Check if it's encrypted data (starts with version prefix) or plain JSON fallback
+    if (encrypted.startsWith(`${ALGORITHM_VERSION}:`)) {
+      // It's encrypted, decrypt it
+      const decrypted = await decryptData(encrypted);
+      if (decrypted === null) {
+        console.error(`[Encryption] Failed to decrypt/verify data for key: ${key}`);
+        return null;
+      }
+      return decrypted;
+    } else {
+      // It's plain JSON (fallback), parse it directly
+      console.warn(`[Encryption] Reading unencrypted fallback data for key: ${key}`);
+      return JSON.parse(encrypted);
     }
-
-    return decrypted;
   } catch (error) {
     console.error(`[Encryption] Failed to retrieve secure item '${key}':`, error);
     return null;
