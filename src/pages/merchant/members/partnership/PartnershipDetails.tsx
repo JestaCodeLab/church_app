@@ -1444,10 +1444,17 @@ const PartnershipDetails = () => {
                   </tr>
                 ) : (
                   paginatedPartners.map((partner) => {
-                    const name = partner.partner
-                      ? `${partner.partner.firstName} ${partner.partner.lastName}`
-                      : 'N/A';
-                    const phone = partner.partner?.phone || 'N/A';
+                    // Get name and phone based on partner type
+                    let name = 'N/A';
+                    let phone = 'N/A';
+                    
+                    if (partner.partnerType === 'member' && partner.member) {
+                      name = `${partner.member.firstName} ${partner.member.lastName}`;
+                      phone = partner.member.phone || 'N/A';
+                    } else if (partner.partner) {
+                      name = `${partner.partner.firstName} ${partner.partner.lastName}`;
+                      phone = partner.partner.phone || 'N/A';
+                    }
 
                     return (
                       <tr key={partner._id}>
@@ -1540,9 +1547,9 @@ const PartnershipDetails = () => {
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
         <div className="space-y-4">
-          {/* Filters */}
+          {/* Filters and Actions */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -1564,29 +1571,22 @@ const PartnershipDetails = () => {
                   <option value="pending">Pending</option>
                   <option value="failed">Failed</option>
                 </select>
+                <button
+                  onClick={() => setShowAddTransactionModal(true)}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Transaction
+                </button>
+                <button
+                  onClick={handleExportTransactions}
+                  disabled={isExporting}
+                  className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 whitespace-nowrap"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {isExporting ? 'Exporting...' : 'Export'}
+                </button>
               </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center flex-wrap gap-3">
-
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto ml-auto">
-              <button
-                onClick={() => setShowAddTransactionModal(true)}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Transaction
-              </button>
-              <button
-                onClick={handleExportTransactions}
-                disabled={isExporting}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {isExporting ? 'Exporting...' : 'Export to Excel'}
-              </button>
             </div>
           </div>
 
