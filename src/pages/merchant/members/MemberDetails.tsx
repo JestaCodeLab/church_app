@@ -19,7 +19,9 @@ import {
   Gem,
   TrendingUp,
   DollarSign,
-  Loader
+  Loader,
+  Coins,
+  Download
 } from 'lucide-react';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -35,13 +37,12 @@ const MemberDetails = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
-  const [transactionSummary, setTransactionSummary] = useState<any>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     fetchMember();
     if (id) {
       fetchTransactions();
-      fetchTransactionSummary();
     }
   }, [id]);
 
@@ -60,22 +61,16 @@ const MemberDetails = () => {
   const fetchTransactions = async () => {
     try {
       setTransactionsLoading(true);
-      const response = await memberAPI.getMemberTransactions(id, { limit: 1000, page: 1 });
+      const response = await memberAPI.getMemberTransactions(id, { 
+        limit: 1000, 
+        page: 1 
+      });
       setTransactions(response.data.data?.transactions || []);
     } catch (error) {
       console.error('Failed to load transactions:', error);
       // Don't show toast to avoid cluttering the UI
     } finally {
       setTransactionsLoading(false);
-    }
-  };
-
-  const fetchTransactionSummary = async () => {
-    try {
-      const response = await memberAPI.getMemberTransactionSummary(id);
-      setTransactionSummary(response.data.data?.summary || null);
-    } catch (error) {
-      console.error('Failed to load transaction summary:', error);
     }
   };
 
@@ -88,6 +83,47 @@ const MemberDetails = () => {
     } catch (error) {
       showToast.error('Failed to delete member');
       setShowDeleteModal(false);
+    }
+  };
+
+  const handleExportTransactions = () => {
+    try {
+      setIsExporting(true);
+      
+      // Prepare CSV data
+      const headers = ['Date', 'Type', 'Reference', 'Amount', 'Currency', 'Status', 'Payment Method'];
+      const rows = transactions.map(tx => [
+        new Date(tx.transactionDate).toLocaleDateString('en-US'),
+        tx.transactionType?.replace(/_/g, ' ').toUpperCase() || 'N/A',
+        tx.event?.title || tx.campaign?.name || tx.programme?.name || '-',
+        tx.amount || 0,
+        tx.currency || 'GHS',
+        tx.status?.charAt(0).toUpperCase() + tx.status?.slice(1) || 'N/A',
+        tx.paymentMethod || 'N/A'
+      ]);
+      
+      // Create CSV content
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+      
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `member_transactions_${member.memberId || id}_${new Date().getTime()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      showToast.success('Transactions exported successfully');
+    } catch (error) {
+      showToast.error('Failed to export transactions');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -160,7 +196,7 @@ const MemberDetails = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-8xl mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <button
@@ -206,7 +242,7 @@ const MemberDetails = () => {
         </div>
 
         {/* Content */}
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-8xl mx-auto px-6 py-8">
           {/* Profile Header Card */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden">
             <div className="h-32 bg-gradient-to-r from-primary-500 to-primary-600"></div>
@@ -392,20 +428,6 @@ const MemberDetails = () => {
                 </div>
               )}
 
-              {/* Notes */}
-              {member.notes && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                      <FileText className="w-5 h-5 mr-2" />
-                      Notes
-                    </h3>
-                  </div>
-                  <div className="p-6">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{member.notes}</p>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Right Column */}
@@ -492,61 +514,44 @@ const MemberDetails = () => {
                 </div>
               )}
 
-              {/* Transaction Summary */}
-              {transactionSummary && (
+              {/* Notes */}
+              {member.notes && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                   <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                      <TrendingUp className="w-5 h-5 mr-2" />
-                      Transaction Summary
+                      <FileText className="w-5 h-5 mr-2" />
+                      Notes
                     </h3>
                   </div>
-                  <div className="p-6 space-y-4">
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 flex items-center">
-                        <DollarSign className="w-4 h-4 mr-1" />
-                        Total Donated
-                      </p>
-                      <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                        {new Intl.NumberFormat('en-US', {
-                          style: 'currency',
-                          currency: transactionSummary.currency || 'GHS'
-                        }).format(transactionSummary.totalPaymentAmount || 0)}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Transaction Count</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                          {transactionSummary.totalPaymentCount || 0}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Average Amount</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                          {new Intl.NumberFormat('en-US', {
-                            style: 'currency',
-                            currency: transactionSummary.currency || 'GHS',
-                            minimumFractionDigits: 2
-                          }).format(transactionSummary.averagePaymentAmount || 0)}
-                        </p>
-                      </div>
-                    </div>
+                  <div className="p-6">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{member.notes}</p>
                   </div>
                 </div>
               )}
+            </div>
+          </div>
 
-              {/* All Transactions Table */}
-              {transactions.length > 0 || transactionsLoading ? (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                      <DollarSign className="w-5 h-5 mr-2" />
-                      All Transactions ({transactions.length})
-                    </h3>
-                  </div>
+          {/* All Transactions Table - Full Width */}
+          <div className="mt-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <Coins className="w-5 h-5 mr-2" />
+                    All Transactions ({transactions.length})
+                  </h3>
+                  {transactions.length > 0 && (
+                    <button
+                      onClick={handleExportTransactions}
+                      disabled={isExporting}
+                      className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {isExporting ? 'Exporting...' : 'Export'}
+                    </button>
+                  )}
+                </div>
 
-                  {transactionsLoading ? (
+                {transactionsLoading ? (
                     <div className="p-6 flex items-center justify-center">
                       <Loader className="w-5 h-5 text-gray-400 animate-spin mr-2" />
                       <p className="text-gray-500 dark:text-gray-400">Loading all transactions...</p>
@@ -587,10 +592,13 @@ const MemberDetails = () => {
                                   {transaction.campaign?.name && (
                                     <p className="font-medium">{transaction.campaign.name}</p>
                                   )}
+                                  {transaction.programme?.name && (
+                                    <p className="font-medium">{transaction.programme.name}</p>
+                                  )}
                                   {transaction.tier?.name && (
                                     <p className="text-xs text-gray-500 dark:text-gray-400">Tier: {transaction.tier.name}</p>
                                   )}
-                                  {!transaction.event?.title && !transaction.campaign?.name && (
+                                  {!transaction.event?.title && !transaction.campaign?.name && !transaction.programme?.name && (
                                     <p className="text-gray-500 dark:text-gray-400">-</p>
                                   )}
                                 </div>
@@ -619,32 +627,14 @@ const MemberDetails = () => {
                       </table>
                     </div>
                   ) : (
-                    <div className="p-6 text-center">
+                    <div className="p-12 text-center">
+                      <Coins className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400">No transactions found</p>
                     </div>
                   )}
                 </div>
-              ) : null}
-
-              {/* Quick Stats */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Member Since
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
-                    {member.membershipDate ? new Date(member.membershipDate).getFullYear() : 'N/A'}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {formatDate(member.membershipDate)}
-                  </p>
-                </div>
               </div>
             </div>
-          </div>
-        </div>
 
         {/* Delete Modal */}
         {showDeleteModal && (

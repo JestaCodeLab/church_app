@@ -45,6 +45,7 @@ import UserMenu from '../components/ui/UserMenu';
 import SubscriptionAlert from '../components/ui/SubscriptionAlert';
 import ChurchSelector from '../components/selectors/ChurchSelector';
 import NotificationCenter from '../components/ui/NotificationCenter';
+import {usePermission} from '../hooks/usePermission';
 
 interface NavigationItem {
   name: string;
@@ -64,6 +65,8 @@ const MerchantLayout = () => {
   const { selectedMerchantId, setSelectedMerchantId, setSelectedMerchantSubdomain } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const activityLogPermission = usePermission('settings.viewActivityLogs');
+  const settingsPermission = usePermission('settings.viewSettings');
 
   // Helper to check if user has permission (all must be present)
   const checkPermission = (permissions?: string[]): boolean => {
@@ -285,6 +288,7 @@ const MerchantLayout = () => {
             requiredPermissions: ['finance.reports'],
             lockedFeature: 'financialReports'
           },
+          
           {
             name: 'Donations',
             href: '/finance/donations',
@@ -570,36 +574,44 @@ const MerchantLayout = () => {
 
         {/* Bottom Links - Fixed at bottom */}
         <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
-          <Link
-            to="/activity-logs"
-            onClick={() => setSidebarOpen(false)}
-            className={`
-              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
-              transition-all duration-200
-              ${isActive('/activity-logs')
-                ? 'bg-primary-600 text-white'
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }
-            `}
-          >
-            <Activity className="w-5 h-5 mr-3" />
-            Activity Logs
-          </Link>
-          <Link
-            to="/settings"
-            onClick={() => setSidebarOpen(false)}
-            className={`
-              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
-              transition-all duration-200
-              ${isActive('/settings')
-                ? 'bg-primary-600 text-white'
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }
-            `}
-          >
-            <Settings className="w-5 h-5 mr-3" />
-            Settings
-          </Link>
+          {
+            (activityLogPermission.hasPermission || activityLogPermission.isSuperAdmin) && (
+              <Link
+                to="/activity-logs"
+                onClick={() => setSidebarOpen(false)}
+                className={`
+                  flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+                  transition-all duration-200
+                  ${isActive('/activity-logs')
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }
+                `}
+              >
+                <Activity className="w-5 h-5 mr-3" />
+                Activity Logs
+              </Link>
+            )
+          }
+          {
+            (settingsPermission.hasPermission || settingsPermission.isSuperAdmin) && (
+            <Link
+              to="/settings"
+              onClick={() => setSidebarOpen(false)}
+              className={`
+                flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+                transition-all duration-200
+                ${isActive('/settings')
+                  ? 'bg-primary-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }
+              `}
+            >
+              <Settings className="w-5 h-5 mr-3" />
+              Settings
+            </Link>
+            )
+          }
         </div>
       </aside>
 
