@@ -34,9 +34,16 @@ const ManageRolesModal: React.FC<ManageRolesModalProps> = ({ onClose }) => {
     try {
       setLoading(true);
       const response = await api.get('/roles');
-      setRoles(response.data.data);
-    } catch (error) {
+      const rolesData = response.data.data;
+      
+      if (!Array.isArray(rolesData)) {
+        throw new Error('Invalid roles data format');
+      }
+      
+      setRoles(rolesData);
+    } catch (error: any) {
       showToast.error('Failed to load roles');
+      console.error('Fetch roles error:', error);
     } finally {
       setLoading(false);
     }
@@ -44,13 +51,21 @@ const ManageRolesModal: React.FC<ManageRolesModalProps> = ({ onClose }) => {
 
   const handleCreateRole = async (roleData: any) => {
     try {
-      await api.post('/roles', roleData);
-      showToast.success('Custom role created successfully');
-      setShowCreateModal(false);
-      setSelectedRole(null);
-      fetchRoles();
+      const response = await api.post('/roles', roleData);
+      
+      if (response.data.success) {
+        showToast.success('Custom role created successfully');
+        setShowCreateModal(false);
+        setSelectedRole(null);
+        fetchRoles();
+      } else {
+        throw new Error(response.data.message || 'Failed to create role');
+      }
     } catch (error: any) {
-      showToast.error(error.response?.data?.message || 'Failed to create role');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create role';
+      showToast.error(errorMessage);
+      console.error('Create role error:', error);
+      throw error; // Re-throw to prevent modal from closing
     }
   };
 
@@ -182,6 +197,11 @@ const ManageRolesModal: React.FC<ManageRolesModalProps> = ({ onClose }) => {
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 {role.description || 'No description'}
                               </p>
+                              <div className="flex items-center gap-3 mt-2">
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  {role.usageCount || 0} {role.usageCount === 1 ? 'user' : 'users'}
+                                </span>
+                              </div>
                             </div>
 
                             <div className="text-right">
@@ -234,10 +254,10 @@ const ManageRolesModal: React.FC<ManageRolesModalProps> = ({ onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
+        <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6 flex justify-end">
           <button
             onClick={onClose}
-            className="w-full px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             Close
           </button>

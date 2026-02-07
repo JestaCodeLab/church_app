@@ -16,13 +16,17 @@ interface CreateRoleModalProps {
   onSave: (roleData: any) => Promise<void>;
 }
 
-type PermissionStructure = Record<string, { category: string; actions: Record<string, string> }>;
+type PermissionStructure = Record<string, { 
+  category: string; 
+  actions: Record<string, string>;
+  permissionIds: Record<string, string>;
+}>;
 
 const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    permissions: {}
+    permissions: {} as Record<string, Record<string, { selected: boolean; permissionId: string }>>
   });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -34,14 +38,23 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave
     const fetchPermissionStructure = async () => {
       try {
         const response = await api.get('/roles/permissions/structure');
-        setPermissionCategories(response.data.data);
-        const firstKey = Object.keys(response.data.data)[0];
+        const structure = response.data.data;
+        
+        if (!structure || Object.keys(structure).length === 0) {
+          throw new Error('Permission structure is empty');
+        }
+        
+        setPermissionCategories(structure);
+        const firstKey = Object.keys(structure)[0];
         setActiveTab(firstKey);
+        
+        const defaultPerms = getDefaultPermissions(structure);
+        
         setFormData(prev => ({
           ...prev,
-          permissions: getDefaultPermissions(response.data.data)
+          permissions: defaultPerms
         }));
-      } catch (error) {
+      } catch (error: any) {
         showToast.error('Failed to load permission structure');
         console.error('Failed to fetch permission structure:', error);
       } finally {
@@ -55,10 +68,29 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave
   // Load role data if editing
   useEffect(() => {
     if (role && Object.keys(permissionCategories).length > 0) {
+      // Convert role permissions to form format
+      const rolePermissionIds = new Set(
+        (role.permissions as any[])?.map((p: any) => 
+          typeof p === 'string' ? p : p.permissionId?._id || p.permissionId
+        ) || []
+      );
+
+      const newPermissions: typeof formData.permissions = {};
+      
+      Object.entries(permissionCategories).forEach(([category, data]) => {
+        newPermissions[category] = {};
+        Object.entries(data.permissionIds).forEach(([action, permId]) => {
+          newPermissions[category][action] = {
+            selected: rolePermissionIds.has(permId),
+            permissionId: permId
+          };
+        });
+      });
+
       setFormData({
         name: role.name,
         description: role.description,
-        permissions: role.permissions as typeof formData.permissions
+        permissions: newPermissions
       });
     }
   }, [role, permissionCategories]);
@@ -78,18 +110,24 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave
         ...prev.permissions,
         [category]: {
           ...prev.permissions[category],
-          [action]: !prev.permissions[category][action]
+          [action]: {
+            ...prev.permissions[category][action],
+            selected: !prev.permissions[category][action].selected
+          }
         }
       }
     }));
   };
 
   const handleSelectAll = (category: string) => {
-    const allEnabled = Object.values(formData.permissions[category]).every(v => v);
+    const allEnabled = Object.values(formData.permissions[category]).every(p => p.selected);
     const newPermissions = { ...formData.permissions };
 
     Object.keys(newPermissions[category]).forEach(action => {
-      newPermissions[category][action] = !allEnabled;
+      newPermissions[category][action] = {
+        ...newPermissions[category][action],
+        selected: !allEnabled
+      };
     });
 
     setFormData(prev => ({
@@ -106,20 +144,36 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave
       return;
     }
 
+    // Extract selected permission IDs
+    const selectedPermissionIds = Object.values(formData.permissions)
+      .flatMap(category => Object.values(category))
+      .filter(p => p.selected)
+      .map(p => p.permissionId);
+
+    if (selectedPermissionIds.length === 0) {
+      showToast.error('Please select at least one permission');
+      return;
+    }
+
     setLoading(true);
     try {
       if (role) {
         await api.put(`/roles/${role._id}`, {
           description: formData.description,
-          permissions: formData.permissions
+          permissions: selectedPermissionIds
         });
         showToast.success('Role updated successfully');
       } else {
-        await onSave(formData);
+        await onSave({
+          name: formData.name,
+          description: formData.description,
+          permissions: selectedPermissionIds
+        });
       }
       onClose();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to save role');
+      console.error('Role save error:', error);
     } finally {
       setLoading(false);
     }
@@ -127,7 +181,7 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave
 
   const currentPermissions = formData.permissions[activeTab] || {};
   const currentCategory = permissionCategories[activeTab];
-  const allSelected = currentCategory && Object.values(currentPermissions).every(v => v);
+  const allSelected = currentCategory && Object.values(currentPermissions).every(p => p.selected);
 
   if (fetching) {
     return (
@@ -225,17 +279,33 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave
 
               {currentCategory && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {Object.entries(currentCategory.actions).map(([action, label]) => (
-                    <label key={action} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white dark:hover:bg-gray-800/50 rounded transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={currentPermissions[action] || false}
-                        onChange={() => handlePermissionToggle(activeTab, action)}
-                        className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                      />
-                      <span className="text-gray-700 dark:text-gray-300">{label}</span>
-                    </label>
-                  ))}
+                  {Object.entries(currentCategory.actions).map(([action, label]) => {
+                    const permissionData = currentPermissions[action];
+                    const displayLabel = permissionData ? label : `${label} (Deleted Permission)`;
+                    const isDeleted = !permissionData;
+                    
+                    return (
+                      <label 
+                        key={action} 
+                        className={`flex items-center gap-3 cursor-pointer p-2 hover:bg-white dark:hover:bg-gray-800/50 rounded transition-colors ${
+                          isDeleted ? 'opacity-50' : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={permissionData?.selected || false}
+                          onChange={() => !isDeleted && handlePermissionToggle(activeTab, action)}
+                          disabled={isDeleted}
+                          className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        <span className={`text-gray-700 dark:text-gray-300 ${
+                          isDeleted ? 'line-through text-red-500 dark:text-red-400' : ''
+                        }`}>
+                          {displayLabel}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -265,12 +335,15 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave
 };
 
 function getDefaultPermissions(structure: PermissionStructure) {
-  const defaultPerms: Record<string, Record<string, boolean>> = {};
+  const defaultPerms: Record<string, Record<string, { selected: boolean; permissionId: string }>> = {};
   
   Object.entries(structure).forEach(([category, data]) => {
     defaultPerms[category] = {};
-    Object.keys(data.actions).forEach(action => {
-      defaultPerms[category][action] = false;
+    Object.entries(data.permissionIds).forEach(([action, permId]) => {
+      defaultPerms[category][action] = {
+        selected: false,
+        permissionId: permId
+      };
     });
   });
   

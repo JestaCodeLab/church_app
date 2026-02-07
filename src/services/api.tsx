@@ -364,8 +364,6 @@ export const memberAPI = {
   // Member Transactions
   getMemberTransactions: (memberId: string, params?: any) =>
     api.get(`/members/${memberId}/transactions`, { params }),
-  getMemberTransactionSummary: (memberId: string) =>
-    api.get(`/members/${memberId}/transaction-summary`),
   getTransactionDetails: (memberId: string, transactionId: string) =>
     api.get(`/members/${memberId}/transactions/${transactionId}`),
 };

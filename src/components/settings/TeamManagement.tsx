@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Trash2, RotateCw, Loader, Shield } from 'lucide-react';
+import { Search, UserPlus, Trash2, Mail, Loader, Shield, Edit2, Users } from 'lucide-react';
 import { teamAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
+import { useAuth } from '../../context/AuthContext';
 import InviteUserModal from '../modals/InviteUserModal';
+import EditTeamMemberModal from '../modals/EditTeamMemberModal';
 import ConfirmModal from '../modals/ConfirmModal';
 import ManageRolesModal from '../roles/ManageRolesModal';
 
@@ -11,7 +13,11 @@ interface TeamMember {
   firstName: string;
   lastName: string;
   email: string;
-  role: string;
+  role: {
+    _id: string;
+    name: string;
+    slug: string;
+  } | string;
   status: string;
   photo?: string;
   isEmailVerified: boolean;
@@ -19,23 +25,23 @@ interface TeamMember {
 }
 
 const TeamManagement = () => {
+  const { fetchAndUpdateSubscription, user } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showManageRoles, setShowManageRoles] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [resendingInvite, setResendingInvite] = useState<string | null>(null);
 
   const roleOptions = [
     { value: 'church_admin', label: 'Admin' },
-    // { value: 'pastor', label: 'Pastor' },
-    // { value: 'leader', label: 'Leader' },
-    // { value: 'elder', label: 'Elder' },
-    // { value: 'deacon', label: 'Deacon' },
   ];
 
   useEffect(() => {
@@ -71,6 +77,11 @@ const TeamManagement = () => {
     }
   };
 
+  const handleEditMember = (member: TeamMember) => {
+    setMemberToEdit(member);
+    setShowEditModal(true);
+  };
+
   const handleRemoveMember = (memberId: string, memberName: string) => {
     setMemberToDelete({ id: memberId, name: memberName });
     setShowDeleteModal(true);
@@ -86,6 +97,8 @@ const TeamManagement = () => {
       setShowDeleteModal(false);
       setMemberToDelete(null);
       fetchTeamMembers();
+      // Refresh subscription data to update usage counter
+      await fetchAndUpdateSubscription();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to remove member');
     } finally {
@@ -95,10 +108,13 @@ const TeamManagement = () => {
 
   const handleResendInvitation = async (memberId: string) => {
     try {
+      setResendingInvite(memberId);
       await teamAPI.resendInvitation(memberId);
       showToast.success('Invitation resent successfully');
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to resend invitation');
+    } finally {
+      setResendingInvite(null);
     }
   };
 
@@ -117,9 +133,19 @@ const TeamManagement = () => {
     );
   };
 
-  const getRoleLabel = (role: string) => {
+  const getRoleLabel = (role: string | { _id: string; name: string; slug: string }) => {
+    if (typeof role === 'object' && role.name) {
+      return role.name;
+    }
     const option = roleOptions.find(r => r.value === role);
-    return option?.label || role;
+    return option?.label || String(role);
+  };
+
+  const getRoleSlug = (role: string | { _id: string; name: string; slug: string }): string => {
+    if (typeof role === 'object' && role?.slug) {
+      return role.slug;
+    }
+    return String(role);
   };
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -128,6 +154,57 @@ const TeamManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Usage Stats */}
+      {user?.merchant?.subscription && (
+        <div className="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Team Members
+                </h3>
+                <div className="flex items-baseline space-x-2 mt-1">
+                  <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    {user.merchant.subscription.usage?.users || 0}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400">/</span>
+                  <span className="text-lg font-medium text-gray-600 dark:text-gray-400">
+                    {user.merchant.subscription.limits?.users === null 
+                      ? 'Unlimited' 
+                      : user.merchant.subscription.limits?.users || 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {user.merchant.subscription.limits?.users !== null && (
+              <div className="flex flex-col items-end">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {Math.round(
+                    ((user.merchant.subscription.usage?.users || 0) / 
+                    (user.merchant.subscription.limits?.users || 1)) * 100
+                  )}% used
+                </span>
+                <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary-500 to-purple-500 transition-all duration-300"
+                    style={{
+                      width: `${Math.min(
+                        ((user.merchant.subscription.usage?.users || 0) / 
+                        (user.merchant.subscription.limits?.users || 1)) * 100,
+                        100
+                      )}%`
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Search and Actions */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
@@ -228,34 +305,40 @@ const TeamManagement = () => {
 
                   {/* Role */}
                   <div className="col-span-3 flex items-center">
-                    <select
-                      value={member.role}
-                      onChange={(e) => handleRoleChange(member._id, e.target.value)}
-                      className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    >
-                      {roleOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <span className="text-gray-900 dark:text-gray-100 font-medium">
+                      {getRoleLabel(member.role)}
+                    </span>
                   </div>
 
                   {/* Actions */}
                   <div className="col-span-3 flex items-center justify-end space-x-2">
+                    <button
+                      onClick={() => handleEditMember(member)}
+                      disabled={member.email === user?.email}
+                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={member.email === user?.email ? "You cannot edit yourself" : "Edit role and permissions"}
+                    >
+                      <Edit2 className="w-5 h-5" />
+                    </button>
                     {member.status === 'pending' && (
                       <button
                         onClick={() => handleResendInvitation(member._id)}
-                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        disabled={resendingInvite === member._id}
+                        className="p-2 text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Resend invitation"
                       >
-                        <RotateCw className="w-5 h-5" />
+                        {resendingInvite === member._id ? (
+                          <Loader className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Mail className="w-5 h-5" />
+                        )}
                       </button>
                     )}
                     <button
                       onClick={() => handleRemoveMember(member._id, `${member.firstName} ${member.lastName}`)}
-                      className="p-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                      title="Remove member"
+                      disabled={member.email === user?.email}
+                      className="p-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={member.email === user?.email ? "You cannot remove yourself" : "Remove member"}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -309,8 +392,26 @@ const TeamManagement = () => {
       {showInviteModal && (
         <InviteUserModal
           onClose={() => setShowInviteModal(false)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setShowInviteModal(false);
+            fetchTeamMembers();
+            // Refresh subscription data to update usage counter
+            await fetchAndUpdateSubscription();
+          }}
+        />
+      )}
+
+      {/* Edit Team Member Modal */}
+      {showEditModal && memberToEdit && (
+        <EditTeamMemberModal
+          member={memberToEdit}
+          onClose={() => {
+            setShowEditModal(false);
+            setMemberToEdit(null);
+          }}
+          onSuccess={() => {
+            setShowEditModal(false);
+            setMemberToEdit(null);
             fetchTeamMembers();
           }}
         />

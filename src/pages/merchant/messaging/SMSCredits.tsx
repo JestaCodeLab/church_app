@@ -455,12 +455,12 @@ const handlePurchase = async (pkg: CreditPackage) => {
                               </span>
                             </div>
                           </div>
-                          <div className="text-right">
+                          {/* <div className="text-right">
                             <p className="text-xs text-gray-600 dark:text-gray-400">Price per SMS</p>
                             <p className="text-lg font-semibold text-gray-900 dark:text-white">
                               {pkg.currency} {pkg.pricePerSMS}
                             </p>
-                          </div>
+                          </div> */}
                         </div>
                       </div>
 

@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
+import PermissionGuard from '../../components/guards/PermissionGuard';
+import { PermissionRoute } from '../../components/guards/PermissionRoute';
 
 interface ActivityLog {
   _id: string;
@@ -141,6 +143,7 @@ const ActivityLogs = () => {
   };
 
   return (
+    <PermissionRoute permission="settings.viewActivityLogs" redirectTo='/settings'>
     <div className="min-h-screen dark:bg-slate-900">
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
@@ -390,6 +393,7 @@ const ActivityLogs = () => {
         </div>
       </main>
     </div>
+    </PermissionRoute>
   );
 };
 
