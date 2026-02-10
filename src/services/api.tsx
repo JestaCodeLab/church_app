@@ -443,6 +443,36 @@ export const adminAPI = {
   updatePermissionCategory: (categoryId: string, data: any) => api.put(`/admin/permission-categories/${categoryId}`, data),
   deletePermissionCategory: (categoryId: string) => api.delete(`/admin/permission-categories/${categoryId}`),
   reorderPermissionCategories: (data: any) => api.post('/admin/permission-categories/reorder', data),
+
+  // Feature Announcements
+  getAnnouncements: (params?: any) => api.get('/admin/announcements', { params }),
+  getAnnouncement: (id: string) => api.get(`/admin/announcements/${id}`),
+  createAnnouncement: (data: any) => api.post('/admin/announcements', data),
+  updateAnnouncement: (id: string, data: any) => api.put(`/admin/announcements/${id}`, data),
+  deleteAnnouncement: (id: string) => api.delete(`/admin/announcements/${id}`),
+  activateAnnouncement: (id: string) => api.patch(`/admin/announcements/${id}/activate`),
+  reorderAnnouncementSlides: (id: string, slideOrder: string[]) =>
+    api.patch(`/admin/announcements/${id}/slides/reorder`, { slideOrder }),
+  uploadSlideImage: (announcementId: string, slideIndex: number, file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post(`/admin/announcements/${announcementId}/slides/${slideIndex}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+
+  // Communications
+  getRecipients: (type?: 'merchants' | 'users') => api.get('/admin/communications/recipients', { params: { type } }),
+  sendBulkSMS: (data: { message: string; recipientIds?: string[]; sendToAll?: boolean }) =>
+    api.post('/admin/communications/send-sms', data),
+  sendBulkEmail: (data: { subject: string; message: string; recipientIds?: string[]; sendToAll?: boolean }) =>
+    api.post('/admin/communications/send-email', data),
+};
+
+// Announcement API (merchant-facing)
+export const announcementAPI = {
+  getActive: () => api.get('/announcements/active'),
+  dismiss: (announcementId: string) => api.post('/announcements/dismiss', { announcementId }),
 };
 
 // Branch API
@@ -766,6 +796,8 @@ export const eventCodeAPI = {
 export const financeAPI = {
   // Overview & Analytics
   getOverview: () => api.get('/finance/overview'),
+  getTrends: (params?: { months?: number; startDate?: string; endDate?: string }) =>
+    api.get('/finance/trends', { params }),
 
   // Income Operations
   income: {
@@ -871,6 +903,13 @@ export const partnershipAPI = {
   // QR Code Generation
   generateQRCode: (id: string, type: 'registration' | 'payment', links: { registrationLink: string; paymentLink: string }) =>
     api.post(`/partnerships/${id}/generate-qr`, { type, ...links }),
+};
+
+// Transaction API (for admin finance overview)
+export const transactionAPI = {
+  getAll: (params?: any) => api.get('/transactions', { params }),
+  getStats: (params?: any) => api.get('/transactions/stats', { params }),
+  getRevenueTrend: (params?: any) => api.get('/transactions/revenue-trend', { params }),
 };
 
 export default api;

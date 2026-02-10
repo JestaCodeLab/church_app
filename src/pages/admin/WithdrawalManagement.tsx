@@ -314,10 +314,10 @@ const WithdrawalManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen dark:bg-slate-900">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 py-2 sm:py-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Withdrawal Management</h1>

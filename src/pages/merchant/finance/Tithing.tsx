@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, AlertCircle, Search, Loader, TrendingUp, Download, MessageCircle, ChevronDown, Filter, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertCircle, Search, Loader, TrendingUp, Download, MessageCircle, ChevronDown, Filter, CheckCircle2, Clock, Calendar } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { financeAPI, memberAPI } from '../../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import toast from 'react-hot-toast';
@@ -211,6 +222,32 @@ const TithingTransactions: React.FC = () => {
     }
   };
 
+  const setQuickDateRange = (range: string) => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    switch (range) {
+      case 'thisMonth':
+        setFilterDateFrom(new Date(y, m, 1).toISOString().split('T')[0]);
+        setFilterDateTo(new Date(y, m + 1, 0).toISOString().split('T')[0]);
+        break;
+      case 'lastMonth':
+        setFilterDateFrom(new Date(y, m - 1, 1).toISOString().split('T')[0]);
+        setFilterDateTo(new Date(y, m, 0).toISOString().split('T')[0]);
+        break;
+      case 'thisQuarter': {
+        const qStart = Math.floor(m / 3) * 3;
+        setFilterDateFrom(new Date(y, qStart, 1).toISOString().split('T')[0]);
+        setFilterDateTo(now.toISOString().split('T')[0]);
+        break;
+      }
+      case 'thisYear':
+        setFilterDateFrom(new Date(y, 0, 1).toISOString().split('T')[0]);
+        setFilterDateTo(now.toISOString().split('T')[0]);
+        break;
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-blue-600" /></div>;
   }
@@ -233,6 +270,32 @@ const TithingTransactions: React.FC = () => {
     return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax && matchesType;
   });
 
+  // Chart data: monthly trend
+  const monthlyData = (() => {
+    const map: Record<string, number> = {};
+    filteredTithes.forEach(t => {
+      const d = new Date(t.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      map[key] = (map[key] || 0) + t.amount;
+    });
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, amount]) => {
+        const [y, m] = key.split('-');
+        return { month: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), amount };
+      });
+  })();
+
+  // Chart data: member vs guest breakdown
+  const typeBreakdownData = (() => {
+    const statusMap: Record<string, number> = {};
+    filteredTithes.forEach(t => {
+      const label = t.isGuest ? 'Guest' : 'Member';
+      statusMap[label] = (statusMap[label] || 0) + t.amount;
+    });
+    return Object.entries(statusMap).map(([type, amount]) => ({ type, amount }));
+  })();
+
   return (
     <div className="space-y-3 dark:bg-gray-900 min-h-screen">
       {/* Header */}
@@ -251,6 +314,48 @@ const TithingTransactions: React.FC = () => {
             Record Tithe
           </button>
         </div>
+      </div>
+
+      {/* Date Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 rounded-xl px-4 py-2.5 border border-gray-200 dark:border-gray-700">
+        <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
+        <input
+          type="date"
+          value={filterDateFrom}
+          onChange={(e) => setFilterDateFrom(e.target.value)}
+          className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        />
+        <span className="text-gray-400 text-sm">to</span>
+        <input
+          type="date"
+          value={filterDateTo}
+          onChange={(e) => setFilterDateTo(e.target.value)}
+          className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        />
+        <div className="flex gap-1 ml-2">
+          {[
+            { label: 'This Month', key: 'thisMonth' },
+            { label: 'Last Month', key: 'lastMonth' },
+            { label: 'This Quarter', key: 'thisQuarter' },
+            { label: 'This Year', key: 'thisYear' },
+          ].map(p => (
+            <button
+              key={p.key}
+              onClick={() => setQuickDateRange(p.key)}
+              className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        {(filterDateFrom || filterDateTo) && (
+          <button
+            onClick={() => { setFilterDateFrom(''); setFilterDateTo(''); }}
+            className="ml-auto px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          >
+            Clear dates
+          </button>
+        )}
       </div>
 
       {/* Stat Cards */}
@@ -295,6 +400,48 @@ const TithingTransactions: React.FC = () => {
               <Clock className="h-7 w-7 text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Tithe Trend</h3>
+          {monthlyData.length > 1 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={monthlyData}>
+                <defs>
+                  <linearGradient id="titheGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="dark:opacity-20" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
+                <Tooltip formatter={(value: number) => [formatCurrencyValue(value), 'Tithes']} contentStyle={{ backgroundColor: 'rgba(255,255,255,0.95)', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px' }} />
+                <Area type="monotone" dataKey="amount" stroke="#3B82F6" strokeWidth={2} fill="url(#titheGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[260px] text-gray-400 text-sm">Not enough data for trend</div>
+          )}
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Member vs Guest</h3>
+          {typeBreakdownData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={typeBreakdownData} margin={{ left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" className="dark:opacity-20" />
+                <XAxis dataKey="type" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
+                <Tooltip formatter={(value: number) => [formatCurrencyValue(value), 'Amount']} contentStyle={{ backgroundColor: 'rgba(255,255,255,0.95)', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px' }} />
+                <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[260px] text-gray-400 text-sm">No data</div>
+          )}
         </div>
       </div>
 
@@ -354,28 +501,6 @@ const TithingTransactions: React.FC = () => {
                   <option value="pending">Pending</option>
                   <option value="failed">Failed</option>
                 </select>
-              </div>
-
-              {/* Date From */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">From</label>
-                <input 
-                  type="date" 
-                  value={filterDateFrom}
-                  onChange={(e) => setFilterDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              {/* Date To */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">To</label>
-                <input 
-                  type="date" 
-                  value={filterDateTo}
-                  onChange={(e) => setFilterDateTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
               </div>
 
               {/* Amount Min */}
