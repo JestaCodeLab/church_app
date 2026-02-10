@@ -640,8 +640,10 @@ const PartnershipDetails = () => {
       ];
 
       console.log('Combined search results:', combined);
+      console.log('Combined length:', combined.length);
 
       setMemberSearchResults(combined);
+      console.log('State updated with', combined.length, 'results');
     } catch (error: any) {
       console.error('Error searching members and partners:', error);
       setMemberSearchResults([]);
@@ -2257,9 +2259,27 @@ const PartnershipDetails = () => {
                           {/* Member/Partner Search Results Dropdown */}
                           {showMemberSearchResults && memberSearchQuery.length >= 2 && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50">
+                              {(() => {
+                                console.log('Rendering dropdown. memberSearchResults:', memberSearchResults);
+                                console.log('memberSearchResults.length:', memberSearchResults.length);
+                                console.log('Is Array?:', Array.isArray(memberSearchResults));
+                                console.log('Condition check (length > 0):', memberSearchResults.length > 0);
+                                return null;
+                              })()}
                               {memberSearchResults.length > 0 ? (
                                 <ul className="max-h-48 overflow-y-auto">
-                                  {memberSearchResults.map((item: any) => (
+                                  {(() => {
+                                    console.log('About to map over results. Count:', memberSearchResults.length);
+                                    console.log('First item:', memberSearchResults[0]);
+                                    return null;
+                                  })()}
+                                  {memberSearchResults.map((item: any) => {
+                                    console.log('Mapping item:', item);
+                                    console.log('Item type:', item.type);
+                                    console.log('Item _id:', item._id);
+                                    console.log('Item firstName:', item.firstName);
+                                    console.log('Item lastName:', item.lastName);
+                                    return (
                                     <li key={item._id}>
                                       <button
                                         type="button"
@@ -2291,7 +2311,7 @@ const PartnershipDetails = () => {
                                         </div>
                                       </button>
                                     </li>
-                                  ))}
+                                  )})}
                                 </ul>
                               ) : (
                                 <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
