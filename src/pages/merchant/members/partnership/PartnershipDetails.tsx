@@ -2253,54 +2253,54 @@ const PartnershipDetails = () => {
                           {searchingMembers && (
                             <Loader2 className="absolute right-3 top-2.5 w-5 h-5 animate-spin text-gray-500" />
                           )}
-                        </div>
 
-                        {/* Member/Partner Search Results Dropdown */}
-                        {showMemberSearchResults && memberSearchQuery.length >= 2 && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50">
-                            {memberSearchResults.length > 0 ? (
-                              <ul className="max-h-48 overflow-y-auto">
-                                {memberSearchResults.map((item: any) => (
-                                  <li key={item._id}>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        handleSelectMember(item);
-                                        setShowMemberSearchResults(false);
-                                      }}
-                                      className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0 text-sm"
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <div>
-                                          <div className="font-medium text-gray-900 dark:text-gray-100">
-                                            {item.type === 'partner'
-                                              ? `${item.partner.firstName} ${item.partner.lastName}`
-                                              : `${item.firstName} ${item.lastName}`
-                                            }
+                          {/* Member/Partner Search Results Dropdown */}
+                          {showMemberSearchResults && memberSearchQuery.length >= 2 && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50">
+                              {memberSearchResults.length > 0 ? (
+                                <ul className="max-h-48 overflow-y-auto">
+                                  {memberSearchResults.map((item: any) => (
+                                    <li key={item._id}>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          handleSelectMember(item);
+                                          setShowMemberSearchResults(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0 text-sm"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                                              {item.type === 'partner'
+                                                ? `${item.partner.firstName} ${item.partner.lastName}`
+                                                : `${item.firstName} ${item.lastName}`
+                                              }
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              {item.type === 'partner'
+                                                ? item.partner.phone
+                                                : item.phone
+                                              }
+                                              {item.type === 'partner' && item.tier?.name && ` • Tier: ${item.tier.name}`}
+                                            </div>
                                           </div>
-                                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                                            {item.type === 'partner'
-                                              ? item.partner.phone
-                                              : item.phone
-                                            }
-                                            {item.type === 'partner' && item.tier?.name && ` • Tier: ${item.tier.name}`}
-                                          </div>
+                                          <span className="ml-2 px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded">
+                                            {item.type === 'partner' ? 'Partner' : 'Member'}
+                                          </span>
                                         </div>
-                                        <span className="ml-2 px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded">
-                                          {item.type === 'partner' ? 'Partner' : 'Member'}
-                                        </span>
-                                      </div>
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                                No members or partners found
-                              </div>
-                            )}
-                          </div>
-                        )}
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                                  No members or partners found
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
                   </div>
