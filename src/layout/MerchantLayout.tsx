@@ -46,6 +46,9 @@ import SubscriptionAlert from '../components/ui/SubscriptionAlert';
 import ChurchSelector from '../components/selectors/ChurchSelector';
 import NotificationCenter from '../components/ui/NotificationCenter';
 import {usePermission} from '../hooks/usePermission';
+import { announcementAPI } from '../services/api';
+import { Announcement } from '../types/announcement';
+import FeatureAnnouncementModal from '../components/modals/FeatureAnnouncementModal';
 
 interface NavigationItem {
   name: string;
@@ -67,6 +70,40 @@ const MerchantLayout = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const activityLogPermission = usePermission('settings.viewActivityLogs');
   const settingsPermission = usePermission('settings.viewSettings');
+
+  // Feature announcement state
+  const [activeAnnouncement, setActiveAnnouncement] = useState<Announcement | null>(null);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      try {
+        const response = await announcementAPI.getActive();
+        const announcement = response.data.data.announcement;
+        if (announcement) {
+          setActiveAnnouncement(announcement);
+          setShowAnnouncementModal(true);
+        }
+      } catch (error) {
+        // Silently fail — announcement modal is not critical
+        console.error('Failed to fetch announcement:', error);
+      }
+    };
+
+    fetchAnnouncement();
+  }, []);
+
+  const handleDismissAnnouncement = async () => {
+    if (!activeAnnouncement) return;
+    try {
+      await announcementAPI.dismiss(activeAnnouncement._id);
+    } catch (error) {
+      // Still close even if dismiss API fails
+      console.error('Failed to dismiss announcement:', error);
+    }
+    setShowAnnouncementModal(false);
+    setActiveAnnouncement(null);
+  };
 
   // Helper to check if user has permission (all must be present)
   const checkPermission = (permissions?: string[]): boolean => {
@@ -261,7 +298,7 @@ const MerchantLayout = () => {
             href: '/finance/income',
             icon: TrendingUp,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.income'],
+            requiredPermissions: ['finance.viewIncome'],
             lockedFeature: 'incomeTracking'
           },
           {
@@ -269,7 +306,7 @@ const MerchantLayout = () => {
             href: '/finance/expenses',
             icon: Receipt,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.expenses'],
+            requiredPermissions: ['finance.viewExpenses'],
             lockedFeature: 'expenseTracking'
           },
           {
@@ -277,7 +314,7 @@ const MerchantLayout = () => {
             href: '/finance/tithing',
             icon: Coins,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.tithing'],
+            requiredPermissions: ['finance.viewTithing'],
             lockedFeature: 'tithingManagement'
           },
           {
@@ -285,16 +322,16 @@ const MerchantLayout = () => {
             href: '/finance/reports',
             icon: FileChartColumn,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.reports'],
+            requiredPermissions: ['finance.viewReports'],
             lockedFeature: 'financialReports'
           },
-          
+
           {
             name: 'Donations',
             href: '/finance/donations',
             icon: HandHeart,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.donations'],
+            requiredPermissions: ['finance.viewDonations'],
             lockedFeature: 'financeDonations'
           },
           {
@@ -302,8 +339,16 @@ const MerchantLayout = () => {
             href: '/finance/wallet',
             icon: Wallet,
             requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.wallet'],
+            requiredPermissions: ['finance.viewWallet'],
             lockedFeature: 'financeWallet'
+          },
+          {
+            name: 'All Transactions',
+            href: '/finance/transactions',
+            icon: Receipt,
+            requiresFeature: 'financialManagement',
+            requiredPermissions: ['finance.viewTransactions'],
+            lockedFeature: null
           }
         ]
       },
@@ -697,6 +742,14 @@ const MerchantLayout = () => {
           </div>
         </main>
       </div>
+
+      {/* Feature Announcement Modal */}
+      {showAnnouncementModal && activeAnnouncement && (
+        <FeatureAnnouncementModal
+          announcement={activeAnnouncement}
+          onDismiss={handleDismissAnnouncement}
+        />
+      )}
     </div>
   );
 };

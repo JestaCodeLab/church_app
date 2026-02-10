@@ -28,10 +28,8 @@ import OnboardingRoute from '../../routes/OnboardingRoute';
 import Branches from '../../pages/merchant/branches/AllBranches';
 import NewBranch from '../../pages/merchant/branches/NewBranch';
 import BranchDetails from '../../pages/merchant/branches/BranchDetails';
-import { Edit } from 'lucide-react';
 import EditBranch from '../../pages/merchant/branches/EditBranch';
 import AdminFeatures from '../../pages/admin/AdminFeatures';
-import AdminBranches from '../../pages/admin/AdminBranches';
 import AdminMerchantDetails from '../../pages/admin/AdminMerchantDetails';
 import AdminUserDetails from '../../pages/admin/AdminUserDetails';
 import OnboardingSuccess from '../onboarding/OnboardingSuccess';
@@ -64,9 +62,7 @@ import SendSMS from '../../pages/merchant/messaging/SendSMS';
 import SMSTemplates from '../../pages/merchant/messaging/SMSTemplates';
 import SMSHistory from '../../pages/merchant/messaging/SMSHistory';
 import SMSCredits from '../../pages/merchant/messaging/SMSCredits';
-import SMSStatistics from '../../pages/admin/sms/AdminSMSStatistics';
 import SMSPackages from '../../pages/admin/sms/AdminSMSPackages';
-import AdminSMSBalance from '../../pages/admin/sms/AdminSMSBalance';
 import Birthdays from '../../pages/merchant/members/Birthdays';
 import BranchMembers from '../../pages/merchant/branches/BranchMembers';
 import BirthdaySettings from '../../pages/merchant/members/BirthdaySettings';
@@ -92,6 +88,8 @@ import TithingTransactions from '../../pages/merchant/finance/Tithing';
 import LandingPage from '../../pages/website/LandingPage';
 import AuthRedirect from '../../pages/auth/AuthRedirect';
 import AdminRolesPage from '../../pages/admin/AdminRolesPage';
+import AdminAnnouncements from '../../pages/admin/AdminAnnouncements';
+import AdminComms from '../../pages/admin/AdminComms';
 import Donations from '../../pages/merchant/finance/Donations';
 import CampaignDetails from '../../pages/merchant/finance/CampaignDetails';
 import Wallet from '../../pages/merchant/finance/Wallet';
@@ -99,6 +97,8 @@ import ActivityLogs from '../../pages/merchant/ActivityLogs';
 import WithdrawalManagement from '../../pages/admin/WithdrawalManagement';
 import SermonManagement from '../../pages/merchant/sermons/SermonManagement';
 import TransactionManagement from '../../pages/admin/TransactionManagement';
+import AdminFinanceOverview from '../../pages/admin/FinanceOverview';
+import AllTransactions from '../../pages/merchant/AllTransactions';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -247,6 +247,7 @@ const AnimatedRoutes = () => {
             <Route path="/finance/tithing" element={<TithingTransactions />} />
             <Route path="/finance/donations" element={<Donations />} />
             <Route path="/finance/donations/:campaignId" element={<CampaignDetails />} />
+            <Route path="/finance/transactions" element={<AllTransactions />} />
 
             {/* Sermon Routes */}
             <Route path="/sermons" element={<SermonManagement />} />
@@ -267,7 +268,6 @@ const AnimatedRoutes = () => {
             <Route path="/admin/churches/:id" element={<AdminMerchantDetails />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/users/:id" element={<AdminUserDetails />} />
-            <Route path="/admin/branches" element={<AdminBranches />} />
             <Route path="/admin/features" element={<AdminFeatures />} />
 
             {/* Plans */}
@@ -285,16 +285,18 @@ const AnimatedRoutes = () => {
             {/* ✅ NEW: Messaging Routes */}
             <Route path="/admin/sender-ids" element={<AdminSenderIds />} />
             <Route path="/admin/sms-packages" element={<SMSPackages />} />
-            <Route path="/admin/sms-statistics" element={<SMSStatistics />} />
-            <Route path="/admin/sms-balance" element={<AdminSMSBalance />} />
 
             {/* Roles & Permissions */}
             <Route path="/admin/roles" element={<AdminRolesPage />} />
 
             {/* Finance Management */}
+            <Route path="/admin/finance-overview" element={<AdminFinanceOverview />} />
             <Route path="/admin/transactions" element={<TransactionManagement />} />
             <Route path="/admin/withdrawals" element={<WithdrawalManagement />} />
 
+            {/* Announcements */}
+            <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+            <Route path="/admin/comms" element={<AdminComms />} />
             <Route path="/admin/logs" element={<AdminLogs />} />
           </Route>
         </Route>

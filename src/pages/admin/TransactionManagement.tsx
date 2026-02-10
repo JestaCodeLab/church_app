@@ -15,7 +15,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import api from '../../services/api';
+import api, { adminAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/currency';
 import { format } from 'date-fns';
 
@@ -77,10 +77,24 @@ const TransactionManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [merchants, setMerchants] = useState<Array<{ _id: string; name: string; subdomain: string }>>([]);
+  const [merchantFilter, setMerchantFilter] = useState('');
+
+  useEffect(() => {
+    const fetchMerchants = async () => {
+      try {
+        const res = await adminAPI.getAllMerchants({ limit: 500, status: 'active' });
+        setMerchants(res.data.data.merchants || []);
+      } catch (error) {
+        console.error('Failed to fetch merchants:', error);
+      }
+    };
+    fetchMerchants();
+  }, []);
 
   useEffect(() => {
     fetchTransactions();
-  }, [currentPage, statusFilter, typeFilter, paymentMethodFilter, startDate, endDate]);
+  }, [currentPage, statusFilter, typeFilter, paymentMethodFilter, startDate, endDate, merchantFilter]);
 
   const fetchTransactions = async () => {
     try {
@@ -93,7 +107,8 @@ const TransactionManagement: React.FC = () => {
         ...(typeFilter && { transactionType: typeFilter }),
         ...(paymentMethodFilter && { paymentMethod: paymentMethodFilter }),
         ...(startDate && { startDate }),
-        ...(endDate && { endDate })
+        ...(endDate && { endDate }),
+        ...(merchantFilter && { merchant: merchantFilter })
       });
 
       const res = await api.get(`/transactions?${params}`);
@@ -118,7 +133,8 @@ const TransactionManagement: React.FC = () => {
         ...(statusFilter && { status: statusFilter }),
         ...(typeFilter && { transactionType: typeFilter }),
         ...(startDate && { startDate }),
-        ...(endDate && { endDate })
+        ...(endDate && { endDate }),
+        ...(merchantFilter && { merchant: merchantFilter })
       });
 
       window.open(`${api.defaults.baseURL}/transactions/export?${params}`, '_blank');
@@ -134,6 +150,7 @@ const TransactionManagement: React.FC = () => {
     setStartDate('');
     setEndDate('');
     setSearchTerm('');
+    setMerchantFilter('');
     setCurrentPage(1);
   };
 
@@ -157,7 +174,7 @@ const TransactionManagement: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -278,7 +295,31 @@ const TransactionManagement: React.FC = () => {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Church Filter */}
+            {merchants.length > 0 && (
+              <div className="sm:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Church
+                </label>
+                <select
+                  value={merchantFilter}
+                  onChange={(e) => {
+                    setMerchantFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                >
+                  <option value="">All Churches (Platform-wide)</option>
+                  {merchants.map((m) => (
+                    <option key={m._id} value={m._id}>
+                      {m.name} ({m.subdomain})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Status
@@ -337,25 +378,29 @@ const TransactionManagement: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Date Range
+                Start Date
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                />
-              </div>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              />
             </div>
 
-            <div className="lg:col-span-4 flex justify-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              />
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-3 flex justify-end">
               <button
                 onClick={clearFilters}
                 className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"

@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Trash2, Edit2, Plus, Loader, Download, Search, Inbox, Check, AlertCircle, DollarSign, BarChart3, TrendingDown, ThumbsUp, X, Filter, ChevronDown, CheckCircle2, Clock, MessageSquare, AlertTriangle, History } from 'lucide-react';
+import { Trash2, Edit2, Plus, Loader, Download, Search, Inbox, Check, AlertCircle, DollarSign, BarChart3, TrendingDown, ThumbsUp, X, Filter, ChevronDown, CheckCircle2, Clock, MessageSquare, AlertTriangle, History, Calendar } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { financeAPI } from '../../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import toast from 'react-hot-toast';
@@ -242,11 +253,65 @@ const Expenses: React.FC = () => {
     }
   };
 
+  const setQuickDateRange = (range: string) => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    switch (range) {
+      case 'thisMonth':
+        setFilterDateFrom(new Date(y, m, 1).toISOString().split('T')[0]);
+        setFilterDateTo(new Date(y, m + 1, 0).toISOString().split('T')[0]);
+        break;
+      case 'lastMonth':
+        setFilterDateFrom(new Date(y, m - 1, 1).toISOString().split('T')[0]);
+        setFilterDateTo(new Date(y, m, 0).toISOString().split('T')[0]);
+        break;
+      case 'thisQuarter': {
+        const qStart = Math.floor(m / 3) * 3;
+        setFilterDateFrom(new Date(y, qStart, 1).toISOString().split('T')[0]);
+        setFilterDateTo(now.toISOString().split('T')[0]);
+        break;
+      }
+      case 'thisYear':
+        setFilterDateFrom(new Date(y, 0, 1).toISOString().split('T')[0]);
+        setFilterDateTo(now.toISOString().split('T')[0]);
+        break;
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-blue-600" /></div>;
   }
 
   const formatCurrencyValue = (value: number) => formatCurrency(value, getMerchantCurrency());
+
+  // Chart data: monthly trend
+  const monthlyData = (() => {
+    const map: Record<string, number> = {};
+    filteredExpenses.forEach(e => {
+      const d = new Date(e.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      map[key] = (map[key] || 0) + e.amount;
+    });
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, amount]) => {
+        const [y, m] = key.split('-');
+        return { month: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), amount };
+      });
+  })();
+
+  // Chart data: by category
+  const categoryData = (() => {
+    const map: Record<string, number> = {};
+    filteredExpenses.forEach(e => { map[e.category] = (map[e.category] || 0) + e.amount; });
+    return Object.entries(map)
+      .sort(([, a], [, b]) => b - a)
+      .map(([cat, amount]) => ({
+        category: cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        amount,
+      }));
+  })();
 
   return (
     <div className="space-y-3 dark:bg-gray-900 min-h-screen">
@@ -270,6 +335,48 @@ const Expenses: React.FC = () => {
           </button>
           </PermissionGuard>
         </div>
+      </div>
+
+      {/* Date Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 rounded-xl px-4 py-2.5 border border-gray-200 dark:border-gray-700">
+        <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
+        <input
+          type="date"
+          value={filterDateFrom}
+          onChange={(e) => setFilterDateFrom(e.target.value)}
+          className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        />
+        <span className="text-gray-400 text-sm">to</span>
+        <input
+          type="date"
+          value={filterDateTo}
+          onChange={(e) => setFilterDateTo(e.target.value)}
+          className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        />
+        <div className="flex gap-1 ml-2">
+          {[
+            { label: 'This Month', key: 'thisMonth' },
+            { label: 'Last Month', key: 'lastMonth' },
+            { label: 'This Quarter', key: 'thisQuarter' },
+            { label: 'This Year', key: 'thisYear' },
+          ].map(p => (
+            <button
+              key={p.key}
+              onClick={() => setQuickDateRange(p.key)}
+              className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        {(filterDateFrom || filterDateTo) && (
+          <button
+            onClick={() => { setFilterDateFrom(''); setFilterDateTo(''); }}
+            className="ml-auto px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          >
+            Clear dates
+          </button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -314,6 +421,48 @@ const Expenses: React.FC = () => {
               <Clock className="h-7 w-7 text-violet-600 dark:text-violet-400" strokeWidth={2.5} />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Expense Trend</h3>
+          {monthlyData.length > 1 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={monthlyData}>
+                <defs>
+                  <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="dark:opacity-20" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
+                <Tooltip formatter={(value: number) => [formatCurrencyValue(value), 'Expenses']} contentStyle={{ backgroundColor: 'rgba(255,255,255,0.95)', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px' }} />
+                <Area type="monotone" dataKey="amount" stroke="#EF4444" strokeWidth={2} fill="url(#expenseGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[260px] text-gray-400 text-sm">Not enough data for trend</div>
+          )}
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">By Category</h3>
+          {categoryData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={categoryData} layout="vertical" margin={{ left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" className="dark:opacity-20" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
+                <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={90} />
+                <Tooltip formatter={(value: number) => [formatCurrencyValue(value), 'Amount']} contentStyle={{ backgroundColor: 'rgba(255,255,255,0.95)', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px' }} />
+                <Bar dataKey="amount" fill="#EF4444" radius={[0, 4, 4, 0]} barSize={18} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[260px] text-gray-400 text-sm">No category data</div>
+          )}
         </div>
       </div>
 
@@ -390,27 +539,6 @@ const Expenses: React.FC = () => {
                     <option key={method} value={method}>{method.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>
                   ))}
                 </select>
-              </div>
-
-              {/* Date Range */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">From</label>
-                <input 
-                  type="date" 
-                  value={filterDateFrom}
-                  onChange={(e) => setFilterDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">To</label>
-                <input 
-                  type="date" 
-                  value={filterDateTo}
-                  onChange={(e) => setFilterDateTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
               </div>
 
               {/* Amount Range */}
