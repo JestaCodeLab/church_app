@@ -29,6 +29,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     const [volume, setVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
     const [waveform, setWaveform] = useState<number[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
     // Generate waveform visualization
     useEffect(() => {
@@ -40,14 +41,44 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         generateWaveform();
     }, []);
 
-    const handlePlayPause = () => {
-        if (audioRef.current) {
+    // Validate audio source
+    useEffect(() => {
+        if (!src) {
+            setError('No audio source provided');
+        } else {
+            setError(null);
+        }
+    }, [src]);
+
+    const handlePlayPause = async () => {
+        if (!audioRef.current) return;
+        
+        if (error) {
+            console.error('Cannot play: ', error);
+            return;
+        }
+
+        try {
             if (isPlaying) {
                 audioRef.current.pause();
+                setIsPlaying(false);
             } else {
-                audioRef.current.play();
+                const playPromise = audioRef.current.play();
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            setIsPlaying(true);
+                        })
+                        .catch((err) => {
+                            console.error('Error playing audio:', err);
+                            setError(`Playback error: ${err.message}`);
+                            setIsPlaying(false);
+                        });
+                }
             }
-            setIsPlaying(!isPlaying);
+        } catch (err: any) {
+            console.error('Error toggling playback:', err);
+            setError(err.message);
         }
     };
 
@@ -60,7 +91,36 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     const handleLoadedMetadata = () => {
         if (audioRef.current) {
             setDuration(audioRef.current.duration);
+            setError(null);
         }
+    };
+
+    const handleAudioError = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+        const audioElement = e.currentTarget;
+        let errorMessage = 'Unknown audio error';
+
+        if (audioElement.error) {
+            switch (audioElement.error.code) {
+                case audioElement.error.MEDIA_ERR_ABORTED:
+                    errorMessage = 'Audio loading was aborted';
+                    break;
+                case audioElement.error.MEDIA_ERR_NETWORK:
+                    errorMessage = 'Network error while loading audio';
+                    break;
+                case audioElement.error.MEDIA_ERR_DECODE:
+                    errorMessage = 'Audio format not supported or corrupted';
+                    break;
+                case audioElement.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                    errorMessage = 'Audio source not supported';
+                    break;
+                default:
+                    errorMessage = 'Unable to load audio';
+            }
+        }
+
+        console.error('Audio error:', errorMessage, 'Source:', src);
+        setError(errorMessage);
+        setIsPlaying(false);
     };
 
     const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,8 +201,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         }
     };
 
-    const progress = duration ? (currentTime / duration) * 100 : 0;
-
     return (
         <div className={`bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-gray-700 ${className}`}>
             <audio
@@ -151,6 +209,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={() => setIsPlaying(false)}
+                onError={handleAudioError}
+                crossOrigin="anonymous"
             />
 
             {/* Header with Badge and Close Button */}
@@ -168,6 +228,15 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                     </button>
                 )}
             </div>
+
+            {/* Error Message */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
+                    <p className="text-sm text-red-800 dark:text-red-200">
+                        <span className="font-semibold">Error:</span> {error}
+                    </p>
+                </div>
+            )}
 
             {/* Title and Metadata */}
             <div className="mb-2">
@@ -211,7 +280,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                     {/* Play Button */}
                     <button
                         onClick={handlePlayPause}
-                        className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        disabled={!!error}
+                        className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPlaying ? (
                             <Pause className="w-7 h-7" />
@@ -228,7 +298,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                     audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
                                 }
                             }}
-                            className="w-10 h-10 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors"
+                            disabled={!!error}
+                            className="w-10 h-10 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Skip back 10s"
                         >
                             <SkipBack className="w-5 h-5" />
@@ -239,7 +310,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                     audioRef.current.currentTime = Math.min(duration, audioRef.current.currentTime + 30);
                                 }
                             }}
-                            className="w-10 h-10 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors"
+                            disabled={!!error}
+                            className="w-10 h-10 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Skip forward 30s"
                         >
                             <SkipForward className="w-5 h-5" />
@@ -252,20 +324,22 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-fit">
                         {formatTime(currentTime)}
                     </span>
-                    <div className="flex-1 relative h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden cursor-pointer group" onClick={(e) => {
-                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                        const percent = (e.clientX - rect.left) / rect.width;
-                        if (audioRef.current) {
+                    <div 
+                        className="flex-1 relative h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden cursor-pointer group" 
+                        onClick={(e) => {
+                            if (error || !audioRef.current) return;
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            const percent = (e.clientX - rect.left) / rect.width;
                             audioRef.current.currentTime = percent * duration;
-                        }
-                    }}>
+                        }}
+                    >
                         <div
                             className="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full transition-all"
-                            style={{ width: `${progress}%` }}
+                            style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
                         />
                         <div
                             className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white dark:bg-blue-400 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
+                            style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }}
                         />
                     </div>
                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-fit">

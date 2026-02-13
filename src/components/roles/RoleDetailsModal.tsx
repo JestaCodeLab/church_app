@@ -89,7 +89,8 @@ const RoleDetailsModal: React.FC<RoleDetailsModalProps> = ({ role, onClose }) =>
     }
     // Fallback to action name formatted nicely
     const action = perm.action || perm;
-    return action.replace(/([A-Z])/g, ' $1').trim();
+    const actionStr = typeof action === 'string' ? action : String(action);
+    return actionStr.replace(/([A-Z])/g, ' $1').trim();
   };
 
   // Helper function to get category label

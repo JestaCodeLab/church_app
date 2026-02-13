@@ -49,6 +49,9 @@ const PartnershipProgrammes = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
   const [stats, setStats] = useState({
     total: 0,
@@ -62,7 +65,7 @@ const PartnershipProgrammes = () => {
 
   useEffect(() => {
     fetchProgrammes();
-  }, [statusFilter]);
+  }, [statusFilter, dateFilter, customStartDate, customEndDate]);
 
   const fetchProgrammes = async () => {
     setLoading(true);
@@ -70,6 +73,64 @@ const PartnershipProgrammes = () => {
       const params: any = {};
       if (statusFilter !== 'all') {
         params.status = statusFilter;
+      }
+
+      // Add date filter
+      if (dateFilter !== 'all') {
+        const now = new Date();
+        let startDate: Date | null = null;
+        let endDate: Date | null = null;
+
+        switch (dateFilter) {
+          case 'today':
+            startDate = new Date(now.setHours(0, 0, 0, 0));
+            endDate = new Date(now.setHours(23, 59, 59, 999));
+            break;
+          case 'yesterday':
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            startDate = new Date(yesterday.setHours(0, 0, 0, 0));
+            endDate = new Date(yesterday.setHours(23, 59, 59, 999));
+            break;
+          case 'thisWeek':
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            startDate = new Date(weekStart.setHours(0, 0, 0, 0));
+            endDate = new Date();
+            break;
+          case 'lastWeek':
+            const lastWeekEnd = new Date(now);
+            lastWeekEnd.setDate(now.getDate() - now.getDay() - 1);
+            const lastWeekStart = new Date(lastWeekEnd);
+            lastWeekStart.setDate(lastWeekEnd.getDate() - 6);
+            startDate = new Date(lastWeekStart.setHours(0, 0, 0, 0));
+            endDate = new Date(lastWeekEnd.setHours(23, 59, 59, 999));
+            break;
+          case 'thisMonth':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date();
+            break;
+          case 'lastMonth':
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            startDate = lastMonth;
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+            break;
+          case 'thisYear':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date();
+            break;
+          case 'lastYear':
+            startDate = new Date(now.getFullYear() - 1, 0, 1);
+            endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
+            break;
+          case 'custom':
+            if (customStartDate) startDate = new Date(customStartDate);
+            if (customEndDate) endDate = new Date(customEndDate);
+            break;
+        }
+
+        if (startDate) params.startDate = startDate.toISOString();
+        if (endDate) params.endDate = endDate.toISOString();
       }
 
       const response = await partnershipAPI.getAll(params);
@@ -246,6 +307,24 @@ const PartnershipProgrammes = () => {
               />
             </div>
 
+            {/* Date Filter */}
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="thisWeek">This Week</option>
+              <option value="lastWeek">Last Week</option>
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+              <option value="thisYear">This Year</option>
+              <option value="lastYear">Last Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+
             {/* Status Filter */}
             <select
               value={statusFilter}
@@ -259,6 +338,36 @@ const PartnershipProgrammes = () => {
               <option value="completed">Completed</option>
             </select>
           </div>
+
+          {/* Custom Date Range */}
+          {dateFilter === 'custom' && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

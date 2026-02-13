@@ -1178,18 +1178,24 @@ const PermissionMatrix: React.FC<{ permissions: any }> = ({
             {categoryNames[category] || category}
           </h4>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {Object.entries(actions as any).map(([action, enabled]) => (
-              <div
-                key={action}
-                className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                  enabled
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                    : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                }`}
-              >
-                {action.replace(/([A-Z])/g, ' $1').trim()}
-              </div>
-            ))}
+            {Object.entries(actions as any).map(([action, enabled]) => {
+              const actionLabel = typeof action === 'string' 
+                ? action.replace(/([A-Z])/g, ' $1').trim()
+                : String(action);
+              
+              return (
+                <div
+                  key={action}
+                  className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                    enabled
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                  }`}
+                >
+                  {actionLabel}
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}

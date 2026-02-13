@@ -69,6 +69,13 @@ const PublicPartnershipPayment = () => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  
+  // Member search states
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [memberSearchResults, setMemberSearchResults] = useState<any[]>([]);
+  const [searchingMembers, setSearchingMembers] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [showMemberSearch, setShowMemberSearch] = useState(false);
 
   useEffect(() => {
     loadProgramme();
@@ -150,6 +157,53 @@ const PublicPartnershipPayment = () => {
     }
   };
 
+  const searchMembers = async (query: string) => {
+    if (!query || query.trim().length < 2) {
+      setMemberSearchResults([]);
+      return;
+    }
+
+    try {
+      setSearchingMembers(true);
+      const response = await partnershipAPI.searchPublicMembers(merchantId!, query);
+      setMemberSearchResults(response.data.data.members || []);
+    } catch (error: any) {
+      console.error('Error searching members:', error);
+      setMemberSearchResults([]);
+    } finally {
+      setSearchingMembers(false);
+    }
+  };
+
+  const handleSelectMember = (member: any) => {
+    setSelectedMember(member);
+    setFullName(`${member.firstName} ${member.lastName}`);
+    setPhone(member.phone);
+    setEmail(member.email || email);
+    setMemberSearchQuery('');
+    setMemberSearchResults([]);
+    setShowMemberSearch(false);
+    showToast.success(`Welcome back, ${member.firstName}!`);
+  };
+
+  const handleClearMember = () => {
+    setSelectedMember(null);
+    setFullName('');
+    setPhone('');
+    setEmail(programme?.merchant.email || '');
+  };
+
+  // Debounce member search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (memberSearchQuery && memberSearchQuery.trim().length >= 2 && !selectedMember) {
+        searchMembers(memberSearchQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [memberSearchQuery, selectedMember]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -188,7 +242,8 @@ const PublicPartnershipPayment = () => {
           lastName: fullName.split(' ').slice(1).join(' ') || '',
           phone,
           email,
-          amount
+          amount,
+          memberId: selectedMember?._id || null // Include memberId if member selected
         }
       );
 
@@ -260,41 +315,162 @@ const PublicPartnershipPayment = () => {
           <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Make a Partnership Contribution</h3>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-                />
+            {/* Member Search Section - Always Visible */}
+            {!selectedMember && !showMemberSearch && (
+              <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
+                <div className="flex items-center mb-3">
+                  <User className="w-5 h-5 text-purple-600 dark:text-purple-400 mr-2" />
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Are you already a member? Search for your profile <span className="text-red-500">*</span>
+                  </p>
+                </div>
+                
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search by name or phone number..."
+                    value={memberSearchQuery}
+                    onChange={(e) => {
+                      setMemberSearchQuery(e.target.value);
+                      if (!e.target.value.trim()) {
+                        setMemberSearchResults([]);
+                      }
+                    }}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+                  />
+                  {searchingMembers && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-purple-600" />
+                  )}
+                </div>
+                
+                {/* Search Results */}
+                {memberSearchResults.length > 0 && (
+                  <div className="mt-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {memberSearchResults.map((member) => (
+                      <button
+                        key={member._id}
+                        type="button"
+                        onClick={() => handleSelectMember(member)}
+                        className="w-full text-left px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b border-gray-100 dark:border-gray-600 last:border-b-0 transition-colors"
+                      >
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {member.firstName} {member.lastName}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                          {member.phone} {member.email && `• ${member.email}`}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {!searchingMembers && memberSearchQuery.length >= 2 && memberSearchResults.length === 0 && (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    No members found. Continue as a guest below.
+                  </p>
+                )}
+                
+                <button
+                  type="button"
+                  onClick={() => setShowMemberSearch(true)}
+                  className="mt-3 w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  Continue as Guest
+                </button>
               </div>
-            </div>
+            )}
 
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Phone Number <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Enter your phone number"
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100"
-                />
+            {/* Member Selected Confirmation */}
+            {selectedMember && (
+              <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Welcome back, {selectedMember.firstName}!
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                        {selectedMember.phone}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearMember}
+                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
+                  >
+                    Change
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Hidden fields for member - populated in background */}
+            {selectedMember && (
+              <>
+                <input type="hidden" value={fullName} readOnly />
+                <input type="hidden" value={phone} readOnly />
+              </>
+            )}
+
+            {/* Guest Mode Section */}
+            {showMemberSearch && (
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Guest Information
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMemberSearch(false);
+                      setFullName('');
+                      setPhone('');
+                    }}
+                    className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium"
+                  >
+                    I'm a member
+                  </button>
+                </div>
+                
+                {/* Full Name */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Enter your phone number"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Email - Hidden field, pre-filled with merchant email */}
             <input

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Trash2, Edit2, Plus, Loader, Download, Search, Inbox, Check, AlertCircle, DollarSign, BarChart3, TrendingDown, ThumbsUp, X, Filter, ChevronDown, CheckCircle2, Clock, MessageSquare, AlertTriangle, History, Calendar } from 'lucide-react';
 import {
   AreaChart,
@@ -38,6 +38,10 @@ const Expenses: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalApprovedAmount, setTotalApprovedAmount] = useState(0);
+  const [stats, setStats] = useState({ totalApprovedAmount: 0, approvedCount: 0, pendingCount: 0, total: 0 });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -63,17 +67,62 @@ const Expenses: React.FC = () => {
 
   useEffect(() => {
     fetchExpenses();
-  }, []);
+  }, [page]);
+
+  const handleApplyFilters = () => {
+    setPage(1);
+    fetchExpenses();
+  };
+
+  const handleClearDateFilters = () => {
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setPage(1);
+    setTimeout(() => {
+      fetchExpenses();
+    }, 0);
+  };
+
+  const handleClearAllFilters = () => {
+    setFilterCategory('');
+    setFilterStatus('');
+    setFilterPaymentMethod('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setFilterAmountMin('');
+    setFilterAmountMax('');
+    setSearchQuery('');
+    setPage(1);
+    setTimeout(() => {
+      fetchExpenses();
+    }, 0);
+  };
 
   const fetchExpenses = async () => {
     try {
       setLoading(true);
-      const response = await financeAPI.expenses.getAll();
-      const data = response.data.data || [];
-      setExpenses(Array.isArray(data) ? data : data.expenses || []);
-      // Get total approved amount from API
-      if (response.data.totalApprovedAmount !== undefined) {
-        setTotalApprovedAmount(response.data.totalApprovedAmount);
+      const params: any = { page, limit: 20 };
+      
+      // Add filter parameters to API call
+      if (searchQuery) params.search = searchQuery;
+      if (filterCategory) params.category = filterCategory;
+      if (filterStatus) params.status = filterStatus;
+      if (filterPaymentMethod) params.paymentMethod = filterPaymentMethod;
+      if (filterDateFrom) params.startDate = filterDateFrom;
+      if (filterDateTo) params.endDate = filterDateTo;
+      if (filterAmountMin) params.minAmount = parseFloat(filterAmountMin);
+      if (filterAmountMax) params.maxAmount = parseFloat(filterAmountMax);
+      
+      const response = await financeAPI.expenses.getAll(params);
+      const data = Array.isArray(response.data.data) ? response.data.data : response.data.data?.expenses || [];
+      setExpenses(data);
+      setTotalPages(response.data.data?.pagination?.pages || 1);
+      setTotalCount(response.data.data?.pagination?.total || data.length);
+      
+      // Use stats from API response
+      if (response.data.stats) {
+        setStats(response.data.stats);
+        setTotalApprovedAmount(response.data.stats.totalApprovedAmount);
       }
     } catch (err) {
       toast.error('Failed to fetch expenses');
@@ -190,32 +239,8 @@ const Expenses: React.FC = () => {
   // Calculate metrics
   const thisMonthExpenses = expenses.filter(e => new Date(e.date).getMonth() === new Date().getMonth()).reduce((sum, e) => sum + e.amount, 0);
 
-  const filteredExpenses = expenses.filter(e => {
-    // Search filter
-    const matchesSearch = e.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Category filter
-    const matchesCategory = !filterCategory || e.category === filterCategory;
-    
-    // Status filter
-    const matchesStatus = !filterStatus || e.status === filterStatus;
-    
-    // Payment method filter
-    const matchesPaymentMethod = !filterPaymentMethod || e.paymentMethod === filterPaymentMethod;
-    
-    // Date range filter
-    const expenseDate = new Date(e.date);
-    const matchesDateFrom = !filterDateFrom || expenseDate >= new Date(filterDateFrom);
-    const matchesDateTo = !filterDateTo || expenseDate <= new Date(filterDateTo);
-    
-    // Amount range filter
-    const matchesAmountMin = !filterAmountMin || e.amount >= parseFloat(filterAmountMin);
-    const matchesAmountMax = !filterAmountMax || e.amount <= parseFloat(filterAmountMax);
-    
-    return matchesSearch && matchesCategory && matchesStatus && matchesPaymentMethod && 
-           matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax;
-  });
+  // Use API-filtered data directly (no client-side filtering needed)
+  const filteredExpenses = expenses;
 
   const toggleSelectAll = () => {
     if (selectedIds.size === filteredExpenses.length) {
@@ -257,26 +282,38 @@ const Expenses: React.FC = () => {
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
+    let from = '';
+    let to = '';
+    
     switch (range) {
       case 'thisMonth':
-        setFilterDateFrom(new Date(y, m, 1).toISOString().split('T')[0]);
-        setFilterDateTo(new Date(y, m + 1, 0).toISOString().split('T')[0]);
+        from = new Date(y, m, 1).toISOString().split('T')[0];
+        to = new Date(y, m + 1, 0).toISOString().split('T')[0];
         break;
       case 'lastMonth':
-        setFilterDateFrom(new Date(y, m - 1, 1).toISOString().split('T')[0]);
-        setFilterDateTo(new Date(y, m, 0).toISOString().split('T')[0]);
+        from = new Date(y, m - 1, 1).toISOString().split('T')[0];
+        to = new Date(y, m, 0).toISOString().split('T')[0];
         break;
       case 'thisQuarter': {
         const qStart = Math.floor(m / 3) * 3;
-        setFilterDateFrom(new Date(y, qStart, 1).toISOString().split('T')[0]);
-        setFilterDateTo(now.toISOString().split('T')[0]);
+        from = new Date(y, qStart, 1).toISOString().split('T')[0];
+        to = now.toISOString().split('T')[0];
         break;
       }
       case 'thisYear':
-        setFilterDateFrom(new Date(y, 0, 1).toISOString().split('T')[0]);
-        setFilterDateTo(now.toISOString().split('T')[0]);
+        from = new Date(y, 0, 1).toISOString().split('T')[0];
+        to = now.toISOString().split('T')[0];
         break;
     }
+    
+    setFilterDateFrom(from);
+    setFilterDateTo(to);
+    setPage(1);
+    
+    // Fetch with the new dates
+    setTimeout(() => {
+      fetchExpenses();
+    }, 0);
   };
 
   if (loading) {
@@ -285,20 +322,46 @@ const Expenses: React.FC = () => {
 
   const formatCurrencyValue = (value: number) => formatCurrency(value, getMerchantCurrency());
 
-  // Chart data: monthly trend
+  // Chart data: intelligent grouping (daily if < 60 days, monthly if >= 60 days)
   const monthlyData = (() => {
-    const map: Record<string, number> = {};
-    filteredExpenses.forEach(e => {
-      const d = new Date(e.date);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      map[key] = (map[key] || 0) + e.amount;
-    });
-    return Object.entries(map)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, amount]) => {
-        const [y, m] = key.split('-');
-        return { month: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), amount };
+    if (filteredExpenses.length === 0) return [];
+
+    // Determine date range
+    const dates = filteredExpenses.map(e => new Date(e.date));
+    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    const daysDiff = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Use daily grouping if date range is less than 60 days, otherwise use monthly
+    if (daysDiff < 60) {
+      // Daily grouping
+      const map: Record<string, number> = {};
+      filteredExpenses.forEach(e => {
+        const d = new Date(e.date);
+        const key = d.toISOString().split('T')[0]; // YYYY-MM-DD format
+        map[key] = (map[key] || 0) + e.amount;
       });
+      return Object.entries(map)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, amount]) => ({
+          month: new Date(key).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          amount
+        }));
+    } else {
+      // Monthly grouping
+      const map: Record<string, number> = {};
+      filteredExpenses.forEach(e => {
+        const d = new Date(e.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        map[key] = (map[key] || 0) + e.amount;
+      });
+      return Object.entries(map)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, amount]) => {
+          const [y, m] = key.split('-');
+          return { month: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), amount };
+        });
+    }
   })();
 
   // Chart data: by category
@@ -338,22 +401,37 @@ const Expenses: React.FC = () => {
       </div>
 
       {/* Date Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 rounded-xl px-4 py-2.5 border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 rounded-xl px-4 py-3 border border-gray-200 dark:border-gray-700">
         <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
-        <input
-          type="date"
-          value={filterDateFrom}
-          onChange={(e) => setFilterDateFrom(e.target.value)}
-          className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
-        <span className="text-gray-400 text-sm">to</span>
-        <input
-          type="date"
-          value={filterDateTo}
-          onChange={(e) => setFilterDateTo(e.target.value)}
-          className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
-        <div className="flex gap-1 ml-2">
+        
+        {/* Date Range Inputs */}
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={(e) => setFilterDateFrom(e.target.value)}
+            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <span className="text-gray-400 text-sm">to</span>
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={(e) => setFilterDateTo(e.target.value)}
+            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          
+          {/* Search/Apply Button */}
+          <button
+            onClick={handleApplyFilters}
+            className="ml-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+          >
+            <Search className="h-4 w-4" />
+            Search
+          </button>
+        </div>
+
+        {/* Quick Filters - Moved to Right */}
+        <div className="flex gap-1 ml-auto">
           {[
             { label: 'This Month', key: 'thisMonth' },
             { label: 'Last Month', key: 'lastMonth' },
@@ -362,19 +440,23 @@ const Expenses: React.FC = () => {
           ].map(p => (
             <button
               key={p.key}
-              onClick={() => setQuickDateRange(p.key)}
+              onClick={() => {
+                setQuickDateRange(p.key);
+              }}
               className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
             >
               {p.label}
             </button>
           ))}
         </div>
+
+        {/* Clear Button */}
         {(filterDateFrom || filterDateTo) && (
           <button
-            onClick={() => { setFilterDateFrom(''); setFilterDateTo(''); }}
-            className="ml-auto px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            onClick={handleClearDateFilters}
+            className="px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
           >
-            Clear dates
+            Clear
           </button>
         )}
       </div>
@@ -386,7 +468,7 @@ const Expenses: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-red-700 dark:text-red-400 uppercase tracking-wide">Total Spent</p>
-              <p className="text-3xl font-bold text-red-900 dark:text-red-100 mt-2">{formatCurrencyValue(totalApprovedAmount)}</p>
+              <p className="text-3xl font-bold text-red-900 dark:text-red-100 mt-2">{formatCurrencyValue(stats.totalApprovedAmount)}</p>
               <p className="text-xs text-red-600 dark:text-red-300 mt-3 font-semibold">+8% vs last month</p>
             </div>
             <div className="bg-red-200 dark:bg-red-800/50 p-4 rounded-xl">
@@ -400,8 +482,8 @@ const Expenses: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-green-700 dark:text-green-400 uppercase tracking-wide">Approved</p>
-              <p className="text-3xl font-bold text-green-900 dark:text-green-100 mt-2">{expenses.filter(e => e.status === 'approved').length}</p>
-              <p className="text-xs text-green-600 dark:text-green-300 mt-3">{((expenses.filter(e => e.status === 'approved').length / expenses.length) * 100 || 0).toFixed(0)}% of total</p>
+              <p className="text-3xl font-bold text-green-900 dark:text-green-100 mt-2">{stats.approvedCount}</p>
+              <p className="text-xs text-green-600 dark:text-green-300 mt-3">{stats.total > 0 ? ((stats.approvedCount / stats.total) * 100).toFixed(0) : 0}% of total</p>
             </div>
             <div className="bg-green-200 dark:bg-green-800/50 p-4 rounded-xl">
               <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" strokeWidth={2.5} />
@@ -414,7 +496,7 @@ const Expenses: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-violet-700 dark:text-violet-400 uppercase tracking-wide">Pending</p>
-              <p className="text-3xl font-bold text-violet-900 dark:text-violet-100 mt-2">{expenses.filter(e => e.status === 'pending').length}</p>
+              <p className="text-3xl font-bold text-violet-900 dark:text-violet-100 mt-2">{stats.pendingCount}</p>
               <p className="text-xs text-violet-600 dark:text-violet-300 mt-3">Awaiting approval</p>
             </div>
             <div className="bg-violet-200 dark:bg-violet-800/50 p-4 rounded-xl">
@@ -428,7 +510,7 @@ const Expenses: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Expense Trend</h3>
-          {monthlyData.length > 1 ? (
+          {monthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={monthlyData}>
                 <defs>
@@ -475,6 +557,11 @@ const Expenses: React.FC = () => {
             placeholder="Search by vendor or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleApplyFilters();
+              }
+            }}
             className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder-gray-500"
           />
           <button 
@@ -570,22 +657,14 @@ const Expenses: React.FC = () => {
             {/* Filter Actions */}
             <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button 
-                onClick={() => {
-                  setFilterCategory('');
-                  setFilterStatus('');
-                  setFilterPaymentMethod('');
-                  setFilterDateFrom('');
-                  setFilterDateTo('');
-                  setFilterAmountMin('');
-                  setFilterAmountMax('');
-                }}
+                onClick={handleClearAllFilters}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium transition-colors"
               >
                 Clear All
               </button>
               <div className="flex-1" />
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400 py-2 px-4">
-                {filteredExpenses.length} result{filteredExpenses.length !== 1 ? 's' : ''}
+                {stats.total} result{stats.total !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -758,6 +837,35 @@ const Expenses: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Showing page <span className="font-semibold">{page}</span> of <span className="font-semibold">{totalPages}</span> 
+                  <span className="ml-4">Total: <span className="font-semibold">{totalCount}</span> records</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 px-2">
+                    Page {page}
+                  </span>
+                  <button
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <div className="p-12 text-center">

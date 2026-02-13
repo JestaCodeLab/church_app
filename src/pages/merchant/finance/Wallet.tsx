@@ -61,8 +61,14 @@ interface WithdrawalRequest {
 interface WalletStats {
   availableBalance: number;
   totalCollected: number;
-  campaignDonations: number;
-  eventDonations: number;
+  breakdown?: {
+    digitalOfferings: number;
+    partnerships: number;
+    campaigns: number;
+    events: number;
+  };
+  campaignDonations?: number;
+  eventDonations?: number;
   totalWithdrawn: number;
   pendingWithdrawals: number;
   lastPayoutDate?: string;
@@ -78,8 +84,12 @@ const Wallet = () => {
   const [stats, setStats] = useState<WalletStats>({
     availableBalance: 0,
     totalCollected: 0,
-    campaignDonations: 0,
-    eventDonations: 0,
+    breakdown: {
+      digitalOfferings: 0,
+      partnerships: 0,
+      campaigns: 0,
+      events: 0
+    },
     totalWithdrawn: 0,
     pendingWithdrawals: 0,
     lastPayoutDate: undefined,
@@ -499,6 +509,80 @@ const Wallet = () => {
             </div>
           </div>
         </div>
+
+        {/* Revenue Sources Breakdown */}
+        {stats.breakdown && (
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6">
+              Revenue by Source
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Digital Offerings */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="bg-emerald-100 dark:bg-emerald-900/30 p-3 rounded-lg">
+                    <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Digital Offerings</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(stats.breakdown.digitalOfferings, merchantCurrency)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Tithes, offerings & pledges
+                </p>
+              </div>
+
+              {/* Campaigns */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
+                    <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Campaigns</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(stats.breakdown.campaigns, merchantCurrency)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Fundraising campaigns
+                </p>
+              </div>
+
+              {/* Partnerships */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
+                    <Building className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Partnerships</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(stats.breakdown.partnerships, merchantCurrency)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Partnership programmes
+                </p>
+              </div>
+
+              {/* Events */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg">
+                    <Download className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Events</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(stats.breakdown.events, merchantCurrency)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Event donations
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Payment Methods */}
         <div className="mb-6 sm:mb-8">
