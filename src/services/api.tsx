@@ -888,6 +888,8 @@ export const partnershipAPI = {
   // Public Routes (no auth required)
   getPublicProgramme: (merchantId: string, programmeId: string) =>
     api.get(`/partnerships/public/${merchantId}/${programmeId}`),
+  searchPublicMembers: (merchantId: string, query: string) =>
+    api.get(`/partnerships/public/${merchantId}/search-members`, { params: { q: query } }),
   registerPublicPartner: (merchantId: string, programmeId: string, data: any) =>
     api.post(`/partnerships/public/${merchantId}/${programmeId}/register`, data),
 
@@ -898,7 +900,7 @@ export const partnershipAPI = {
 
   // Statistics
   refreshStats: (id: string) => api.post(`/partnerships/${id}/refresh`),
-  getTierBreakdown: (id: string) => api.get(`/partnerships/${id}/tier-breakdown`),
+  getTierBreakdown: (id: string, params?: any) => api.get(`/partnerships/${id}/tier-breakdown`, { params }),
 
   // QR Code Generation
   generateQRCode: (id: string, type: 'registration' | 'payment', links: { registrationLink: string; paymentLink: string }) =>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Plus, Edit2, Trash2, AlertCircle, Search, Loader, TrendingUp, Download, MessageCircle, ChevronDown, Filter, CheckCircle2, Clock, Calendar } from 'lucide-react';
 import {
   AreaChart,
@@ -272,18 +272,44 @@ const TithingTransactions: React.FC = () => {
 
   // Chart data: monthly trend
   const monthlyData = (() => {
-    const map: Record<string, number> = {};
-    filteredTithes.forEach(t => {
-      const d = new Date(t.date);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      map[key] = (map[key] || 0) + t.amount;
-    });
-    return Object.entries(map)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, amount]) => {
-        const [y, m] = key.split('-');
-        return { month: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), amount };
+    if (filteredTithes.length === 0) return [];
+
+    // Determine date range
+    const dates = filteredTithes.map(t => new Date(t.date));
+    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    const daysDiff = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Use daily grouping if date range is less than 60 days, otherwise use monthly
+    if (daysDiff < 60) {
+      // Daily grouping
+      const map: Record<string, number> = {};
+      filteredTithes.forEach(t => {
+        const d = new Date(t.date);
+        const key = d.toISOString().split('T')[0]; // YYYY-MM-DD format
+        map[key] = (map[key] || 0) + t.amount;
       });
+      return Object.entries(map)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, amount]) => ({
+          month: new Date(key).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          amount
+        }));
+    } else {
+      // Monthly grouping
+      const map: Record<string, number> = {};
+      filteredTithes.forEach(t => {
+        const d = new Date(t.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        map[key] = (map[key] || 0) + t.amount;
+      });
+      return Object.entries(map)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, amount]) => {
+          const [y, m] = key.split('-');
+          return { month: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), amount };
+        });
+    }
   })();
 
   // Chart data: member vs guest breakdown
@@ -407,7 +433,7 @@ const TithingTransactions: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Tithe Trend</h3>
-          {monthlyData.length > 1 ? (
+          {monthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={monthlyData}>
                 <defs>

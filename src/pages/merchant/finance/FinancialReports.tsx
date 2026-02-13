@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, Filter, TrendingUp, TrendingDown, DollarSign, Calendar, FileText, Loader, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { financeAPI } from '../../../services/api';
+import { getMerchantCurrency } from '../../../utils/currency';
 import toast from 'react-hot-toast';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -130,7 +131,7 @@ const FinancialReports: React.FC = () => {
   const formatCurrency = (value: number) => 
     new Intl.NumberFormat('en-US', { 
       style: 'currency', 
-      currency: 'USD', 
+      currency: getMerchantCurrency(), 
       minimumFractionDigits: 0 
     }).format(value);
 

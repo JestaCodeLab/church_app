@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Plus, Edit2, Trash2, AlertCircle, Search, Loader, Inbox, Check, TrendingUp, DollarSign, BarChart3, Target, Filter, ChevronDown, CheckCircle2, Clock, Download, Calendar } from 'lucide-react';
 import {
   AreaChart,
@@ -25,6 +25,7 @@ interface Income {
   description: string;
   date: string;
   status: 'verified' | 'pending' | 'failed';
+  paymentMethod?: string;
 }
 
 const INCOME_CATEGORIES = [
@@ -42,6 +43,7 @@ const Income: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [stats, setStats] = useState({ totalAmount: 0, verifiedCount: 0, pendingCount: 0, total: 0 });
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -52,6 +54,7 @@ const Income: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [filterAmountMin, setFilterAmountMin] = useState('');
@@ -62,20 +65,67 @@ const Income: React.FC = () => {
     source: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
+    paymentMethod: 'cash',
   });
 
   useEffect(() => {
     fetchIncome();
   }, [page]);
 
+  const handleApplyFilters = () => {
+    setPage(1);
+    fetchIncome();
+  };
+
+  const handleClearDateFilters = () => {
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setPage(1);
+    setTimeout(() => {
+      fetchIncome();
+    }, 0);
+  };
+
+  const handleClearAllFilters = () => {
+    setFilterCategory('');
+    setFilterStatus('');
+    setFilterPaymentMethod('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setFilterAmountMin('');
+    setFilterAmountMax('');
+    setSearchQuery('');
+    setPage(1);
+    setTimeout(() => {
+      fetchIncome();
+    }, 0);
+  };
+
   const fetchIncome = async () => {
     try {
       setLoading(true);
-      const response = await financeAPI.income.getAll({ page, limit: 20 });
+      const params: any = { page, limit: 20 };
+      
+      // Add filter parameters to API call
+      if (searchQuery) params.search = searchQuery;
+      if (filterCategory) params.category = filterCategory;
+      if (filterStatus) params.status = filterStatus;
+      if (filterPaymentMethod) params.paymentMethod = filterPaymentMethod;
+      if (filterDateFrom) params.startDate = filterDateFrom;
+      if (filterDateTo) params.endDate = filterDateTo;
+      if (filterAmountMin) params.minAmount = parseFloat(filterAmountMin);
+      if (filterAmountMax) params.maxAmount = parseFloat(filterAmountMax);
+      
+      const response = await financeAPI.income.getAll(params);
       const data = Array.isArray(response.data.data) ? response.data.data : response.data.data?.income || [];
       setIncomeList(data);
       setTotalPages(response.data.data?.pagination?.pages || 1);
       setTotalCount(response.data.data?.pagination?.total || data.length);
+      
+      // Use stats from API response
+      if (response.data.stats) {
+        setStats(response.data.stats);
+      }
     } catch (err) {
       toast.error('Failed to load income records');
     } finally {
@@ -95,7 +145,7 @@ const Income: React.FC = () => {
       }
       setShowModal(false);
       setEditingId(null);
-      setFormData({ category: '', amount: '', source: '', description: '', date: new Date().toISOString().split('T')[0] });
+      setFormData({ category: '', amount: '', source: '', description: '', date: new Date().toISOString().split('T')[0], paymentMethod: 'cash' });
       fetchIncome();
     } catch (err) {
       toast.error('Failed to save income');
@@ -181,68 +231,85 @@ const Income: React.FC = () => {
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
+    let from = '';
+    let to = '';
+    
     switch (range) {
       case 'thisMonth':
-        setFilterDateFrom(new Date(y, m, 1).toISOString().split('T')[0]);
-        setFilterDateTo(new Date(y, m + 1, 0).toISOString().split('T')[0]);
+        from = new Date(y, m, 1).toISOString().split('T')[0];
+        to = new Date(y, m + 1, 0).toISOString().split('T')[0];
         break;
       case 'lastMonth':
-        setFilterDateFrom(new Date(y, m - 1, 1).toISOString().split('T')[0]);
-        setFilterDateTo(new Date(y, m, 0).toISOString().split('T')[0]);
+        from = new Date(y, m - 1, 1).toISOString().split('T')[0];
+        to = new Date(y, m, 0).toISOString().split('T')[0];
         break;
       case 'thisQuarter': {
         const qStart = Math.floor(m / 3) * 3;
-        setFilterDateFrom(new Date(y, qStart, 1).toISOString().split('T')[0]);
-        setFilterDateTo(now.toISOString().split('T')[0]);
+        from = new Date(y, qStart, 1).toISOString().split('T')[0];
+        to = now.toISOString().split('T')[0];
         break;
       }
       case 'thisYear':
-        setFilterDateFrom(new Date(y, 0, 1).toISOString().split('T')[0]);
-        setFilterDateTo(now.toISOString().split('T')[0]);
+        from = new Date(y, 0, 1).toISOString().split('T')[0];
+        to = now.toISOString().split('T')[0];
         break;
     }
+    
+    setFilterDateFrom(from);
+    setFilterDateTo(to);
+    setPage(1);
+    
+    // Fetch with the new dates
+    setTimeout(() => {
+      fetchIncome();
+    }, 0);
   };
 
   if (loading) return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-blue-600" /></div>;
 
-  const filteredIncome = incomeList.filter(i => {
-    // Search filter
-    const matchesSearch = i.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      i.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Category filter
-    const matchesCategory = !filterCategory || i.category === filterCategory;
-    
-    // Status filter
-    const matchesStatus = !filterStatus || i.status === filterStatus;
-    
-    // Date range filter
-    const incomeDate = new Date(i.date);
-    const matchesDateFrom = !filterDateFrom || incomeDate >= new Date(filterDateFrom);
-    const matchesDateTo = !filterDateTo || incomeDate <= new Date(filterDateTo);
-    
-    // Amount range filter
-    const matchesAmountMin = !filterAmountMin || i.amount >= parseFloat(filterAmountMin);
-    const matchesAmountMax = !filterAmountMax || i.amount <= parseFloat(filterAmountMax);
-    
-    return matchesSearch && matchesCategory && matchesStatus &&
-           matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax;
-  });
+  // Use API-filtered data directly (no client-side filtering needed)
+  const filteredIncome = incomeList;
 
-  // Chart data: monthly trend
+  // Chart data: intelligent grouping (daily if < 60 days, monthly if >= 60 days)
   const monthlyData = (() => {
-    const map: Record<string, number> = {};
-    filteredIncome.forEach(i => {
-      const d = new Date(i.date);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      map[key] = (map[key] || 0) + i.amount;
-    });
-    return Object.entries(map)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, amount]) => {
-        const [y, m] = key.split('-');
-        return { month: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), amount };
+    if (filteredIncome.length === 0) return [];
+
+    // Determine date range
+    const dates = filteredIncome.map(i => new Date(i.date));
+    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    const daysDiff = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Use daily grouping if date range is less than 60 days, otherwise use monthly
+    if (daysDiff < 60) {
+      // Daily grouping
+      const map: Record<string, number> = {};
+      filteredIncome.forEach(i => {
+        const d = new Date(i.date);
+        const key = d.toISOString().split('T')[0]; // YYYY-MM-DD format
+        map[key] = (map[key] || 0) + i.amount;
       });
+      return Object.entries(map)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, amount]) => ({
+          month: new Date(key).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          amount
+        }));
+    } else {
+      // Monthly grouping
+      const map: Record<string, number> = {};
+      filteredIncome.forEach(i => {
+        const d = new Date(i.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        map[key] = (map[key] || 0) + i.amount;
+      });
+      return Object.entries(map)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, amount]) => {
+          const [y, m] = key.split('-');
+          return { month: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), amount };
+        });
+    }
   })();
 
   // Chart data: by category
@@ -277,7 +344,7 @@ const Income: React.FC = () => {
           </button>
           </PermissionGuard>
           <PermissionGuard permission="finance.addIncome">
-          <button onClick={() => { setEditingId(null); setFormData({ category: '', amount: '', source: '', description: '', date: new Date().toISOString().split('T')[0] }); setShowModal(true); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+          <button onClick={() => { setEditingId(null); setFormData({ category: '', amount: '', source: '', description: '', date: new Date().toISOString().split('T')[0], paymentMethod: 'cash' }); setShowModal(true); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
             <Plus className="h-4 w-4" />
             Add Income
           </button>
@@ -286,22 +353,37 @@ const Income: React.FC = () => {
       </div>
 
       {/* Date Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 rounded-xl px-4 py-2.5 border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 rounded-xl px-4 py-3 border border-gray-200 dark:border-gray-700">
         <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
-        <input
-          type="date"
-          value={filterDateFrom}
-          onChange={(e) => setFilterDateFrom(e.target.value)}
-          className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
-        <span className="text-gray-400 text-sm">to</span>
-        <input
-          type="date"
-          value={filterDateTo}
-          onChange={(e) => setFilterDateTo(e.target.value)}
-          className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
-        <div className="flex gap-1 ml-2">
+        
+        {/* Date Range Inputs */}
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={(e) => setFilterDateFrom(e.target.value)}
+            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <span className="text-gray-400 text-sm">to</span>
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={(e) => setFilterDateTo(e.target.value)}
+            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          
+          {/* Search/Apply Button */}
+          <button
+            onClick={handleApplyFilters}
+            className="ml-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+          >
+            <Search className="h-4 w-4" />
+            Search
+          </button>
+        </div>
+
+        {/* Quick Filters - Moved to Right */}
+        <div className="flex gap-1 ml-auto">
           {[
             { label: 'This Month', key: 'thisMonth' },
             { label: 'Last Month', key: 'lastMonth' },
@@ -310,19 +392,23 @@ const Income: React.FC = () => {
           ].map(p => (
             <button
               key={p.key}
-              onClick={() => setQuickDateRange(p.key)}
+              onClick={() => {
+                setQuickDateRange(p.key);
+              }}
               className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
             >
               {p.label}
             </button>
           ))}
         </div>
+
+        {/* Clear Button */}
         {(filterDateFrom || filterDateTo) && (
           <button
-            onClick={() => { setFilterDateFrom(''); setFilterDateTo(''); }}
-            className="ml-auto px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            onClick={handleClearDateFilters}
+            className="px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
           >
-            Clear dates
+            Clear
           </button>
         )}
       </div>
@@ -334,7 +420,7 @@ const Income: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">Total Income</p>
-              <p className="text-3xl font-bold text-emerald-900 dark:text-emerald-100 mt-2">{formatCurrencyValue(incomeList.reduce((sum, i) => sum + i.amount, 0))}</p>
+              <p className="text-3xl font-bold text-emerald-900 dark:text-emerald-100 mt-2">{formatCurrencyValue(stats.totalAmount)}</p>
               <p className="text-xs text-emerald-600 dark:text-emerald-300 mt-3 font-semibold">+12% vs last month</p>
             </div>
             <div className="bg-emerald-200 dark:bg-emerald-800/50 p-4 rounded-xl">
@@ -348,8 +434,8 @@ const Income: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wide">Verified</p>
-              <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{incomeList.filter(i => i.status === 'verified').length}</p>
-              <p className="text-xs text-blue-600 dark:text-blue-300 mt-3">{((incomeList.filter(i => i.status === 'verified').length / incomeList.length) * 100 || 0).toFixed(0)}% of total</p>
+              <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{stats.verifiedCount}</p>
+              <p className="text-xs text-blue-600 dark:text-blue-300 mt-3">{stats.total > 0 ? ((stats.verifiedCount / stats.total) * 100).toFixed(0) : 0}% of total</p>
             </div>
             <div className="bg-blue-200 dark:bg-blue-800/50 p-4 rounded-xl">
               <CheckCircle2 className="h-7 w-7 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
@@ -362,7 +448,7 @@ const Income: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wide">Pending</p>
-              <p className="text-3xl font-bold text-amber-900 dark:text-amber-100 mt-2">{incomeList.filter(i => i.status === 'pending').length}</p>
+              <p className="text-3xl font-bold text-amber-900 dark:text-amber-100 mt-2">{stats.pendingCount}</p>
               <p className="text-xs text-amber-600 dark:text-amber-300 mt-3">Awaiting verification</p>
             </div>
             <div className="bg-amber-200 dark:bg-amber-800/50 p-4 rounded-xl">
@@ -376,7 +462,7 @@ const Income: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Income Trend</h3>
-          {monthlyData.length > 1 ? (
+          {monthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={monthlyData}>
                 <defs>
@@ -423,6 +509,11 @@ const Income: React.FC = () => {
             placeholder="Search by source or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleApplyFilters();
+              }
+            }}
             className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder-gray-500"
           />
           <button 
@@ -473,6 +564,26 @@ const Income: React.FC = () => {
                 </select>
               </div>
 
+              {/* Payment Method Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
+                <select 
+                  value={filterPaymentMethod}
+                  onChange={(e) => setFilterPaymentMethod(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="">All Methods</option>
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="mobile_money">Mobile Money</option>
+                  <option value="card">Card</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="paystack">Paystack</option>
+                  <option value="manual">Manual</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
               {/* Amount Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Min Amount</label>
@@ -502,21 +613,14 @@ const Income: React.FC = () => {
             {/* Filter Actions */}
             <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button 
-                onClick={() => {
-                  setFilterCategory('');
-                  setFilterStatus('');
-                  setFilterDateFrom('');
-                  setFilterDateTo('');
-                  setFilterAmountMin('');
-                  setFilterAmountMax('');
-                }}
+                onClick={handleClearAllFilters}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium transition-colors"
               >
                 Clear All
               </button>
               <div className="flex-1" />
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400 py-2 px-4">
-                {filteredIncome.length} result{filteredIncome.length !== 1 ? 's' : ''}
+                {stats.total} result{stats.total !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -593,7 +697,7 @@ const Income: React.FC = () => {
                       <td className="py-4 px-6 text-right font-semibold text-green-600 dark:text-green-400">+{formatCurrencyValue(income.amount)}</td>
                       <PermissionGuard permissions={['finance.editIncome','finance.delete']}>
                         <td className="py-4 px-6 flex justify-center gap-2">
-                          <button onClick={() => { setEditingId(income._id); setFormData({ category: income.category, amount: income.amount.toString(), source: income.source, description: income.description, date: new Date(income.date).toISOString().split('T')[0] }); setShowModal(true); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                          <button onClick={() => { setEditingId(income._id); setFormData({ category: income.category, amount: income.amount.toString(), source: income.source, description: income.description, date: new Date(income.date).toISOString().split('T')[0], paymentMethod: income.paymentMethod || 'cash' }); setShowModal(true); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button onClick={() => setDeletingId(income._id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
@@ -672,6 +776,19 @@ const Income: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
                 <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} max={getTodayDate()} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
+                <select value={formData.paymentMethod} onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="mobile_money">Mobile Money</option>
+                  <option value="card">Card</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="paystack">Paystack</option>
+                  <option value="manual">Manual Entry</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
               <div className="flex gap-2 pt-4">
                 <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">{editingId ? 'Update' : 'Create'}</button>
