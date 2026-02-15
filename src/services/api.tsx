@@ -916,4 +916,49 @@ export const transactionAPI = {
   getRevenueTrend: (params?: any) => api.get('/transactions/revenue-trend', { params }),
 };
 
+// Social Media API
+export const socialMediaAPI = {
+  // OAuth / Accounts
+  initOAuth: (platform: string) => api.get(`/social-media/auth/${platform}`),
+  getAccounts: () => api.get('/social-media/accounts'),
+  getAccount: (id: string) => api.get(`/social-media/accounts/${id}`),
+  refreshToken: (id: string) => api.post(`/social-media/accounts/${id}/refresh-token`),
+  disconnectAccount: (id: string) => api.delete(`/social-media/accounts/${id}`),
+
+  // Posts
+  getPosts: (params?: any) => api.get('/social-media/posts', { params }),
+  getPost: (id: string) => api.get(`/social-media/posts/${id}`),
+  createPost: (data: FormData) => api.post('/social-media/posts', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  updatePost: (id: string, data: FormData) => api.put(`/social-media/posts/${id}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deletePost: (id: string) => api.delete(`/social-media/posts/${id}`),
+  publishPost: (id: string) => api.post(`/social-media/posts/${id}/publish`),
+  cancelPost: (id: string) => api.post(`/social-media/posts/${id}/cancel`),
+
+  // Templates
+  getTemplates: (params?: any) => api.get('/social-media/templates', { params }),
+  getTemplate: (id: string) => api.get(`/social-media/templates/${id}`),
+  createTemplate: (data: any) => api.post('/social-media/templates', data),
+  updateTemplate: (id: string, data: any) => api.put(`/social-media/templates/${id}`, data),
+  deleteTemplate: (id: string) => api.delete(`/social-media/templates/${id}`),
+
+  // Analytics
+  getAnalyticsOverview: (params?: any) => api.get('/social-media/analytics/overview', { params }),
+  getEngagement: (params?: any) => api.get('/social-media/analytics/engagement', { params }),
+  getBestTimes: () => api.get('/social-media/analytics/best-times'),
+  getGrowth: (params?: any) => api.get('/social-media/analytics/growth', { params }),
+
+  // Settings
+  getSettings: () => api.get('/social-media/settings'),
+  updateSettings: (data: any) => api.put('/social-media/settings', data),
+
+  // AI
+  suggestContent: (data: any) => api.post('/social-media/ai/suggest-content', data),
+  suggestHashtags: (data: any) => api.post('/social-media/ai/suggest-hashtags', data),
+  getOptimalTimes: () => api.get('/social-media/ai/optimal-times'),
+};
+
 export default api;

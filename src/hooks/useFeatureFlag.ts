@@ -49,7 +49,9 @@ export type Feature =
   // Advanced Features
   | 'multiLanguage'
   | 'mobileApp'
-  | 'automatedWorkflows';
+  | 'automatedWorkflows'
+  // Social Media
+  | 'socialMedia';
 
 type Limit = 
   | 'members'

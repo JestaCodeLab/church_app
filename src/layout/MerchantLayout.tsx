@@ -34,7 +34,11 @@ import {
   HandHeart,
   Coins,
   Activity,
-  Music
+  Music,
+  Share2,
+  Link2,
+  CalendarDays,
+  PenSquare
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -405,6 +409,56 @@ const MerchantLayout = () => {
             requiresFeature: 'smsSenderId',
             requiredPermissions: ['communications.smsSenderID'],
             lockedFeature: 'smsSenderId'
+          }
+        ]
+      },
+      {
+        name: 'Social Media',
+        icon: Share2,
+        requiresFeature: 'socialMedia',
+        requiredPermissions: ['socialMedia.view'],
+        children: [
+          {
+            name: 'Dashboard',
+            href: '/social-media',
+            icon: LayoutDashboard,
+            requiresFeature: 'socialMedia',
+            requiredPermissions: ['socialMedia.view']
+          },
+          {
+            name: 'Accounts',
+            href: '/social-media/accounts',
+            icon: Link2,
+            requiresFeature: 'socialMedia',
+            requiredPermissions: ['socialMedia.view']
+          },
+          {
+            name: 'Calendar',
+            href: '/social-media/calendar',
+            icon: CalendarDays,
+            requiresFeature: 'socialMedia',
+            requiredPermissions: ['socialMedia.view']
+          },
+          {
+            name: 'Create Post',
+            href: '/social-media/create',
+            icon: PenSquare,
+            requiresFeature: 'socialMedia',
+            requiredPermissions: ['socialMedia.view']
+          },
+          {
+            name: 'Templates',
+            href: '/social-media/templates',
+            icon: FileText,
+            requiresFeature: 'socialMedia',
+            requiredPermissions: ['socialMedia.view']
+          },
+          {
+            name: 'Analytics',
+            href: '/social-media/analytics',
+            icon: BarChart3,
+            requiresFeature: 'socialMedia',
+            requiredPermissions: ['socialMedia.view']
           }
         ]
       }
