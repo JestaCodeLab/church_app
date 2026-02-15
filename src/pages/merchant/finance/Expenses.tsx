@@ -409,7 +409,14 @@ const Expenses: React.FC = () => {
           <input
             type="date"
             value={filterDateFrom}
-            onChange={(e) => setFilterDateFrom(e.target.value)}
+            onChange={(e) => {
+              setFilterDateFrom(e.target.value);
+              // Clear end date if it's before new start date
+              if (filterDateTo && e.target.value > filterDateTo) {
+                setFilterDateTo('');
+              }
+            }}
+            max={new Date().toISOString().split('T')[0]}
             className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
           <span className="text-gray-400 text-sm">to</span>
@@ -417,13 +424,17 @@ const Expenses: React.FC = () => {
             type="date"
             value={filterDateTo}
             onChange={(e) => setFilterDateTo(e.target.value)}
-            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            min={filterDateFrom}
+            max={new Date().toISOString().split('T')[0]}
+            disabled={!filterDateFrom}
+            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           />
           
           {/* Search/Apply Button */}
           <button
             onClick={handleApplyFilters}
-            className="ml-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+            disabled={!filterDateFrom || !filterDateTo}
+            className="ml-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
           >
             <Search className="h-4 w-4" />
             Search
@@ -810,24 +821,28 @@ const Expenses: React.FC = () => {
                                     <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg" style={{ width: '36px', height: '36px' }} />
                                   </button>
                                 )}
-                                <PermissionGuard permission={'finance.editExpense'}>
-                                <button 
-                                  onClick={() => handleEditClick(expense)} 
-                                  className="inline-flex items-center justify-center p-2 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-all hover:shadow-sm"
-                                  title="Edit"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </button>
-                                </PermissionGuard>
-                                <PermissionGuard permission={'finance.delete'}>
-                                  <button 
-                                    onClick={() => handleDelete(expense._id)} 
-                                    className="inline-flex items-center justify-center p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-all hover:shadow-sm"
-                                    title="Delete"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </PermissionGuard>
+                                {expense.status !== 'approved' && (
+                                  <>
+                                    <PermissionGuard permission={'finance.editExpense'}>
+                                      <button 
+                                        onClick={() => handleEditClick(expense)} 
+                                        className="inline-flex items-center justify-center p-2 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-all hover:shadow-sm"
+                                        title="Edit"
+                                      >
+                                        <Edit2 className="h-4 w-4" />
+                                      </button>
+                                    </PermissionGuard>
+                                    <PermissionGuard permission={'finance.delete'}>
+                                      <button 
+                                        onClick={() => handleDelete(expense._id)} 
+                                        className="inline-flex items-center justify-center p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-all hover:shadow-sm"
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    </PermissionGuard>
+                                  </>
+                                )}
                               </div>
                             )}
                           </div>

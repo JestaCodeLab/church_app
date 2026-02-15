@@ -16,11 +16,14 @@ import {
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from 'recharts';
 import { financeAPI } from '../../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
@@ -230,8 +233,66 @@ const FinanceOverview: React.FC = () => {
   const paginatedTransactions = filteredTransactions.slice((page - 1) * itemsPerPage, page * itemsPerPage);
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
-  // Category bar data
+  // Compute stats from filtered data
+  const filteredStats = useMemo(() => {
+    const incomeTotal = filteredTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const expenseTotal = filteredTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    return {
+      income: incomeTotal,
+      expenses: expenseTotal,
+      net: incomeTotal - expenseTotal,
+    };
+  }, [filteredTransactions]);
+
+  // Category bar data - computed from filtered transactions
   const incomeCategoryData = useMemo(() => {
+    const categoryMap = new Map<string, { amount: number; count: number }>();
+    filteredTransactions
+      .filter(t => t.type === 'income')
+      .forEach(t => {
+        const existing = categoryMap.get(t.category) || { amount: 0, count: 0 };
+        categoryMap.set(t.category, {
+          amount: existing.amount + t.amount,
+          count: existing.count + 1,
+        });
+      });
+    return Array.from(categoryMap.entries())
+      .map(([category, data]) => ({
+        category: category?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Uncategorized',
+        amount: data.amount,
+        count: data.count,
+        color: CATEGORY_COLORS[category] || '#6B7280',
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [filteredTransactions]);
+
+  const expenseCategoryData = useMemo(() => {
+    const categoryMap = new Map<string, { amount: number; count: number }>();
+    filteredTransactions
+      .filter(t => t.type === 'expense')
+      .forEach(t => {
+        const existing = categoryMap.get(t.category) || { amount: 0, count: 0 };
+        categoryMap.set(t.category, {
+          amount: existing.amount + t.amount,
+          count: existing.count + 1,
+        });
+      });
+    return Array.from(categoryMap.entries())
+      .map(([category, data]) => ({
+        category: category?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Uncategorized',
+        amount: data.amount,
+        count: data.count,
+        color: CATEGORY_COLORS[category] || '#6B7280',
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [filteredTransactions]);
+
+  // Original category data for reference (unused now)
+  const _originalIncomeCategoryData = useMemo(() => {
     return (overview?.categories?.income || []).map(c => ({
       category: c._id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       amount: c.amount,
@@ -240,7 +301,7 @@ const FinanceOverview: React.FC = () => {
     }));
   }, [overview]);
 
-  const expenseCategoryData = useMemo(() => {
+  const _originalExpenseCategoryData = useMemo(() => {
     return (overview?.categories?.expenses || []).map(c => ({
       category: c._id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       amount: c.amount,
@@ -347,6 +408,7 @@ const FinanceOverview: React.FC = () => {
         <input
           type="date"
           value={customRange.start}
+          max={new Date().toISOString().split('T')[0]}
           onChange={e => setCustomRange({ ...customRange, start: e.target.value })}
           className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
@@ -354,6 +416,7 @@ const FinanceOverview: React.FC = () => {
         <input
           type="date"
           value={customRange.end}
+          max={new Date().toISOString().split('T')[0]}
           onChange={e => setCustomRange({ ...customRange, end: e.target.value })}
           className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
@@ -388,8 +451,8 @@ const FinanceOverview: React.FC = () => {
               </span>
             )}
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{fmt(thisMonth?.income || 0)}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Income this month</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{fmt(filteredStats.income)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Income (filtered)</p>
         </div>
 
         {/* This Month Expenses */}
@@ -405,8 +468,8 @@ const FinanceOverview: React.FC = () => {
               </span>
             )}
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{fmt(thisMonth?.expenses || 0)}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Expenses this month</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{fmt(filteredStats.expenses)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Expenses (filtered)</p>
         </div>
 
         {/* Net Balance */}
@@ -416,10 +479,10 @@ const FinanceOverview: React.FC = () => {
               <Wallet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <p className={`text-2xl font-bold ${(thisMonth?.net || 0) >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
-            {fmt(thisMonth?.net || 0)}
+          <p className={`text-2xl font-bold ${filteredStats.net >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
+            {fmt(filteredStats.net)}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Net this month</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Net (filtered)</p>
         </div>
 
         {/* Pending Approvals */}
@@ -548,61 +611,83 @@ const FinanceOverview: React.FC = () => {
       </div>
 
       {/* Category Breakdown */}
-      {(incomeCategoryData.length > 0 || expenseCategoryData.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Income by Category */}
-          {incomeCategoryData.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Income by Category (YTD)</h3>
-              <div className="space-y-3">
-                {incomeCategoryData.map((item, i) => {
-                  const maxAmount = Math.max(...incomeCategoryData.map(c => c.amount));
-                  const pct = maxAmount > 0 ? (item.amount / maxAmount) * 100 : 0;
-                  return (
-                    <div key={i}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-700 dark:text-gray-300">{item.category}</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{fmt(item.amount)}</span>
-                      </div>
-                      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: item.color }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+      {incomeCategoryData.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Income by Category</h3>
+          <ResponsiveContainer width="100%" height={Math.max(250, incomeCategoryData.length * 40)}>
+            <BarChart data={incomeCategoryData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+              <XAxis
+                type="number"
+                tickFormatter={(v) => {
+                  if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
+                  if (v >= 1000) return `${(v / 1000).toFixed(0)}K`;
+                  return v;
+                }}
+                className="text-gray-500"
+              />
+              <YAxis
+                type="category"
+                dataKey="category"
+                width={120}
+                className="text-gray-700 dark:text-gray-300 text-sm"
+              />
+              <Tooltip
+                formatter={(value: number) => fmt(value)}
+                contentStyle={{
+                  backgroundColor: 'rgba(255,255,255,0.95)',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                }}
+              />
+              <Bar dataKey="amount" radius={[0, 8, 8, 0]}>
+                {incomeCategoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
-          {/* Expenses by Category */}
-          {expenseCategoryData.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Expenses by Category (YTD)</h3>
-              <div className="space-y-3">
-                {expenseCategoryData.map((item, i) => {
-                  const maxAmount = Math.max(...expenseCategoryData.map(c => c.amount));
-                  const pct = maxAmount > 0 ? (item.amount / maxAmount) * 100 : 0;
-                  return (
-                    <div key={i}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-700 dark:text-gray-300">{item.category}</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{fmt(item.amount)}</span>
-                      </div>
-                      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: item.color }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+      {expenseCategoryData.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Expenses by Category</h3>
+          <ResponsiveContainer width="100%" height={Math.max(250, expenseCategoryData.length * 40)}>
+            <BarChart data={expenseCategoryData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+              <XAxis
+                type="number"
+                tickFormatter={(v) => {
+                  if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
+                  if (v >= 1000) return `${(v / 1000).toFixed(0)}K`;
+                  return v;
+                }}
+                className="text-gray-500"
+              />
+              <YAxis
+                type="category"
+                dataKey="category"
+                width={120}
+                className="text-gray-700 dark:text-gray-300 text-sm"
+              />
+              <Tooltip
+                formatter={(value: number) => fmt(value)}
+                contentStyle={{
+                  backgroundColor: 'rgba(255,255,255,0.95)',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                }}
+              />
+              <Bar dataKey="amount" radius={[0, 8, 8, 0]}>
+                {expenseCategoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       )}
 
