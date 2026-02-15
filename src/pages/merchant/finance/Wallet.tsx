@@ -58,6 +58,22 @@ interface WithdrawalRequest {
   cancellationReason?: string;
 }
 
+interface WalletTransaction {
+  _id: string;
+  type: 'sms_credit_purchase' | 'subscription_payment' | 'withdrawal' | 'refund';
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  description: string;
+  status: 'pending' | 'completed' | 'failed';
+  metadata?: any;
+  createdAt: string;
+  user?: {
+    firstName: string;
+    lastName: string;
+  };
+}
+
 interface WalletStats {
   availableBalance: number;
   totalCollected: number;
@@ -98,6 +114,8 @@ const Wallet = () => {
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [withdrawalHistory, setWithdrawalHistory] = useState<WithdrawalRequest[]>([]);
+  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
+  const [activeTab, setActiveTab] = useState<'withdrawals' | 'transactions'>('withdrawals');
   
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [showAddMethodModal, setShowAddMethodModal] = useState(false);
@@ -128,6 +146,9 @@ const Wallet = () => {
   const [historyPage, setHistoryPage] = useState(1);
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [transactionsTotalPages, setTransactionsTotalPages] = useState(1);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
 
   // Helper function to get card styling based on payment method type and provider
   const getPaymentMethodStyles = (method: PaymentMethod) => {
@@ -219,6 +240,12 @@ const Wallet = () => {
     loadWithdrawalHistory();
   }, [filterStatus, historyPage]);
 
+  useEffect(() => {
+    if (activeTab === 'transactions') {
+      loadWalletTransactions();
+    }
+  }, [activeTab, transactionsPage]);
+
   const loadWalletData = async () => {
     try {
       setLoading(true);
@@ -265,6 +292,28 @@ const Wallet = () => {
     }
   };
 
+  const loadWalletTransactions = async () => {
+    try {
+      setTransactionsLoading(true);
+      const res = await api.get('/wallet/transactions', {
+        params: {
+          page: transactionsPage,
+          limit: 10
+        }
+      });
+
+      if (res.data.success) {
+        setWalletTransactions(res.data.data);
+        setTransactionsTotalPages(res.data.pagination?.pages || 1);
+      }
+    } catch (error: any) {
+      console.error('Failed to load wallet transactions:', error);
+      toast.error(error?.response?.data?.message || 'Failed to load wallet transactions');
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
   const handleAddPaymentMethod = async () => {
     if (!methodFormData.accountName || !methodFormData.accountNumber) {
       toast.error('Please fill in all required fields');
@@ -297,6 +346,82 @@ const Wallet = () => {
       toast.error(error?.response?.data?.message || 'Failed to add payment method');
     } finally {
       setMethodLoading(false);
+    }
+  };
+
+  const handleExport = () => {
+    try {
+      let dataToExport: any[] = [];
+      let filename = '';
+
+      if (activeTab === 'withdrawals') {
+        dataToExport = filteredHistory.map((withdrawal) => ({
+          Date: new Date(withdrawal.requestedAt).toLocaleDateString(),
+          Time: new Date(withdrawal.requestedAt).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+          }),
+          'Reference ID': withdrawal._id,
+          Method: withdrawal.paymentMethodId ? 
+            (withdrawal.paymentMethodId.type === 'momo' ? 'Momo' : 'Bank') : 'N/A',
+          Amount: `${merchantCurrency}${withdrawal.amount.toFixed(2)}`,
+          Status: withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)
+        }));
+        filename = `withdrawal-history-${new Date().toISOString().split('T')[0]}.csv`;
+      } else {
+        dataToExport = walletTransactions.map((transaction) => ({
+          Date: new Date(transaction.createdAt).toLocaleDateString(),
+          Time: new Date(transaction.createdAt).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+          }),
+          Type: getTransactionTypeLabel(transaction.type),
+          Description: transaction.description,
+          Amount: `${merchantCurrency}${transaction.amount.toFixed(2)}`,
+          'Balance After': `${merchantCurrency}${transaction.balanceAfter.toFixed(2)}`,
+          Status: transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)
+        }));
+        filename = `wallet-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+      }
+
+      if (dataToExport.length === 0) {
+        toast.error('No data to export');
+        return;
+      }
+
+      // Convert to CSV
+      const headers = Object.keys(dataToExport[0]);
+      const csvContent = [
+        headers.join(','),
+        ...dataToExport.map(row => 
+          headers.map(header => {
+            const value = row[header];
+            // Escape commas and quotes in values
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Export completed successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export data');
     }
   };
 
@@ -412,6 +537,26 @@ const Wallet = () => {
       case 'failed': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
       case 'cancelled': return 'bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-400';
       default: return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+    }
+  };
+
+  const getTransactionTypeLabel = (type: string) => {
+    switch (type) {
+      case 'sms_credit_purchase': return 'SMS Credits';
+      case 'subscription_payment': return 'Subscription';
+      case 'withdrawal': return 'Withdrawal';
+      case 'refund': return 'Refund';
+      default: return type;
+    }
+  };
+
+  const getTransactionTypeColor = (type: string) => {
+    switch (type) {
+      case 'sms_credit_purchase': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+      case 'subscription_payment': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'withdrawal': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+      case 'refund': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-400';
     }
   };
 
@@ -644,7 +789,15 @@ const Wallet = () => {
                 {/* Icon */}
                 <div className="mb-4">
                   {method.type === 'momo' ? (
-                    <Phone size={32} className={styles.icon} />
+                    method.provider?.toUpperCase() === 'MTN' ? (
+                      <img src="/images/New-mtn-logo.jpg" alt="MTN" className="w-12 h-12 rounded-full object-cover" />
+                    ) : method.provider?.toUpperCase() === 'VODAFONE' ? (
+                      <img src="/images/telecel.jpeg" alt="Telecel" className="w-12 h-12 rounded-full object-cover" />
+                    ) : (method.provider?.toUpperCase() === 'AIRTELTIGO' || method.provider?.toUpperCase() === 'AIRTEL_TIGO') ? (
+                      <img src="/images/at.png" alt="AirtelTigo" className="w-12 h-12 rounded-full object-cover" />
+                    ) : (
+                      <Phone size={32} className={styles.icon} />
+                    )
                   ) : (
                     <Building size={32} className={styles.icon} />
                   )}
@@ -688,138 +841,266 @@ const Wallet = () => {
           </div>
         </div>
 
-        {/* Withdrawal History */}
+        {/* Wallet Activity Tabs */}
         <div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Withdrawal History</h2>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('withdrawals')}
+                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  activeTab === 'withdrawals'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
+                }`}
               >
-                <option value="all">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="failed">Failed</option>
-              </select>
-              <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                Withdrawal History
+              </button>
+              <button
+                onClick={() => setActiveTab('transactions')}
+                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  activeTab === 'transactions'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                Wallet Transactions
+              </button>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3">
+              {activeTab === 'withdrawals' && (
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="all">All Status</option>
+                  <option value="completed">Completed</option>
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="failed">Failed</option>
+                </select>
+              )}
+              <button 
+                onClick={handleExport}
+                className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+              >
                 <Download size={14} />
                 <span className="hidden sm:inline">Export</span>
               </button>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-            {historyLoading ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <p className="text-slate-600 dark:text-slate-400 text-sm">Loading withdrawal history...</p>
-              </div>
-            ) : filteredHistory.length === 0 ? (
-              <div className="text-center py-8 text-slate-600 dark:text-slate-400">
-                <Download size={32} className="mx-auto mb-2 opacity-50" />
-                <p>No withdrawal requests found</p>
-              </div>
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
-                        <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">DATE</th>
-                        <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">REFERENCE ID</th>
-                        <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">METHOD</th>
-                        <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">AMOUNT</th>
-                        <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">STATUS</th>
-                        <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">ACTIONS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredHistory.map((withdrawal, idx) => (
-                        <tr
-                          key={withdrawal._id}
-                          className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors last:border-b-0"
-                        >
-                          <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
-                            <div className="text-slate-900 dark:text-white font-medium">
-                              {new Date(withdrawal.requestedAt).toLocaleDateString()}
-                            </div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400">
-                              {new Date(withdrawal.requestedAt).toLocaleTimeString('en-US', { 
-                                hour: 'numeric', 
-                                minute: '2-digit', 
-                                hour12: true 
-                              })}
-                            </div>
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm font-mono text-slate-900 dark:text-white">
-                            {withdrawal._id}
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                            {withdrawal.paymentMethodId ? (
-                              <span className="font-medium">
-                                {withdrawal.paymentMethodId.type === 'momo' ? 'Momo' : 'Bank'}
-                              </span>
-                            ) : (
-                              <span className="text-slate-400">N/A</span>
-                            )}
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                            {formatCurrency(withdrawal.amount, merchantCurrency)}
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
-                            <span className={`inline-block px-2 py-1 rounded-full font-bold text-xs ${getStatusColor(withdrawal.status)}`}>
-                              {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
-                            </span>
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
-                            {['pending', 'approved'].includes(withdrawal.status) ? (
-                              <button
-                                onClick={() => handleCancelWithdrawal(withdrawal)}
-                                disabled={cancelWithdrawalLoading}
-                                className="px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                Cancel
-                              </button>
-                            ) : (
-                              <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+          {/* Withdrawals Tab Content */}
+          {activeTab === 'withdrawals' && (
+            <div className="bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+              {historyLoading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">Loading withdrawal history...</p>
                 </div>
-
-                {/* Pagination Controls */}
-                {historyTotalPages > 1 && (
-                  <div className="border-t border-slate-200 dark:border-slate-700 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                      Page {historyPage} of {historyTotalPages}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setHistoryPage(Math.max(1, historyPage - 1))}
-                        disabled={historyPage === 1 || historyLoading}
-                        className="px-3 sm:px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        onClick={() => setHistoryPage(Math.min(historyTotalPages, historyPage + 1))}
-                        disabled={historyPage === historyTotalPages || historyLoading}
-                        className="px-3 sm:px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                      >
-                        Next
-                      </button>
-                    </div>
+              ) : filteredHistory.length === 0 ? (
+                <div className="text-center py-8 text-slate-600 dark:text-slate-400">
+                  <Download size={32} className="mx-auto mb-2 opacity-50" />
+                  <p>No withdrawal requests found</p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">DATE</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">REFERENCE ID</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">METHOD</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">AMOUNT</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">STATUS</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">ACTIONS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredHistory.map((withdrawal, idx) => (
+                          <tr
+                            key={withdrawal._id}
+                            className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors last:border-b-0"
+                          >
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
+                              <div className="text-slate-900 dark:text-white font-medium">
+                                {new Date(withdrawal.requestedAt).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-slate-600 dark:text-slate-400">
+                                {new Date(withdrawal.requestedAt).toLocaleTimeString('en-US', { 
+                                  hour: 'numeric', 
+                                  minute: '2-digit', 
+                                  hour12: true 
+                                })}
+                              </div>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm font-mono text-slate-900 dark:text-white">
+                              {withdrawal._id}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                              {withdrawal.paymentMethodId ? (
+                                <span className="font-medium">
+                                  {withdrawal.paymentMethodId.type === 'momo' ? 'Momo' : 'Bank'}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">N/A</span>
+                              )}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                              {formatCurrency(withdrawal.amount, merchantCurrency)}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
+                              <span className={`inline-block px-2 py-1 rounded-full font-bold text-xs ${getStatusColor(withdrawal.status)}`}>
+                                {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
+                              </span>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
+                              {['pending', 'approved'].includes(withdrawal.status) ? (
+                                <button
+                                  onClick={() => handleCancelWithdrawal(withdrawal)}
+                                  disabled={cancelWithdrawalLoading}
+                                  className="px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  Cancel
+                                </button>
+                              ) : (
+                                <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
-              </>
-            )}
-          </div>
+
+                  {/* Pagination Controls */}
+                  {historyTotalPages > 1 && (
+                    <div className="border-t border-slate-200 dark:border-slate-700 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                        Page {historyPage} of {historyTotalPages}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setHistoryPage(Math.max(1, historyPage - 1))}
+                          disabled={historyPage === 1 || historyLoading}
+                          className="px-3 sm:px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setHistoryPage(Math.min(historyTotalPages, historyPage + 1))}
+                          disabled={historyPage === historyTotalPages || historyLoading}
+                          className="px-3 sm:px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Transactions Tab Content */}
+          {activeTab === 'transactions' && (
+            <div className="bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+              {transactionsLoading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">Loading wallet transactions...</p>
+                </div>
+              ) : walletTransactions.length === 0 ? (
+                <div className="text-center py-8 text-slate-600 dark:text-slate-400">
+                  <DollarSign size={32} className="mx-auto mb-2 opacity-50" />
+                  <p>No wallet transactions found</p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">DATE</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">TYPE</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">DESCRIPTION</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">AMOUNT</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">BALANCE AFTER</th>
+                          <th className="text-left px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">STATUS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {walletTransactions.map((transaction) => (
+                          <tr
+                            key={transaction._id}
+                            className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors last:border-b-0"
+                          >
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
+                              <div className="text-slate-900 dark:text-white font-medium">
+                                {new Date(transaction.createdAt).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-slate-600 dark:text-slate-400">
+                                {new Date(transaction.createdAt).toLocaleTimeString('en-US', { 
+                                  hour: 'numeric', 
+                                  minute: '2-digit', 
+                                  hour12: true 
+                                })}
+                              </div>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
+                              <span className={`inline-block px-2 py-1 rounded-full font-bold text-xs ${getTransactionTypeColor(transaction.type)}`}>
+                                {getTransactionTypeLabel(transaction.type)}
+                              </span>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                              {transaction.description}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-red-600 dark:text-red-400">
+                              -{formatCurrency(transaction.amount, merchantCurrency)}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm font-medium text-slate-900 dark:text-white">
+                              {formatCurrency(transaction.balanceAfter, merchantCurrency)}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 text-xs sm:text-sm">
+                              <span className={`inline-block px-2 py-1 rounded-full font-bold text-xs ${getStatusColor(transaction.status)}`}>
+                                {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {transactionsTotalPages > 1 && (
+                    <div className="border-t border-slate-200 dark:border-slate-700 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                        Page {transactionsPage} of {transactionsTotalPages}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setTransactionsPage(Math.max(1, transactionsPage - 1))}
+                          disabled={transactionsPage === 1 || transactionsLoading}
+                          className="px-3 sm:px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setTransactionsPage(Math.min(transactionsTotalPages, transactionsPage + 1))}
+                          disabled={transactionsPage === transactionsTotalPages || transactionsLoading}
+                          className="px-3 sm:px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </main>
 
@@ -996,7 +1277,15 @@ const Wallet = () => {
                                     : 'bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-150'
                               }`}>
                                 {method.type === 'momo' ? (
-                                  <Phone size={24} className={method.type === 'momo' ? 'text-yellow-600 dark:text-yellow-400' : 'text-blue-600 dark:text-blue-400'} />
+                                  method.provider?.toUpperCase() === 'MTN' ? (
+                                    <img src="/images/New-mtn-logo.jpg" alt="MTN" className="w-6 h-6 rounded-full object-cover" />
+                                  ) : method.provider?.toUpperCase() === 'VODAFONE' ? (
+                                    <img src="/images/telecel.jpeg" alt="Telecel" className="w-6 h-6 rounded-full object-cover" />
+                                  ) : (method.provider?.toUpperCase() === 'AIRTELTIGO' || method.provider?.toUpperCase() === 'AIRTEL_TIGO') ? (
+                                    <img src="/images/at.png" alt="AirtelTigo" className="w-6 h-6 rounded-full object-cover" />
+                                  ) : (
+                                    <Phone size={24} className="text-yellow-600 dark:text-yellow-400" />
+                                  )
                                 ) : (
                                   <Building size={24} className="text-blue-600 dark:text-blue-400" />
                                 )}

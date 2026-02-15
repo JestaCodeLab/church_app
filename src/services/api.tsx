@@ -497,13 +497,15 @@ export const settingsAPI = {
   changePassword: (data: any) => api.put('/settings/security/password', data),
   updateNotifications: (category: string, data: any) => api.put(`/settings/notifications/${category}`, data),
   getSubscription: () => api.get('/settings/subscription'),
-  changePlan: (plan: any, discountCode?: string | null) =>
+  changePlan: (plan: any, discountCode?: string | null, paymentMethod?: 'wallet' | 'paystack') =>
     api.post('/settings/subscription/change-plan', {
       plan,
-      ...(discountCode && { discountCode }) // Only include if provided
+      ...(discountCode && { discountCode }), // Only include if provided
+      ...(paymentMethod && { paymentMethod }) // Only include if provided
     }),
   verifyPayment: (reference: any) => api.post('/settings/subscription/verify-payment', { reference }),
   getBillingHistory: (params?: any) => api.get('/settings/billing-history', { params }),
+  getWalletBalance: () => api.get('/wallet/balance'),
   downloadInvoice: (transactionId: string) =>
     api.get(`/settings/invoice/${transactionId}`, {
       responseType: 'blob' // Important for PDF download

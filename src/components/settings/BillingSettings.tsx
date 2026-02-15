@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { settingsAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
-import { Check, Crown, Users, Zap, TrendingUp, AlertCircle, Church, Download, Calendar, FileText, CreditCard, DollarSign, Filter, X, FileDown, CalendarDays, BookOpen, HardDrive, UserCircle, Building2, ChevronRight, CheckCircle, XCircle, Info, RotateCw } from 'lucide-react';
+import { Check, Crown, Users, Zap, TrendingUp, AlertCircle, Church, Download, Calendar, FileText, CreditCard, DollarSign, Filter, X, FileDown, CalendarDays, BookOpen, HardDrive, UserCircle, Building2, ChevronRight, CheckCircle, XCircle, Info, RotateCw, Wallet } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usePaystackPayment } from '../../hooks/usePaystackPayment';
 import DiscountCodeInput from '../ui/DiscountCodeInput';
@@ -28,10 +28,13 @@ const BillingSettings = () => {
   const [showAllMetrics, setShowAllMetrics] = useState(true);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   const { initializePayment, loading: paymentLoading, scriptLoaded } = usePaystackPayment();
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
 
   useEffect(() => {
     fetchSubscription();
     fetchBillingHistory();
+    fetchWalletBalance();
   }, []);
 
   const fetchSubscription = async () => {
@@ -45,6 +48,15 @@ const BillingSettings = () => {
       showToast.error('Failed to load subscription details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWalletBalance = async () => {
+    try {
+      const response = await settingsAPI.getWalletBalance();
+      setWalletBalance(response.data.data.availableBalance || 0);
+    } catch (error) {
+      console.error('Failed to fetch wallet balance:', error);
     }
   };
 
@@ -232,10 +244,50 @@ const BillingSettings = () => {
   const handleConfirmUpgrade = async () => {
     if (!selectedPlan) return;
 
+    // Show payment method selection modal
+    setShowPaymentMethodModal(true);
+  };
+
+  const handlePaymentMethodSelect = async (method: 'wallet' | 'paystack') => {
+    if (!selectedPlan) return;
+
+    setShowPaymentMethodModal(false);
+    
     const finalAmount = appliedDiscount 
       ? appliedDiscount.finalAmount 
       : selectedPlan.price.amount;
 
+    if (method === 'wallet') {
+      await handleWalletPayment(finalAmount);
+    } else {
+      await handlePaystackPayment(finalAmount);
+    }
+  };
+
+  const handleWalletPayment = async (finalAmount: number) => {
+    try {
+      setActionLoading(true);
+      const response = await settingsAPI.changePlan(
+        selectedPlan.slug,
+        appliedDiscount?.code || null,
+        'wallet'
+      );
+
+      if (response.data.success) {
+        showToast.success('Subscription upgraded successfully with wallet!');
+        setShowUpgradeModal(false);
+        setSelectedPlan(null);
+        setAppliedDiscount(null);
+        setTimeout(() => window.location.reload(), 2000);
+      }
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to upgrade with wallet');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePaystackPayment = async (finalAmount: number) => {
     // Initiate payment
     await initializePayment({
       email: user?.email || '',
@@ -1247,6 +1299,100 @@ const BillingSettings = () => {
                     {paymentLoading ? 'Processing...' : 'Proceed to Payment'}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Method Selection Modal */}
+      {showPaymentMethodModal && selectedPlan && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50"
+              onClick={() => setShowPaymentMethodModal(false)}
+            />
+            
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Choose Payment Method
+                </h3>
+                <button
+                  onClick={() => setShowPaymentMethodModal(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  Plan: <span className="font-semibold text-gray-900 dark:text-white">{selectedPlan.name}</span>
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Amount: <span className="font-semibold text-gray-900 dark:text-white">
+                    GHS {appliedDiscount ? appliedDiscount.finalAmount : selectedPlan.price.amount}
+                  </span>
+                </p>
+              </div>
+
+              {/* Wallet Balance Display */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Wallet Balance</span>
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                    GHS {walletBalance.toFixed(2)}
+                  </span>
+                </div>
+                {walletBalance < (appliedDiscount ? appliedDiscount.finalAmount : selectedPlan.price.amount) && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                    Insufficient balance. Need GHS {((appliedDiscount ? appliedDiscount.finalAmount : selectedPlan.price.amount) - walletBalance).toFixed(2)} more.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {/* Wallet Payment Option */}
+                <button
+                  onClick={() => handlePaymentMethodSelect('wallet')}
+                  disabled={walletBalance < (appliedDiscount ? appliedDiscount.finalAmount : selectedPlan.price.amount)}
+                  className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                    walletBalance >= (appliedDiscount ? appliedDiscount.finalAmount : selectedPlan.price.amount)
+                      ? 'border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer'
+                      : 'border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mr-3">
+                      <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-900 dark:text-white">Pay with Wallet</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Use your available balance</p>
+                    </div>
+                  </div>
+                  {walletBalance >= (appliedDiscount ? appliedDiscount.finalAmount : selectedPlan.price.amount) && (
+                    <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  )}
+                </button>
+
+                {/* Paystack Payment Option */}
+                <button
+                  onClick={() => handlePaymentMethodSelect('paystack')}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
+                >
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mr-3">
+                      <CreditCard className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-900 dark:text-white">Pay with Card</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Paystack secure payment</p>
+                    </div>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
