@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import TextareaAutosize from 'react-textarea-autosize';
 import {
   ArrowLeft,
@@ -15,7 +15,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Facebook,
-  Instagram
+  Instagram,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Copy
 } from 'lucide-react';
 import { socialMediaAPI } from '../../../services/api';
 import { SocialAccount, SocialPost, PLATFORM_INFO, Platform } from '../../../types/socialMedia';
@@ -36,6 +40,7 @@ const FB_CHAR_LIMIT = 63206;
 const CreatePost: React.FC = () => {
   const navigate = useNavigate();
   const { id: editId } = useParams();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -54,12 +59,31 @@ const CreatePost: React.FC = () => {
   const [scheduledAt, setScheduledAt] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
 
+  // AI state
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{ content: string; description: string }>>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [hashtagSuggestions, setHashtagSuggestions] = useState<string[]>([]);
+  const [hashtagsLoading, setHashtagsLoading] = useState(false);
+
   useEffect(() => {
     fetchAccounts();
     if (editId) {
       fetchPost(editId);
     }
   }, [editId]);
+
+  // Pre-fill from template navigation state
+  useEffect(() => {
+    const state = location.state as { templateId?: string; content?: string; hashtags?: string[] } | null;
+    if (state?.content) {
+      setContent(state.content);
+    }
+    if (state?.hashtags && state.hashtags.length > 0) {
+      setHashtags(state.hashtags);
+    }
+  }, [location.state]);
 
   const fetchAccounts = async () => {
     try {
@@ -123,6 +147,51 @@ const CreatePost: React.FC = () => {
 
   const removeHashtag = (tag: string) => {
     setHashtags(prev => prev.filter(t => t !== tag));
+  };
+
+  const handleGenerateSuggestions = async () => {
+    try {
+      setAiLoading(true);
+      const platform = hasInstagram ? 'instagram' : 'facebook';
+      const response = await socialMediaAPI.suggestContent({
+        topic: aiTopic || undefined,
+        platform
+      });
+      setAiSuggestions(response.data.data || []);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to generate suggestions');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleSuggestHashtags = async () => {
+    if (!content.trim()) {
+      toast.error('Write some content first to get hashtag suggestions');
+      return;
+    }
+    try {
+      setHashtagsLoading(true);
+      const platform = hasInstagram ? 'instagram' : 'facebook';
+      const response = await socialMediaAPI.suggestHashtags({ content, platform });
+      setHashtagSuggestions(response.data.data || []);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to suggest hashtags');
+    } finally {
+      setHashtagsLoading(false);
+    }
+  };
+
+  const applySuggestion = (suggestionContent: string) => {
+    setContent(suggestionContent);
+    toast.success('Content applied');
+  };
+
+  const addSuggestedHashtag = (tag: string) => {
+    const normalizedTag = tag.replace(/^#/, '').toLowerCase();
+    if (!hashtags.includes(normalizedTag)) {
+      setHashtags(prev => [...prev, normalizedTag]);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -399,6 +468,79 @@ const CreatePost: React.FC = () => {
               </div>
             </div>
 
+            {/* AI Content Suggestions */}
+            <div className="border border-purple-200 dark:border-purple-800 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setShowAiPanel(!showAiPanel)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                    AI Content Assistant
+                  </span>
+                </div>
+                {showAiPanel ? (
+                  <ChevronUp className="w-4 h-4 text-purple-500" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-purple-500" />
+                )}
+              </button>
+
+              {showAiPanel && (
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={aiTopic}
+                      onChange={(e) => setAiTopic(e.target.value)}
+                      placeholder="Topic (optional, e.g. 'Sunday service', 'Easter')"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                    />
+                    <button
+                      onClick={handleGenerateSuggestions}
+                      disabled={aiLoading}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {aiLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-4 h-4" />
+                      )}
+                      Generate
+                    </button>
+                  </div>
+
+                  {aiSuggestions.length > 0 && (
+                    <div className="space-y-2">
+                      {aiSuggestions.map((suggestion, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                              {suggestion.description}
+                            </span>
+                            <button
+                              onClick={() => applySuggestion(suggestion.content)}
+                              className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium whitespace-nowrap"
+                            >
+                              <Copy className="w-3 h-3" />
+                              Use this
+                            </button>
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line line-clamp-4">
+                            {suggestion.content}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Hashtags */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -427,7 +569,45 @@ const CreatePost: React.FC = () => {
                   placeholder="Type a hashtag and press Enter"
                   className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
                 />
+                <button
+                  onClick={handleSuggestHashtags}
+                  disabled={hashtagsLoading || !content.trim()}
+                  className="flex items-center gap-1 px-3 py-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors text-sm disabled:opacity-50 whitespace-nowrap"
+                  title="Get AI hashtag suggestions"
+                >
+                  {hashtagsLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  Suggest
+                </button>
               </div>
+
+              {/* AI Hashtag Suggestions */}
+              {hashtagSuggestions.length > 0 && (
+                <div className="mt-2 p-3 bg-purple-50 dark:bg-purple-900/10 rounded-lg">
+                  <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-2">
+                    Suggested hashtags (click to add):
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {hashtagSuggestions.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => addSuggestedHashtag(tag)}
+                        disabled={hashtags.includes(tag.toLowerCase())}
+                        className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                          hashtags.includes(tag.toLowerCase())
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 cursor-default'
+                            : 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-800/30 border border-purple-200 dark:border-purple-700'
+                        }`}
+                      >
+                        {hashtags.includes(tag.toLowerCase()) ? '✓' : '+'} #{tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Media Upload */}
