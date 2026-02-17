@@ -9,10 +9,7 @@ import {
   X,
   Trash2,
   Edit2,
-  Copy,
-  Filter,
-  BookOpen,
-  Lock
+  BookOpen
 } from 'lucide-react';
 import { socialMediaAPI } from '../../../services/api';
 import { SocialTemplate, TEMPLATE_CATEGORIES, PLATFORM_INFO } from '../../../types/socialMedia';
@@ -39,6 +36,7 @@ const SocialTemplates: React.FC = () => {
 
   useEffect(() => {
     fetchTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, search]);
 
   const fetchTemplates = async () => {
@@ -122,7 +120,7 @@ const SocialTemplates: React.FC = () => {
     }
   };
 
-  const useTemplate = (template: SocialTemplate) => {
+  const applyTemplate = (template: SocialTemplate) => {
     // Navigate to create post with template content pre-filled
     navigate('/social-media/create', {
       state: {
@@ -271,7 +269,7 @@ const SocialTemplates: React.FC = () => {
                 {/* Actions */}
                 <div className="border-t border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between">
                   <button
-                    onClick={() => useTemplate(template)}
+                    onClick={() => applyTemplate(template)}
                     className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 font-medium"
                   >
                     <PenSquare className="w-3.5 h-3.5" />

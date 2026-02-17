@@ -37,7 +37,7 @@ const ForgotPassword = () => {
   if (submitted) {
     return (
       <PageTransition>
-        <AuthLayout showHeader={false}>
+        <AuthLayout showHeader={false} icon={"/images/logo-only.png"}>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors space-y-6">
             {/* Success Icon */}
             <div className="flex justify-center">

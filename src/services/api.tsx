@@ -199,6 +199,10 @@ export const merchantAPI = {
   planFeatures: () => api.get('/merchants/plan-features'),
   getSenderIDStatus: () => api.get('/merchants/sender-id/status'),
   getMerchantBySubdomain: (subdomain: string) => api.get(`/merchants/by-subdomain/${subdomain}`),
+  uploadLoginSlide: (data: FormData) => api.post('/merchants/branding/login-slides', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deleteLoginSlide: (index: number) => api.delete(`/merchants/branding/login-slides/${index}`),
 };
 
 // Member API
