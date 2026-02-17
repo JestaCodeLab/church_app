@@ -6,6 +6,7 @@ interface MerchantBranding {
   primaryColor: string;
   secondaryColor: string;
   tagline: string;
+  loginSlides?: Array<{ url: string; caption?: string }>;
 }
 
 interface Merchant {
@@ -79,13 +80,21 @@ export const MerchantProvider: React.FC<{ children: ReactNode }> = ({ children }
         
         // Development: faith.localhost
         if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
-          if (parts.length === 2 && parts[0] !== 'localhost') {
+          if (parts.length === 2 && parts[0] !== 'localhost' && parts[0] !== 'app') {
             detectedSubdomain = parts[0];
           }
+          // app.localhost = main domain
+          else if (parts.length === 2 && parts[0] === 'app') {
+            detectedSubdomain = null;
+          }
         }
-        // Production: faith.thechurchhq.com
+        // Production: app.thechurchhq.com = main domain, faith.thechurchhq.com = church subdomain
         else if (parts.length >= 3) {
-          detectedSubdomain = parts[0];
+          if (parts[0] === 'app') {
+            detectedSubdomain = null;
+          } else {
+            detectedSubdomain = parts[0];
+          }
         }
         
         console.log('🌐 Detected subdomain:', detectedSubdomain);
