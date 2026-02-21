@@ -174,8 +174,8 @@ const SMSTemplates: React.FC = () => {
   const getCategoryBadgeColor = (category: string) => {
     const colors: Record<string, string> = {
       welcome: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-      event_reminder: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-      event_confirmation: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
+      event_reminder: 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400',
+      event_confirmation: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-primary-400',
       birthday: 'bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-400',
       anniversary: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
       first_timer_followup: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400',
@@ -202,7 +202,7 @@ const SMSTemplates: React.FC = () => {
         </div>
         <button
           onClick={openCreateModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
         >
           + New Template
         </button>
@@ -211,7 +211,7 @@ const SMSTemplates: React.FC = () => {
       {/* Templates Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       ) : templates.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
@@ -224,7 +224,7 @@ const SMSTemplates: React.FC = () => {
           </p>
           <button
             onClick={openCreateModal}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
           >
             Create Template
           </button>
@@ -271,7 +271,7 @@ const SMSTemplates: React.FC = () => {
                       {template.variables.map((variable, index) => (
                         <span
                           key={index}
-                          className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 rounded"
+                          className="inline-block px-2 py-1 text-xs bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400 rounded"
                         >
                           {`{{${variable}}}`}
                         </span>
@@ -290,7 +290,7 @@ const SMSTemplates: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => openEditModal(template)}
-                    className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                    className="flex-1 px-3 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700"
                   >
                     Edit
                   </button>
@@ -338,7 +338,7 @@ const SMSTemplates: React.FC = () => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g., Sunday Service Reminder"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       required
                     />
                   </div>
@@ -351,7 +351,7 @@ const SMSTemplates: React.FC = () => {
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       required
                     >
                       <option value="general">General</option>
@@ -381,10 +381,10 @@ const SMSTemplates: React.FC = () => {
                           key={variable.name}
                           type="button"
                           onClick={() => insertVariable(variable.name)}
-                          className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm text-left"
+                          className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-primary-50 dark:hover:bg-blue-900/20 text-sm text-left"
                           title={variable.description}
                         >
-                          <div className="font-mono text-xs text-blue-600 dark:text-blue-400">
+                          <div className="font-mono text-xs text-primary-600 dark:text-primary-400">
                             {`{{${variable.name}}}`}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -407,7 +407,7 @@ const SMSTemplates: React.FC = () => {
                     placeholder="Dear {{firstName}}, this is a reminder that our {{eventName}} is on {{eventDate}} at {{eventTime}}. We look forward to seeing you! - {{churchName}}"
                     rows={8}
                     maxLength={1000}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     required
                   />
                   <p className="text-sm text-gray-500 mt-1">
@@ -437,7 +437,7 @@ const SMSTemplates: React.FC = () => {
                         type="checkbox"
                         checked={isActive}
                         onChange={(e) => setIsActive(e.target.checked)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                       />
                       <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                         Template is active
@@ -458,7 +458,7 @@ const SMSTemplates: React.FC = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? 'Saving...' : editingTemplate ? 'Update Template' : 'Create Template'}
                   </button>

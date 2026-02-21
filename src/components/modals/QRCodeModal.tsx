@@ -104,7 +104,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
                                         onClick={handleCopyLink}
-                                        className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors font-medium text-sm"
+                                        className="flex items-center justify-center space-x-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors font-medium text-sm"
                                     >
                                         <Copy className="w-4 h-4" />
                                         <span>Copy Link</span>

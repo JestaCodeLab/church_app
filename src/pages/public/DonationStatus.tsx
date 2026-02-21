@@ -62,7 +62,7 @@ const DonationStatus: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Verifying your donation...</p>
         </div>
       </div>
@@ -80,7 +80,7 @@ const DonationStatus: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <button
             onClick={() => navigate(`/donate/${uniqueId}`)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             Try Again
           </button>
@@ -176,8 +176,8 @@ const DonationStatus: React.FC = () => {
 
             {/* Success Message */}
             {isSuccess && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
+              <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 mb-6">
+                <p className="text-sm text-primary-800 dark:text-blue-300">
                   <Heart className="w-4 h-4 inline mr-2" />
                   A receipt has been sent to <strong>{donation?.donor?.email}</strong>
                 </p>

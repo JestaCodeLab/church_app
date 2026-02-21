@@ -103,8 +103,8 @@ const SubscriptionUsage: React.FC<{ className?: string }> = ({ className = '' })
       <div className="p-6 space-y-6">
         {/* Members */}
         <div className="flex items-start space-x-4">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
-            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex-shrink-0">
+            <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div className="flex-1">
             <UsageMeter
@@ -118,7 +118,7 @@ const SubscriptionUsage: React.FC<{ className?: string }> = ({ className = '' })
         {/* Branches */}
         <div className="flex items-start space-x-4">
           <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex-shrink-0">
-            <Church className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <Church className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div className="flex-1">
             <UsageMeter

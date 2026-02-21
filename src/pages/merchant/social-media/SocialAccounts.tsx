@@ -127,8 +127,8 @@ const SocialAccounts: React.FC = () => {
         {/* Facebook */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-              <Facebook className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
+              <Facebook className="w-6 h-6 text-primary-600" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">Facebook</h3>
@@ -147,7 +147,7 @@ const SocialAccounts: React.FC = () => {
             <button
               onClick={handleConnect}
               disabled={connecting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {connecting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

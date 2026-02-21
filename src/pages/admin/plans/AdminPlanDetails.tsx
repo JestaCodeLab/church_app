@@ -111,7 +111,7 @@ const AdminPlanDetails = () => {
                 </span>
               )}
               {plan.isPublic ? (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded-full">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-semibold bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-blue-300 rounded-full">
                   <Eye className="w-3 h-3 mr-1" />
                   Public
                 </span>

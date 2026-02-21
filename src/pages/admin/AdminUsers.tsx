@@ -91,8 +91,8 @@ const AdminUsers = () => {
 
   const getRoleBadge = (role: string) => {
     const badges: any = {
-      super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' },
-      church_admin: { label: 'Church Admin', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' },
+      super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-primary-700 dark:bg-purple-900/20 dark:text-primary-300' },
+      church_admin: { label: 'Church Admin', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300' },
       pastor: { label: 'Pastor', color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300' },
       leader: { label: 'Leader', color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300' },
       member: { label: 'Member', color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300' },

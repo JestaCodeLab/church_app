@@ -340,15 +340,15 @@ const BirthdaySettings: React.FC = () => {
                 </div>
 
                 {/* Available Variables */}
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
+                  <p className="text-sm font-medium text-primary-900 dark:text-primary-100 mb-2">
                     Available Variables:
                   </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-blue-700 dark:text-blue-300">
-                    <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{'{{firstName}}'}</code>
-                    <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{'{{lastName}}'}</code>
-                    <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{'{{age}}'}</code>
-                    <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{'{{churchName}}'}</code>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-primary-700 dark:text-blue-300">
+                    <code className="bg-primary-100 dark:bg-primary-900/30 px-2 py-1 rounded">{'{{firstName}}'}</code>
+                    <code className="bg-primary-100 dark:bg-primary-900/30 px-2 py-1 rounded">{'{{lastName}}'}</code>
+                    <code className="bg-primary-100 dark:bg-primary-900/30 px-2 py-1 rounded">{'{{age}}'}</code>
+                    <code className="bg-primary-100 dark:bg-primary-900/30 px-2 py-1 rounded">{'{{churchName}}'}</code>
                   </div>
                 </div>
               </div>
@@ -391,14 +391,14 @@ const BirthdaySettings: React.FC = () => {
           </div>
 
           {/* Info Banner */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-4">
             <div className="flex items-start space-x-3">
-              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <Info className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
               <div className="space-y-2">
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                <p className="text-sm font-medium text-primary-900 dark:text-primary-100">
                   How Birthday Automation Works:
                 </p>
-                <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                <ul className="text-sm text-primary-700 dark:text-blue-300 space-y-1 list-disc list-inside">
                   <li>System checks for birthdays daily at the configured time</li>
                   <li>Messages are sent automatically based on your settings</li>
                   <li>Only members with valid phone numbers will receive messages</li>

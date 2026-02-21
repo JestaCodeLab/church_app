@@ -78,11 +78,11 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
                 />
                 <div className="ml-3 flex-1">
                   <div className="flex items-center space-x-2">
-                    <Archive className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <Archive className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     <span className="font-medium text-gray-900 dark:text-gray-100">
                       Archive Member
                     </span>
-                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-xs font-medium rounded-full">
+                    <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 text-xs font-medium rounded-full">
                       Recommended
                     </span>
                   </div>
@@ -149,7 +149,7 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
                 className={`px-4 py-2 font-medium rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   deletePermanently
                     ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-primary-600 hover:bg-primary-700 text-white'
                 }`}
               >
                 {isLoading && <Loader className="w-4 h-4 animate-spin" />}

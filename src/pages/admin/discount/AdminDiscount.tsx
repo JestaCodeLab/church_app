@@ -281,7 +281,7 @@ const AdminDiscounts = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => navigate(`/admin/discounts/${discount._id}`)}
-                  className="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                  className="p-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-blue-300 transition-colors"
                   title="View Details"
                 >
                   <Eye className="w-5 h-5" />

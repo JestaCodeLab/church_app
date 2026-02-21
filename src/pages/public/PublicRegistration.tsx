@@ -341,7 +341,7 @@ const handleSetPrimaryDepartment = (deptId) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
@@ -382,8 +382,8 @@ const handleSetPrimaryDepartment = (deptId) => {
               </div>
             )}
             {registrationStatus?.status === 'scheduled' && (
-              <div className="p-4 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                <Calendar className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+              <div className="p-4 bg-primary-100 dark:bg-primary-900/20 rounded-full">
+                <Calendar className="h-12 w-12 text-primary-600 dark:text-primary-400" />
               </div>
             )}
           </div>
@@ -419,7 +419,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                   Registration will be available starting:
                 </p>
                 {registrationStatus?.startDate && (
-                  <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                  <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">
                     {new Date(registrationStatus.startDate).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -454,7 +454,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                 {registrationStatus?.contactEmail && (
                   <div className="flex items-center text-gray-600 dark:text-gray-400">
                     <Mail className="h-4 w-4 mr-2" />
-                    <a href={`mailto:${registrationStatus.contactEmail}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+                    <a href={`mailto:${registrationStatus.contactEmail}`} className="hover:text-primary-600 dark:hover:text-blue-400">
                       {registrationStatus.contactEmail}
                     </a>
                   </div>
@@ -462,7 +462,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                 {registrationStatus?.contactPhone && (
                   <div className="flex items-center text-gray-600 dark:text-gray-400">
                     <Phone className="h-4 w-4 mr-2" />
-                    <a href={`tel:${registrationStatus.contactPhone}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+                    <a href={`tel:${registrationStatus.contactPhone}`} className="hover:text-primary-600 dark:hover:text-blue-400">
                       {registrationStatus.contactPhone}
                     </a>
                   </div>
@@ -496,7 +496,7 @@ const handleSetPrimaryDepartment = (deptId) => {
           
           <button
             onClick={resetForm}
-            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             Register Another Person
           </button>
@@ -554,8 +554,8 @@ const handleSetPrimaryDepartment = (deptId) => {
               className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-blue-500"
             >
               <div className="flex flex-col items-center text-center">
-                <div className="p-4 bg-blue-100 dark:bg-blue-900/20 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                  <Users className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                <div className="p-4 bg-primary-100 dark:bg-primary-900/20 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                  <Users className="h-12 w-12 text-primary-600 dark:text-primary-400" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   Member Registration
@@ -592,17 +592,17 @@ const handleSetPrimaryDepartment = (deptId) => {
             {/* Back Button */}
             <button
               onClick={resetForm}
-              className="mb-6 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center"
+              className="mb-6 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-blue-300 flex items-center"
             >
               ← Back to selection
             </button>
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Branch Selection - REQUIRED */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 rounded-lg p-4">
+                <div className="bg-primary-50 dark:bg-primary-900/20 dark:border-primary-800 rounded-lg p-4">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <MapPin className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                         <span>Select a Branch <span className="text-red-500">*</span></span>
                     </div>
                     </label>
@@ -611,7 +611,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     value={formData.branch}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 dark:border-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium"
+                    className="w-full px-4 py-3 dark:border-blue-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium"
                     >
                     <option value="">Select</option>
                     {availableBranches?.map((branch: any) => (
@@ -640,7 +640,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div>
@@ -653,7 +653,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
               </div>
@@ -672,7 +672,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     onChange={handleInputChange}
                     required
                     placeholder="0241234567 or 233241234567"
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500 
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-1 focus:ring-primary-500 
                     ${errors.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
                     bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
                 />
@@ -691,7 +691,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     value={formData.gender}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="">Select Gender</option>
                     <option value="male">Male</option>
@@ -714,7 +714,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                         value={formData.email}
                         onChange={handleInputChange}
                         placeholder="example@email.com"
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-1 focus:ring-primary-500
                             ${errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
                             bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
                         />
@@ -733,7 +733,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                         name="dateOfBirth"
                         value={formData.dateOfBirth}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                     </div>
                   </div>
@@ -747,7 +747,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                         name="maritalStatus"
                         value={formData.maritalStatus}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         <option value="">Select Status</option>
                         <option value="single">Single</option>
@@ -765,7 +765,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                         name="occupation"
                         value={formData.occupation}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                     </div>
                     <div>
@@ -777,7 +777,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                         name="placeOfWork"
                         value={formData.placeOfWork}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         placeholder="e.g., ABC School, XYZ Company"
                         />
                     </div>
@@ -787,7 +787,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                 {registrationType === 'member' && availableDepartments.length > 0 && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 dark:bg-gray-700 dark:border-gray-600">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center dark:text-gray-100">
-                    <Users className="w-5 h-5 mr-2 text-blue-600" />
+                    <Users className="w-5 h-5 mr-2 text-primary-600" />
                     Select Departments (Optional)
                     </h3>
                     <p className="text-sm text-gray-600 mb-4 dark:text-gray-300">
@@ -804,7 +804,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                             key={dept._id}
                             className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
                             isSelected
-                                ? 'border-blue-500 bg-blue-50'
+                                ? 'border-blue-500 bg-primary-50'
                                 : 'border-gray-200 hover:border-gray-300'
                             }`}
                             onClick={() => handleDepartmentToggle(dept._id)}
@@ -814,7 +814,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                             <div className="flex-shrink-0 mt-1">
                                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                                 isSelected
-                                    ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+                                    ? 'bg-primary-600 border-primary-600 dark:bg-primary-500 dark:border-blue-500'
                                     : 'border-gray-300 dark:border-gray-600'
                                 }`}>
                                 {isSelected && (
@@ -861,7 +861,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                                     handleSetPrimaryDepartment(dept._id);
                                     }}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="w-4 h-4 text-blue-600"
+                                    className="w-4 h-4 text-primary-600"
                                 />
                                 <span className="text-gray-700">Set as primary department</span>
                                 </label>
@@ -870,7 +870,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                             
                             {isPrimary && (
                             <div className="absolute top-2 right-2">
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                                 Primary
                                 </span>
                             </div>
@@ -881,8 +881,8 @@ const handleSetPrimaryDepartment = (deptId) => {
                     </div>
                     
                     {selectedDepartments.length > 0 && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-800">
+                    <div className="mt-4 p-3 bg-primary-50 rounded-lg">
+                        <p className="text-sm text-primary-800">
                         <strong>{selectedDepartments.length}</strong> department{selectedDepartments.length !== 1 ? 's' : ''} selected
                         {formData.primaryDepartment && (
                             <span className="ml-2">
@@ -910,7 +910,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                   value={formData.address.street}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
 
@@ -924,7 +924,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     name="address.city"
                     value={formData.address.city}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div>
@@ -936,7 +936,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                     name="address.region"
                     value={formData.address.region}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
               </div>
@@ -955,7 +955,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                             const value = e.target.value === '' ? null : e.target.value === 'true';
                             setFormData(prev => ({ ...prev, bornAgain: value }));
                             }}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                             <option value="">Select...</option>
                             <option value="true">Yes</option>
@@ -972,7 +972,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                             name="baptismStatus"
                             value={formData.baptismStatus}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                             <option value="none">None</option>
                             <option value="water">Water Baptism</option>
@@ -991,7 +991,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                         name="howDidYouJoin"
                         value={formData.howDidYouJoin}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                         <option value="">Select...</option>
                         <option value="invitation">Invitation</option>
@@ -1014,7 +1014,7 @@ const handleSetPrimaryDepartment = (deptId) => {
                             value={formData.howDidYouJoinOther}
                             onChange={handleInputChange}
                             maxLength={200}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             placeholder="Please specify..."
                         />
                         </div>
@@ -1026,7 +1026,7 @@ const handleSetPrimaryDepartment = (deptId) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">

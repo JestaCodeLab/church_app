@@ -1003,7 +1003,7 @@ const PartnershipDetails = () => {
       case 'paused':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
       case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+        return 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
@@ -1058,7 +1058,7 @@ const PartnershipDetails = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading programme details...</p>
         </div>
       </div>
@@ -1131,7 +1131,7 @@ const PartnershipDetails = () => {
             <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:space-x-3">
               <div className="flex-shrink-0 mt-0 sm:mt-1">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <Link2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <Link2 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
                 </div>
               </div>
               <div className="flex-1 min-w-0">
@@ -1156,7 +1156,7 @@ const PartnershipDetails = () => {
                         navigator.clipboard.writeText(publicRegistrationLink);
                         showToast.success('Link copied to clipboard!');
                       }}
-                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                     >
                       <Copy className="h-4 w-4" />
                       <span className="hidden lg:inline">Copy</span>
@@ -1164,7 +1164,7 @@ const PartnershipDetails = () => {
                     <button
                       onClick={() => handleGenerateQR('registration')}
                       disabled={qrModal.loading}
-                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-purple-100 dark:bg-purple-900/30 text-primary-700 dark:text-primary-400 border border-purple-200 dark:border-purple-800 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {qrModal.loading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -1238,7 +1238,7 @@ const PartnershipDetails = () => {
           <button
             onClick={() => setActiveTab('overview')}
             className={`${activeTab === 'overview'
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              ? 'border-purple-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
@@ -1247,7 +1247,7 @@ const PartnershipDetails = () => {
           <button
             onClick={() => setActiveTab('partners')}
             className={`${activeTab === 'partners'
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              ? 'border-purple-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
@@ -1256,7 +1256,7 @@ const PartnershipDetails = () => {
           <button
             onClick={() => setActiveTab('transactions')}
             className={`${activeTab === 'transactions'
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              ? 'border-purple-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
@@ -1265,7 +1265,7 @@ const PartnershipDetails = () => {
           <button
             onClick={() => setActiveTab('messages')}
             className={`${activeTab === 'messages'
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              ? 'border-purple-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
@@ -1353,8 +1353,8 @@ const PartnershipDetails = () => {
                       {formatCurrency(programme.goal?.targetAmount || 0, programme.goal?.currency || merchantCurrency)}
                     </p>
                   </div>
-                  <div className="p-3 bg-purple-600/10 dark:bg-purple-500/10 rounded-lg">
-                    <Target className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  <div className="p-3 bg-primary-600/10 dark:bg-purple-500/10 rounded-lg">
+                    <Target className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
               </div>
@@ -1379,16 +1379,16 @@ const PartnershipDetails = () => {
             </div>
 
             {/* Total Partners Card */}
-            <div className="relative overflow-hidden rounded-xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-blue-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+            <div className="relative overflow-hidden rounded-xl border border-primary-200 dark:border-primary-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-primary-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
               <div className="relative z-10">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Partners</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{filteredStats?.totalPartners || 0}</p>
                   </div>
-                  <div className="p-3 bg-blue-600/10 dark:bg-blue-500/10 rounded-lg">
-                    <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <div className="p-3 bg-primary-600/10 dark:bg-primary-500/10 rounded-lg">
+                    <Users className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
               </div>
@@ -1611,7 +1611,7 @@ const PartnershipDetails = () => {
                 </button>
                 <button
                   onClick={() => setShowAddPartnerModal(true)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Partner</span>
@@ -1710,7 +1710,7 @@ const PartnershipDetails = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs capitalize font-semibold rounded-full ${partner.partnerType === 'member'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                            ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                             }`}>
                             {partner.partnerType}
@@ -1732,7 +1732,7 @@ const PartnershipDetails = () => {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEditPartner(partner)}
-                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                              className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-blue-300 transition-colors"
                               title="Edit partner"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -1773,7 +1773,7 @@ const PartnershipDetails = () => {
                 <button
                   onClick={() => setPartnersCurrentPage(p => Math.min(partnersTotalPages, p + 1))}
                   disabled={partnersCurrentPage === partnersTotalPages}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
                 </button>
@@ -1812,7 +1812,7 @@ const PartnershipDetails = () => {
                 </select>
                 <button
                   onClick={() => setShowAddTransactionModal(true)}
-                  className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium whitespace-nowrap"
+                  className="inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Transaction
@@ -1908,7 +1908,7 @@ const PartnershipDetails = () => {
                             {transaction.paymentMethod?.toUpperCase()}
                           </div>
                           {transaction.registration?.partnerType && (
-                            <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            <div className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                               {transaction.registration.partnerType === 'member' ? 'Member' : 'Guest'}
                             </div>
                           )}
@@ -1919,7 +1919,7 @@ const PartnershipDetails = () => {
                             <div className="text-xs text-gray-500 dark:text-gray-400">ID: {transaction.memberId}</div>
                           )}
                           {(transaction.registration?.tier || transaction.tier) && (
-                            <div className="text-xs text-purple-600 dark:text-purple-400">
+                            <div className="text-xs text-primary-600 dark:text-primary-400">
                               {typeof (transaction.registration?.tier || transaction.tier) === 'object' 
                                 ? (transaction.registration?.tier?.name || transaction.tier?.name)
                                 : (transaction.registration?.tier || transaction.tier)}
@@ -1987,10 +1987,10 @@ const PartnershipDetails = () => {
           </div>
 
           {/* Available Variables Info */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-5">
+          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-5">
             <div className="mb-4">
-              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-3">Available Variables</h4>
-              <p className="text-xs text-blue-800 dark:text-blue-300 mb-4">
+              <h4 className="text-sm font-semibold text-primary-900 dark:text-primary-200 mb-3">Available Variables</h4>
+              <p className="text-xs text-primary-800 dark:text-blue-300 mb-4">
                 Use these placeholders in your messages and they will be automatically replaced with actual values:
               </p>
             </div>
@@ -1998,47 +1998,47 @@ const PartnershipDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
-                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[name]</code>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">Partner/recipient name</p>
+                  <code className="text-xs font-mono text-primary-700 dark:text-blue-300">[name]</code>
+                  <p className="text-xs text-primary-600 dark:text-primary-400">Partner/recipient name</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
-                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[amount]</code>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">Transaction amount (thank you only)</p>
+                  <code className="text-xs font-mono text-primary-700 dark:text-blue-300">[amount]</code>
+                  <p className="text-xs text-primary-600 dark:text-primary-400">Transaction amount (thank you only)</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
-                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[currency]</code>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">Currency code (GHS, USD, etc)</p>
+                  <code className="text-xs font-mono text-primary-700 dark:text-blue-300">[currency]</code>
+                  <p className="text-xs text-primary-600 dark:text-primary-400">Currency code (GHS, USD, etc)</p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
-                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[programme]</code>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">Programme/partnership name</p>
+                  <code className="text-xs font-mono text-primary-700 dark:text-blue-300">[programme]</code>
+                  <p className="text-xs text-primary-600 dark:text-primary-400">Programme/partnership name</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
-                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[church]</code>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">Church/merchant name</p>
+                  <code className="text-xs font-mono text-primary-700 dark:text-blue-300">[church]</code>
+                  <p className="text-xs text-primary-600 dark:text-primary-400">Church/merchant name</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded px-3 py-2 border border-blue-100 dark:border-blue-900">
-                  <code className="text-xs font-mono text-blue-700 dark:text-blue-300">[tier]</code>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">Tier name (public payments only)</p>
+                  <code className="text-xs font-mono text-primary-700 dark:text-blue-300">[tier]</code>
+                  <p className="text-xs text-primary-600 dark:text-primary-400">Tier name (public payments only)</p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-              <h5 className="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">Default Messages</h5>
+            <div className="mt-4 pt-4 border-t border-primary-200 dark:border-primary-800">
+              <h5 className="text-xs font-semibold text-primary-900 dark:text-primary-200 mb-2">Default Messages</h5>
               <div className="space-y-2">
                 <div>
-                  <p className="text-xs font-medium text-blue-900 dark:text-blue-200 mb-1">Welcome (when partner registers):</p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 rounded px-3 py-2 italic">
+                  <p className="text-xs font-medium text-primary-900 dark:text-primary-200 mb-1">Welcome (when partner registers):</p>
+                  <p className="text-xs text-primary-700 dark:text-blue-300 bg-white dark:bg-gray-800 rounded px-3 py-2 italic">
                     "Welcome to [programme] partnership programme at [church]! Thank you for joining us. We're excited to have you as a partner."
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-blue-900 dark:text-blue-200 mb-1">Thank You (after payment):</p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 rounded px-3 py-2 italic">
+                  <p className="text-xs font-medium text-primary-900 dark:text-primary-200 mb-1">Thank You (after payment):</p>
+                  <p className="text-xs text-primary-700 dark:text-blue-300 bg-white dark:bg-gray-800 rounded px-3 py-2 italic">
                     "Thank you for your partnership contribution of [currency] [amount]. Your support to [church]'s [programme] is greatly appreciated."
                   </p>
                 </div>
@@ -2094,7 +2094,7 @@ const PartnershipDetails = () => {
               <button
                 onClick={handleSaveMessages}
                 disabled={messageSaving}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
               >
                 {messageSaving ? (
                   <>
@@ -2199,7 +2199,7 @@ const PartnershipDetails = () => {
               <button
                 onClick={() => setPartnerTab('member')}
                 className={`px-4 py-2 font-medium border-b-2 transition-colors ${partnerTab === 'member'
-                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
                   }`}
               >
@@ -2208,7 +2208,7 @@ const PartnershipDetails = () => {
               <button
                 onClick={() => setPartnerTab('guest')}
                 className={`px-4 py-2 font-medium border-b-2 transition-colors ${partnerTab === 'guest'
-                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
                   }`}
               >
@@ -2365,7 +2365,7 @@ const PartnershipDetails = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -2405,7 +2405,7 @@ const PartnershipDetails = () => {
               <button
                 onClick={() => setTransactionTab('member')}
                 className={`px-4 py-2 font-medium border-b-2 transition-colors ${transactionTab === 'member'
-                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
                   }`}
               >
@@ -2414,7 +2414,7 @@ const PartnershipDetails = () => {
               <button
                 onClick={() => setTransactionTab('guest')}
                 className={`px-4 py-2 font-medium border-b-2 transition-colors ${transactionTab === 'guest'
-                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
                   }`}
               >
@@ -2432,27 +2432,27 @@ const PartnershipDetails = () => {
                     </label>
 
                     {selectedMember || selectedPartnerForTransaction ? (
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-center justify-between">
+                      <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 flex items-center justify-between">
                         <div>
                           {selectedMember ? (
                             <>
-                              <p className="font-medium text-blue-900 dark:text-blue-200">
+                              <p className="font-medium text-primary-900 dark:text-primary-200">
                                 {selectedMember.firstName} {selectedMember.lastName}
                               </p>
-                              <p className="text-sm text-blue-700 dark:text-blue-300">
+                              <p className="text-sm text-primary-700 dark:text-blue-300">
                                 {selectedMember.phone}
                               </p>
                             </>
                           ) : selectedPartnerForTransaction ? (
                             <>
-                              <p className="font-medium text-blue-900 dark:text-blue-200">
+                              <p className="font-medium text-primary-900 dark:text-primary-200">
                                 {selectedPartnerForTransaction.partner.firstName} {selectedPartnerForTransaction.partner.lastName}
                               </p>
-                              <p className="text-sm text-blue-700 dark:text-blue-300">
+                              <p className="text-sm text-primary-700 dark:text-blue-300">
                                 {selectedPartnerForTransaction.partner.phone}
                               </p>
                               {selectedPartnerForTransaction.tier?.name && (
-                                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                                <p className="text-xs text-primary-600 dark:text-blue-300 mt-1">
                                   {selectedPartnerForTransaction.tier.name}
                                 </p>
                               )}
@@ -2467,7 +2467,7 @@ const PartnershipDetails = () => {
                             setAddTransactionData(prev => ({ ...prev, registrationId: '' }));
                             setMemberSearchQuery('');
                           }}
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-100"
+                          className="text-primary-600 hover:text-primary-800 dark:text-blue-300 dark:hover:text-primary-100"
                         >
                           ✕
                         </button>
@@ -2654,7 +2654,7 @@ const PartnershipDetails = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || (transactionTab === 'member' ? !selectedMember && !selectedPartnerForTransaction : !guestData.fullName || !guestData.phone) || !addTransactionData.amount}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

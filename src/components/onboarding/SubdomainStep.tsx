@@ -174,7 +174,7 @@ const SubdomainStep: React.FC<SubdomainStepProps> = ({
           <button
             type="button"
             aria-label="Dashboard address info"
-            className="ml-2 text-blue-500 hover:text-blue-600 dark:text-blue-300 focus:outline-none group relative"
+            className="ml-2 text-blue-500 hover:text-primary-600 dark:text-blue-300 focus:outline-none group relative"
           >
             <Info className="w-4 h-4" />
 

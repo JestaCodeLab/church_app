@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, X, Loader, Image, Plus, Trash2 } from 'lucide-react';
+import { Upload, X, Loader, Image, Plus, Trash2, RotateCcw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toasts';
 import { getSecureItem } from '../../utils/encryption';
 import { merchantAPI } from '../../services/api';
 import axios from 'axios';
+import ConfirmModal from '../modals/ConfirmModal';
 
 // Interface for merchant branding with login slides
 interface MerchantBranding {
@@ -24,6 +25,7 @@ const AppearanceSettings = () => {
   const { user, checkAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [showResetModal, setShowResetModal] = useState(false);
   
   const [formData, setFormData] = useState({
     logo: user?.merchant?.branding?.logo || '',
@@ -197,15 +199,58 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 };
 
+  const handleResetColors = async () => {
+    setShowResetModal(false);
+    setLoading(true);
+    try {
+      const token = await getSecureItem('accessToken');
+      
+      const response = await axios.patch(
+        `${process.env.REACT_APP_API_URL}/merchants/branding`,
+        { resetToDefault: true },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      showToast.success('Brand colors reset to system defaults!');
+      
+      // Update local state
+      setFormData({
+        ...formData,
+        primaryColor: '#4F46E5',
+        secondaryColor: '#10B981'
+      });
+      
+      // Refresh user data
+      await checkAuth();
+      
+      // Reload to apply new colors
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+    } catch (error: any) {
+      console.error('❌ Reset colors error:', error);
+      showToast.error(error.response?.data?.message || 'Failed to reset colors');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loadingData) {
     return (
-        <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-12">
         <Loader className="w-8 h-8 animate-spin text-primary-600" />
-        </div>
+      </div>
     );
-    }
+  }
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="max-w-8xl">
         <div className='flex gap-6'>
             {/* Logo Upload */}
@@ -220,7 +265,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <img
                         src={previewUrl}
                         alt="Logo preview"
-                        className="h-24 w-auto object-contain rounded-lg border-2 border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-900"
+                        className="w-32 h-32 object-contain rounded-lg border border-gray-200 dark:border-gray-700"
                     />
                     <button
                         type="button"
@@ -265,9 +310,20 @@ const handleSubmit = async (e: React.FormEvent) => {
             <div>
                 {/* Colors */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                    Brand Colors
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        Brand Colors
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowResetModal(true)}
+                        disabled={loading}
+                        className="flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Reset</span>
+                      </button>
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-6">
                     <div>
@@ -429,6 +485,20 @@ const handleSubmit = async (e: React.FormEvent) => {
         </button>
       </div>
     </form>
+
+    {/* Reset Colors Confirmation Modal */}
+    <ConfirmModal
+      isOpen={showResetModal}
+      onClose={() => setShowResetModal(false)}
+      onConfirm={handleResetColors}
+      title="Reset Brand Colors"
+      message="Are you sure you want to reset brand colors to system defaults? This will change your primary color to blue (#4F46E5) and secondary color to green (#10B981)."
+      confirmText="Reset Colors"
+      cancelText="Cancel"
+      type="warning"
+      isLoading={loading}
+    />
+    </>
   );
 };
 

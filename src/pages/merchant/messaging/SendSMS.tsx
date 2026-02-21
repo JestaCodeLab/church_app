@@ -628,20 +628,20 @@ const SendSMS = () => {
 
         {/* Sender ID Status */}
         {senderIdStatus && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
             <div className="flex items-start space-x-3">
-              <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <MessageSquare className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm text-blue-900 dark:text-blue-100">
+                <p className="text-sm text-primary-900 dark:text-primary-100">
                   <strong>Sending as:</strong> {senderIdStatus.effectiveSenderId}
                 </p>
                 {senderIdStatus.status === 'pending' && (
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                     Your custom sender ID <b>"{senderIdStatus.customSenderId}"</b> is pending approval
                   </p>
                 )}
                 {senderIdStatus.status === 'none' && (
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                     Want to use your church name? {' '}
                     <Link to="/messaging/sender-id" className="underline font-medium">
                       Register a custom sender ID
@@ -997,8 +997,8 @@ const SendSMS = () => {
                 </select>
 
                 {selectedTemplate && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded mt-2">
-                    <p className="text-sm text-blue-900 dark:text-blue-100">
+                  <div className="bg-primary-50 dark:bg-primary-900/20 p-3 rounded mt-2">
+                    <p className="text-sm text-primary-900 dark:text-primary-100">
                       Variables will be auto-filled:
                       {templates?.find(t => t._id === selectedTemplate)?.variables?.join(', ')}
                     </p>
@@ -1081,7 +1081,7 @@ const SendSMS = () => {
                         onChange={(e) => setAiTone(e.target.value)}
                         placeholder="e.g. Invite to Sunday service in a friendly manner..."
                         rows={4}
-                        className="w-full px-4 py-2 border border-purple-300 dark:border-purple-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-primary-300 dark:border-primary-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-purple-500"
                       />
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Describe what you'd like the message to convey or how you want it to sound
@@ -1204,8 +1204,8 @@ const SendSMS = () => {
                   </div>
 
                   {scheduledDate && (
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                      <p className="text-xs text-blue-900 dark:text-blue-100">
+                    <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+                      <p className="text-xs text-primary-900 dark:text-primary-100">
                         <Calendar className="w-4 h-4 inline mr-2" />
                         <strong>Scheduled for:</strong> {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString()}
                       </p>
@@ -1216,7 +1216,7 @@ const SendSMS = () => {
             </div>
 
             {/* Credits Summary */}
-            <div className={`${hasInsufficientCredits ? 'bg-red-100 dark:bg-red-900' : 'bg-blue-50 dark:bg-gray-900'} rounded-lg p-4 border border-gray-200 dark:border-gray-700`}>
+            <div className={`${hasInsufficientCredits ? 'bg-red-100 dark:bg-red-900' : 'bg-primary-50 dark:bg-gray-900'} rounded-lg p-4 border border-gray-200 dark:border-gray-700`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-base font-bold text-gray-700 dark:text-gray-300">
@@ -1293,14 +1293,14 @@ const SendSMS = () => {
         </div>
 
         {/* Quick Tips */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <Info className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
             <div className="space-y-2">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              <p className="text-sm font-medium text-primary-900 dark:text-primary-100">
                 Quick Tips:
               </p>
-              <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+              <ul className="text-sm text-primary-700 dark:text-blue-300 space-y-1 list-disc list-inside">
                 <li>Messages over 160 characters will be sent as multiple SMS parts</li>
                 <li>Delivery status updates automatically within 30 seconds</li>
                 <li>Check SMS History to see delivery status per recipient</li>

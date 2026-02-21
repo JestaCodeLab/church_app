@@ -8,6 +8,7 @@ import { useMerchant } from '../../context/MerchantContext';
 import { validateEmail } from '../../utils/validators';
 import useSEO from '../../hooks/useSEO';
 import ThemeToggle from '../../components/ui/ThemeToggle';
+import AppLogo from '../../components/ui/AppLogo';
 
 const SLIDE_1 = '/images/slider04.jpg';
 // const SLIDE_2 = '/images/slider03.jpg';
@@ -158,15 +159,14 @@ const Login = () => {
     }
   };
 
-  const churchName = merchant?.name || 'Ministry Made Simple';
-  const tagline = merchant?.branding?.tagline || 'Unite your congregation with a platform that makes ministry effortless';
+  const churchName = merchant?.name;
+  const tagline = merchant?.branding?.tagline;
   const logo = merchant?.branding?.logo;
-  const appLogo =  'images/logo-white.png';
-  const primaryColor = merchant?.branding?.primaryColor || '#4F46E5';
+  const primaryColor = merchant?.branding?.primaryColor || '#82d76e';
 
   return (
     <PageTransition>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen" data-theme="green">
         {/* Left Panel — Image Slideshow (hidden on mobile) */}
         <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden p-6">
           {/* Slide images */}
@@ -189,7 +189,11 @@ const Login = () => {
             // check if the main domain is app.localhost:3000 or localhost:3000, if so, show the default logo and name instead of merchant branding
             isMainDomain && (
               <div className="absolute top-6 left-6 z-10 flex items-center gap-3">
-                <img src={appLogo} alt="Church HQ" width={'25%'}/>
+               <AppLogo 
+                size="sm" 
+                className='rounded-[12px] cursor-pointer' 
+                onClick={() => window.location.assign(process.env.REACT_APP_PROJECT_URL || 'https://thechurchhq.com')}
+              />
               </div>
             )
           }
@@ -205,20 +209,30 @@ const Login = () => {
           
 
           {/* Bottom text overlay */}
-          <div className="absolute bottom-16 left-8 right-8 z-10 p-8 rounded-[30px] backdrop-blur-md bg-black/30">
-             {/* Church logo & name overlay (top-left) */}
-              <div className="flex items-center gap-3 mb-3">
+            <div className="absolute bottom-16 left-8 right-8 z-10 p-8 rounded-[30px] backdrop-blur-md bg-black/30 w-3/5">
+             {
+              isMainDomain ? (
+              <div>
+                <h4 className="text-white font-semibold text-3xl drop-shadow-lg mb-1">Everything Your Church Needs, All in <span className="text-primary-600">One Place</span></h4>
+                <p className="text-white/70 text-sm">Streamline your operations, engage your congregation, and grow your ministry with our comprehensive suite of tools designed specifically for modern churches.</p>
+              </div>
+              ): (
+               <div>
+                <div className="flex items-center gap-3 mb-3">
                 {logo && (
                   <img src={logo} alt={churchName} width={'12%'} />
                 )}
-              </div>
-             <h4 className="text-white font-semibold text-3xl drop-shadow-lg mb-1">{churchName}</h4>
-            <p className="text-white/70 text-lg">{tagline}</p>
-          </div>
+                </div>
+                <h4 className="text-white font-semibold text-3xl drop-shadow-lg mb-1">{churchName}</h4>
+              <p className="text-white/70 text-lg">{tagline}</p>
+               </div> 
+              )
+             }
+            </div>
 
           {/* Dot indicators */}
           {slides.length > 1 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            <div className="absolute bottom-6 left-14 p-4 -translate-x-1/2 z-10 flex gap-2">
               {slides.map((_, index) => (
                 <button
                   key={index}
@@ -242,17 +256,29 @@ const Login = () => {
             <ThemeToggle />
           </div>
           {/* Mobile header with logo */}
-          <div className="lg:hidden flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="lg:hidden flex items-center justify-between py-4 px-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
               {logo ? (
                 <img src={logo} alt={churchName} className="w-10 h-10 rounded-full object-cover" />
               ) : (
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  {churchName.charAt(0)}
-                </div>
+                <>
+                  { isMainDomain ? (
+                      <AppLogo 
+                        size="sm" 
+                        className='rounded-[12px] cursor-pointer' 
+                        onClick={() => window.location.assign(process.env.REACT_APP_PROJECT_URL || 'https://thechurchhq.com')}
+                      />
+                    )
+                    : (
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                    {churchName?.charAt(0)}
+                    </div>
+                  )
+                }
+                </>
               )}
               <span className="font-semibold text-gray-900 dark:text-white">{churchName}</span>
             </div>
@@ -264,7 +290,7 @@ const Login = () => {
             <div className="w-full max-w-md">
               {/* Heading */}
               <div className="mb-8 text-center">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-primary-800 to-gray-900 dark:from-gray-100 dark:via-primary-400 dark:to-gray-100 bg-clip-text text-transparent transition-all duration-300">Welcome Back!</h1>
+                <h1 className="text-3xl font-bold dark:text-white">Welcome Back!</h1>
                 <p className="mt-0 text-gray-600 dark:text-gray-400">
                   Sign in to your account
                 </p>
@@ -330,8 +356,8 @@ const Login = () => {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading || !formData.email.trim() || !formData.password.trim()}
+                  className="w-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>

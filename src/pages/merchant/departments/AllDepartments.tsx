@@ -300,7 +300,7 @@ const AllDepartments = () => {
                           {dept.isActive ? '● Active' : '○ Inactive'}
                         </span>
                         {dept.allowSelfRegistration && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400">
                             Open
                           </span>
                         )}
@@ -369,7 +369,7 @@ const AllDepartments = () => {
                   <PermissionGuard permission="departments.edit">
                   <button
                     onClick={() => navigate(`/departments/${dept._id}/edit`)}
-                    className="inline-flex items-center justify-center px-3 py-2 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-semibold rounded-lg transition-colors"
+                    className="inline-flex items-center justify-center px-3 py-2 bg-primary-100 dark:bg-primary-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 text-primary-700 dark:text-primary-400 text-sm font-semibold rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
@@ -460,7 +460,7 @@ const AllDepartments = () => {
                           {dept.isActive ? '● Active' : '○ Inactive'}
                         </span>
                         {dept.allowSelfRegistration && (
-                          <span className="block inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          <span className="block inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400">
                             Open
                           </span>
                         )}
@@ -474,7 +474,7 @@ const AllDepartments = () => {
                             e.stopPropagation();
                             navigate(`/departments/${dept._id}/edit`);
                           }}
-                          className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                          className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Edit className="w-5 h-5" />

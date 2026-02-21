@@ -406,7 +406,7 @@ const AdminDiscountDetails = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
                   <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total Revenue</p>
                   <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                     GHS {stats?.totalRevenue?.toFixed(2) || '0.00'}

@@ -212,7 +212,7 @@ const AdminPermissionsPage = () => {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         {permission.displayName}
                       </h3>
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
                         <Tag className="w-3 h-3" />
                         {permission.category}
                       </span>
@@ -242,7 +242,7 @@ const AdminPermissionsPage = () => {
                       setSelectedPermission(permission);
                       setShowEditModal(true);
                     }}
-                    className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded transition-colors"
+                    className="p-2 hover:bg-primary-100 dark:hover:bg-blue-900/30 text-primary-600 rounded transition-colors"
                     title="Edit permission"
                   >
                     <Edit2 className="w-5 h-5" />

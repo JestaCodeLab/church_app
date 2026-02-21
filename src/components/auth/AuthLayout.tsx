@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { Church } from 'lucide-react';
 import AuthFooter from './AuthFooter';
 import ThemeToggle from '../ui/ThemeToggle';
+import AppLogo from '../ui/AppLogo';
 import { useMerchant } from '../../context/MerchantContext';
 import { useNavigate } from 'react-router';
 
@@ -62,32 +63,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         {/* Logo/Brand */}
         { showHeader && (
           <div className="text-center mb-8 cursor-pointer" onClick={()=>navigate('/')}>
-            {merchantLoading ? (
-              // Loading state
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              </div>
-            ) : displayLogo ? (
-              // Show merchant logo
-              <div className="mb-4">
-                <img 
-                  src={displayLogo} 
-                  alt={displayTitle}
-                  className="h-20 w-auto mx-auto object-contain"
-                />
-              </div>
-            ) : (
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 rounded-[20px] mb-4 shadow-lg dark:shadow-primary-500/20 transition-all duration-300">
-                {/* {icon || <Church className="w-8 h-8 text-white" />} */}
-                <img 
-                  src={'/images/logo-only.png'} 
-                  alt={'logo'}
-                  className="h-20 w-auto mx-auto object-contain"
-                />
-              </div>
-            )}
+            <AppLogo size="md" showLoading={merchantLoading} />
             
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-primary-800 to-gray-900 dark:from-gray-100 dark:via-primary-400 dark:to-gray-100 bg-clip-text text-transparent transition-all duration-300">
+            <h1 className="text-3xl font-bold dark:text-white">
               {displayTitle}
             </h1>
             

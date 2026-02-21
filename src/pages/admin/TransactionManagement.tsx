@@ -212,8 +212,8 @@ const TransactionManagement: React.FC = () => {
                   {summary.totalTransactions.toLocaleString()}
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <DollarSign className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
@@ -469,12 +469,12 @@ const TransactionManagement: React.FC = () => {
                             {transaction.paymentMethod.toUpperCase()}
                           </p>
                           {transaction.campaign && (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                               {transaction.campaign}
                             </p>
                           )}
                           {transaction.event && (
-                            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                            <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                               {transaction.event}
                             </p>
                           )}

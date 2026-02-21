@@ -21,8 +21,8 @@ const FacebookPreview: React.FC<FacebookPreviewProps> = ({
         {pageImage ? (
           <img src={pageImage} alt={pageName} className="w-10 h-10 rounded-full" />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <span className="text-sm font-bold text-blue-600">f</span>
+          <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+            <span className="text-sm font-bold text-primary-600">f</span>
           </div>
         )}
         <div>

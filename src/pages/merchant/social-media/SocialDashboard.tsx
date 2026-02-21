@@ -248,8 +248,8 @@ const SocialDashboard: React.FC = () => {
           <div className="space-y-2">
             {[
               { label: 'Create Post', icon: PenSquare, href: '/social-media/create', color: 'text-primary-600' },
-              { label: 'View Calendar', icon: CalendarDays, href: '/social-media/calendar', color: 'text-blue-600' },
-              { label: 'Browse Templates', icon: LayoutDashboard, href: '/social-media/templates', color: 'text-purple-600' },
+              { label: 'View Calendar', icon: CalendarDays, href: '/social-media/calendar', color: 'text-primary-600' },
+              { label: 'Browse Templates', icon: LayoutDashboard, href: '/social-media/templates', color: 'text-primary-600' },
               { label: 'View Analytics', icon: TrendingUp, href: '/social-media/analytics', color: 'text-green-600' },
               { label: 'Connect Account', icon: Link2, href: '/social-media/accounts', color: 'text-orange-600' },
             ].map((action) => (

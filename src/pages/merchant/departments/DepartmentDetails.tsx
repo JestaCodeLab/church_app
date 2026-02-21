@@ -337,7 +337,7 @@ const DepartmentDetails = () => {
               setShowAddMembersModal(true);
               fetchAvailableMembers();
             }}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
           >
             <UserPlus className="w-4 h-4 mr-2" />
             Add Members
@@ -366,8 +366,8 @@ const DepartmentDetails = () => {
                   {statistics.totalMembers}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
@@ -395,7 +395,7 @@ const DepartmentDetails = () => {
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <TrendingUp className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
@@ -615,7 +615,7 @@ const DepartmentDetails = () => {
                       <Mail className="w-4 h-4 text-gray-400" />
                       <a 
                         href={`mailto:${department.contactEmail}`}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                        className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                       >
                         {department.contactEmail}
                       </a>
@@ -626,7 +626,7 @@ const DepartmentDetails = () => {
                       <Phone className="w-4 h-4 text-gray-400" />
                       <a 
                         href={`tel:${department.contactPhone}`}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                        className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                       >
                         {department.contactPhone}
                       </a>
@@ -715,7 +715,7 @@ const DepartmentDetails = () => {
                     placeholder="Search members by name, email, or phone..."
                     value={memberSearchTerm}
                     onChange={(e) => setMemberSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                    className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
                   />
                   {modalSearching && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -727,7 +727,7 @@ const DepartmentDetails = () => {
 
               {/* Selected count */}
               {selectedMemberIds.length > 0 && (
-                <div className="mt-3 text-sm text-blue-600 dark:text-blue-400">
+                <div className="mt-3 text-sm text-primary-600 dark:text-primary-400">
                   {selectedMemberIds.length} member(s) selected
                 </div>
               )}
@@ -759,7 +759,7 @@ const DepartmentDetails = () => {
                         type="checkbox"
                         checked={selectedMemberIds.includes(member._id)}
                         onChange={() => toggleMemberSelection(member._id)}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
                       />
                       <div className="ml-3 flex items-center flex-1">
                         {member.photo ? (
@@ -769,7 +769,7 @@ const DepartmentDetails = () => {
                             className="w-10 h-10 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-gray-600 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-primary-600 dark:bg-gray-600 flex items-center justify-center">
                             <span className="text-white dark:text-gray-300 font-semibold">
                               {member.firstName[0]}{member.lastName[0]}
                             </span>
@@ -807,7 +807,7 @@ const DepartmentDetails = () => {
                 <button
                   onClick={handleAddMembers}
                   disabled={selectedMemberIds.length === 0 || addingMembers}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                 >
                   {addingMembers ? (
                     <>

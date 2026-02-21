@@ -218,7 +218,7 @@ const EditMember = () => {
           <div className="flex items-start space-x-4">
             <button
               onClick={() => navigate('/members/all')}
-              className="bg-blue-600 p-2 hover:bg-blue-700 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="bg-primary-600 p-2 hover:bg-primary-700 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Back to Members"
             >
               <ArrowLeft className="w-5 h-5 text-white dark:text-gray-400 " />
@@ -438,7 +438,7 @@ const EditMember = () => {
                       name="occupation"
                       value={formData.occupation || ''}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="e.g., Teacher, Engineer"
                     />
                   </div>
@@ -451,7 +451,7 @@ const EditMember = () => {
                       name="placeOfWork"
                       value={formData.placeOfWork || ''}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="e.g., ABC School, XYZ Company"
                     />
                   </div>
@@ -743,7 +743,7 @@ const EditMember = () => {
                       name="bornAgain"
                       value={formData.bornAgain === null ? '' : String(formData.bornAgain)}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     >
                       <option value="">Select...</option>
                       <option value="true">Yes</option>
@@ -760,7 +760,7 @@ const EditMember = () => {
                     name="baptismStatus"
                     value={formData.baptismStatus || 'none'}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="none">None</option>
                     <option value="water">Water Baptism</option>
@@ -778,7 +778,7 @@ const EditMember = () => {
                     name="howDidYouJoin"
                     value={formData.howDidYouJoin || ''}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="">Select...</option>
                     <option value="invitation">Invitation</option>
@@ -801,7 +801,7 @@ const EditMember = () => {
                       value={formData.howDidYouJoinOther || ''}
                       onChange={handleChange}
                       maxLength={200}
-                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="Please specify..."
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

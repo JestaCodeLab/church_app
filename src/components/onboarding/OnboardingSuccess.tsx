@@ -62,7 +62,7 @@ const OnboardingSuccess: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                     {merchantData.name}
                 </h2>
-                <span className="px-4 py-2 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium">
+                <span className="px-4 py-2 bg-purple-100 dark:bg-purple-900/20 text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium">
                     Pending Approval
                 </span>
                 </div>
@@ -78,13 +78,13 @@ const OnboardingSuccess: React.FC = () => {
                 </div>
 
                 {/* Email Confirmation */}
-                <div className="flex items-start space-x-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div className="flex items-start space-x-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4">
+                <Mail className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" />
                 <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    <p className="text-sm font-medium text-primary-900 dark:text-primary-100">
                     Confirmation Email Sent
                     </p>
-                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                    <p className="text-sm text-primary-700 dark:text-blue-300 mt-1">
                     We've sent a confirmation to <span className="font-medium">{merchantData.email}</span>
                     </p>
                 </div>

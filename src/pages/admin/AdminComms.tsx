@@ -277,14 +277,14 @@ const AdminComms = () => {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
         <div className="flex">
-          <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
+            <h3 className="text-sm font-medium text-primary-800 dark:text-blue-300">
               Using Platform Sender ID
             </h3>
-            <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
+            <p className="mt-1 text-sm text-primary-700 dark:text-primary-400">
               SMS messages will be sent using the platform sender ID. 
               {sendToAll 
                 ? ` Messages will be sent to all ${recipients.length} merchant admins.`

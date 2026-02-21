@@ -61,7 +61,7 @@ const SessionExpiryModal: React.FC<SessionExpiryModalProps> = ({
 
       {/* Modal */}
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <div className="modal-fade-in bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full border-2 border-yellow-500 dark:border-blue-600 overflow-hidden animate-pulse-slow">
+        <div className="modal-fade-in bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full border-2 border-yellow-500 dark:border-primary-600 overflow-hidden animate-pulse-slow">
           {/* Header with Icon */}
           <div className="bg-gradient-to-r from-yellow-500 to-orange-500 dark:from-blue-600 dark:to-indigo-600 p-6 text-white">
             <div className="flex items-center justify-center mb-4">

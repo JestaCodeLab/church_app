@@ -131,9 +131,9 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
   return (
     <div className="space-y-6">
       {/* Enable/Disable Toggle */}
-      <div className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-700/50">
+      <div className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-primary-200 dark:border-blue-700/50">
         <div className="flex items-center space-x-4">
-          <div className="p-2.5 bg-blue-600 rounded-lg">
+          <div className="p-2.5 bg-primary-600 rounded-lg">
             <MessageSquare className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -150,7 +150,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
             onChange={(e) => onChange({ ...value, enabled: e.target.checked })}
             className="sr-only peer"
           />
-          <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
         </label>
       </div>
 
@@ -160,7 +160,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <Bell className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-white text-base">Scheduled Notifications</h4>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Set up automated messages before your event</p>
@@ -169,7 +169,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
               <button
                 type="button"
                 onClick={addNotification}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Notification</span>
@@ -177,8 +177,8 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
             </div>
 
             {value.notifications.length === 0 ? (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700/50 rounded-xl p-8 text-center">
-                <Bell className="w-12 h-12 text-blue-300 dark:text-blue-700 mx-auto mb-3" />
+              <div className="bg-primary-50 dark:bg-primary-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700/50 rounded-xl p-8 text-center">
+                <Bell className="w-12 h-12 text-blue-300 dark:text-primary-700 mx-auto mb-3" />
                 <p className="text-gray-600 dark:text-gray-400 font-medium">No notifications configured yet</p>
                 <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Click "Add Notification" to create your first automated reminder</p>
               </div>
@@ -196,8 +196,8 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                       className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
                     >
                       <div className="flex items-center space-x-4 flex-1 text-left">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                          <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                          <Bell className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                         </div>
                         <div className="flex-1">
                           <p className="font-semibold text-gray-900 dark:text-white">
@@ -234,7 +234,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                         {/* Timing Configuration */}
                         <div>
                           <h5 className="font-semibold text-gray-900 dark:text-white text-sm mb-3 flex items-center space-x-2">
-                            <Clock className="w-4 h-4 text-blue-600" />
+                            <Clock className="w-4 h-4 text-primary-600" />
                             <span>Timing</span>
                           </h5>
                           <div className="grid grid-cols-3 gap-3">
@@ -247,7 +247,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                 min="1"
                                 value={notification.timeValue}
                                 onChange={(e) => updateNotification(index, { timeValue: parseInt(e.target.value) })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                               />
                             </div>
                             <div>
@@ -257,7 +257,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                               <select
                                 value={notification.timeUnit}
                                 onChange={(e) => updateNotification(index, { timeUnit: e.target.value as any })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                               >
                                 <option value="hours">Hours</option>
                                 <option value="days">Days</option>
@@ -274,7 +274,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                   type="time"
                                   value={notification.sendTime || '09:00'}
                                   onChange={(e) => updateNotification(index, { sendTime: e.target.value })}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 />
                               </div>
                             )}
@@ -289,7 +289,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                         {/* Message Configuration */}
                         <div>
                           <h5 className="font-semibold text-gray-900 dark:text-white text-sm mb-3 flex items-center space-x-2">
-                            <MessageSquare className="w-4 h-4 text-blue-600" />
+                            <MessageSquare className="w-4 h-4 text-primary-600" />
                             <span>Message</span>
                           </h5>
                           <select
@@ -298,7 +298,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                               templateId: e.target.value || undefined,
                               customMessage: e.target.value ? undefined : notification.customMessage
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm mb-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm mb-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           >
                             <option value="">Custom Message</option>
                             {templates.map(t => (
@@ -312,7 +312,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                               onChange={(e) => updateNotification(index, { customMessage: e.target.value })}
                               placeholder="Enter custom message. Use {{eventName}}, {{eventDate}}, {{eventTime}}, {{donationLink}}..."
                               rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                             />
                           )}
                         </div>
@@ -320,7 +320,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                         {/* Recipient Filters */}
                         <div>
                           <h5 className="font-semibold text-gray-900 dark:text-white text-sm mb-3 flex items-center space-x-2">
-                            <Users className="w-4 h-4 text-blue-600" />
+                            <Users className="w-4 h-4 text-primary-600" />
                             <span>Recipients</span>
                           </h5>
                           
@@ -328,7 +328,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                             {/* All Members Option */}
                             <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                               notification.recipientFilter.type === 'all_members'
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                ? 'border-blue-500 bg-primary-50 dark:bg-primary-900/20'
                                 : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                             }`}>
                               <input
@@ -337,7 +337,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                 onChange={() => updateNotification(index, {
                                   recipientFilter: { type: 'all_members' }
                                 })}
-                                className="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                className="mt-1 w-4 h-4 text-primary-600 focus:ring-primary-500"
                               />
                               <div className="flex-1">
                                 <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
@@ -362,7 +362,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                   onChange={() => updateNotification(index, {
                                     recipientFilter: { ...notification.recipientFilter, type: 'filtered' }
                                   })}
-                                  className="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                  className="mt-1 w-4 h-4 text-primary-600 focus:ring-primary-500"
                                 />
                                 <div className="flex-1">
                                   <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
@@ -388,8 +388,8 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                           return (
                                             <label
                                               key={dept._id}
-                                              className={`flex items-center space-x-3 px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0 transition-colors text-sm ${
-                                                isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                                              className={`flex items-center space-x-3 px-3 py-2.5 hover:bg-primary-50 dark:hover:bg-blue-900/20 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0 transition-colors text-sm ${
+                                                isSelected ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                                               }`}
                                             >
                                               <input
@@ -407,13 +407,13 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                                     }
                                                   });
                                                 }}
-                                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                                               />
                                               <span className="flex-1 text-gray-700 dark:text-gray-300">
                                                 {dept.name}
                                               </span>
                                               {isSelected && (
-                                                <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                                <Check className="w-4 h-4 text-primary-600 flex-shrink-0" />
                                               )}
                                             </label>
                                           );
@@ -429,7 +429,7 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                         {notification.recipientFilter.departments.map(deptId => {
                                           const dept = departments.find(d => d._id === deptId);
                                           return dept ? (
-                                            <span key={deptId} className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                                            <span key={deptId} className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-blue-300">
                                               {dept.name}
                                               <button
                                                 type="button"

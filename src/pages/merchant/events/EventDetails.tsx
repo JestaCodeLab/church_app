@@ -261,7 +261,7 @@ const EventDetails: React.FC = () => {
       case 'cancelled':
         return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
@@ -311,7 +311,7 @@ const EventDetails: React.FC = () => {
                   {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                 </span>
                 {event.isPublic && (
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
                     Public
                   </span>
                 )}
@@ -587,7 +587,7 @@ const EventDetails: React.FC = () => {
                                         Expired
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-blue-300">
                                         Upcoming
                                       </span>
                                     )}
@@ -642,14 +642,14 @@ const EventDetails: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
               {/* SMS Automation Status Banner */}
               {smsAutomation?.enabled && smsAutomationStatus?.hasRunToday && (
-                <div className={`rounded-lg p-4 border mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800`}>
+                <div className={`rounded-lg p-4 border mb-6 bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800`}>
                   <div className="flex items-start space-x-3">
-                    <CheckCircle className={`w-5 h-5 mt-0.5 text-blue-600 dark:text-blue-400`} />
+                    <CheckCircle className={`w-5 h-5 mt-0.5 text-primary-600 dark:text-primary-400`} />
                     <div className="flex-1">
-                      <p className={`text-sm font-bold text-blue-900 dark:text-blue-100`}>
+                      <p className={`text-sm font-bold text-primary-900 dark:text-primary-100`}>
                         Automation Already Ran Today
                       </p>
-                      <p className={`text-sm mt-1 text-blue-700 dark:text-blue-300`}>
+                      <p className={`text-sm mt-1 text-primary-700 dark:text-blue-300`}>
                         {smsAutomationStatus.lastRun ? (
                           <>
                             Last run:{' '}
@@ -680,13 +680,13 @@ const EventDetails: React.FC = () => {
 
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
-                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <MessageSquare className="w-5 h-5 text-primary-600" />
                   <span>SMS Automation</span>
                 </h2>
                 <button
                   onClick={handleSaveSettings}
                   disabled={savingSettings}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center space-x-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {savingSettings ? (
                     <>
@@ -736,13 +736,13 @@ const EventDetails: React.FC = () => {
                   <div className="flex items-start space-x-3">
                     <CheckCircle className={`w-5 h-5 mt-0.5 ${
                       donationAutomationStatus.hasRunToday
-                        ? 'text-purple-600 dark:text-purple-400'
+                        ? 'text-primary-600 dark:text-primary-400'
                         : 'text-green-600 dark:text-green-400'
                     }`} />
                     <div className="flex-1">
                       <p className={`text-sm font-bold ${
                         donationAutomationStatus.hasRunToday
-                          ? 'text-purple-900 dark:text-purple-100'
+                          ? 'text-purple-900 dark:text-primary-100'
                           : 'text-green-900 dark:text-green-100'
                       }`}>
                         {donationAutomationStatus.hasRunToday
@@ -751,7 +751,7 @@ const EventDetails: React.FC = () => {
                       </p>
                       <p className={`text-sm mt-1 ${
                         donationAutomationStatus.hasRunToday
-                          ? 'text-purple-700 dark:text-purple-300'
+                          ? 'text-primary-700 dark:text-primary-300'
                           : 'text-green-700 dark:text-green-300'
                       }`}>
                         {donationAutomationStatus.hasRunToday ? (

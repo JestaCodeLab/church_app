@@ -177,7 +177,7 @@ const SMSHistory = () => {
       delivered: { icon: CheckCircle, color: 'text-green-600 bg-green-100', label: 'Delivered' },
       completed: { icon: CheckCircle, color: 'text-green-600 bg-green-100', label: 'Delivered' },
       submitted: { icon: Clock, color: 'text-yellow-600 bg-yellow-100', label: 'Submitted' },
-      sent: { icon: Clock, color: 'text-blue-600 bg-blue-100', label: 'Sent' },
+      sent: { icon: Clock, color: 'text-primary-600 bg-primary-100', label: 'Sent' },
       failed: { icon: XCircle, color: 'text-red-600 bg-red-100', label: 'Failed' },
       pending: { icon: Clock, color: 'text-gray-600 bg-gray-100', label: 'Pending' },
       partial: { icon: AlertCircle, color: 'text-orange-600 bg-orange-100', label: 'Partial' },
@@ -512,9 +512,9 @@ const SMSHistory = () => {
                         {(selectedLog as SmsLog).failedDeliveries}
                       </p>
                     </div>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-blue-600 dark:text-blue-400">Credits Used</p>
-                      <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-primary-600 dark:text-primary-400">Credits Used</p>
+                      <p className="text-2xl font-bold text-primary-900 dark:text-primary-100">
                         {(selectedLog as SmsLog).creditsUsed}
                       </p>
                     </div>
@@ -558,15 +558,15 @@ const SMSHistory = () => {
                 <>
                   {/* Scheduled Info */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-blue-600 dark:text-blue-400">Scheduled For</p>
-                      <p className="text-base font-semibold text-blue-900 dark:text-blue-100">
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-primary-600 dark:text-primary-400">Scheduled For</p>
+                      <p className="text-base font-semibold text-primary-900 dark:text-primary-100">
                         {new Date((selectedLog as ScheduledMessage).scheduledAt).toLocaleString()}
                       </p>
                     </div>
                     <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-purple-600 dark:text-purple-400">Status</p>
-                      <p className="text-base font-semibold text-purple-900 dark:text-purple-100">
+                      <p className="text-sm text-primary-600 dark:text-primary-400">Status</p>
+                      <p className="text-base font-semibold text-purple-900 dark:text-primary-100">
                         {(selectedLog as ScheduledMessage).status}
                       </p>
                     </div>
@@ -586,9 +586,9 @@ const SMSHistory = () => {
                         {(selectedLog as ScheduledMessage).estimatedCreditsNeeded}
                       </p>
                     </div>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-blue-600 dark:text-blue-400">Category</p>
-                      <p className="text-base font-semibold text-blue-900 dark:text-blue-100 capitalize">
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-primary-600 dark:text-primary-400">Category</p>
+                      <p className="text-base font-semibold text-primary-900 dark:text-primary-100 capitalize">
                         {(selectedLog as ScheduledMessage).category || 'General'}
                       </p>
                     </div>

@@ -152,7 +152,7 @@ const PlanStep: React.FC<PlanStepProps> = ({
 
               {/* Icon */}
               <div className={`w-16 h-16 rounded-lg flex items-center justify-center mb-4 ${
-                plan.slug === 'starter' ? 'bg-blue-500' :
+                plan.slug === 'starter' ? 'bg-primary-500' :
                 plan.slug === 'growth' ? 'bg-green-500' :
                 plan.slug === 'pro' ? 'bg-purple-500' : 'bg-gray-500'
               }`}>
@@ -186,8 +186,8 @@ const PlanStep: React.FC<PlanStepProps> = ({
       </div>
 
       {/* Trial Notice */}
-      {/* <div className="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border-l-4 border-blue-500 p-4 mb-6 rounded">
-        <p className="text-sm text-blue-800 dark:text-blue-200">
+      {/* <div className="bg-primary-50 dark:bg-primary-900 dark:bg-opacity-20 border-l-4 border-blue-500 p-4 mb-6 rounded">
+        <p className="text-sm text-primary-800 dark:text-primary-200">
           <strong>14-Day Free Trial:</strong> All paid plans include a 14-day trial period. 
           No credit card required for the Free plan. Cancel anytime.
         </p>

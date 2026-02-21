@@ -183,7 +183,7 @@ const PublicEventDonation: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
       </div>
     );
   }
@@ -260,7 +260,7 @@ const PublicEventDonation: React.FC = () => {
 
           {/* Progress */}
           {event.goal && event.goal.amount && (
-            <div className="mt-6 p-4 border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="mt-6 p-4 border-2 border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
               <div className="flex justify-between text-sm mb-2">
                 <span className="font-medium text-gray-900 dark:text-white">
                   {event.goal.currency} {(event.totalRaised || 0).toLocaleString()} raised

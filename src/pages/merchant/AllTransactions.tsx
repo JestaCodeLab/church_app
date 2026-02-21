@@ -192,9 +192,9 @@ const AllTransactions = () => {
   const getTypeBadge = (type: string, transactionType?: string) => {
     const displayType = transactionType || type;
     const colors: Record<string, string> = {
-      subscription: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      sms_credit: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-      sms_credit_purchase: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+      subscription: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400',
+      sms_credit: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-primary-400',
+      sms_credit_purchase: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-primary-400',
       donation: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
       campaign_donation: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
       event_donation: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',

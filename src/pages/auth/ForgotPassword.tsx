@@ -60,11 +60,11 @@ const ForgotPassword = () => {
             </div>
 
             {/* Instructions */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-2">
-              <h3 className="font-medium text-blue-900 dark:text-blue-100">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 space-y-2">
+              <h3 className="font-medium text-primary-900 dark:text-primary-100">
                 Next steps:
               </h3>
-              <ol className="text-sm text-blue-700 dark:text-blue-300 list-decimal list-inside space-y-1">
+              <ol className="text-sm text-primary-700 dark:text-blue-300 list-decimal list-inside space-y-1">
                 <li>Check your email inbox</li>
                 <li>Click the reset password link</li>
                 <li>Enter your new password</li>
@@ -106,6 +106,7 @@ const ForgotPassword = () => {
 
   return (
     <PageTransition>
+      <div data-theme="green">
       <AuthLayout 
         title="Forgot Your Password?" 
         subtitle={'Enter your email below to receive a password reset link.'}
@@ -151,8 +152,8 @@ const ForgotPassword = () => {
           </form>
 
           {/* Info Box */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
+          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+            <p className="text-sm text-primary-700 dark:text-blue-300">
               <strong>For security,</strong> we'll only send a reset link if an account exists with this email
             </p>
           </div>
@@ -170,6 +171,7 @@ const ForgotPassword = () => {
           </p>
         </div>
       </AuthLayout>
+      </div>
     </PageTransition>
   );
 };

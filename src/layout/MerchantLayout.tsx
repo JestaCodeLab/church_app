@@ -133,7 +133,7 @@ const MerchantLayout = () => {
     const now = new Date();
     const expiry = new Date(expiryDate);
     const diffTime = expiry.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
 
@@ -142,7 +142,17 @@ const MerchantLayout = () => {
   // ✅ Determine alert status based on subscription expiration status
   const getAlertStatus = (): 'expired' | 'cancelled' | 'expiring-soon' | null => {
     if (expirationStatus === 'expired') return 'expired';
-    if (expirationStatus === 'expiring-soon') return 'expiring-soon';
+    if (expirationStatus === 'cancelled') return 'cancelled';
+    if (expirationStatus === 'expiring-soon' || expirationStatus === 'expiring_soon') return 'expiring-soon';
+    
+    // Fallback: Calculate manually if expirationStatus is missing but we have an expiry date
+    if (expiryDate && daysUntilExpiry > 0 && daysUntilExpiry <= 7) {
+      return 'expiring-soon';
+    }
+    if (expiryDate && daysUntilExpiry <= 0) {
+      return 'expired';
+    }
+    
     return null;
   };
 

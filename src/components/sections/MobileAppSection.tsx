@@ -58,7 +58,7 @@ const MobileAppSection: React.FC = () => {
                         <div className="font-bold text-sm text-gray-900 dark:text-white">Mary Lewis</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">Choir Director</div>
                       </div>
-                      <span className="text-blue-700 dark:text-blue-400 text-xs font-bold px-2 py-1 bg-blue-50 dark:bg-blue-400/10 rounded-full border border-blue-200 dark:border-blue-400/20">Staff</span>
+                      <span className="text-primary-700 dark:text-primary-400 text-xs font-bold px-2 py-1 bg-primary-50 dark:bg-blue-400/10 rounded-full border border-primary-200 dark:border-blue-400/20">Staff</span>
                     </div>
                   </div>
                 </div>

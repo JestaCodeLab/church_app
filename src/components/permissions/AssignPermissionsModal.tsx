@@ -157,7 +157,7 @@ const AssignPermissionsModal: React.FC<AssignPermissionsModalProps> = ({
                     </div>
                   </label>
                   {isSystemRole(role) && (
-                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full ml-2">
+                    <span className="text-xs px-2 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-blue-300 rounded-full ml-2">
                       System
                     </span>
                   )}
@@ -170,8 +170,8 @@ const AssignPermissionsModal: React.FC<AssignPermissionsModalProps> = ({
           </div>
 
           {/* Summary */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p className="text-sm text-blue-900 dark:text-blue-300">
+          <div className="bg-primary-50 dark:bg-primary-900/20 p-3 rounded-lg border border-primary-200 dark:border-primary-800">
+            <p className="text-sm text-primary-900 dark:text-blue-300">
               <span className="font-semibold">{selectedRoles.length}</span> role(s) selected
               {selectedRoles.length > 0 && (
                 <>

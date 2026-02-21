@@ -10,7 +10,7 @@ html {
 }
 
 html.dark {
-  background-color: #111827; /* Dark mode default */
+  background-color: #161920; /* Dark mode default */
 }
 
 body {
@@ -28,11 +28,11 @@ code {
 }
 
 :root {
-  --primary-color: #4F46E5;
+  --primary-color: #4F46E5; /* Default blue/purple */
   --secondary-color: #10B981;
 }
 
-/* Use merchant colors for primary buttons */
+/* Default primary colors (blue/purple) */
 .bg-primary-600 {
   background-color: var(--primary-color) !important;
 }
@@ -44,6 +44,178 @@ code {
 .border-primary-600 {
   border-color: var(--primary-color) !important;
 }
+
+/* Green theme for auth pages */
+[data-theme="green"] {
+  --primary-color: #44b83a;
+}
+
+[data-theme="green"] .bg-primary-50 {
+  background-color: #f0fbef !important;
+}
+
+[data-theme="green"] .bg-primary-100 {
+  background-color: #dcf6d8 !important;
+}
+
+[data-theme="green"] .bg-primary-400 {
+  background-color: #82d76e !important;
+}
+
+[data-theme="green"] .bg-primary-500 {
+  background-color: #5fcf4c !important;
+}
+
+[data-theme="green"] .bg-primary-600 {
+  background-color: #44b83a !important;
+}
+
+[data-theme="green"] .bg-primary-700 {
+  background-color: #35912f !important;
+}
+
+[data-theme="green"] .text-primary-400 {
+  color: #82d76e !important;
+}
+
+[data-theme="green"] .text-primary-500 {
+  color: #5fcf4c !important;
+}
+
+[data-theme="green"] .text-primary-600 {
+  color: #44b83a !important;
+}
+
+[data-theme="green"] .text-primary-700 {
+  color: #35912f !important;
+}
+
+[data-theme="green"] .text-primary-800 {
+  color: #2a6f25 !important;
+}
+
+[data-theme="green"] .border-primary-500 {
+  border-color: #5fcf4c !important;
+}
+
+[data-theme="green"] .border-primary-600 {
+  border-color: #44b83a !important;
+}
+
+[data-theme="green"] .hover\:bg-primary-700:hover {
+  background-color: #35912f !important;
+}
+
+[data-theme="green"] .hover\:bg-primary-600:hover {
+  background-color: #44b83a !important;
+}
+
+[data-theme="green"] .hover\:text-primary-700:hover {
+  color: #35912f !important;
+}
+
+[data-theme="green"] .hover\:text-primary-300:hover {
+  color: #96e38a !important;
+}
+
+/* Green focus rings for auth pages */
+[data-theme="green"] input:focus,
+[data-theme="green"] textarea:focus,
+[data-theme="green"] select:focus {
+  --tw-ring-color: rgb(95 207 76) !important;
+  box-shadow: 0 0 0 1px rgb(95 207 76) !important;
+}
+
+[data-theme="green"] .focus\:ring-1:focus {
+  box-shadow: 0 0 0 1px rgb(95 207 76) !important;
+}
+
+[data-theme="green"] .focus\:ring-2:focus {
+  box-shadow: 0 0 0 2px rgb(95 207 76) !important;
+}
+
+/* Disabled button styles - override primary colors */
+button:disabled.bg-primary-600,
+button:disabled.bg-primary-500,
+button:disabled.bg-primary-700 {
+  background-color: #d1d5db !important; /* gray-300 */
+}
+
+html.dark button:disabled.bg-primary-600,
+html.dark button:disabled.bg-primary-500,
+html.dark button:disabled.bg-primary-700 {
+  background-color: #4b5563 !important; /* gray-600 */
+}
+
+/* Prevent hover states on disabled buttons */
+button:disabled.bg-primary-600:hover,
+button:disabled.bg-primary-500:hover,
+button:disabled.bg-primary-700:hover,
+button:disabled.hover\:bg-primary-600:hover,
+button:disabled.hover\:bg-primary-700:hover {
+  background-color: #d1d5db !important; /* gray-300 */
+}
+
+html.dark button:disabled.bg-primary-600:hover,
+html.dark button:disabled.bg-primary-500:hover,
+html.dark button:disabled.bg-primary-700:hover,
+html.dark button:disabled.hover\:bg-primary-600:hover,
+html.dark button:disabled.hover\:bg-primary-700:hover {
+  background-color: #4b5563 !important; /* gray-600 */
+}
+
+/* Prevent green hover on disabled buttons in auth pages */
+[data-theme="green"] button:disabled.bg-primary-600:hover,
+[data-theme="green"] button:disabled.bg-primary-500:hover,
+[data-theme="green"] button:disabled.bg-primary-700:hover,
+[data-theme="green"] button:disabled.hover\:bg-primary-600:hover,
+[data-theme="green"] button:disabled.hover\:bg-primary-700:hover {
+  background-color: #d1d5db !important; /* gray-300 */
+}
+
+[data-theme="green"] html.dark button:disabled.bg-primary-600:hover,
+[data-theme="green"] html.dark button:disabled.bg-primary-500:hover,
+[data-theme="green"] html.dark button:disabled.bg-primary-700:hover,
+[data-theme="green"] html.dark button:disabled.hover\:bg-primary-600:hover,
+[data-theme="green"] html.dark button:disabled.hover\:bg-primary-700:hover {
+  background-color: #4b5563 !important; /* gray-600 */
+}
+
+/* Focus ring colors - force primary color */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  --tw-ring-opacity: 1 !important;
+  --tw-ring-color: rgb(79 70 229) !important; /* blue primary-600: #4F46E5 */
+  box-shadow: 0 0 0 1px rgb(79 70 229) !important;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 1px rgb(79 70 229) !important;
+}
+
+.focus\:ring-1:focus {
+  box-shadow: 0 0 0 1px rgb(79 70 229) !important;
+}
+
+.focus\:ring-2:focus {
+  box-shadow: 0 0 0 2px rgb(79 70 229) !important;
+}
+
+.focus\:ring-primary-500:focus {
+  --tw-ring-color: rgb(79 70 229) !important;
+}
+
+.focus\:border-primary-500:focus {
+  border-color: #4F46E5 !important;
+}
+
+
+
 
 /* Smooth color transitions for theme changes */
 * {

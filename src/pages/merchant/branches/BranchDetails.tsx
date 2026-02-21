@@ -102,8 +102,8 @@ const BranchDetails = () => {
 
   const getTypeBadgeColor = (type: string) => {
     const colors: any = {
-      main: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
-      branch: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+      main: 'bg-purple-100 dark:bg-purple-900/20 text-primary-700 dark:text-primary-300',
+      branch: 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-blue-300',
       campus: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
       satellite: 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300',
     };
@@ -219,7 +219,7 @@ const BranchDetails = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Contact Information */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-3 bg-blue-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-3 bg-primary-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
                 Contact Information
               </h2>
               <div className="space-y-3 mt-4 p-6 pt-0">
@@ -266,7 +266,7 @@ const BranchDetails = () => {
             {/* Leadership */}
             {(branch.pastor || branch.assistant || (branch.leaders && branch.leaders.length > 0)) && (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="flex items-center space-x-2 mb-4 pb-3 bg-blue-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
+                <div className="flex items-center space-x-2 mb-4 pb-3 bg-primary-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
                   <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Leadership
@@ -319,7 +319,7 @@ const BranchDetails = () => {
             {/* Service Times */}
             {branch.serviceTimes && branch.serviceTimes.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="flex items-center space-x-2 mb-4 pb-3 bg-blue-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
+                <div className="flex items-center space-x-2 mb-4 pb-3 bg-primary-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
                   <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Service Times
@@ -327,7 +327,7 @@ const BranchDetails = () => {
                 </div>
                 <div className="space-y-3 mt-4 p-6 pt-0">
                   {branch.serviceTimes.map((service: any, index: number) => (
-                    <div key={index} className="flex items-start justify-between p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-sm transition-shadow">
+                    <div key={index} className="flex items-start justify-between p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg hover:shadow-sm transition-shadow">
                       <div className="flex-1">
                         <p className="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-1">{service.service}</p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{service.day}</p>
@@ -347,7 +347,7 @@ const BranchDetails = () => {
             {/* Facilities & Amenities */}
             {branch.facilities && (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="flex items-center space-x-2 mb-4 pb-3 bg-blue-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
+                <div className="flex items-center space-x-2 mb-4 pb-3 bg-primary-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
                   <Wifi className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Facilities & Amenities
@@ -379,7 +379,7 @@ const BranchDetails = () => {
 
                 <div className="flex flex-wrap gap-2 p-6 pt-0 mb-1">
                   {branch.facilities.childcare && (
-                    <span className="flex items-center px-3 py-1.5 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-full text-sm">
+                    <span className="flex items-center px-3 py-1.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-full text-sm">
                       <Baby className="w-4 h-4 mr-1.5" />
                       Childcare
                     </span>
@@ -391,7 +391,7 @@ const BranchDetails = () => {
                     </span>
                   )}
                   {branch.facilities.accessibility?.elevator && (
-                    <span className="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 rounded-full text-sm">
+                    <span className="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/20 text-primary-700 dark:text-primary-400 rounded-full text-sm">
                       Elevator
                     </span>
                   )}
@@ -421,7 +421,7 @@ const BranchDetails = () => {
                       href={branch.socialMedia.facebook}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors"
+                      className="flex items-center px-4 py-2 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors"
                     >
                       <Facebook className="w-4 h-4 mr-2" />
                       Facebook
@@ -480,7 +480,7 @@ const BranchDetails = () => {
           <div className="space-y-6">
             {/* Quick Stats */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="flex items-center space-x-2 mb-4 pb-3 bg-blue-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
+              <div className="flex items-center space-x-2 mb-4 pb-3 bg-primary-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
                 <TrendingUp className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Statistics
@@ -507,7 +507,7 @@ const BranchDetails = () => {
 
             {/* Branch Info */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-3 bg-blue-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-3 bg-primary-100 dark:bg-gray-700 border-b-1 border-primary-200 dark:border-primary-900 px-6 pt-2">
                 Branch Information
               </h2>
               <div className="space-y-3 mt-4 p-6 pt-0">
@@ -534,7 +534,7 @@ const BranchDetails = () => {
             {/* Departments */}
             {departments.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-3 bg-blue-100 dark:bg-gray-700 border-b border-primary-200 dark:border-primary-900 px-6 pt-2">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-3 bg-primary-100 dark:bg-gray-700 border-b border-primary-200 dark:border-primary-900 px-6 pt-2">
                   Departments ({departments.length})
                 </h2>
                 <div className="space-y-2 p-6 pt-0">
@@ -542,7 +542,7 @@ const BranchDetails = () => {
                     <div
                       key={dept._id}
                       onClick={() => navigate(`/departments/${dept._id}`)}
-                      className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all cursor-pointer"
+                      className="flex items-center justify-between p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg hover:shadow-md hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-all cursor-pointer"
                     >
                       <div className="flex-1">
                         <p className="font-semibold text-gray-900 dark:text-gray-100">{dept.name}</p>

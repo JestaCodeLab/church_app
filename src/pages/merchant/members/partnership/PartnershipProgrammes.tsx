@@ -192,7 +192,7 @@ const PartnershipProgrammes = () => {
       case 'paused':
         return 'bg-yellow-100 text-yellow-800';
       case 'completed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary-100 text-primary-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -204,7 +204,7 @@ const PartnershipProgrammes = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <HandHeart className="w-8 h-8 text-purple-600" />
+            <HandHeart className="w-8 h-8 text-primary-600" />
             Partnership Programmes
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -214,7 +214,7 @@ const PartnershipProgrammes = () => {
         <PermissionGuard permission="members.create">
           <button
             onClick={() => navigate('/members/partnership/new')}
-            className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
           >
             <Plus className="w-5 h-5 mr-2" />
             New Programme
@@ -233,8 +233,8 @@ const PartnershipProgrammes = () => {
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Programmes</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
               </div>
-              <div className="p-3 bg-purple-600/10 dark:bg-purple-500/10 rounded-lg">
-                <Target className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <div className="p-3 bg-primary-600/10 dark:bg-purple-500/10 rounded-lg">
+                <Target className="h-6 w-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
@@ -257,8 +257,8 @@ const PartnershipProgrammes = () => {
         </div>
 
         {/* Total Raised Card */}
-        <div className="relative overflow-hidden rounded-xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-blue-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+        <div className="relative overflow-hidden rounded-xl border border-primary-200 dark:border-primary-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-primary-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
           <div className="relative z-10">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -267,8 +267,8 @@ const PartnershipProgrammes = () => {
                   {formatCurrency(stats.totalRaised, merchantCurrency)}
                 </p>
               </div>
-              <div className="p-3 bg-blue-600/10 dark:bg-blue-500/10 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 bg-primary-600/10 dark:bg-primary-500/10 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
@@ -374,7 +374,7 @@ const PartnershipProgrammes = () => {
       {/* Programmes List */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           <p className="mt-2 text-sm text-gray-500">Loading programmes...</p>
         </div>
       ) : filteredProgrammes.length === 0 ? (
@@ -386,7 +386,7 @@ const PartnershipProgrammes = () => {
             <div className="mt-6">
               <button
                 onClick={() => navigate('/members/partnership/new')}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 New Programme
@@ -426,7 +426,7 @@ const PartnershipProgrammes = () => {
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${programme.status === 'active' ? 'bg-green-500/90 text-white' :
                       programme.status === 'draft' ? 'bg-gray-500/90 text-white' :
                         programme.status === 'paused' ? 'bg-yellow-500/90 text-white' :
-                          'bg-blue-500/90 text-white'
+                          'bg-primary-500/90 text-white'
                       }`}>
                       {programme.status.charAt(0).toUpperCase() + programme.status.slice(1)}
                     </span>
@@ -444,7 +444,7 @@ const PartnershipProgrammes = () => {
                 <div className="p-6">
                   {/* Title and Description */}
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-purple-400 transition-colors">
                       {programme.name}
                     </h3>
                     {programme.description && (
@@ -458,7 +458,7 @@ const PartnershipProgrammes = () => {
                   <div className="mb-5 pb-5 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-end mb-2">
                       <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">PROGRESS</span>
-                      <span className="text-sm font-bold text-purple-600 dark:text-purple-400">{progress.toFixed(0)}%</span>
+                      <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{progress.toFixed(0)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                       <div
@@ -480,11 +480,11 @@ const PartnershipProgrammes = () => {
                   <div className="grid grid-cols-3 gap-3 mb-5">
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-3 text-center">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tiers</p>
-                      <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{programme.tiers?.length || 0}</p>
+                      <p className="text-xl font-bold text-primary-600 dark:text-primary-400">{programme.tiers?.length || 0}</p>
                     </div>
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-3 text-center">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Partners</p>
-                      <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{programme.stats?.totalPartners || 0}</p>
+                      <p className="text-xl font-bold text-primary-600 dark:text-primary-400">{programme.stats?.totalPartners || 0}</p>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-3 text-center">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Payments</p>
@@ -496,7 +496,7 @@ const PartnershipProgrammes = () => {
                   <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => navigate(`/members/partnership/${programme._id}`)}
-                      className="inline-flex items-center justify-center px-3 py-2.5 border border-purple-300 dark:border-purple-700 shadow-sm text-sm font-semibold rounded-lg text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
+                      className="inline-flex items-center justify-center px-3 py-2.5 border border-primary-300 dark:border-primary-700 shadow-sm text-sm font-semibold rounded-lg text-primary-700 dark:text-primary-300 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
                     >
                       <Eye className="w-4 h-4 mr-1.5" />
                       View

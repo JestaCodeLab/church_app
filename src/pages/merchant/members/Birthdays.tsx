@@ -225,17 +225,17 @@ const Birthdays: React.FC = () => {
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium">This Week</p>
+              <p className="text-primary-100 text-sm font-medium">This Week</p>
               <p className="text-3xl font-bold mt-1">{stats?.thisWeek || 0}</p>
             </div>
-            <Calendar className="w-12 h-12 text-blue-200" />
+            <Calendar className="w-12 h-12 text-primary-200" />
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm font-medium">This Month</p>
+              <p className="text-primary-100 text-sm font-medium">This Month</p>
               <p className="text-3xl font-bold mt-1">{stats?.thisMonth || 0}</p>
             </div>
             <TrendingUp className="w-12 h-12 text-purple-200" />
@@ -298,19 +298,19 @@ const Birthdays: React.FC = () => {
       {automationSettings?.enabled && (
         <div className={`rounded-xl p-4 border ${
           automationSettings.automationStatus?.hasRunToday
-            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+            ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800'
             : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
         }`}>
           <div className="flex items-start space-x-3">
             {automationSettings.automationStatus?.hasRunToday ? (
-              <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" />
             ) : (
               <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
             )}
             <div className="flex-1">
               <p className={`text-sm font-bold ${
                 automationSettings.automationStatus?.hasRunToday
-                  ? 'text-blue-900 dark:text-blue-100'
+                  ? 'text-primary-900 dark:text-primary-100'
                   : 'text-green-900 dark:text-green-100'
               }`}>
                 {automationSettings.automationStatus?.hasRunToday
@@ -319,7 +319,7 @@ const Birthdays: React.FC = () => {
               </p>
               <p className={`text-sm mt-1 ${
                 automationSettings.automationStatus?.hasRunToday
-                  ? 'text-blue-700 dark:text-blue-300'
+                  ? 'text-primary-700 dark:text-blue-300'
                   : 'text-green-700 dark:text-green-300'
               }`}>
                 {automationSettings.automationStatus?.hasRunToday ? (
@@ -431,8 +431,8 @@ const Birthdays: React.FC = () => {
 
       {/* Upcoming Birthdays (Next 7 Days) */}
       {upcomingBirthdays.length > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-[1px] border-blue-200 dark:border-blue-800">
-          <h2 className="text-lg font-bold text-blue-900 dark:text-blue-100 mb-4 flex items-center">
+        <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-6 border-[1px] border-primary-200 dark:border-primary-800">
+          <h2 className="text-lg font-bold text-primary-900 dark:text-primary-100 mb-4 flex items-center">
             <Calendar className="w-5 h-5 mr-2" />
             Upcoming Birthdays (Next 7 Days)
           </h2>
@@ -447,7 +447,7 @@ const Birthdays: React.FC = () => {
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xl">
+                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xl">
                       🎂
                     </div>
                   )}
@@ -474,7 +474,7 @@ const Birthdays: React.FC = () => {
             {upcomingBirthdays.length > 5 && (
               <button
                 onClick={() => setSelectedMonth(new Date().getMonth() + 1)}
-                className="w-full py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                className="w-full py-2 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
               >
                 View all {upcomingBirthdays.length} upcoming birthdays
               </button>

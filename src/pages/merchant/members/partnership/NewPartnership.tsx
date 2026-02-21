@@ -496,7 +496,7 @@ const NewPartnership = () => {
                   type="checkbox"
                   checked={formData.showTargetAmount}
                   onChange={(e) => setFormData(prev => ({ ...prev, showTargetAmount: e.target.checked }))}
-                  className="w-4 h-4 text-purple-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-purple-500 focus:ring-2"
+                  className="w-4 h-4 text-primary-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-purple-500 focus:ring-2"
                 />
                 <div>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -518,7 +518,7 @@ const NewPartnership = () => {
             <button
               type="button"
               onClick={handleAddTier}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-primary-700 dark:text-primary-300 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add Tier
@@ -598,7 +598,7 @@ const NewPartnership = () => {
                     <button
                       type="button"
                       onClick={() => handleAddTierBenefit(index)}
-                      className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+                      className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-purple-300"
                     >
                       + Add Benefit
                     </button>
@@ -636,7 +636,7 @@ const NewPartnership = () => {
             <button
               type="button"
               onClick={handleAddFormField}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-primary-700 dark:text-primary-300 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add Field
@@ -680,7 +680,7 @@ const NewPartnership = () => {
                       type="checkbox"
                       checked={field.required}
                       onChange={(e) => handleFormFieldChange(index, 'required', e.target.checked)}
-                      className="rounded border-gray-300 dark:border-gray-600 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-purple-500"
                     />
                     <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Required</span>
                   </label>
@@ -711,7 +711,7 @@ const NewPartnership = () => {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
           >
             {loading ? (
               <>

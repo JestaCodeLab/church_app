@@ -21,10 +21,10 @@ const colorMap: Record<string, { bg: string; border: string; badge: string; text
     text: 'text-gray-600 dark:text-gray-400'
   },
   blue: {
-    bg: 'bg-blue-50 dark:bg-blue-900/30',
-    border: 'border-blue-200 dark:border-blue-700',
-    badge: 'bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300',
-    text: 'text-blue-600 dark:text-blue-400'
+    bg: 'bg-primary-50 dark:bg-primary-900/30',
+    border: 'border-primary-200 dark:border-blue-700',
+    badge: 'bg-primary-100 dark:bg-blue-800 text-primary-700 dark:text-blue-300',
+    text: 'text-primary-600 dark:text-primary-400'
   },
   emerald: {
     bg: 'bg-emerald-50 dark:bg-emerald-900/30',
@@ -34,9 +34,9 @@ const colorMap: Record<string, { bg: string; border: string; badge: string; text
   },
   purple: {
     bg: 'bg-purple-50 dark:bg-purple-900/30',
-    border: 'border-purple-200 dark:border-purple-700',
-    badge: 'bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-300',
-    text: 'text-purple-600 dark:text-purple-400'
+    border: 'border-purple-200 dark:border-primary-700',
+    badge: 'bg-purple-100 dark:bg-purple-800 text-primary-700 dark:text-primary-300',
+    text: 'text-primary-600 dark:text-primary-400'
   },
   amber: {
     bg: 'bg-amber-50 dark:bg-amber-900/30',

@@ -224,7 +224,7 @@ const TeamManagement = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowManageRoles(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+            className="flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
           >
             <Shield className="w-5 h-5" />
             <span>Manage Roles</span>
@@ -315,7 +315,7 @@ const TeamManagement = () => {
                     <button
                       onClick={() => handleEditMember(member)}
                       disabled={member.email === user?.email}
-                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-2 text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title={member.email === user?.email ? "You cannot edit yourself" : "Edit role and permissions"}
                     >
                       <Edit2 className="w-5 h-5" />

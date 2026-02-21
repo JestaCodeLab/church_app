@@ -337,7 +337,7 @@ const FinanceOverview: React.FC = () => {
   if (loading && !overview) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader className="h-8 w-8 animate-spin text-primary-600" />
       </div>
     );
   }
@@ -378,7 +378,7 @@ const FinanceOverview: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/finance/tithing')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
           >
             <Plus className="h-4 w-4" />
             Record Income
@@ -396,7 +396,7 @@ const FinanceOverview: React.FC = () => {
               onClick={() => handlePresetChange(preset.label, preset.months)}
               className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
                 activePreset === preset.label
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -475,8 +475,8 @@ const FinanceOverview: React.FC = () => {
         {/* Net Balance */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <Wallet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+              <Wallet className="h-5 w-5 text-primary-600 dark:text-primary-400" />
             </div>
           </div>
           <p className={`text-2xl font-bold ${filteredStats.net >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
@@ -508,7 +508,7 @@ const FinanceOverview: React.FC = () => {
           <p className="text-xl font-bold mt-1">{fmt(thisYear?.expenses || 0)}</p>
         </div>
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white">
-          <p className="text-sm font-medium text-blue-100">YTD Net</p>
+          <p className="text-sm font-medium text-primary-100">YTD Net</p>
           <p className="text-xl font-bold mt-1">{fmt(thisYear?.net || 0)}</p>
         </div>
       </div>
@@ -523,13 +523,13 @@ const FinanceOverview: React.FC = () => {
           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-green-500 rounded-full inline-block" /> Income</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-red-500 rounded-full inline-block" /> Expenses</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-blue-500 rounded-full inline-block border-dashed" style={{ borderTop: '2px dashed #3B82F6', height: 0 }} /> Net</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary-500 rounded-full inline-block border-dashed" style={{ borderTop: '2px dashed #3B82F6', height: 0 }} /> Net</span>
           </div>
         </div>
 
         {trendsLoading ? (
           <div className="flex items-center justify-center h-[350px]">
-            <Loader className="h-6 w-6 animate-spin text-blue-600" />
+            <Loader className="h-6 w-6 animate-spin text-primary-600" />
           </div>
         ) : trends.length > 0 ? (
           <ResponsiveContainer width="100%" height={350}>
@@ -716,7 +716,7 @@ const FinanceOverview: React.FC = () => {
                     onClick={() => { setFilterType(type); setPage(1); }}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                       filterType === type
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -797,7 +797,7 @@ const FinanceOverview: React.FC = () => {
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages || totalPages === 0}
-                  className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40"
+                  className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-40"
                 >
                   Next
                 </button>

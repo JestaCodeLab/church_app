@@ -153,17 +153,17 @@ const MemberDetails = () => {
     const colors: any = {
       active: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
       inactive: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-      visitor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+      visitor: 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400',
       new_convert: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
-      transferred: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
+      transferred: 'bg-purple-100 text-primary-700 dark:bg-purple-900/20 dark:text-primary-400'
     };
     return colors[status] || colors.inactive;
   };
 
   const getRoleColor = (role: string) => {
     const colors: any = {
-      pastor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-      leader: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+      pastor: 'bg-purple-100 text-primary-700 dark:bg-purple-900/20 dark:text-primary-400',
+      leader: 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400',
       elder: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
       deacon: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400',
       member: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
@@ -269,7 +269,7 @@ const MemberDetails = () => {
                   {member?.tierDonations && member.tierDonations.length > 0 && (
                     <div className={`absolute bottom-1 -right-1 text-white rounded-full p-2 shadow-lg ring-2 ring-white dark:ring-gray-800 ${member.tierDonations.length === 1
                         ? 'bg-orange-500'
-                        : 'bg-blue-600'
+                        : 'bg-primary-600'
                       }`} title={`Donated to ${member.tierDonations.length} tier${member.tierDonations.length > 1 ? 's' : ''}`}>
                       {member.tierDonations.length === 1 ? (
                         <Award className="w-5 h-5" />
@@ -575,7 +575,7 @@ const MemberDetails = () => {
                                 {formatDate(transaction.transactionDate)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
                                   {transaction.transactionType === 'campaign_donation' && 'Campaign'}
                                   {transaction.transactionType === 'tier_donation' && 'Tier'}
                                   {transaction.transactionType === 'event_donation' && 'Event'}
