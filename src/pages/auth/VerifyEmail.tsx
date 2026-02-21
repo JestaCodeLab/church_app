@@ -165,11 +165,12 @@ const VerifyEmail = () => {
 
   return (
     <PageTransition direction="right">
-      <AuthLayout 
-        title="Verify Your Email" 
-        subtitle=""
-        icon={<Mail className="w-8 h-8 text-white" />}
-      >
+      <div data-theme="green">
+        <AuthLayout 
+          title="Verify Your Email" 
+          subtitle=""
+          icon={<Mail className="w-8 h-8 text-white" />}
+        >
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 transition-colors">
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
@@ -213,7 +214,7 @@ const VerifyEmail = () => {
             <button
               type="submit"
               disabled={loading || code.join('').length !== 6}
-              className="w-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (
                 'Verifying...'
@@ -253,6 +254,7 @@ const VerifyEmail = () => {
           </div>
         </div>
       </AuthLayout>
+      </div>
     </PageTransition>
   );
 };

@@ -114,7 +114,7 @@ const FinancialReports: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader className="h-8 w-8 animate-spin text-primary-600" />
       </div>
     );
   }
@@ -304,7 +304,7 @@ const FinancialReports: React.FC = () => {
             <select 
               value={reportType} 
               onChange={(e) => setReportType(e.target.value as ReportType)} 
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="profit-loss">Profit & Loss Statement</option>
               <option value="income">Income Report</option>
@@ -319,7 +319,7 @@ const FinancialReports: React.FC = () => {
             <select 
               value={datePreset} 
               onChange={(e) => setDatePreset(e.target.value as DatePreset)} 
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="thisMonth">This Month</option>
               <option value="lastMonth">Last Month</option>
@@ -338,7 +338,7 @@ const FinancialReports: React.FC = () => {
                 type="checkbox" 
                 checked={showComparison} 
                 onChange={(e) => setShowComparison(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-2 focus:ring-blue-500"
+                className="rounded text-primary-600 focus:ring-2 focus:ring-primary-500"
               />
               <span className="text-sm text-gray-900 dark:text-white">Show Period Comparison</span>
             </label>
@@ -354,7 +354,7 @@ const FinancialReports: React.FC = () => {
                 type="date" 
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -363,7 +363,7 @@ const FinancialReports: React.FC = () => {
                 type="date" 
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -402,8 +402,8 @@ const FinancialReports: React.FC = () => {
 
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
           <div className="flex justify-between items-start mb-2">
-            <p className="text-sm font-medium text-blue-100">Net Profit</p>
-            <DollarSign className="h-5 w-5 text-blue-100" />
+            <p className="text-sm font-medium text-primary-100">Net Profit</p>
+            <DollarSign className="h-5 w-5 text-primary-100" />
           </div>
           <p className="text-3xl font-bold">{formatCurrency(periodStats.netIncome)}</p>
           {showComparison && (
@@ -577,9 +577,9 @@ const FinancialReports: React.FC = () => {
                     </span>
                   </td>
                 </tr>
-                <tr className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 bg-blue-50 dark:bg-blue-900/20">
+                <tr className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 bg-primary-50 dark:bg-primary-900/20">
                   <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">Net Profit</td>
-                  <td className="py-4 px-6 text-right text-blue-600 dark:text-blue-400 font-bold">
+                  <td className="py-4 px-6 text-right text-primary-600 dark:text-primary-400 font-bold">
                     {formatCurrency(periodStats.netIncome)}
                   </td>
                   <td className="py-4 px-6 text-right text-gray-600 dark:text-gray-400">
@@ -591,7 +591,7 @@ const FinancialReports: React.FC = () => {
                   <td className="py-4 px-6 text-center">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       netChange >= 0 
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                        ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400'
                         : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                     }`}>
                       {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}%
@@ -627,7 +627,7 @@ const FinancialReports: React.FC = () => {
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Net Profit (YTD)</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {formatCurrency(data.thisYear.net)}
             </p>
           </div>

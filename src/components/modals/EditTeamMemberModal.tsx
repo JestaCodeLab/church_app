@@ -135,8 +135,8 @@ const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({ member, onClo
           </div>
 
           {/* Info Box */}
-          <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
+          <div className="bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-blue-500/30 rounded-lg p-4">
+            <p className="text-sm text-primary-700 dark:text-blue-300">
               Changing the role will update the member's permissions immediately.
             </p>
           </div>

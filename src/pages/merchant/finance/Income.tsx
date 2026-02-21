@@ -266,7 +266,7 @@ const Income: React.FC = () => {
     }, 0);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-blue-600" /></div>;
+  if (loading) return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-primary-600" /></div>;
 
   // Use API-filtered data directly (no client-side filtering needed)
   const filteredIncome = incomeList;
@@ -345,7 +345,7 @@ const Income: React.FC = () => {
           </button>
           </PermissionGuard>
           <PermissionGuard permission="finance.addIncome">
-          <button onClick={() => { setEditingId(null); setFormData({ category: '', amount: '', source: '', description: '', date: new Date().toISOString().split('T')[0], paymentMethod: 'cash' }); setShowModal(true); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+          <button onClick={() => { setEditingId(null); setFormData({ category: '', amount: '', source: '', description: '', date: new Date().toISOString().split('T')[0], paymentMethod: 'cash' }); setShowModal(true); }} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium">
             <Plus className="h-4 w-4" />
             Add Income
           </button>
@@ -387,7 +387,7 @@ const Income: React.FC = () => {
           <button
             onClick={handleApplyFilters}
             disabled={!filterDateFrom || !filterDateTo}
-            className="ml-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+            className="ml-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-600"
           >
             <Search className="h-4 w-4" />
             Search
@@ -442,15 +442,15 @@ const Income: React.FC = () => {
         </div>
 
         {/* Verified Records */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-900/40 rounded-xl p-6 border border-blue-200 dark:border-blue-800/50 shadow-lg hover:shadow-xl transition-shadow">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-900/40 rounded-xl p-6 border border-primary-200 dark:border-primary-800/50 shadow-lg hover:shadow-xl transition-shadow">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wide">Verified</p>
-              <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{stats.verifiedCount}</p>
-              <p className="text-xs text-blue-600 dark:text-blue-300 mt-3">{stats.total > 0 ? ((stats.verifiedCount / stats.total) * 100).toFixed(0) : 0}% of total</p>
+              <p className="text-sm font-medium text-primary-700 dark:text-primary-400 uppercase tracking-wide">Verified</p>
+              <p className="text-3xl font-bold text-primary-900 dark:text-primary-100 mt-2">{stats.verifiedCount}</p>
+              <p className="text-xs text-primary-600 dark:text-blue-300 mt-3">{stats.total > 0 ? ((stats.verifiedCount / stats.total) * 100).toFixed(0) : 0}% of total</p>
             </div>
             <div className="bg-blue-200 dark:bg-blue-800/50 p-4 rounded-xl">
-              <CheckCircle2 className="h-7 w-7 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
+              <CheckCircle2 className="h-7 w-7 text-primary-600 dark:text-primary-400" strokeWidth={2.5} />
             </div>
           </div>
         </div>
@@ -532,7 +532,7 @@ const Income: React.FC = () => {
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               showFilters 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
+                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' 
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -552,7 +552,7 @@ const Income: React.FC = () => {
                 <select 
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">All Categories</option>
                   {INCOME_CATEGORIES.map(cat => (
@@ -567,7 +567,7 @@ const Income: React.FC = () => {
                 <select 
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">All Statuses</option>
                   <option value="verified">Verified</option>
@@ -582,7 +582,7 @@ const Income: React.FC = () => {
                 <select 
                   value={filterPaymentMethod}
                   onChange={(e) => setFilterPaymentMethod(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">All Methods</option>
                   <option value="cash">Cash</option>
@@ -605,7 +605,7 @@ const Income: React.FC = () => {
                   value={filterAmountMin}
                   onChange={(e) => setFilterAmountMin(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 />
               </div>
 
@@ -617,7 +617,7 @@ const Income: React.FC = () => {
                   value={filterAmountMax}
                   onChange={(e) => setFilterAmountMax(e.target.value)}
                   placeholder="9999.99"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 />
               </div>
             </div>
@@ -644,10 +644,10 @@ const Income: React.FC = () => {
         {filteredIncome.length > 0 ? (
           <>
             {selectedIds.size > 0 && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 px-6 py-3 flex justify-between items-center">
+              <div className="bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-800 px-6 py-3 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <Check className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900 dark:text-blue-400">{selectedIds.size} selected</span>
+                  <Check className="h-5 w-5 text-primary-600" />
+                  <span className="text-sm font-medium text-primary-900 dark:text-primary-400">{selectedIds.size} selected</span>
                 </div>
                 <button 
                   onClick={handleBulkDelete}
@@ -693,7 +693,7 @@ const Income: React.FC = () => {
                       <td className="py-4 px-6 text-sm text-gray-900 dark:text-white">{new Date(income.date).toLocaleDateString()}</td>
                       <td className="py-4 px-6 text-sm font-medium text-gray-900 dark:text-white">{income.source}</td>
                       <td className="py-4 px-6 text-sm">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
                           {INCOME_CATEGORIES.find(c => c.value === income.category)?.label || income.category}
                         </span>
                       </td>
@@ -709,7 +709,7 @@ const Income: React.FC = () => {
                       <td className="py-4 px-6 text-right font-semibold text-green-600 dark:text-green-400">+{formatCurrencyValue(income.amount)}</td>
                       <PermissionGuard permissions={['finance.editIncome','finance.delete']}>
                         <td className="py-4 px-6 flex justify-center gap-2">
-                          <button onClick={() => { setEditingId(income._id); setFormData({ category: income.category, amount: income.amount.toString(), source: income.source, description: income.description, date: new Date(income.date).toISOString().split('T')[0], paymentMethod: income.paymentMethod || 'cash' }); setShowModal(true); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                          <button onClick={() => { setEditingId(income._id); setFormData({ category: income.category, amount: income.amount.toString(), source: income.source, description: income.description, date: new Date(income.date).toISOString().split('T')[0], paymentMethod: income.paymentMethod || 'cash' }); setShowModal(true); }} className="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button onClick={() => setDeletingId(income._id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
@@ -768,30 +768,30 @@ const Income: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
-                <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none">
                   <option value="">Select Category</option>
                   {INCOME_CATEGORIES.map(cat => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount</label>
-                <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" step="0.01" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" step="0.01" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Source</label>
-                <input type="text" value={formData.source} onChange={(e) => setFormData({ ...formData, source: e.target.value })} placeholder="e.g., Sunday Service" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                <input type="text" value={formData.source} onChange={(e) => setFormData({ ...formData, source: e.target.value })} placeholder="e.g., Sunday Service" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Add any notes..." className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Add any notes..." className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
-                <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} max={getTodayDate()} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} max={getTodayDate()} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
-                <select value={formData.paymentMethod} onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                <select value={formData.paymentMethod} onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none">
                   <option value="cash">Cash</option>
                   <option value="bank_transfer">Bank Transfer</option>
                   <option value="mobile_money">Mobile Money</option>
@@ -803,7 +803,7 @@ const Income: React.FC = () => {
                 </select>
               </div>
               <div className="flex gap-2 pt-4">
-                <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">{editingId ? 'Update' : 'Create'}</button>
+                <button type="submit" className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors">{editingId ? 'Update' : 'Create'}</button>
                 <button type="button" onClick={() => { setShowModal(false); setEditingId(null); }} className="flex-1 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium transition-colors">Cancel</button>
               </div>
             </form>

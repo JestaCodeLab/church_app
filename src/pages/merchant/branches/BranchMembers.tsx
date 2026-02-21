@@ -530,7 +530,7 @@ const BranchMembers = () => {
                       placeholder="Search members by name, email, or phone..."
                       value={memberSearchTerm}
                       onChange={(e) => setMemberSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                      className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
                     />
                     {modalSearching && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -542,7 +542,7 @@ const BranchMembers = () => {
 
                 {/* Selected count */}
                 {selectedMemberIds.length > 0 && (
-                  <div className="mt-3 text-sm text-blue-600 dark:text-blue-400">
+                  <div className="mt-3 text-sm text-primary-600 dark:text-primary-400">
                     {selectedMemberIds.length} member(s) selected
                   </div>
                 )}
@@ -574,7 +574,7 @@ const BranchMembers = () => {
                           type="checkbox"
                           checked={selectedMemberIds.includes(member._id)}
                           onChange={() => toggleMemberSelection(member._id)}
-                          className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                          className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
                         />
                         <div className="ml-3 flex items-center flex-1">
                           {member.photo ? (
@@ -622,7 +622,7 @@ const BranchMembers = () => {
                   <button
                     onClick={handleAddMembers}
                     disabled={selectedMemberIds.length === 0 || addingMembers}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                   >
                     {addingMembers ? (
                       <>

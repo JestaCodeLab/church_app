@@ -124,8 +124,8 @@ const Branches = () => {
 
   const getTypeBadgeColor = (type: string) => {
     const colors: any = {
-      main: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
-      branch: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+      main: 'bg-purple-100 dark:bg-purple-900/20 text-primary-700 dark:text-primary-300',
+      branch: 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-blue-300',
       campus: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
       satellite: 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300',
     };
@@ -299,7 +299,7 @@ const Branches = () => {
                             e.stopPropagation();
                             handleEdit(branch._id);
                           }}
-                          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-primary-100 dark:hover:bg-blue-900/30 hover:text-primary-600 dark:hover:text-blue-400 transition-colors"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />

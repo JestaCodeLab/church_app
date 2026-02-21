@@ -100,7 +100,7 @@ const CAMPAIGN_STATUSES = [
   { value: 'draft', label: 'Draft', color: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300' },
   { value: 'active', label: 'Active', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
   { value: 'paused', label: 'Paused', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
-  { value: 'completed', label: 'Completed', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' }
+  { value: 'completed', label: 'Completed', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' }
 ];
 
 const TRANSACTION_STATUSES = [
@@ -484,7 +484,7 @@ const Donations = () => {
                 setFormData({ name: '', description: '', targetAmount: '', status: 'draft', startDate: new Date().toISOString().split('T')[0], endDate: '' });
                 setShowCampaignModal(true);
               }}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all whitespace-nowrap flex-shrink-0 text-sm sm:text-base"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all whitespace-nowrap flex-shrink-0 text-sm sm:text-base"
             >
               <Plus size={18} className="hidden sm:block" />
               <Plus size={16} className="sm:hidden" />
@@ -518,37 +518,37 @@ const Donations = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg sm:rounded-xl border border-blue-200 dark:border-blue-800 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg sm:rounded-xl border border-primary-200 dark:border-primary-800 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 font-medium">Active Campaigns</p>
-                <div className="p-2 sm:p-3 rounded-lg bg-blue-100 dark:bg-blue-900/40">
-                  <Target className="hidden sm:block text-blue-600 dark:text-blue-400" size={20} />
-                  <Target className="sm:hidden text-blue-600 dark:text-blue-400" size={16} />
+                <p className="text-xs sm:text-sm text-primary-700 dark:text-blue-300 font-medium">Active Campaigns</p>
+                <div className="p-2 sm:p-3 rounded-lg bg-primary-100 dark:bg-primary-900/40">
+                  <Target className="hidden sm:block text-primary-600 dark:text-primary-400" size={20} />
+                  <Target className="sm:hidden text-primary-600 dark:text-primary-400" size={16} />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100 mb-2">{stats.activeCampaigns}</p>
-              <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs sm:text-sm">
+              <p className="text-2xl sm:text-3xl font-bold text-primary-900 dark:text-primary-100 mb-2">{stats.activeCampaigns}</p>
+              <div className="flex items-center gap-1 text-primary-600 dark:text-primary-400 text-xs sm:text-sm">
                 <Plus size={14} className="hidden sm:block" />
                 <Plus size={12} className="sm:hidden" />
                 <span className="font-bold">2</span>
-                <span className="text-blue-700 dark:text-blue-300 hidden sm:inline">new this week</span>
+                <span className="text-primary-700 dark:text-blue-300 hidden sm:inline">new this week</span>
               </div>
             </div>
 
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg sm:rounded-xl border border-purple-200 dark:border-purple-800 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300 font-medium">Total Donors</p>
+                <p className="text-xs sm:text-sm text-primary-700 dark:text-primary-300 font-medium">Total Donors</p>
                 <div className="p-2 sm:p-3 rounded-lg bg-purple-100 dark:bg-purple-900/40">
-                  <Users className="hidden sm:block text-purple-600 dark:text-purple-400" size={20} />
-                  <Users className="sm:hidden text-purple-600 dark:text-purple-400" size={16} />
+                  <Users className="hidden sm:block text-primary-600 dark:text-primary-400" size={20} />
+                  <Users className="sm:hidden text-primary-600 dark:text-primary-400" size={16} />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-purple-900 dark:text-purple-100 mb-2">{stats.totalDonors}</p>
-              <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 text-xs sm:text-sm">
+              <p className="text-2xl sm:text-3xl font-bold text-purple-900 dark:text-primary-100 mb-2">{stats.totalDonors}</p>
+              <div className="flex items-center gap-1 text-primary-600 dark:text-primary-400 text-xs sm:text-sm">
                 <TrendingUp size={14} className="hidden sm:block" />
                 <TrendingUp size={12} className="sm:hidden" />
                 <span className="font-bold">+5.2%</span>
-                <span className="text-purple-700 dark:text-purple-300 hidden sm:inline">growth rate</span>
+                <span className="text-primary-700 dark:text-primary-300 hidden sm:inline">growth rate</span>
               </div>
             </div>
           </div>
@@ -556,20 +556,20 @@ const Donations = () => {
 
         {activeTab === 'events' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg sm:rounded-xl border border-blue-200 dark:border-blue-800 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg sm:rounded-xl border border-primary-200 dark:border-primary-800 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 font-medium">Events with Donations</p>
-                <div className="p-2 sm:p-3 rounded-lg bg-blue-100 dark:bg-blue-900/40">
-                  <Calendar className="hidden sm:block text-blue-600 dark:text-blue-400" size={20} />
-                  <Calendar className="sm:hidden text-blue-600 dark:text-blue-400" size={16} />
+                <p className="text-xs sm:text-sm text-primary-700 dark:text-blue-300 font-medium">Events with Donations</p>
+                <div className="p-2 sm:p-3 rounded-lg bg-primary-100 dark:bg-primary-900/40">
+                  <Calendar className="hidden sm:block text-primary-600 dark:text-primary-400" size={20} />
+                  <Calendar className="sm:hidden text-primary-600 dark:text-primary-400" size={16} />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100 mb-2">{events.length}</p>
-              <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs sm:text-sm">
+              <p className="text-2xl sm:text-3xl font-bold text-primary-900 dark:text-primary-100 mb-2">{events.length}</p>
+              <div className="flex items-center gap-1 text-primary-600 dark:text-primary-400 text-xs sm:text-sm">
                 <Plus size={14} className="hidden sm:block" />
                 <Plus size={12} className="sm:hidden" />
                 <span className="font-bold">{Math.max(0, events.length - 2)}</span>
-                <span className="text-blue-700 dark:text-blue-300 hidden sm:inline">active</span>
+                <span className="text-primary-700 dark:text-blue-300 hidden sm:inline">active</span>
               </div>
             </div>
 
@@ -594,18 +594,18 @@ const Donations = () => {
 
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg sm:rounded-xl border border-purple-200 dark:border-purple-800 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300 font-medium">Total Donations Count</p>
+                <p className="text-xs sm:text-sm text-primary-700 dark:text-primary-300 font-medium">Total Donations Count</p>
                 <div className="p-2 sm:p-3 rounded-lg bg-purple-100 dark:bg-purple-900/40">
-                  <Users className="hidden sm:block text-purple-600 dark:text-purple-400" size={20} />
-                  <Users className="sm:hidden text-purple-600 dark:text-purple-400" size={16} />
+                  <Users className="hidden sm:block text-primary-600 dark:text-primary-400" size={20} />
+                  <Users className="sm:hidden text-primary-600 dark:text-primary-400" size={16} />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-purple-900 dark:text-purple-100 mb-2">{events.reduce((sum, e) => sum + (e.donations?.donationCount || 0), 0)}</p>
-              <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 text-xs sm:text-sm">
+              <p className="text-2xl sm:text-3xl font-bold text-purple-900 dark:text-primary-100 mb-2">{events.reduce((sum, e) => sum + (e.donations?.donationCount || 0), 0)}</p>
+              <div className="flex items-center gap-1 text-primary-600 dark:text-primary-400 text-xs sm:text-sm">
                 <TrendingUp size={14} className="hidden sm:block" />
                 <TrendingUp size={12} className="sm:hidden" />
                 <span className="font-bold">+3.5%</span>
-                <span className="text-purple-700 dark:text-purple-300 hidden sm:inline">increase</span>
+                <span className="text-primary-700 dark:text-primary-300 hidden sm:inline">increase</span>
               </div>
             </div>
           </div>
@@ -618,7 +618,7 @@ const Donations = () => {
               onClick={() => setActiveTab('campaigns')}
               className={`flex items-center gap-1 sm:gap-2 pb-3 sm:pb-4 px-1 border-b-[2px] font-medium text-sm sm:text-base whitespace-nowrap transition-colors ${
                 activeTab === 'campaigns'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
@@ -630,7 +630,7 @@ const Donations = () => {
               onClick={() => setActiveTab('events')}
               className={`flex items-center gap-1 sm:gap-2 pb-3 sm:pb-4 px-1 border-b-[2px] font-medium text-sm sm:text-base whitespace-nowrap transition-colors ${
                 activeTab === 'events'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
@@ -705,13 +705,13 @@ const Donations = () => {
                       <span className="text-slate-600 dark:text-slate-400 truncate">
                         {formatCurrency(getCampaignRaisedAmount(campaign), campaign.goal?.currency || merchantCurrency)} of {formatCurrency(getCampaignTargetAmount(campaign), campaign.goal?.currency || merchantCurrency)}
                       </span>
-                      <span className="font-bold text-blue-600 flex-shrink-0">
+                      <span className="font-bold text-primary-600 flex-shrink-0">
                         {Math.round(calculateProgress(getCampaignRaisedAmount(campaign), getCampaignTargetAmount(campaign)))}%
                       </span>
                     </div>
                     <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 sm:h-3 overflow-hidden">
                       <div
-                        className="bg-blue-600 h-2 sm:h-3 rounded-full transition-all duration-500"
+                        className="bg-primary-600 h-2 sm:h-3 rounded-full transition-all duration-500"
                         style={{ width: `${calculateProgress(getCampaignRaisedAmount(campaign), getCampaignTargetAmount(campaign))}%` }}
                       />
                     </div>
@@ -732,7 +732,7 @@ const Donations = () => {
                     </button>
                     <button
                       onClick={() => navigate(`/finance/donations/${campaign._id}`)}
-                      className="flex items-center justify-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs sm:text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors whitespace-nowrap"
+                      className="flex items-center justify-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-xs sm:text-sm font-semibold hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-colors whitespace-nowrap"
                     >
                       <Eye className="hidden sm:block" size={14} />
                       <Eye className="sm:hidden" size={12} />
@@ -819,7 +819,7 @@ const Donations = () => {
                 <p className="text-slate-600 dark:text-slate-400 text-sm">No events with donations enabled yet.</p>
                 <button
                   onClick={() => navigate('/events/new')}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
                   <Plus size={16} />
                   <span>Create Event</span>
@@ -863,13 +863,13 @@ const Donations = () => {
                             <span className="text-slate-600 dark:text-slate-400 truncate">
                               {formatCurrency(event.donations.totalRaised || 0, event.donations.goal?.currency || merchantCurrency)} of {formatCurrency(event.donations.goal?.amount || 0, event.donations.goal?.currency || merchantCurrency)}
                             </span>
-                            <span className="font-bold text-blue-600 flex-shrink-0">
+                            <span className="font-bold text-primary-600 flex-shrink-0">
                               {Math.round(((event.donations.totalRaised || 0) / (event.donations.goal?.amount || 1)) * 100)}%
                             </span>
                           </div>
                           <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 sm:h-3 overflow-hidden">
                             <div
-                              className="bg-blue-600 h-2 sm:h-3 rounded-full transition-all duration-500"
+                              className="bg-primary-600 h-2 sm:h-3 rounded-full transition-all duration-500"
                               style={{ width: `${Math.min(((event.donations.totalRaised || 0) / (event.donations.goal?.amount || 1)) * 100, 100)}%` }}
                             />
                           </div>
@@ -880,7 +880,7 @@ const Donations = () => {
                       <div className="flex items-center justify-end gap-1 sm:gap-2 flex-wrap mt-auto">
                         <button
                           onClick={() => navigate(`/events/${event._id}/donations`)}
-                          className="flex items-center justify-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs sm:text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                          className="flex items-center justify-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-xs sm:text-sm font-semibold hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-colors"
                         >
                           <Eye className="hidden sm:block" size={14} />
                           <Eye className="sm:hidden" size={12} />
@@ -1072,7 +1072,7 @@ const Donations = () => {
               <button
                 onClick={handleCreateCampaign}
                 disabled={modalLoading}
-                className="px-3 sm:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                className="px-3 sm:px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-slate-400 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center justify-center gap-2"
               >
                   {modalLoading ? (
                     <>

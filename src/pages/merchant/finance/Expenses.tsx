@@ -317,7 +317,7 @@ const Expenses: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-blue-600" /></div>;
+    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-primary-600" /></div>;
   }
 
   const formatCurrencyValue = (value: number) => formatCurrency(value, getMerchantCurrency());
@@ -392,7 +392,7 @@ const Expenses: React.FC = () => {
           </button>
           </PermissionGuard>
           <PermissionGuard permissions={['finance.addExpense']}>
-          <button onClick={handleAddClick} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+          <button onClick={handleAddClick} className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">
             <Plus className="h-4 w-4" />
             Add Expense
           </button>
@@ -434,7 +434,7 @@ const Expenses: React.FC = () => {
           <button
             onClick={handleApplyFilters}
             disabled={!filterDateFrom || !filterDateTo}
-            className="ml-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+            className="ml-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-600"
           >
             <Search className="h-4 w-4" />
             Search
@@ -579,7 +579,7 @@ const Expenses: React.FC = () => {
             onClick={() => setShowFilters(!showFilters)}
             className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               showFilters 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
+                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' 
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -599,7 +599,7 @@ const Expenses: React.FC = () => {
                 <select 
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">All Categories</option>
                   {EXPENSE_CATEGORIES.map(cat => (
@@ -614,7 +614,7 @@ const Expenses: React.FC = () => {
                 <select 
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">All Statuses</option>
                   <option value="pending">Pending</option>
@@ -630,7 +630,7 @@ const Expenses: React.FC = () => {
                 <select 
                   value={filterPaymentMethod}
                   onChange={(e) => setFilterPaymentMethod(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">All Methods</option>
                   {PAYMENT_METHODS.map(method => (
@@ -648,7 +648,7 @@ const Expenses: React.FC = () => {
                   value={filterAmountMin}
                   onChange={(e) => setFilterAmountMin(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 />
               </div>
 
@@ -660,7 +660,7 @@ const Expenses: React.FC = () => {
                   value={filterAmountMax}
                   onChange={(e) => setFilterAmountMax(e.target.value)}
                   placeholder="9999.99"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 />
               </div>
             </div>
@@ -687,10 +687,10 @@ const Expenses: React.FC = () => {
         {filteredExpenses.length > 0 ? (
           <>
             {selectedIds.size > 0 && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 px-6 py-3 flex justify-between items-center">
+              <div className="bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-800 px-6 py-3 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <Check className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900 dark:text-blue-400">{selectedIds.size} selected</span>
+                  <Check className="h-5 w-5 text-primary-600" />
+                  <span className="text-sm font-medium text-primary-900 dark:text-primary-400">{selectedIds.size} selected</span>
                 </div>
                 <button 
                   onClick={handleBulkDelete}
@@ -745,7 +745,7 @@ const Expenses: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
                           {expense.category.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                         </span>
                       </td>
@@ -759,7 +759,7 @@ const Expenses: React.FC = () => {
                           expense.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
                           expense.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
                           expense.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
-                          'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                          'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400'
                         }`}>
                           {expense.status === 'pending' && <History className="h-3 w-3" />}
                           {expense.status === 'approved' && <Check className="h-3 w-3" />}
@@ -818,7 +818,7 @@ const Expenses: React.FC = () => {
                                     className="cursor-pointer hover:opacity-80 transition-opacity"
                                     title="View approval note"
                                   >
-                                    <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg" style={{ width: '36px', height: '36px' }} />
+                                    <MessageSquare className="h-4 w-4 text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 p-2 rounded-lg" style={{ width: '36px', height: '36px' }} />
                                   </button>
                                 )}
                                 {expense.status !== 'approved' && (
@@ -826,7 +826,7 @@ const Expenses: React.FC = () => {
                                     <PermissionGuard permission={'finance.editExpense'}>
                                       <button 
                                         onClick={() => handleEditClick(expense)} 
-                                        className="inline-flex items-center justify-center p-2 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-all hover:shadow-sm"
+                                        className="inline-flex items-center justify-center p-2 text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-blue-900/40 rounded-lg transition-all hover:shadow-sm"
                                         title="Edit"
                                       >
                                         <Edit2 className="h-4 w-4" />
@@ -933,7 +933,7 @@ const Expenses: React.FC = () => {
                 <button 
                   type="submit" 
                   disabled={submitting} 
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-2 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {submitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
                   <span>{submitting ? 'Saving...' : (editingId ? 'Update' : 'Add')}</span>
@@ -1031,7 +1031,7 @@ const Expenses: React.FC = () => {
             })()}
             <button 
               onClick={() => setViewingNoteId(null)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 rounded-lg text-sm font-medium transition-colors"
             >
               Close
             </button>

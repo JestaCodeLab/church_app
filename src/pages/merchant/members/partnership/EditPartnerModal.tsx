@@ -208,7 +208,7 @@ const EditPartnerModal: React.FC<EditPartnerModalProps> = ({
           {/* Member Partner Info - read-only */}
           {partner.partnerType === 'member' && (
             <>
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {formData.firstName} {formData.lastName}
                 </p>

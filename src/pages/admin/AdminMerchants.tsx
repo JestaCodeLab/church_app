@@ -124,8 +124,8 @@ const AdminMerchants = () => {
   const colors: any = {
     active: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300',
     pending_verification: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300',
-    pending_onboarding: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
-    pending_approval: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300',
+    pending_onboarding: 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300',
+    pending_approval: 'bg-purple-100 text-primary-700 dark:bg-purple-900/20 dark:text-primary-300',
     suspended: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300',
     inactive: 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300',
   };
@@ -278,7 +278,7 @@ const AdminMerchants = () => {
                         </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 capitalize">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300 capitalize">
                           {merchant.subscription?.plan || 'Free'}
                         </span>
                       </td>

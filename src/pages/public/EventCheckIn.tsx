@@ -366,7 +366,7 @@ const EventCheckIn = () => {
                         setFormData(prev => ({ ...prev, code: value }));
                       }}
                       placeholder="0000"
-                      className="w-full px-6 py-4 text-center text-4xl tracking-widest font-mono border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-bold transition-all"
+                      className="w-full px-6 py-4 text-center text-4xl tracking-widest font-mono border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-bold transition-all"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                       Enter the 4-digit code provided at the event
@@ -386,7 +386,7 @@ const EventCheckIn = () => {
                         value={formData.phone}
                         onChange={handleInputChange}
                         placeholder="024XXXXXXX"
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
                       />
                     </div>
                   </div>
@@ -408,7 +408,7 @@ const EventCheckIn = () => {
                           value={formData.firstName}
                           onChange={handleInputChange}
                           placeholder="John"
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
                           required
                         />
                       </div>
@@ -425,7 +425,7 @@ const EventCheckIn = () => {
                           value={formData.lastName}
                           onChange={handleInputChange}
                           placeholder="Doe"
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
                           required
                         />
                       </div>
@@ -445,7 +445,7 @@ const EventCheckIn = () => {
                         value={formData.phone}
                         onChange={handleInputChange}
                         placeholder="024XXXXXXX"
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
                         required
                       />
                     </div>
@@ -457,7 +457,7 @@ const EventCheckIn = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full mt-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:bg-blue-700 dark:hover:bg-blue-800 dark:disabled:bg-gray-600 text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center space-x-2 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                className="w-full mt-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 dark:bg-blue-700 dark:hover:bg-blue-800 dark:disabled:bg-gray-600 text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center space-x-2 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
               >
                 {submitting ? (
                   <>

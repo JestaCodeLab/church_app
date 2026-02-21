@@ -200,9 +200,9 @@ const PostDetail: React.FC = () => {
 
           {/* Scheduled info */}
           {post.scheduledAt && post.status === 'scheduled' && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-center gap-3">
-              <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <p className="text-sm text-blue-700 dark:text-blue-300">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-4 flex items-center gap-3">
+              <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <p className="text-sm text-primary-700 dark:text-blue-300">
                 Scheduled for {new Date(post.scheduledAt).toLocaleString()}
               </p>
             </div>
@@ -220,7 +220,7 @@ const PostDetail: React.FC = () => {
               <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   {p.platform === 'facebook' ? (
-                    <Facebook className="w-4 h-4 text-blue-600" />
+                    <Facebook className="w-4 h-4 text-primary-600" />
                   ) : (
                     <Instagram className="w-4 h-4 text-pink-600" />
                   )}

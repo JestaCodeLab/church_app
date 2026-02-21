@@ -263,7 +263,7 @@ const PublicPartnershipPayment = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Loading partnership programme...</p>
         </div>
       </div>
@@ -279,7 +279,7 @@ const PublicPartnershipPayment = () => {
           <p className="text-gray-600 dark:text-gray-400">The partnership programme you're looking for doesn't exist or is not available.</p>
           <button
             onClick={() => navigate(-1)}
-            className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700"
+            className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Go Back
@@ -317,9 +317,9 @@ const PublicPartnershipPayment = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Member Search Section - Always Visible */}
             {!selectedMember && !showMemberSearch && (
-              <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
+              <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-primary-700 rounded-lg">
                 <div className="flex items-center mb-3">
-                  <User className="w-5 h-5 text-purple-600 dark:text-purple-400 mr-2" />
+                  <User className="w-5 h-5 text-primary-600 dark:text-primary-400 mr-2" />
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     Are you already a member? Search for your profile <span className="text-red-500">*</span>
                   </p>
@@ -339,7 +339,7 @@ const PublicPartnershipPayment = () => {
                     className="w-full px-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100"
                   />
                   {searchingMembers && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-purple-600" />
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-primary-600" />
                   )}
                 </div>
                 
@@ -373,7 +373,7 @@ const PublicPartnershipPayment = () => {
                 <button
                   type="button"
                   onClick={() => setShowMemberSearch(true)}
-                  className="mt-3 w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  className="mt-3 w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                   Continue as Guest
                 </button>
@@ -428,7 +428,7 @@ const PublicPartnershipPayment = () => {
                       setFullName('');
                       setPhone('');
                     }}
-                    className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium"
+                    className="text-sm text-primary-600 dark:text-primary-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium"
                   >
                     I'm a member
                   </button>
@@ -502,7 +502,7 @@ const PublicPartnershipPayment = () => {
                   >
                     <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mt-1 mr-4 transition-all ${
                       selectedTier === tier._id
-                        ? 'border-purple-600 bg-purple-600 dark:border-purple-400 dark:bg-purple-500'
+                        ? 'border-primary-600 bg-primary-600 dark:border-purple-400 dark:bg-purple-500'
                         : 'border-gray-300 dark:border-gray-600'
                     }`}>
                       {selectedTier === tier._id && (
@@ -514,7 +514,7 @@ const PublicPartnershipPayment = () => {
                       {tier.description && (
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{tier.description}</p>
                       )}
-                      <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-2">
+                      <p className="text-sm font-medium text-primary-600 dark:text-primary-400 mt-2">
                         Min: {formatCurrency(tier.minimumAmount, programme.goal?.currency)}
                       </p>
                       {tier.benefits && tier.benefits.length > 0 && (
@@ -566,7 +566,7 @@ const PublicPartnershipPayment = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 dark:text-gray-300">Amount to Pay:</span>
-                  <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                     {formatCurrency(paymentAmount, programme.goal?.currency)}
                   </span>
                 </div>

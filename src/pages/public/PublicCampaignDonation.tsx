@@ -308,7 +308,7 @@ const PublicCampaignDonation: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
       </div>
     );
   }
@@ -358,8 +358,8 @@ const PublicCampaignDonation: React.FC = () => {
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-              <Heart className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full">
+              <Heart className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -386,7 +386,7 @@ const PublicCampaignDonation: React.FC = () => {
 
           {/* Progress */}
           {campaign.goal && (
-            <div className="mt-6 p-4 border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="mt-6 p-4 border-2 border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
               <div className="flex justify-between text-sm mb-2">
                 <span className="font-medium text-gray-900 dark:text-white">
                   {formatCurrency(campaign.goal.raisedAmount || 0, campaign.goal.currency)} raised
@@ -397,7 +397,7 @@ const PublicCampaignDonation: React.FC = () => {
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                 <div
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                  className="bg-primary-600 h-3 rounded-full transition-all duration-500"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -474,8 +474,8 @@ const PublicCampaignDonation: React.FC = () => {
                       onClick={() => setAmount(preset.toString())}
                       className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
                         amount === preset.toString()
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-600'
+                          ? 'bg-primary-600 text-white border-primary-600'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-primary-600'
                       }`}
                     >
                       {preset}
@@ -501,7 +501,7 @@ const PublicCampaignDonation: React.FC = () => {
                     onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     placeholder="Enter custom amount"
                     required
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
               )}
@@ -522,7 +522,7 @@ const PublicCampaignDonation: React.FC = () => {
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder={selectedTierId ? `Minimum ${getCurrencySymbol(campaign.goal?.currency)} ${campaign.tiers.find(t => t._id === selectedTierId)?.minimumAmount}` : 'Enter amount'}
                     required
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
               )}
@@ -535,7 +535,7 @@ const PublicCampaignDonation: React.FC = () => {
                 id="anonymous"
                 checked={isAnonymous}
                 onChange={(e) => setIsAnonymous(e.target.checked)}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500"
               />
               <label htmlFor="anonymous" className="text-sm text-gray-700 dark:text-gray-300">
                 Make this an anonymous contribution
@@ -554,7 +554,7 @@ const PublicCampaignDonation: React.FC = () => {
                     value={donor.name}
                     onChange={(e) => setDonor({ ...donor, name: e.target.value })}
                     required={!isAnonymous}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 <div>
@@ -566,7 +566,7 @@ const PublicCampaignDonation: React.FC = () => {
                     value={donor.phone}
                     onChange={(e) => setDonor({ ...donor, phone: e.target.value })}
                     required={!isAnonymous}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 {/* <div>
@@ -578,7 +578,7 @@ const PublicCampaignDonation: React.FC = () => {
                     value={donor.email}
                     required
                     onChange={(e) => setDonor({ ...donor, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div> */}
                 
@@ -596,7 +596,7 @@ const PublicCampaignDonation: React.FC = () => {
                     value={donor.email}
                     onChange={(e) => setDonor({ ...donor, email: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div> */}
                 <div>
@@ -608,7 +608,7 @@ const PublicCampaignDonation: React.FC = () => {
                     value={donor.phone}
                     onChange={(e) => setDonor({ ...donor, phone: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
               </div>
@@ -618,7 +618,7 @@ const PublicCampaignDonation: React.FC = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium transition"
+              className="w-full px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium transition"
             >
               {submitting ? (
                 <>

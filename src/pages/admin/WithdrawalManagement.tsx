@@ -266,7 +266,7 @@ const WithdrawalManagement = () => {
       case 'pending':
         return `${baseClasses} bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400`;
       case 'approved':
-        return `${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400`;
+        return `${baseClasses} bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400`;
       case 'processing':
         return `${baseClasses} bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400`;
       case 'completed':
@@ -331,15 +331,15 @@ const WithdrawalManagement = () => {
 
       <main className="max-w-8xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Fee Settings Card */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4 mb-6">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-primary-200 dark:border-primary-800 p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                <Settings className="text-blue-600 dark:text-blue-400" size={20} />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg">
+                <Settings className="text-primary-600 dark:text-primary-400" size={20} />
               </div>
               <div>
                 <h3 className="font-semibold text-slate-900 dark:text-white">Withdrawal Service Fee</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Current fee: <span className="font-bold text-blue-600 dark:text-blue-400">{withdrawalFee}%</span></p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Current fee: <span className="font-bold text-primary-600 dark:text-primary-400">{withdrawalFee}%</span></p>
               </div>
             </div>
             <button
@@ -347,7 +347,7 @@ const WithdrawalManagement = () => {
                 setFeeInput(withdrawalFee.toString());
                 setShowFeeModal(true);
               }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2"
             >
               <Edit size={16} />
               Edit Fee
@@ -374,11 +374,11 @@ const WithdrawalManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold">Approved</p>
-                  <p className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+                  <p className="text-lg sm:text-xl font-bold text-primary-600 dark:text-primary-400 mt-1">
                     {stats.approved.count}
                   </p>
                 </div>
-                <Check className="text-blue-600 dark:text-blue-400" size={20} />
+                <Check className="text-primary-600 dark:text-primary-400" size={20} />
               </div>
             </div>
 
@@ -422,11 +422,11 @@ const WithdrawalManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold">Total Amount</p>
-                  <p className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mt-1">
+                  <p className="text-lg sm:text-xl font-bold text-primary-600 dark:text-primary-400 mt-1">
                     {formatCurrency(stats.totalAmount, merchantCurrency)}
                   </p>
                 </div>
-                <TrendingUp className="text-purple-600 dark:text-purple-400" size={20} />
+                <TrendingUp className="text-primary-600 dark:text-primary-400" size={20} />
               </div>
             </div>
           </div>
@@ -442,7 +442,7 @@ const WithdrawalManagement = () => {
                 placeholder="Search by merchant name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
               />
             </div>
 
@@ -452,7 +452,7 @@ const WithdrawalManagement = () => {
                 setFilterStatus(e.target.value);
                 setPage(1);
               }}
-              className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
+              className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
@@ -542,7 +542,7 @@ const WithdrawalManagement = () => {
                         }}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                       >
-                        <Eye size={18} className="text-blue-600 dark:text-blue-400" />
+                        <Eye size={18} className="text-primary-600 dark:text-primary-400" />
                       </button>
                     </td>
                   </tr>
@@ -606,7 +606,7 @@ const WithdrawalManagement = () => {
                       step="0.1"
                       value={feeInput}
                       onChange={(e) => setFeeInput(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                       placeholder="0-100"
                     />
                     <span className="text-slate-600 dark:text-slate-400 font-medium">%</span>
@@ -627,8 +627,8 @@ const WithdrawalManagement = () => {
 
                 {/* Fee Preview */}
                 {!isNaN(parseFloat(feeInput)) && parseFloat(feeInput) >= 0 && parseFloat(feeInput) <= 100 && (
-                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                    <p className="text-sm text-blue-700 dark:text-blue-400">
+                  <div className="p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
+                    <p className="text-sm text-primary-700 dark:text-primary-400">
                       <strong>Example:</strong> A ${1000} withdrawal will have ${(1000 * parseFloat(feeInput) / 100).toFixed(2)} fee deducted
                     </p>
                   </div>
@@ -646,7 +646,7 @@ const WithdrawalManagement = () => {
                 <button
                   onClick={handleSaveFee}
                   disabled={savingFee || isNaN(parseFloat(feeInput)) || parseFloat(feeInput) < 0 || parseFloat(feeInput) > 100}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {savingFee ? (
                     <>
@@ -800,7 +800,7 @@ const WithdrawalManagement = () => {
                     setShowDetailModal(false);
                     setShowProcessingModal(true);
                   }}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <RotateCw size={18} />
                   Mark Processing
@@ -848,7 +848,7 @@ const WithdrawalManagement = () => {
                   onChange={(e) => setApprovalNotes(e.target.value)}
                   placeholder="Add any notes for the merchant..."
                   rows={4}
-                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
                 />
               </div>
 
@@ -906,7 +906,7 @@ const WithdrawalManagement = () => {
                   onChange={(e) => setRejectionReason(e.target.value)}
                   placeholder="Explain why this withdrawal is being rejected..."
                   rows={4}
-                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
                 />
               </div>
 
@@ -969,7 +969,7 @@ const WithdrawalManagement = () => {
                 <button
                   onClick={handleMarkProcessing}
                   disabled={processingAction}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   {processingAction ? (
                     <>
@@ -1013,7 +1013,7 @@ const WithdrawalManagement = () => {
                   value={transactionRef}
                   onChange={(e) => setTransactionRef(e.target.value)}
                   placeholder="Enter transaction reference from bank/payment provider..."
-                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
 

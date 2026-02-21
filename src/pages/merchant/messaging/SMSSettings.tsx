@@ -132,14 +132,14 @@ const SMSSettings = () => {
             {/* Status: None - Registration Form */}
             {status?.status === 'none' && (
               <div>
-                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="mb-6 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
                   <div className="flex items-start">
-                    <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
+                    <AlertCircle className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 mr-3 flex-shrink-0" />
                     <div>
-                      <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                      <h4 className="font-medium text-primary-900 dark:text-primary-100">
                         Personalize Your SMS
                       </h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                      <p className="text-sm text-primary-700 dark:text-blue-300 mt-1">
                         Register a custom sender ID so members see your church name instead of "{status.platformSenderId}" when receiving SMS.
                       </p>
                     </div>
@@ -284,8 +284,8 @@ const SMSSettings = () => {
                   </div>
                 </div>
 
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-6">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800 mb-6">
+                  <p className="text-sm text-primary-700 dark:text-blue-300">
                     💡 <strong>Tip:</strong> Test it by sending an SMS to yourself from the messaging page.
                   </p>
                 </div>

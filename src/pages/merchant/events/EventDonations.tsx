@@ -161,8 +161,8 @@ const EventDonations: React.FC = () => {
         icon: XCircle
       },
       processing: {
-        bg: 'bg-blue-100 dark:bg-blue-900/30',
-        text: 'text-blue-800 dark:text-blue-200',
+        bg: 'bg-primary-100 dark:bg-primary-900/30',
+        text: 'text-primary-800 dark:text-primary-200',
         icon: Clock
       }
     };
@@ -266,7 +266,7 @@ const EventDonations: React.FC = () => {
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm mb-1">Fundraising Goal</p>
+                  <p className="text-primary-100 text-sm mb-1">Fundraising Goal</p>
                   <p className="text-3xl font-bold">
                     {event?.donations?.goal?.amount 
                       ? `${event.donations.goal.currency} ${event.donations.goal.amount.toLocaleString()}`
@@ -283,7 +283,7 @@ const EventDonations: React.FC = () => {
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm mb-1">Total Donors</p>
+                  <p className="text-primary-100 text-sm mb-1">Total Donors</p>
                   <p className="text-3xl font-bold">
                     {stats.totalDonations}
                   </p>
@@ -388,7 +388,7 @@ const EventDonations: React.FC = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {donations.map((donation) => (
-                      <tr key={donation._id} className="hover:bg-blue-50/50 dark:hover:bg-gray-700/50 transition-colors">
+                      <tr key={donation._id} className="hover:bg-primary-50/50 dark:hover:bg-gray-700/50 transition-colors">
                         <td className="px-6 py-5">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-12 w-12">

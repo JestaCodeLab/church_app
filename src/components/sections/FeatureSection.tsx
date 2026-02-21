@@ -64,7 +64,7 @@ const FeatureShowcase: React.FC<{ activeFeature: number }> = ({ activeFeature })
                   {!imageLoaded[activeFeature] && (
                     <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
                       <div className="text-center">
-                        <Sparkles className="w-16 h-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                        <Sparkles className="w-16 h-16 text-primary-600 dark:text-primary-400 mx-auto mb-4" />
                         <p className="text-gray-700 dark:text-gray-300 font-bold text-lg">{current.title}</p>
                       </div>
                     </div>

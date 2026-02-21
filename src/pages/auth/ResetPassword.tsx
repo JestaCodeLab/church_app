@@ -144,6 +144,7 @@ const ResetPassword = () => {
 
   return (
     <PageTransition>
+      <div data-theme="green">
       <AuthLayout
         title="Reset Your Password"
         subtitle={`Reset your password for ${process.env.REACT_APP_PROJECT_NAME || "The Church HQ"}`}
@@ -303,7 +304,7 @@ const ResetPassword = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !token.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()}
               className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:cursor-not-allowed mt-6"
             >
               {loading ? (
@@ -343,6 +344,7 @@ const ResetPassword = () => {
           </div>
         </div>
       </AuthLayout>
+      </div>
     </PageTransition>
   );
 };

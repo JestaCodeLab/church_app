@@ -142,7 +142,7 @@ const RoleDetailsModal: React.FC<RoleDetailsModalProps> = ({ role, onClose }) =>
                 {role.name}
               </h2>
               {role.type === 'system' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
                   <Lock className="w-3 h-3" />
                   System Role
                 </span>
@@ -173,8 +173,8 @@ const RoleDetailsModal: React.FC<RoleDetailsModalProps> = ({ role, onClose }) =>
               <p className="text-sm text-red-700 dark:text-red-300">Permissions Disabled</p>
             </div>
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg p-4">
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{role.usageCount}</p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">Users Assigned</p>
+              <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{role.usageCount}</p>
+              <p className="text-sm text-primary-700 dark:text-blue-300">Users Assigned</p>
             </div>
           </div>
 

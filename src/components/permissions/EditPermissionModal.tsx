@@ -189,8 +189,8 @@ const EditPermissionModal: React.FC<EditPermissionModalProps> = ({
           </div>
 
           {/* Info - Roles Using This Permission */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-            <p className="text-xs text-blue-800 dark:text-blue-300">
+          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+            <p className="text-xs text-primary-800 dark:text-blue-300">
               <strong>Used by:</strong> {permission.roles.length} role(s)
               {permission.roles.length > 0 && (
                 <>

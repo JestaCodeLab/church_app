@@ -285,7 +285,7 @@ const SermonManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{sermon.preacher || '-'}</td>
                   <td className="px-6 py-4 text-sm">
-                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                    <span className="inline-block px-2 py-1 bg-primary-100 text-primary-800 rounded text-xs font-medium">
                       {sermon.audioUrl ? 'Audio' : 'Video'}
                     </span>
                   </td>
@@ -314,7 +314,7 @@ const SermonManagement: React.FC = () => {
                     </button>
                     <button
                       onClick={() => navigate(`/sermons/${sermon._id}/edit`)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded transition-colors"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>

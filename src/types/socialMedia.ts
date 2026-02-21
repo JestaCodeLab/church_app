@@ -167,13 +167,13 @@ export interface SocialSettings {
 
 // Helper to get platform display info
 export const PLATFORM_INFO: Record<Platform, { name: string; color: string; bgColor: string }> = {
-  facebook: { name: 'Facebook', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
+  facebook: { name: 'Facebook', color: 'text-primary-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
   instagram: { name: 'Instagram', color: 'text-pink-600', bgColor: 'bg-pink-100 dark:bg-pink-900/30' },
 };
 
 export const POST_STATUS_INFO: Record<PostStatus, { label: string; color: string; bgColor: string }> = {
   draft: { label: 'Draft', color: 'text-gray-600 dark:text-gray-400', bgColor: 'bg-gray-100 dark:bg-gray-700' },
-  scheduled: { label: 'Scheduled', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
+  scheduled: { label: 'Scheduled', color: 'text-primary-600 dark:text-primary-400', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
   publishing: { label: 'Publishing', color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30' },
   published: { label: 'Published', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/30' },
   partially_published: { label: 'Partial', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },

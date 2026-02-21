@@ -149,10 +149,10 @@ const AdminDashboard = () => {
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <Building2 className="w-6 h-6" />
             </div>
-            <span className="text-blue-100 text-sm font-medium">+{overview.recentMerchants} this month</span>
+            <span className="text-primary-100 text-sm font-medium">+{overview.recentMerchants} this month</span>
           </div>
           <p className="text-4xl font-bold mb-1">{overview.totalMerchants}</p>
-          <p className="text-blue-100 text-sm">Total Churches</p>
+          <p className="text-primary-100 text-sm">Total Churches</p>
         </div>
 
         {/* Active Churches */}
@@ -175,10 +175,10 @@ const AdminDashboard = () => {
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <Users className="w-6 h-6" />
             </div>
-            <Activity className="w-5 h-5 text-purple-100" />
+            <Activity className="w-5 h-5 text-primary-100" />
           </div>
           <p className="text-4xl font-bold mb-1">{overview.totalUsers}</p>
-          <p className="text-purple-100 text-sm">Platform Users</p>
+          <p className="text-primary-100 text-sm">Platform Users</p>
         </div>
 
         {/* Total Members */}
@@ -349,9 +349,9 @@ const AdminDashboard = () => {
                   const percentage = ((plan.count / overview.totalMerchants) * 100).toFixed(0);
                   const colors = {
                     free: { bg: 'bg-gray-500', light: 'bg-gray-100 dark:bg-gray-900/20', text: 'text-gray-600 dark:text-gray-400' },
-                    basic: { bg: 'bg-blue-500', light: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' },
+                    basic: { bg: 'bg-primary-500', light: 'bg-primary-100 dark:bg-primary-900/20', text: 'text-primary-600 dark:text-primary-400' },
                     starter: { bg: 'bg-cyan-500', light: 'bg-cyan-100 dark:bg-cyan-900/20', text: 'text-cyan-600 dark:text-cyan-400' },
-                    professional: { bg: 'bg-purple-500', light: 'bg-purple-100 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400' },
+                    professional: { bg: 'bg-purple-500', light: 'bg-purple-100 dark:bg-purple-900/20', text: 'text-primary-600 dark:text-primary-400' },
                     enterprise: { bg: 'bg-orange-500', light: 'bg-orange-100 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' }
                   };
                   const color = colors[plan._id as keyof typeof colors] || colors.free;

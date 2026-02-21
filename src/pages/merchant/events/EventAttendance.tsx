@@ -374,8 +374,8 @@ const EventAttendance = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400">Total Attendees</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.total}</p>
               </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+                <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
@@ -399,7 +399,7 @@ const EventAttendance = () => {
                 <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.guests}</p>
               </div>
               <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                <UserX className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <UserX className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
@@ -428,7 +428,7 @@ const EventAttendance = () => {
                 placeholder="Search by name or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all"
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all"
               />
             </div>
           </div>
@@ -476,7 +476,7 @@ const EventAttendance = () => {
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="text-center">
-                <Loader className="w-10 h-10 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-3" />
+                <Loader className="w-10 h-10 animate-spin text-primary-600 dark:text-primary-400 mx-auto mb-3" />
                 <p className="text-gray-600 dark:text-gray-400">Loading attendance...</p>
               </div>
             </div>
@@ -535,7 +535,7 @@ const EventAttendance = () => {
                               {email ? (
                                 <a 
                                   href={`mailto:${email}`} 
-                                  className="text-blue-600 dark:text-blue-400 hover:underline truncate block w-32"
+                                  className="text-primary-600 dark:text-primary-400 hover:underline truncate block w-32"
                                   title={email}
                                 >
                                   {email}
@@ -547,7 +547,7 @@ const EventAttendance = () => {
                                 isAbsentee
                                   ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
                                   : isGuest
-                                    ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                    ? 'bg-purple-100 dark:bg-purple-900/20 text-primary-700 dark:text-primary-300'
                                     : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                               }`}>
                                 {isAbsentee ? 'Absent' : isGuest ? 'Guest' : 'Member'}
@@ -572,7 +572,7 @@ const EventAttendance = () => {
                                 </td>
                                 <td className="px-6 py-4 text-sm">
                                   {isGuest && record.guest?.convertedToMember ? (
-                                    <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-full font-medium">
+                                    <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-blue-300 text-xs rounded-full font-medium">
                                       Converted
                                     </span>
                                   ) : (
@@ -700,11 +700,11 @@ const EventAttendance = () => {
               Convert to Member
             </h3>
 
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-900 dark:text-blue-100">
+            <div className="mb-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+              <p className="text-sm text-primary-900 dark:text-primary-100">
                 <strong>{selectedAttendance?.guest?.firstName} {selectedAttendance?.guest?.lastName}</strong>
               </p>
-              <p className="text-xs text-blue-700 dark:text-blue-400 mt-2">
+              <p className="text-xs text-primary-700 dark:text-primary-400 mt-2">
                 {selectedAttendance?.guest?.phone}
               </p>
             </div>
@@ -716,7 +716,7 @@ const EventAttendance = () => {
               <select
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
               >
                 <option value="">Choose a branch...</option>
                 {branches.map((branch) => (
@@ -741,7 +741,7 @@ const EventAttendance = () => {
               <button
                 onClick={confirmConvert}
                 disabled={converting || !selectedBranch}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed"
               >
                 {converting ? (
                   <>

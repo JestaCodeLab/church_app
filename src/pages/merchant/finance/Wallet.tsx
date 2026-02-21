@@ -190,7 +190,7 @@ const Wallet = () => {
       // Bank card styling
       return {
         bg: 'bg-gradient-to-b from-blue-500 to-blue-800',
-        border: 'border-blue-600 dark:border-blue-500',
+        border: 'border-primary-600 dark:border-blue-500',
         text: 'text-white',
         icon: 'text-white'
       };
@@ -531,7 +531,7 @@ const Wallet = () => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
       case 'pending': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
-      case 'approved': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'approved': return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400';
       case 'processing': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
       case 'rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
       case 'failed': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
@@ -552,8 +552,8 @@ const Wallet = () => {
 
   const getTransactionTypeColor = (type: string) => {
     switch (type) {
-      case 'sms_credit_purchase': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
-      case 'subscription_payment': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'sms_credit_purchase': return 'bg-purple-100 text-primary-700 dark:bg-purple-900/30 dark:text-primary-400';
+      case 'subscription_payment': return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400';
       case 'withdrawal': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
       case 'refund': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
       default: return 'bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-400';
@@ -585,7 +585,7 @@ const Wallet = () => {
             </div>
             <button
               onClick={() => setShowWithdrawalModal(true)}
-              className="flex items-center gap-2 px-3 sm:px-3 py-2 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all whitespace-nowrap flex-shrink-0 text-sm sm:text-base"
+              className="flex items-center gap-2 px-3 sm:px-3 py-2 sm:py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all whitespace-nowrap flex-shrink-0 text-sm sm:text-base"
             >
               <Download size={18} className="hidden sm:block" />
               <Download size={16} className="sm:hidden" />
@@ -600,15 +600,15 @@ const Wallet = () => {
         {/* Balance Section - 3 Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Available Balance Card */}
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg sm:rounded-xl border border-blue-200 dark:border-blue-800 p-6 sm:p-8">
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg sm:rounded-xl border border-primary-200 dark:border-primary-800 p-6 sm:p-8">
             <div>
-              <p className="text-xs sm:text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-2">
+              <p className="text-xs sm:text-sm font-semibold text-primary-700 dark:text-blue-300 uppercase tracking-wider mb-2">
                 Available Balance
               </p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100 mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-primary-900 dark:text-primary-100 mb-2">
                 {formatCurrency(stats.availableBalance, merchantCurrency)}
               </h2>
-              <p className="text-xs text-blue-700 dark:text-blue-300">
+              <p className="text-xs text-primary-700 dark:text-blue-300">
                 Ready to withdraw
               </p>
             </div>
@@ -682,7 +682,7 @@ const Wallet = () => {
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-start mb-3">
                   <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    <TrendingUp className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Campaigns</p>
@@ -697,8 +697,8 @@ const Wallet = () => {
               {/* Partnerships */}
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-start mb-3">
-                  <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
-                    <Building className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <div className="bg-primary-100 dark:bg-primary-900/30 p-3 rounded-lg">
+                    <Building className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Partnerships</p>
@@ -735,7 +735,7 @@ const Wallet = () => {
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Linked Payment Methods</h2>
             <button
               onClick={() => setShowAddMethodModal(true)}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
             >
               <Plus size={16} />
               <span>Add Method</span>
@@ -830,8 +830,8 @@ const Wallet = () => {
               onClick={() => setShowAddMethodModal(true)}
               className="rounded-lg sm:rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 p-4 sm:p-6 flex flex-col items-center justify-center gap-3 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
             >
-              <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/20 transition-colors">
-                <Plus className="text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" size={24} />
+              <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center group-hover:bg-primary-100 dark:group-hover:bg-blue-900/20 transition-colors">
+                <Plus className="text-slate-600 dark:text-slate-300 group-hover:text-primary-600 dark:group-hover:text-blue-400" size={24} />
               </div>
               <div>
                 <p className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Add New Method</p>
@@ -849,7 +849,7 @@ const Wallet = () => {
                 onClick={() => setActiveTab('withdrawals')}
                 className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
                   activeTab === 'withdrawals'
-                    ? 'bg-blue-600 text-white shadow-md'
+                    ? 'bg-primary-600 text-white shadow-md'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
                 }`}
               >
@@ -859,7 +859,7 @@ const Wallet = () => {
                 onClick={() => setActiveTab('transactions')}
                 className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
                   activeTab === 'transactions'
-                    ? 'bg-blue-600 text-white shadow-md'
+                    ? 'bg-primary-600 text-white shadow-md'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
                 }`}
               >
@@ -882,7 +882,7 @@ const Wallet = () => {
               )}
               <button 
                 onClick={handleExport}
-                className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+                className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm"
               >
                 <Download size={14} />
                 <span className="hidden sm:inline">Export</span>
@@ -895,7 +895,7 @@ const Wallet = () => {
             <div className="bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
               {historyLoading ? (
                 <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
                   <p className="text-slate-600 dark:text-slate-400 text-sm">Loading withdrawal history...</p>
                 </div>
               ) : filteredHistory.length === 0 ? (
@@ -1008,7 +1008,7 @@ const Wallet = () => {
             <div className="bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
               {transactionsLoading ? (
                 <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
                   <p className="text-slate-600 dark:text-slate-400 text-sm">Loading wallet transactions...</p>
                 </div>
               ) : walletTransactions.length === 0 ? (
@@ -1205,12 +1205,12 @@ const Wallet = () => {
                   <div
                     key={step}
                     className={`flex-1 h-2 rounded-full transition-all ${
-                      step <= withdrawalStep ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
+                      step <= withdrawalStep ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
                     }`}
                   />
                 ))}
               </div>
-              <div className="text-right mt-2 text-xs text-blue-600 dark:text-blue-400 font-semibold">
+              <div className="text-right mt-2 text-xs text-primary-600 dark:text-primary-400 font-semibold">
                 {Math.round((withdrawalStep / 3) * 100)}%
               </div>
             </div>
@@ -1245,7 +1245,7 @@ const Wallet = () => {
                           setShowWithdrawalModal(false);
                           setShowAddMethodModal(true);
                         }}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold text-sm transition-colors"
                       >
                         <Plus size={18} />
                         Add Payment Method
@@ -1261,8 +1261,8 @@ const Wallet = () => {
                             onClick={() => setSelectedMethod(method)}
                             className={`group p-4 rounded-xl border-2 text-left transition-all duration-200 ${
                               selectedMethod?._id === method._id
-                                ? 'border-blue-600 bg-gradient-to-r from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10 shadow-sm'
-                                : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                ? 'border-primary-600 bg-gradient-to-r from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10 shadow-sm'
+                                : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-primary-600 hover:bg-slate-50 dark:hover:bg-slate-700/50'
                             }`}
                           >
                             <div className="flex items-center gap-4">
@@ -1273,8 +1273,8 @@ const Wallet = () => {
                                     ? 'bg-yellow-200 dark:bg-yellow-900/40'
                                     : 'bg-yellow-100 dark:bg-yellow-900/30 group-hover:bg-yellow-150'
                                   : selectedMethod?._id === method._id
-                                    ? 'bg-blue-200 dark:bg-blue-900/40'
-                                    : 'bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-150'
+                                    ? 'bg-blue-200 dark:bg-primary-900/40'
+                                    : 'bg-primary-100 dark:bg-primary-900/30 group-hover:bg-blue-150'
                               }`}>
                                 {method.type === 'momo' ? (
                                   method.provider?.toUpperCase() === 'MTN' ? (
@@ -1287,7 +1287,7 @@ const Wallet = () => {
                                     <Phone size={24} className="text-yellow-600 dark:text-yellow-400" />
                                   )
                                 ) : (
-                                  <Building size={24} className="text-blue-600 dark:text-blue-400" />
+                                  <Building size={24} className="text-primary-600 dark:text-primary-400" />
                                 )}
                               </div>
 
@@ -1318,7 +1318,7 @@ const Wallet = () => {
                               {/* Checkmark */}
                               <div className="flex-shrink-0 transition-all">
                                 {selectedMethod?._id === method._id && (
-                                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+                                  <div className="w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center">
                                     <Check size={16} className="text-white" />
                                   </div>
                                 )}
@@ -1334,7 +1334,7 @@ const Wallet = () => {
                           setShowWithdrawalModal(false);
                           setShowAddMethodModal(true);
                         }}
-                        className="w-full p-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-700/30 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all flex items-center justify-center gap-2"
+                        className="w-full p-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-700/30 text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-blue-400 transition-all flex items-center justify-center gap-2"
                       >
                         <Plus size={20} />
                         <span className="font-semibold text-sm">Add Another Method</span>
@@ -1353,7 +1353,7 @@ const Wallet = () => {
                       <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{selectedMethod.accountNumber}</p>
                       <button
                         onClick={() => setWithdrawalStep(1)}
-                        className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-2 hover:underline"
+                        className="text-xs text-primary-600 dark:text-primary-400 font-semibold mt-2 hover:underline"
                       >
                         Change
                       </button>
@@ -1377,7 +1377,7 @@ const Wallet = () => {
                       />
                       <button
                         onClick={() => setWithdrawalAmount(stats.availableBalance.toString())}
-                        className="absolute right-2 top-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+                        className="absolute right-2 top-2 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline"
                       >
                         MAX
                       </button>
@@ -1418,7 +1418,7 @@ const Wallet = () => {
                       </div>
                       <div className="border-t border-slate-200 dark:border-slate-700 pt-2 flex justify-between">
                         <span className="font-bold text-slate-900 dark:text-white">Total to be Disbursed</span>
-                        <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">
+                        <span className="font-bold text-primary-600 dark:text-primary-400 text-lg">
                           {formatCurrency(totalToDisburse, merchantCurrency)}
                         </span>
                       </div>
@@ -1434,33 +1434,33 @@ const Wallet = () => {
 
               {withdrawalStep === 3 && selectedMethod && (
                 <div className="space-y-4">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-4">Review Withdrawal Details</p>
+                  <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg border border-primary-200 dark:border-primary-800">
+                    <p className="text-sm font-bold text-primary-900 dark:text-primary-100 mb-4">Review Withdrawal Details</p>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-sm text-blue-700 dark:text-blue-300">Payout Method:</span>
-                        <span className="text-sm font-bold text-blue-900 dark:text-blue-100">{selectedMethod.accountName}</span>
+                        <span className="text-sm text-primary-700 dark:text-blue-300">Payout Method:</span>
+                        <span className="text-sm font-bold text-primary-900 dark:text-primary-100">{selectedMethod.accountName}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-blue-700 dark:text-blue-300">Account:</span>
-                        <span className="text-sm font-mono text-blue-900 dark:text-blue-100">{selectedMethod.accountNumber}</span>
+                        <span className="text-sm text-primary-700 dark:text-blue-300">Account:</span>
+                        <span className="text-sm font-mono text-primary-900 dark:text-primary-100">{selectedMethod.accountNumber}</span>
                       </div>
-                      <div className="border-t border-blue-200 dark:border-blue-700 pt-3">
+                      <div className="border-t border-primary-200 dark:border-blue-700 pt-3">
                         <div className="flex justify-between">
-                          <span className="text-sm text-blue-700 dark:text-blue-300">Amount:</span>
-                          <span className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                          <span className="text-sm text-primary-700 dark:text-blue-300">Amount:</span>
+                          <span className="text-sm font-bold text-primary-900 dark:text-primary-100">
                             {formatCurrency(withdrawalAmount_num, merchantCurrency)}
                           </span>
                         </div>
                         <div className="flex justify-between mt-2">
-                          <span className="text-sm text-blue-700 dark:text-blue-300">Fee:</span>
+                          <span className="text-sm text-primary-700 dark:text-blue-300">Fee:</span>
                           <span className="text-sm font-bold text-red-600 dark:text-red-400">
                             -{formatCurrency(fee, merchantCurrency)}
                           </span>
                         </div>
-                        <div className="flex justify-between mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
-                          <span className="text-sm font-bold text-blue-900 dark:text-blue-100">You'll receive:</span>
-                          <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                        <div className="flex justify-between mt-3 pt-3 border-t border-primary-200 dark:border-blue-700">
+                          <span className="text-sm font-bold text-primary-900 dark:text-primary-100">You'll receive:</span>
+                          <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
                             {formatCurrency(totalToDisburse, merchantCurrency)}
                           </span>
                         </div>
@@ -1523,7 +1523,7 @@ const Wallet = () => {
                   }
                 }}
                 disabled={withdrawalLoading}
-                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-slate-400 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center justify-center gap-2"
               >
                 {withdrawalLoading ? (
                   <>
@@ -1641,7 +1641,7 @@ const Wallet = () => {
               <button
                 onClick={handleAddPaymentMethod}
                 disabled={methodLoading}
-                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-slate-400 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center justify-center gap-2"
               >
                 {methodLoading ? (
                   <>

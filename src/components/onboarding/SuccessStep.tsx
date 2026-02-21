@@ -17,7 +17,7 @@ const SuccessStep: React.FC<SuccessStepProps> = ({
       icon: Users,
       title: 'Add Members',
       description: 'Start building your church directory',
-      color: 'bg-blue-500',
+      color: 'bg-primary-500',
     },
     {
       icon: Calendar,

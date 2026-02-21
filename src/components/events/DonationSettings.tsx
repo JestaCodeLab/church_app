@@ -205,7 +205,7 @@ const DonationSettings: React.FC<Props> = ({ value, onChange }) => {
                 <button
                   type="button"
                   onClick={shareDonationLink}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2"
+                  className="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 flex items-center space-x-2"
                   title="Share donation link"
                 >
                   <Share2 className="w-4 h-4" />

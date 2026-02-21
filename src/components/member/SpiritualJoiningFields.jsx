@@ -15,7 +15,7 @@ const SpiritualJoiningFields = ({ formData, handleInputChange, showOccupation = 
               name="occupation"
               value={formData.occupation || ''}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g., Teacher, Engineer"
             />
           </div>
@@ -28,7 +28,7 @@ const SpiritualJoiningFields = ({ formData, handleInputChange, showOccupation = 
               name="placeOfWork"
               value={formData.placeOfWork || ''}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g., ABC School, XYZ Company"
             />
           </div>
@@ -54,7 +54,7 @@ const SpiritualJoiningFields = ({ formData, handleInputChange, showOccupation = 
                 const value = e.target.value === '' ? null : e.target.value === 'true';
                 handleInputChange({ target: { name: 'bornAgain', value } });
               }}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="">Select...</option>
               <option value="true">Yes</option>
@@ -71,7 +71,7 @@ const SpiritualJoiningFields = ({ formData, handleInputChange, showOccupation = 
               name="baptismStatus"
               value={formData.baptismStatus || 'none'}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="none">None</option>
               <option value="water">Water Baptism</option>
@@ -90,7 +90,7 @@ const SpiritualJoiningFields = ({ formData, handleInputChange, showOccupation = 
             name="howDidYouJoin"
             value={formData.howDidYouJoin || ''}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="">Select...</option>
             <option value="invitation">Invitation</option>
@@ -113,7 +113,7 @@ const SpiritualJoiningFields = ({ formData, handleInputChange, showOccupation = 
               value={formData.howDidYouJoinOther || ''}
               onChange={handleInputChange}
               maxLength={200}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="Please specify..."
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

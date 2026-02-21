@@ -336,10 +336,10 @@ const AdminFeatures = () => {
         </select>
 
         {selectedPlan && (
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
             <div className="flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800 dark:text-blue-200">
+              <AlertCircle className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-primary-800 dark:text-primary-200">
                 <p className="font-medium">Important:</p>
                 <p className="mt-1">Changes to this plan will affect all merchants currently subscribed to <strong>{selectedPlan.name}</strong>.</p>
               </div>
@@ -353,9 +353,9 @@ const AdminFeatures = () => {
         <div className="space-y-6">
           {/* Summary Card */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-              <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">Total Features</div>
-              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{featureData.features.length}</div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl p-6 border border-primary-200 dark:border-primary-800">
+              <div className="text-sm text-primary-600 dark:text-primary-400 font-medium">Total Features</div>
+              <div className="text-3xl font-bold text-primary-900 dark:text-primary-100 mt-2">{featureData.features.length}</div>
             </div>
             
             <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10 rounded-xl p-6 border border-green-200 dark:border-green-800">
@@ -364,8 +364,8 @@ const AdminFeatures = () => {
             </div>
             
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/10 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
-              <div className="text-sm text-purple-600 dark:text-purple-400 font-medium">Categories</div>
-              <div className="text-3xl font-bold text-purple-900 dark:text-purple-100 mt-2">
+              <div className="text-sm text-primary-600 dark:text-primary-400 font-medium">Categories</div>
+              <div className="text-3xl font-bold text-purple-900 dark:text-primary-100 mt-2">
                 {new Set(featureData.features.map(f => f.category)).size}
               </div>
             </div>
@@ -477,7 +477,7 @@ const AdminFeatures = () => {
                               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex gap-2 justify-end">
                                 <button
                                   onClick={() => handleEditFeature(feature)}
-                                  className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                  className="p-1.5 text-primary-600 hover:bg-primary-50 dark:hover:bg-blue-900/20 rounded transition-colors"
                                   title="Edit"
                                 >
                                   <Edit2 className="w-4 h-4" />

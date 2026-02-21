@@ -68,7 +68,7 @@ const SMSDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -88,7 +88,7 @@ const SMSDashboard: React.FC = () => {
         </div>
         <Link
           to="/messaging/send"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
         >
           Send SMS
         </Link>
@@ -96,23 +96,23 @@ const SMSDashboard: React.FC = () => {
 
       {/* Credits Card */}
       {credits && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl shadow-lg p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm mb-1">Available Credits</p>
+              <p className="text-primary-100 text-sm mb-1">Available Credits</p>
               <p className="text-4xl font-bold">{credits.balance.toLocaleString()}</p>
-              <p className="text-blue-100 text-sm mt-2">
+              <p className="text-primary-100 text-sm mt-2">
                 Plan: {credits.planCredits} | Purchased: {credits.purchasedCredits}
               </p>
             </div>
             <div className="text-right">
               <Link
                 to="/messaging/credits"
-                className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 font-medium inline-block"
+                className="px-4 py-2 bg-white text-primary-600 rounded-lg hover:bg-primary-50 font-medium inline-block"
               >
                 Buy Credits
               </Link>
-              <p className="text-blue-100 text-xs mt-2">
+              <p className="text-primary-100 text-xs mt-2">
                 Total used: {credits.totalUsed.toLocaleString()}
               </p>
             </div>
@@ -145,8 +145,8 @@ const SMSDashboard: React.FC = () => {
                   {stats.totalRecipients.toLocaleString()}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl"><Users className='text-blue-600' /></span>
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                <span className="text-2xl"><Users className='text-primary-600' /></span>
               </div>
             </div>
           </div>
@@ -159,8 +159,8 @@ const SMSDashboard: React.FC = () => {
                   {stats.successRate}%
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl"><ChartArea className='text-purple-600'/></span>
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                <span className="text-2xl"><ChartArea className='text-primary-600'/></span>
               </div>
             </div>
           </div>
@@ -188,8 +188,8 @@ const SMSDashboard: React.FC = () => {
           className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-              <span className="text-2xl"><Mail className='text-blue-600' /></span>
+            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+              <span className="text-2xl"><Mail className='text-primary-600' /></span>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">Send SMS</h3>
@@ -205,8 +205,8 @@ const SMSDashboard: React.FC = () => {
           className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-              <span className="text-2xl"><FilePenLine className='text-purple-600' /></span>
+            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+              <span className="text-2xl"><FilePenLine className='text-primary-600' /></span>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">Templates</h3>
@@ -245,7 +245,7 @@ const SMSDashboard: React.FC = () => {
             {stats.byCategory.map((category) => (
               <div key={category._id} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                  <div className="w-2 h-2 bg-primary-600 rounded-full"></div>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
                     {category._id.replace(/_/g, ' ')}
                   </span>

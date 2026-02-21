@@ -43,7 +43,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       case 'success':
         return <CheckCircle className="w-12 h-12 text-green-600" />;
       default:
-        return <Info className="w-12 h-12 text-blue-600" />;
+        return <Info className="w-12 h-12 text-primary-600" />;
     }
   };
 
@@ -56,7 +56,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       case 'success':
         return 'bg-green-600 hover:bg-green-700';
       default:
-        return 'bg-blue-600 hover:bg-blue-700';
+        return 'bg-primary-600 hover:bg-primary-700';
     }
   };
 

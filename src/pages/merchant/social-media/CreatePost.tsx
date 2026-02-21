@@ -475,8 +475,8 @@ const CreatePost: React.FC = () => {
                 className="w-full flex items-center justify-between px-4 py-3 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                  <Sparkles className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                  <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
                     AI Content Assistant
                   </span>
                 </div>
@@ -500,7 +500,7 @@ const CreatePost: React.FC = () => {
                     <button
                       onClick={handleGenerateSuggestions}
                       disabled={aiLoading}
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm disabled:opacity-50 whitespace-nowrap"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm disabled:opacity-50 whitespace-nowrap"
                     >
                       {aiLoading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -516,15 +516,15 @@ const CreatePost: React.FC = () => {
                       {aiSuggestions.map((suggestion, i) => (
                         <div
                           key={i}
-                          className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
+                          className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                            <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
                               {suggestion.description}
                             </span>
                             <button
                               onClick={() => applySuggestion(suggestion.content)}
-                              className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium whitespace-nowrap"
+                              className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap"
                             >
                               <Copy className="w-3 h-3" />
                               Use this
@@ -572,7 +572,7 @@ const CreatePost: React.FC = () => {
                 <button
                   onClick={handleSuggestHashtags}
                   disabled={hashtagsLoading || !content.trim()}
-                  className="flex items-center gap-1 px-3 py-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors text-sm disabled:opacity-50 whitespace-nowrap"
+                  className="flex items-center gap-1 px-3 py-2 text-primary-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors text-sm disabled:opacity-50 whitespace-nowrap"
                   title="Get AI hashtag suggestions"
                 >
                   {hashtagsLoading ? (
@@ -587,7 +587,7 @@ const CreatePost: React.FC = () => {
               {/* AI Hashtag Suggestions */}
               {hashtagSuggestions.length > 0 && (
                 <div className="mt-2 p-3 bg-purple-50 dark:bg-purple-900/10 rounded-lg">
-                  <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-2">
+                  <p className="text-xs text-primary-600 dark:text-primary-400 font-medium mb-2">
                     Suggested hashtags (click to add):
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -599,7 +599,7 @@ const CreatePost: React.FC = () => {
                         className={`text-xs px-2 py-1 rounded-full transition-colors ${
                           hashtags.includes(tag.toLowerCase())
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 cursor-default'
-                            : 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-800/30 border border-purple-200 dark:border-purple-700'
+                            : 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 hover:bg-purple-100 dark:hover:bg-purple-800/30 border border-purple-200 dark:border-primary-700'
                         }`}
                       >
                         {hashtags.includes(tag.toLowerCase()) ? '✓' : '+'} #{tag}
@@ -674,7 +674,7 @@ const CreatePost: React.FC = () => {
               {fbAccount && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
-                    <Facebook className="w-4 h-4 text-blue-600" />
+                    <Facebook className="w-4 h-4 text-primary-600" />
                     Facebook Preview
                   </h3>
                   <FacebookPreview

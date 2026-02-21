@@ -218,7 +218,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading categories...</p>
         </div>
       </div>
@@ -235,7 +235,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
           </div>
           <button
             onClick={handleOpenCreateModal}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
           >
             + Create Category
           </button>
@@ -280,8 +280,8 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-900">
+                  <div className="mb-4 p-3 bg-primary-50 rounded-lg">
+                    <p className="text-sm text-primary-900">
                       <span className="font-semibold">{category.permissionCount}</span> permissions
                     </p>
                   </div>
@@ -307,7 +307,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                       className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-colors ${
                         category.isSystem
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                          : 'bg-primary-50 text-primary-600 hover:bg-primary-100'
                       }`}
                     >
                       Edit
@@ -332,7 +332,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
               <p className="text-gray-600 mb-4">No categories found</p>
               <button
                 onClick={handleOpenCreateModal}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-primary-600 hover:text-primary-700 font-medium"
               >
                 Create the first category
               </button>
@@ -364,7 +364,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                   value={formData.name}
                   onChange={handleNameChange}
                   placeholder="e.g., Member Management"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 />
               </div>
@@ -378,7 +378,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                   placeholder="e.g., member_management"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -395,7 +395,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Brief description of this category"
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
 
@@ -411,7 +411,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                       onClick={() => setFormData({ ...formData, icon })}
                       className={`p-2 rounded border-2 transition-all ${
                         formData.icon === icon
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-primary-600 bg-primary-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -451,7 +451,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
                 >
                   Create
                 </button>
@@ -489,7 +489,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                   type="text"
                   value={formData.name}
                   onChange={handleNameChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   disabled={editingCategory.isSystem}
                   required
                 />
@@ -503,7 +503,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                   type="text"
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   disabled={editingCategory.isSystem}
                   required
                 />
@@ -520,7 +520,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   disabled={editingCategory.isSystem}
                 />
               </div>
@@ -540,7 +540,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                         editingCategory.isSystem ? 'opacity-50 cursor-not-allowed' : ''
                       } ${
                         formData.icon === icon
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-primary-600 bg-primary-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -587,7 +587,7 @@ const AdminPermissionCategoriesPage: React.FC = () => {
                   className={`flex-1 px-4 py-2 rounded-lg font-medium ${
                     editingCategory.isSystem
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-primary-600 text-white hover:bg-primary-700'
                   }`}
                 >
                   Update

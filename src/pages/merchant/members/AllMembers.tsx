@@ -318,8 +318,8 @@ const AllMembers = () => {
 
   const getRoleBadgeColor = (role: string) => {
     const colors: any = {
-      pastor: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
-      leader: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+      pastor: 'bg-purple-100 dark:bg-purple-900/20 text-primary-700 dark:text-primary-300',
+      leader: 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-blue-300',
       elder: 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300',
       deacon: 'bg-cyan-100 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300',
       member: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
@@ -335,10 +335,10 @@ const AllMembers = () => {
     const colors: any = {
       active: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
       inactive: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
-      visitor: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+      visitor: 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-blue-300',
       first_timer: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300',
       new_convert: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300',
-      transferred: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
+      transferred: 'bg-purple-100 dark:bg-purple-900/20 text-primary-700 dark:text-primary-300',
     };
     return colors[status] || colors.active;
   };
@@ -374,7 +374,7 @@ const AllMembers = () => {
             <PermissionGuard permission="members.import">
               <button
                 onClick={() => setShowImportModal(true)}
-                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                className="flex items-center px-4 py-2 text-sm font-medium text-primary-700 dark:text-blue-300 bg-primary-50 dark:bg-primary-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-colors"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Import
@@ -408,7 +408,7 @@ const AllMembers = () => {
           ? 'bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800'
           : memberLimit.isNearLimit
             ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-300 dark:border-orange-800'
-            : 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800'
+            : 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-primary-200 dark:border-primary-800'
           }`}>
           {/* Top Section: Registration Link and Usage Stats */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -416,8 +416,8 @@ const AllMembers = () => {
             <div>
               <div className="flex items-start space-x-3 mb-4">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Link2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                    <Link2 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
                 <div className="flex-1">
@@ -431,7 +431,7 @@ const AllMembers = () => {
                     <PermissionGuard permission="members.registrationLink">
                       <button
                         onClick={() => setShowLinkModal(true)}
-                        className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center space-x-2"
+                        className="px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center space-x-2"
                       >
                         <Share2 className="h-4 w-4" />
                         <span>Get Link</span>
@@ -459,13 +459,13 @@ const AllMembers = () => {
                   ? 'bg-red-100 dark:bg-red-900/30'
                   : memberLimit.isNearLimit
                     ? 'bg-orange-100 dark:bg-orange-900/30'
-                    : 'bg-blue-100 dark:bg-blue-900/30'
+                    : 'bg-primary-100 dark:bg-primary-900/30'
                   }`}>
                   <Users className={`h-6 w-6 ${!memberLimit.canCreate
                     ? 'text-red-600 dark:text-red-400'
                     : memberLimit.isNearLimit
                       ? 'text-orange-600 dark:text-orange-400'
-                      : 'text-blue-600 dark:text-blue-400'
+                      : 'text-primary-600 dark:text-primary-400'
                     }`} />
                 </div>
                 <div className="flex-1">
@@ -494,7 +494,7 @@ const AllMembers = () => {
                           {memberLimit.remaining} remaining
                         </span>
                       ) : (
-                        <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                        <span className="text-primary-600 dark:text-primary-400 font-semibold">
                           {memberLimit.remaining} remaining
                         </span>
                       )}
@@ -573,10 +573,10 @@ const AllMembers = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.male}</p>
+                <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{stats.male}</p>
               </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+                <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
@@ -727,7 +727,7 @@ const AllMembers = () => {
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {members.map((member) => (
-                      <tr key={member._id} onClick={(e) => { e?.stopPropagation(); navigate(`/members/${member._id}`) }} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group ${selectedMembers.has(member._id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                      <tr key={member._id} onClick={(e) => { e?.stopPropagation(); navigate(`/members/${member._id}`) }} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group ${selectedMembers.has(member._id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                         }`}>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <label className="inline-flex items-center cursor-pointer group" onClick={(e) => e.stopPropagation()}>
@@ -821,13 +821,13 @@ const AllMembers = () => {
               {/* Pagination */}
               {/* Selection Info Bar */}
               {selectedMembers.size > 0 && (
-                <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-700 flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                <div className="px-6 py-3 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-200 dark:border-blue-700 flex items-center justify-between">
+                  <span className="text-sm font-medium text-primary-900 dark:text-primary-100">
                     {selectedMembers.size} member{selectedMembers.size !== 1 ? 's' : ''} selected
                   </span>
                   <button
                     onClick={() => setSelectedMembers(new Set())}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                   >
                     Clear selection
                   </button>
@@ -900,7 +900,7 @@ const AllMembers = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={copyRegistrationLink}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
                   >
                     <Copy className="h-4 w-4" />
                     <span>Copy Link</span>
@@ -959,7 +959,7 @@ const AllMembers = () => {
                   {/* Native Share (if supported) */}
                   <button
                     onClick={handleNativeShare}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
                   >
                     <Share2 className="h-4 w-4" />
                     <span>More</span>

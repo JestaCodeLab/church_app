@@ -183,10 +183,10 @@ const SocialAnalytics: React.FC = () => {
       {overview && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            icon={<Eye className="w-5 h-5 text-blue-600" />}
+            icon={<Eye className="w-5 h-5 text-primary-600" />}
             label="Total Reach"
             value={formatNumber(overview.engagement.reach)}
-            bgColor="bg-blue-50 dark:bg-blue-900/20"
+            bgColor="bg-primary-50 dark:bg-primary-900/20"
           />
           <StatCard
             icon={<Heart className="w-5 h-5 text-red-500" />}
@@ -201,7 +201,7 @@ const SocialAnalytics: React.FC = () => {
             bgColor="bg-green-50 dark:bg-green-900/20"
           />
           <StatCard
-            icon={<BarChart3 className="w-5 h-5 text-purple-600" />}
+            icon={<BarChart3 className="w-5 h-5 text-primary-600" />}
             label="Published This Week"
             value={overview.posts.publishedThisWeek.toString()}
             bgColor="bg-purple-50 dark:bg-purple-900/20"

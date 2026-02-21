@@ -145,7 +145,7 @@ const confirmSuspend = async () => {
     const colors: any = {
       active: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300',
       pending_verification: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300',
-      pending_onboarding: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
+      pending_onboarding: 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300',
       suspended: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300',
       inactive: 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300',
     };
@@ -214,7 +214,7 @@ const confirmSuspend = async () => {
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(data.merchant.status)}`}>
                   {getStatusLabel(data.merchant.status)}
                 </span>
-                <span className="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 capitalize">
+                <span className="px-3 py-1 text-sm font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300 capitalize">
                   {data.subscriptionInfo?.current?.plan || 'Free'} Plan
                 </span>
               </div>
@@ -334,8 +334,8 @@ const confirmSuspend = async () => {
                 Quick Statistics
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-center">
-                  <Church className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+                <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-lg text-center">
+                  <Church className="w-8 h-8 text-primary-600 dark:text-primary-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {data.stats.totalBranches}
                   </p>
@@ -349,7 +349,7 @@ const confirmSuspend = async () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Members</p>
                 </div>
                 <div className="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg text-center">
-                  <UserCheck className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
+                  <UserCheck className="w-8 h-8 text-primary-600 dark:text-primary-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {data.stats.totalUsers}
                   </p>
@@ -390,7 +390,7 @@ const confirmSuspend = async () => {
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">New Users</p>
                     </div>
-                    <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                    <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
                 <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
@@ -401,7 +401,7 @@ const confirmSuspend = async () => {
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">New Branches</p>
                     </div>
-                    <Church className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                    <Church className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
               </div>
@@ -414,11 +414,11 @@ const confirmSuspend = async () => {
           <div className="space-y-6">
             {/* Stats Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800 p-5 hover:shadow-md transition-shadow">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl border border-primary-200 dark:border-primary-800 p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Members</p>
-                    <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">
+                    <p className="text-sm font-medium text-primary-700 dark:text-blue-300">Total Members</p>
+                    <p className="text-3xl font-bold text-primary-900 dark:text-primary-100 mt-2">
                       {data.stats.totalMembers}
                     </p>
                   </div>
@@ -441,8 +441,8 @@ const confirmSuspend = async () => {
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/10 rounded-xl border border-purple-200 dark:border-purple-800 p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Branches</p>
-                    <p className="text-3xl font-bold text-purple-900 dark:text-purple-100 mt-2">
+                    <p className="text-sm font-medium text-primary-700 dark:text-primary-300">Branches</p>
+                    <p className="text-3xl font-bold text-purple-900 dark:text-primary-100 mt-2">
                       {data.stats.totalBranches}
                     </p>
                   </div>
@@ -475,13 +475,13 @@ const confirmSuspend = async () => {
                     <span className="text-sm text-gray-700 dark:text-gray-300">New Members</span>
                     <span className="text-lg font-bold text-green-600 dark:text-green-400">+{data.monthlyActivity.newMembers}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-primary-50 dark:bg-primary-900/10 rounded-lg">
                     <span className="text-sm text-gray-700 dark:text-gray-300">New Users</span>
-                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">+{data.monthlyActivity.newUsers}</span>
+                    <span className="text-lg font-bold text-primary-600 dark:text-primary-400">+{data.monthlyActivity.newUsers}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/10 rounded-lg">
                     <span className="text-sm text-gray-700 dark:text-gray-300">New Branches</span>
-                    <span className="text-lg font-bold text-purple-600 dark:text-purple-400">+{data.monthlyActivity.newBranches}</span>
+                    <span className="text-lg font-bold text-primary-600 dark:text-primary-400">+{data.monthlyActivity.newBranches}</span>
                   </div>
                 </div>
               </div>
@@ -505,16 +505,16 @@ const confirmSuspend = async () => {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-gray-600 dark:text-gray-400">User Engagement</span>
-                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">+8.3%</span>
+                      <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">+8.3%</span>
                     </div>
                     <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full" style={{ width: '65%' }}></div>
+                      <div className="h-full bg-primary-500 rounded-full" style={{ width: '65%' }}></div>
                     </div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-gray-600 dark:text-gray-400">Branch Expansion</span>
-                      <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">+5.2%</span>
+                      <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">+5.2%</span>
                     </div>
                     <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div className="h-full bg-purple-500 rounded-full" style={{ width: '52%' }}></div>
@@ -588,7 +588,7 @@ const confirmSuspend = async () => {
               {/* Role Distribution */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <Users className="w-5 h-5 text-primary-600" />
                   User Role Distribution
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
@@ -620,8 +620,8 @@ const confirmSuspend = async () => {
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/10 rounded-xl border border-purple-200 dark:border-purple-800 p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Total Branches</p>
-                    <p className="text-3xl font-bold text-purple-900 dark:text-purple-100 mt-2">
+                    <p className="text-sm font-medium text-primary-700 dark:text-primary-300">Total Branches</p>
+                    <p className="text-3xl font-bold text-purple-900 dark:text-primary-100 mt-2">
                       {data.stats.totalBranches}
                     </p>
                   </div>
@@ -641,11 +641,11 @@ const confirmSuspend = async () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800 p-5">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl border border-primary-200 dark:border-primary-800 p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Avg per Branch</p>
-                    <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">
+                    <p className="text-sm font-medium text-primary-700 dark:text-blue-300">Avg per Branch</p>
+                    <p className="text-3xl font-bold text-primary-900 dark:text-primary-100 mt-2">
                       {data.stats.totalBranches > 0 ? Math.round(data.stats.totalMembers / data.stats.totalBranches) : 0}
                     </p>
                   </div>
@@ -688,7 +688,7 @@ const confirmSuspend = async () => {
                                 {branch.name || 'Unnamed Branch'}
                               </h4>
                               {branch.isMainBranch && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-blue-300">
                                   <Zap className="w-3 h-3" />
                                   Main Branch
                                 </span>
@@ -805,11 +805,11 @@ const confirmSuspend = async () => {
                         <tr key={branch._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-2">
-                              <Church className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                              <Church className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                               <div>
                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{branch.name}</p>
                                 {branch.isMainBranch && (
-                                  <span className="text-xs text-blue-600 dark:text-blue-400">Main Branch</span>
+                                  <span className="text-xs text-primary-600 dark:text-primary-400">Main Branch</span>
                                 )}
                               </div>
                             </div>
@@ -921,7 +921,7 @@ const confirmSuspend = async () => {
                         </p>
                       </div>
                       <div className="text-right space-y-2">
-                        <span className="block px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 capitalize">
+                        <span className="block px-3 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300 capitalize">
                           {user.role?.slug?.replace('_', ' ')}
                         </span>
                         <span className={`block px-3 py-1 text-xs font-medium rounded-full ${
@@ -1009,10 +1009,10 @@ const confirmSuspend = async () => {
                 </h4>
                 <button
                   onClick={() => navigate('/admin/features')}
-                  className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors border border-blue-200 dark:border-blue-900/20"
+                  className="w-full flex items-center justify-between p-4 bg-primary-50 dark:bg-primary-900/10 hover:bg-primary-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors border border-primary-200 dark:border-blue-900/20"
                 >
                   <div className="flex items-center space-x-3">
-                    <Settings className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                    <Settings className="w-6 h-6 text-primary-600 flex-shrink-0" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Manage Features
@@ -1022,7 +1022,7 @@ const confirmSuspend = async () => {
                       </p>
                     </div>
                   </div>
-                  <ArrowLeft className="w-5 h-5 text-blue-600 rotate-180" />
+                  <ArrowLeft className="w-5 h-5 text-primary-600 rotate-180" />
                 </button>
               </div>
             </div>

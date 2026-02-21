@@ -85,7 +85,6 @@ import Income from '../../pages/merchant/finance/Income';
 import Expenses from '../../pages/merchant/finance/Expenses';
 import FinancialReports from '../../pages/merchant/finance/FinancialReports';
 import TithingTransactions from '../../pages/merchant/finance/Tithing';
-import LandingPage from '../../pages/website/LandingPage';
 import AuthRedirect from '../../pages/auth/AuthRedirect';
 import AdminRolesPage from '../../pages/admin/AdminRolesPage';
 import AdminAnnouncements from '../../pages/admin/AdminAnnouncements';
@@ -161,7 +160,7 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         {/* Landing Page - Main Domain */}
-        {isMainDomain && <Route path="/" element={<LandingPage />} />}
+        {isMainDomain && <Route path="/login" element={<Login />} />}
 
         {/* Public Routes */}
         <Route element={<PublicRoute />}>
@@ -321,7 +320,7 @@ const AnimatedRoutes = () => {
         </Route>
 
         {/* Default */}
-        <Route path="/" element={isMainDomain ? <Navigate to="/" replace /> : <Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

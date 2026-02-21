@@ -107,11 +107,11 @@ const ActivityLogs = () => {
     
     switch (baseAction) {
       case 'withdrawal':
-        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+        return 'bg-purple-100 text-primary-700 dark:bg-purple-900/30 dark:text-primary-400';
       case 'donation':
         return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
       case 'member':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+        return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400';
       case 'event':
         return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
       case 'user':
@@ -126,11 +126,11 @@ const ActivityLogs = () => {
   const getResourceTypeBadgeColor = (resourceType: string) => {
     switch (resourceType.toLowerCase()) {
       case 'withdrawal':
-        return 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 border border-purple-200 dark:border-purple-800';
+        return 'bg-purple-50 text-primary-700 dark:bg-purple-900/20 dark:text-primary-300 border border-purple-200 dark:border-purple-800';
       case 'donation':
         return 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 border border-green-200 dark:border-green-800';
       case 'member':
-        return 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800';
+        return 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300 border border-primary-200 dark:border-primary-800';
       case 'event':
         return 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800';
       case 'user':
@@ -150,8 +150,8 @@ const ActivityLogs = () => {
         <div className="max-w-8xl mx-auto px-4 sm:px-4 py-4 sm:py-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Activity className="text-blue-600 dark:text-blue-400" size={24} />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <Activity className="text-primary-600 dark:text-primary-400" size={24} />
               </div>
               <div>
                 <h1 className="text-xl sm:text-xl font-bold text-slate-900 dark:text-white">
@@ -186,7 +186,7 @@ const ActivityLogs = () => {
                   setFilterAction(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="all">All Actions</option>
                 {availableActions.map(action => (
@@ -206,7 +206,7 @@ const ActivityLogs = () => {
                   setFilterResourceType(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="all">All Types</option>
                 {availableResourceTypes.map(type => (
@@ -227,7 +227,7 @@ const ActivityLogs = () => {
                   setDateFromFilter(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
 
@@ -243,7 +243,7 @@ const ActivityLogs = () => {
                   setDateToFilter(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
 
@@ -263,7 +263,7 @@ const ActivityLogs = () => {
         <div className="bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
           {loading ? (
             <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
               <p className="text-slate-600 dark:text-slate-400 text-sm">Loading activity logs...</p>
             </div>
           ) : logs.length === 0 ? (
@@ -354,7 +354,7 @@ const ActivityLogs = () => {
                         setLimit(Number(e.target.value));
                         setPage(1);
                       }}
-                      className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value={5}>5 per page</option>
                       <option value={10}>10 per page</option>

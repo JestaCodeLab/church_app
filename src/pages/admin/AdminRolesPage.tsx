@@ -531,13 +531,13 @@ const AdminRolesPage = () => {
                             {role.name}
                           </h3>
                           {role.type === 'system' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
                               <Lock className="w-3 h-3" />
                               System
                             </span>
                           )}
                           {role.type === 'custom' && (
-                            <span className="inline-flex px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded-full text-xs font-medium">
+                            <span className="inline-flex px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-primary-300 rounded-full text-xs font-medium">
                               Custom
                             </span>
                           )}
@@ -568,7 +568,7 @@ const AdminRolesPage = () => {
                           setSelectedRole(role);
                           setShowDetailsModal(true);
                         }}
-                        className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded transition-colors"
+                        className="p-2 hover:bg-primary-100 dark:hover:bg-blue-900/30 text-primary-600 rounded transition-colors"
                         title="View details"
                       >
                         <ChevronDown className="w-5 h-5" />
@@ -692,7 +692,7 @@ const AdminRolesPage = () => {
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {permission.displayName}
                           </h3>
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
                             <Tag className="w-3 h-3" />
                             {permission.category}
                           </span>
@@ -728,7 +728,7 @@ const AdminRolesPage = () => {
                       </button>
                       <button
                         onClick={() => handleEditPermissionClick(permission)}
-                        className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded transition-colors"
+                        className="p-2 hover:bg-primary-100 dark:hover:bg-blue-900/30 text-primary-600 rounded transition-colors"
                         title="Edit permission"
                       >
                         <Edit2 className="w-5 h-5" />
@@ -805,7 +805,7 @@ const AdminRolesPage = () => {
                   className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow dark:bg-gray-800 dark:border-gray-700"
                 >
                   <div
-                    className="h-2 w-full bg-blue-500"
+                    className="h-2 w-full bg-primary-500"
                   ></div>
 
                   <div className="p-6">
@@ -826,8 +826,8 @@ const AdminRolesPage = () => {
                       </div>
                     </div>
 
-                    <div className="mb-4 p-3 bg-blue-50 rounded-lg dark:bg-blue-900/30">
-                      <p className="text-sm text-blue-900 dark:text-blue-300">
+                    <div className="mb-4 p-3 bg-primary-50 rounded-lg dark:bg-primary-900/30">
+                      <p className="text-sm text-primary-900 dark:text-blue-300">
                         <span className="font-semibold">{category.permissionCount}</span> permissions
                       </p>
                     </div>
@@ -849,7 +849,7 @@ const AdminRolesPage = () => {
                     <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <button
                         onClick={() => handleEditCategoryClick(category)}
-                        className="flex-1 px-3 py-2 rounded text-sm font-medium transition-colors bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+                        className="flex-1 px-3 py-2 rounded text-sm font-medium transition-colors bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
                       >
                         Edit
                       </button>
@@ -972,7 +972,7 @@ const AdminRolesPage = () => {
                   value={categoryFormData.name}
                   onChange={handleCategoryNameChange}
                   placeholder="e.g., Member Management"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   required
                 />
               </div>
@@ -986,7 +986,7 @@ const AdminRolesPage = () => {
                   value={categoryFormData.slug}
                   onChange={(e) => setCategoryFormData({ ...categoryFormData, slug: e.target.value })}
                   placeholder="e.g., member_management"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   required
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -1003,7 +1003,7 @@ const AdminRolesPage = () => {
                   onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
                   placeholder="Brief description of this category"
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
 
@@ -1017,7 +1017,7 @@ const AdminRolesPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium dark:bg-blue-700 dark:hover:bg-blue-600"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium dark:bg-blue-700 dark:hover:bg-primary-600"
                 >
                   Create
                 </button>
@@ -1056,7 +1056,7 @@ const AdminRolesPage = () => {
                   type="text"
                   value={categoryFormData.name}
                   onChange={handleCategoryNameChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   required
                 />
               </div>
@@ -1069,7 +1069,7 @@ const AdminRolesPage = () => {
                   type="text"
                   value={categoryFormData.slug}
                   onChange={(e) => setCategoryFormData({ ...categoryFormData, slug: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   required
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -1085,7 +1085,7 @@ const AdminRolesPage = () => {
                   value={categoryFormData.description}
                   onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
 
@@ -1099,7 +1099,7 @@ const AdminRolesPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium dark:bg-blue-700 dark:hover:bg-blue-600"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium dark:bg-blue-700 dark:hover:bg-primary-600"
                 >
                   Update
                 </button>

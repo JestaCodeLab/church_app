@@ -246,8 +246,8 @@ const FinanceOverview: React.FC = () => {
                   {summary.totalTransactions.toLocaleString()} transactions
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>

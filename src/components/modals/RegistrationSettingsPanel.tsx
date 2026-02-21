@@ -142,7 +142,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <div className="flex items-center space-x-3">
-            <Settings className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <Settings className="h-6 w-6 text-primary-600 dark:text-primary-400" />
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
               Public Registration Settings
             </h2>
@@ -159,15 +159,15 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
 
         {loading ? (
           <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
         ) : (
           <div className="p-6 space-y-6">
             {/* Statistics Cards */}
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Total Registrations</p>
-                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300 mt-1">
+              <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4">
+                <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">Total Registrations</p>
+                <p className="text-2xl font-bold text-primary-700 dark:text-blue-300 mt-1">
                   {statistics.totalRegistrations}
                 </p>
               </div>
@@ -178,8 +178,8 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
                 </p>
               </div>
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-                <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Status</p>
-                <p className="text-xl font-bold text-purple-700 dark:text-purple-300 mt-1 capitalize">
+                <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">Status</p>
+                <p className="text-xl font-bold text-primary-700 dark:text-primary-300 mt-1 capitalize">
                   {settings.status}
                 </p>
               </div>
@@ -228,7 +228,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
                 name="status"
                 value={settings.status}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="active">Active - Accepting registrations</option>
                 <option value="paused">Paused - Temporarily disabled</option>
@@ -249,7 +249,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
                   name="startDate"
                   value={settings.startDate}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Leave empty for immediate start
@@ -265,7 +265,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
                   name="endDate"
                   value={settings.endDate}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Leave empty for no expiration
@@ -275,28 +275,28 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
 
             {/* Quick Extend Buttons */}
             {settings.endDate && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+              <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
                   Quick Extend
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => handleExtend(7)}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
                   >
                     <Plus className="h-3 w-3 inline mr-1" />
                     7 Days
                   </button>
                   <button
                     onClick={() => handleExtend(14)}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
                   >
                     <Plus className="h-3 w-3 inline mr-1" />
                     14 Days
                   </button>
                   <button
                     onClick={() => handleExtend(30)}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
                   >
                     <Plus className="h-3 w-3 inline mr-1" />
                     30 Days
@@ -321,7 +321,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
                   onChange={handleInputChange}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
@@ -338,7 +338,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
                 rows={3}
                 maxLength={500}
                 placeholder="Message to show when registration is inactive..."
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {settings.customMessage.length}/500 characters
@@ -358,7 +358,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
                   value={settings.contactEmail}
                   onChange={handleInputChange}
                   placeholder="admin@church.com"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
               <div>
@@ -372,7 +372,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
                   value={settings.contactPhone}
                   onChange={handleInputChange}
                   placeholder="+233 XX XXX XXXX"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
             </div>
@@ -388,7 +388,7 @@ const RegistrationSettingsPanel = ({ isOpen, onClose }) => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
                 <span>{saving ? 'Saving...' : 'Save Settings'}</span>

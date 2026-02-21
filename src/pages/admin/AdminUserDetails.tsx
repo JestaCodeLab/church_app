@@ -155,8 +155,8 @@ const confirmStatusChange = async () => {
 
   const getRoleBadge = (role: string) => {
     const badges: any = {
-      super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' },
-      church_admin: { label: 'Church Admin', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' },
+      super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-primary-700 dark:bg-purple-900/20 dark:text-primary-300' },
+      church_admin: { label: 'Church Admin', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300' },
       pastor: { label: 'Pastor', color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300' },
       leader: { label: 'Leader', color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300' },
       member: { label: 'Member', color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300' },
@@ -360,8 +360,8 @@ const confirmStatusChange = async () => {
                 Account Statistics
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-center">
-                  <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+                <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-lg text-center">
+                  <Activity className="w-6 h-6 text-primary-600 dark:text-primary-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {data?.stats?.loginCount || 0}
                   </p>
@@ -375,7 +375,7 @@ const confirmStatusChange = async () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Days Old</p>
                 </div>
                 <div className="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg text-center">
-                  <CheckCircle className="w-6 h-6 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
+                  <CheckCircle className="w-6 h-6 text-primary-600 dark:text-primary-400 mx-auto mb-2" />
                   <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
                     {formatDate(data?.stats?.lastLogin || '')}
                   </p>
@@ -464,7 +464,7 @@ const confirmStatusChange = async () => {
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <Key className="w-5 h-5 text-blue-600" />
+                    <Key className="w-5 h-5 text-primary-600" />
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Password Status
@@ -645,10 +645,10 @@ const confirmStatusChange = async () => {
                 <button
                   onClick={()=> setShowResetPasswordModal(true)}
                   disabled={actionLoading}
-                  className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50 border border-blue-200 dark:border-blue-900/20"
+                  className="w-full flex items-center justify-between p-4 bg-primary-50 dark:bg-primary-900/10 hover:bg-primary-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50 border border-primary-200 dark:border-blue-900/20"
                 >
                   <div className="flex items-center space-x-3">
-                    <Key className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                    <Key className="w-6 h-6 text-primary-600 flex-shrink-0" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Reset Password

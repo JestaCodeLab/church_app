@@ -249,7 +249,7 @@ const TithingTransactions: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-blue-600" /></div>;
+    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-primary-600" /></div>;
   }
 
   const formatCurrencyValue = (value: number) => formatCurrency(value, getMerchantCurrency());
@@ -335,7 +335,7 @@ const TithingTransactions: React.FC = () => {
             <Download className="h-4 w-4" />
             Export
           </button>
-          <button onClick={handleAddClick} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+          <button onClick={handleAddClick} className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">
             <Plus className="h-4 w-4" />
             Record Tithe
           </button>
@@ -401,15 +401,15 @@ const TithingTransactions: React.FC = () => {
         </div>
 
         {/* Verified Tithes */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-900/40 rounded-xl p-6 border border-blue-200 dark:border-blue-800/50 shadow-lg hover:shadow-xl transition-shadow">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-900/40 rounded-xl p-6 border border-primary-200 dark:border-primary-800/50 shadow-lg hover:shadow-xl transition-shadow">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wide">Verified Records</p>
-              <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{verifiedTithes}</p>
-              <p className="text-xs text-blue-600 dark:text-blue-300 mt-3">Out of {tithes.length} total records</p>
+              <p className="text-sm font-medium text-primary-700 dark:text-primary-400 uppercase tracking-wide">Verified Records</p>
+              <p className="text-3xl font-bold text-primary-900 dark:text-primary-100 mt-2">{verifiedTithes}</p>
+              <p className="text-xs text-primary-600 dark:text-blue-300 mt-3">Out of {tithes.length} total records</p>
             </div>
             <div className="bg-blue-200 dark:bg-blue-800/50 p-4 rounded-xl">
-              <CheckCircle2 className="h-7 w-7 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
+              <CheckCircle2 className="h-7 w-7 text-primary-600 dark:text-primary-400" strokeWidth={2.5} />
             </div>
           </div>
         </div>
@@ -486,7 +486,7 @@ const TithingTransactions: React.FC = () => {
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               showFilters 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
+                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' 
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -506,7 +506,7 @@ const TithingTransactions: React.FC = () => {
                 <select 
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">All Types</option>
                   <option value="member">Member</option>
@@ -520,7 +520,7 @@ const TithingTransactions: React.FC = () => {
                 <select 
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">All Statuses</option>
                   <option value="verified">Verified</option>
@@ -538,7 +538,7 @@ const TithingTransactions: React.FC = () => {
                   value={filterAmountMin}
                   onChange={(e) => setFilterAmountMin(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 />
               </div>
 
@@ -551,7 +551,7 @@ const TithingTransactions: React.FC = () => {
                   value={filterAmountMax}
                   onChange={(e) => setFilterAmountMax(e.target.value)}
                   placeholder="9999.99"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 />
               </div>
             </div>
@@ -604,8 +604,8 @@ const TithingTransactions: React.FC = () => {
                         <p className="font-medium text-gray-900 dark:text-white">{tithe.source}</p>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
                           tithe.isGuest 
-                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
-                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-primary-400'
+                            : 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400'
                         }`}>
                           {tithe.isGuest ? 'Guest' : 'Member'}
                         </span>
@@ -629,7 +629,7 @@ const TithingTransactions: React.FC = () => {
                         <button
                           onClick={() => handleResendSms(tithe._id)}
                           disabled={resendingSmsId === tithe._id}
-                          className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50"
                           title="Resend SMS acknowledgment"
                         >
                           {resendingSmsId === tithe._id ? (
@@ -638,7 +638,7 @@ const TithingTransactions: React.FC = () => {
                             <MessageCircle className="h-4 w-4" />
                           )}
                         </button>
-                        <button onClick={() => handleEditClick(tithe)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                        <button onClick={() => handleEditClick(tithe)} className="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button onClick={() => handleDelete(tithe._id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
@@ -678,7 +678,7 @@ const TithingTransactions: React.FC = () => {
                     }}
                     className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors ${
                       selectedMemberType === 'member'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
                     }`}
                   >
@@ -694,7 +694,7 @@ const TithingTransactions: React.FC = () => {
                     }}
                     className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors ${
                       selectedMemberType === 'guest'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
                     }`}
                   >
@@ -722,7 +722,7 @@ const TithingTransactions: React.FC = () => {
                         setTimeout(() => setShowMemberDropdown(false), 150);
                       }}
                       placeholder="Search members..."
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors"
                     />
                     {showMemberDropdown && memberSearchQuery.trim() !== '' && (
                       <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl z-50 max-h-56 overflow-y-auto">
@@ -742,7 +742,7 @@ const TithingTransactions: React.FC = () => {
                                 setMemberSearchQuery('');
                                 setShowMemberDropdown(false);
                               }}
-                              className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 last:border-b-0 focus:outline-none focus:bg-blue-50 dark:focus:bg-blue-900/30"
+                              className="w-full text-left px-4 py-3 hover:bg-primary-50 dark:hover:bg-blue-900/30 transition-colors text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 last:border-b-0 focus:outline-none focus:bg-primary-50 dark:focus:bg-blue-900/30"
                             >
                               <p className="font-medium text-sm">{member.firstName} {member.lastName}</p>
                               {member?.phone && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{member?.phone}</p>}
@@ -763,32 +763,32 @@ const TithingTransactions: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                     placeholder="e.g., John Doe"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors"
                   />
                 )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount *</label>
-                <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" step="0.01" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors" />
+                <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" step="0.01" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date *</label>
-                  <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors" />
+                  <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Month Paid *</label>
-                  <input type="month" value={formData.monthPaid} onChange={(e) => setFormData({ ...formData, monthPaid: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors" />
+                  <input type="month" value={formData.monthPaid} onChange={(e) => setFormData({ ...formData, monthPaid: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
-                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Add any notes..." className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors" rows={3} />
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Add any notes..." className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors" rows={3} />
               </div>
               {!editingId && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex gap-2">
-                  <MessageCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-blue-800 dark:text-blue-300">An SMS acknowledgment will be automatically sent to the member upon recording.</p>
+                <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 flex gap-2">
+                  <MessageCircle className="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-primary-800 dark:text-blue-300">An SMS acknowledgment will be automatically sent to the member upon recording.</p>
                 </div>
               )}
               <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -798,7 +798,7 @@ const TithingTransactions: React.FC = () => {
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors order-2 sm:order-1 flex items-center justify-center gap-2 ${
                     isSubmitting 
                       ? 'bg-blue-400 text-white cursor-not-allowed' 
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-primary-600 text-white hover:bg-primary-700'
                   }`}
                 >
                   {isSubmitting && <Loader className="h-4 w-4 animate-spin" />}

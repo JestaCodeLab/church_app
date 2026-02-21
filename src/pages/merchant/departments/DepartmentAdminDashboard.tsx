@@ -86,8 +86,8 @@ const DepartmentAdminDashboard = () => {
                 {stats.totalDepartments}
               </p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+              <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
           </div>
         </div>
@@ -119,7 +119,7 @@ const DepartmentAdminDashboard = () => {
               </p>
             </div>
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <Calendar className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
           </div>
         </div>
@@ -133,10 +133,10 @@ const DepartmentAdminDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={() => navigate('/sms/send')}
-            className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+            className="flex items-center justify-between p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-colors"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
                 <Send className="w-5 h-5 text-white" />
               </div>
               <div className="text-left">
@@ -232,7 +232,7 @@ const DepartmentAdminDashboard = () => {
                     </button>
                     <button
                       onClick={() => navigate(`/sms/send?departmentId=${dept._id}`)}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
                     >
                       <Send className="w-4 h-4 mr-1" />
                       Send SMS

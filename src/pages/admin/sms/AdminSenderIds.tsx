@@ -451,7 +451,7 @@ const AdminSenderIds = () => {
                           <button
                             onClick={() => handleOpenEditModal(item.merchantId, item.senderId, item.churchName)}
                             title="Edit sender ID"
-                            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
+                            className="px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
                           >
                             <Edit2 className="w-4 h-4" />
                             <span className="hidden sm:inline">Edit</span>
@@ -487,7 +487,7 @@ const AdminSenderIds = () => {
                           <button
                             onClick={() => handleReapproveSenderId(item.merchantId, item.churchName)}
                             title="Update credentials"
-                            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
+                            className="px-3 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white text-sm rounded-lg font-medium flex items-center gap-1.5 transition-colors"
                           >
                             <Edit2 className="w-4 h-4" />
                             <span className="hidden sm:inline">Update</span>
@@ -532,15 +532,15 @@ const AdminSenderIds = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 space-y-4">
             {/* Header */}
             <div className="flex items-center space-x-3">
-              <Edit2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <Edit2 className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 Edit Pending Sender ID
               </h2>
             </div>
 
             {/* Info */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+              <p className="text-sm text-primary-800 dark:text-primary-200">
                 <strong>{editData?.churchName}</strong> - Update the sender ID for this pending request
               </p>
             </div>
@@ -571,7 +571,7 @@ const AdminSenderIds = () => {
                   onChange={(e) => setEditSenderId(e.target.value.toUpperCase())}
                   placeholder="Enter new sender ID"
                   maxLength={11}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Max 11 characters
@@ -591,7 +591,7 @@ const AdminSenderIds = () => {
               <button
                 onClick={handleUpdateSenderId}
                 disabled={!editSenderId.trim() || editSenderId === editData?.senderId || updating}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
                 {updating ? (
                   <>
@@ -690,8 +690,8 @@ const AdminSenderIds = () => {
             </div>
 
             {/* Info */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+              <p className="text-sm text-primary-800 dark:text-primary-200">
                 <strong>{credentialsData?.churchName}</strong> has their own Hubtel account. Please enter their credentials below.
               </p>
             </div>

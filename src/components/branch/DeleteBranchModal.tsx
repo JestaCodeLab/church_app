@@ -93,7 +93,7 @@ const DeleteBranchModal: React.FC<DeleteBranchModalProps> = ({
               {/* Archive Option (Default) */}
               <label className={`relative flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                 !deletePermanently
-                  ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20'
+                  ? 'border-blue-300 dark:border-blue-700 bg-primary-50 dark:bg-primary-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
               }`}>
                 <input
@@ -105,11 +105,11 @@ const DeleteBranchModal: React.FC<DeleteBranchModalProps> = ({
                 />
                 <div className="ml-3 flex-1">
                   <div className="flex items-center space-x-2">
-                    <Archive className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <Archive className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     <span className="font-medium text-gray-900 dark:text-gray-100">
                       Archive Branch
                     </span>
-                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-xs font-medium rounded-full">
+                    <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 text-xs font-medium rounded-full">
                       Recommended
                     </span>
                   </div>
@@ -186,7 +186,7 @@ const DeleteBranchModal: React.FC<DeleteBranchModalProps> = ({
                 className={`px-4 py-2 font-medium rounded-lg transition-colors flex items-center space-x-2 ${
                   deletePermanently
                     ? 'bg-red-600 hover:bg-red-700 text-white disabled:bg-red-400 disabled:cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                    : 'bg-primary-600 hover:bg-primary-700 text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                 }`}
               >
                 {isDeleting && <Loader className="w-4 h-4 animate-spin" />}

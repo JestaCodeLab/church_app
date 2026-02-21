@@ -362,8 +362,8 @@ const GuestManagement = () => {
               Convert Guests to Members
             </h3>
 
-            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-300">
+            <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+              <p className="text-sm text-primary-800 dark:text-blue-300">
                 You are converting <strong>{selectedGuests.length}</strong> guest(s) to church members
               </p>
             </div>

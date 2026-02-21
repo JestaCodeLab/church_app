@@ -77,7 +77,7 @@ const PartnershipPaymentStatus: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Verifying your partnership contribution...</p>
         </div>
       </div>
@@ -95,7 +95,7 @@ const PartnershipPaymentStatus: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             Try Again
           </button>

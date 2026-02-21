@@ -130,7 +130,7 @@ const NotificationCenter: React.FC = () => {
       case 'success': return 'text-green-600 dark:text-green-400';
       case 'warning': return 'text-yellow-600 dark:text-yellow-400';
       case 'error': return 'text-red-600 dark:text-red-400';
-      default: return 'text-blue-600 dark:text-blue-400';
+      default: return 'text-primary-600 dark:text-primary-400';
     }
   };
 
@@ -190,7 +190,7 @@ const NotificationCenter: React.FC = () => {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  className="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
                 >
                   <CheckCheck className="w-3 h-3" />
                   Mark all read
@@ -209,7 +209,7 @@ const NotificationCenter: React.FC = () => {
           <div className="max-h-96 overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                 <p className="mt-2 text-sm">Loading...</p>
               </div>
             ) : notifications.length === 0 ? (
@@ -222,7 +222,7 @@ const NotificationCenter: React.FC = () => {
                 <div
                   key={notification._id}
                   className={`p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                    !notification.isRead ? 'bg-blue-50 dark:bg-blue-900/10' : ''
+                    !notification.isRead ? 'bg-primary-50 dark:bg-primary-900/10' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -252,7 +252,7 @@ const NotificationCenter: React.FC = () => {
                         {notification.actionUrl && (
                           <a
                             href={notification.actionUrl}
-                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                            className="text-xs text-primary-600 dark:text-primary-400 hover:underline font-medium"
                           >
                             {notification.actionText || 'View Details'}
                           </a>
@@ -286,7 +286,7 @@ const NotificationCenter: React.FC = () => {
             <div className="p-3 border-t border-gray-200 dark:border-gray-700 text-center">
               <a
                 href="/notifications"
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                className="text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium"
               >
                 View all notifications
               </a>

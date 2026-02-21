@@ -34,7 +34,7 @@ const MembersPageFilters = ({ onFilterChange, merchantId }) => {
             onClick={() => handleFilterClick(filter)}
             className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               activeFilter === filter.id
-                ? 'bg-blue-600 text-white'
+                ? 'bg-primary-600 text-white'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -44,11 +44,11 @@ const MembersPageFilters = ({ onFilterChange, merchantId }) => {
       </div>
 
       {/* Public Registration Link Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-primary-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-6 w-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             </div>
@@ -61,7 +61,7 @@ const MembersPageFilters = ({ onFilterChange, merchantId }) => {
           </div>
           <button
             onClick={() => setShowLinkModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
           >
             Get Link
           </button>
@@ -99,7 +99,7 @@ const MembersPageFilters = ({ onFilterChange, merchantId }) => {
             <div className="flex space-x-3">
               <button
                 onClick={copyToClipboard}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

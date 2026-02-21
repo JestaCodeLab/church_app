@@ -47,11 +47,11 @@ const NotFound: React.FC = () => {
         )}
 
         {/* Helpful Info Box */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8 max-w-md mx-auto">
-          <p className="text-sm text-blue-800 dark:text-blue-300 mb-3">
+        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-6 mb-8 max-w-md mx-auto">
+          <p className="text-sm text-primary-800 dark:text-blue-300 mb-3">
             <strong>Are you a church administrator?</strong>
           </p>
-          <p className="text-sm text-blue-700 dark:text-blue-400 mb-4">
+          <p className="text-sm text-primary-700 dark:text-primary-400 mb-4">
             If you've recently registered, your subdomain may still be pending approval. Check your email for updates.
           </p>
         </div>

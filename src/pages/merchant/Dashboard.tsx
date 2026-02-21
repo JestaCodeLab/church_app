@@ -170,8 +170,8 @@ const Dashboard = () => {
                   </span>
                 </div>
               </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
             <button
@@ -198,7 +198,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <MapPin className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
             <button
@@ -295,8 +295,8 @@ const Dashboard = () => {
                       : 0;
 
                     const colors = [
-                      { bg: 'bg-purple-50 dark:bg-purple-900/10', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800' },
-                      { bg: 'bg-blue-50 dark:bg-blue-900/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
+                      { bg: 'bg-purple-50 dark:bg-purple-900/10', text: 'text-primary-600 dark:text-primary-400', border: 'border-purple-200 dark:border-purple-800' },
+                      { bg: 'bg-primary-50 dark:bg-primary-900/10', text: 'text-primary-600 dark:text-primary-400', border: 'border-primary-200 dark:border-primary-800' },
                       { bg: 'bg-orange-50 dark:bg-orange-900/10', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800' },
                       { bg: 'bg-green-50 dark:bg-green-900/10', text: 'text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
                       { bg: 'bg-teal-50 dark:bg-teal-900/10', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-800' },
@@ -515,8 +515,8 @@ const Dashboard = () => {
                   <span className="text-gray-600 dark:text-gray-400">Gender Distribution</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3">
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  <div className="bg-primary-50 dark:bg-primary-900/10 rounded-lg p-3">
+                    <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                       {stats.memberStats.male}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Male</p>
@@ -566,7 +566,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Active Members</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                     {stats.memberStats.active}
                   </p>
                 </div>
@@ -576,7 +576,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Leadership</p>
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                     {stats.memberStats.leaders.total}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">

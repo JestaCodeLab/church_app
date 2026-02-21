@@ -180,7 +180,7 @@ const SMSPackages: React.FC = () => {
         </div>
         <button
           onClick={openCreateModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
         >
           + New Package
         </button>
@@ -189,7 +189,7 @@ const SMSPackages: React.FC = () => {
       {/* Packages Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -201,7 +201,7 @@ const SMSPackages: React.FC = () => {
               }`}
             >
               {pkg.isPrimary && (
-                <div className="bg-blue-500 text-white text-center py-1 text-xs font-medium">
+                <div className="bg-primary-500 text-white text-center py-1 text-xs font-medium">
                   RECOMMENDED
                 </div>
               )}
@@ -255,7 +255,7 @@ const SMSPackages: React.FC = () => {
                 <div className="flex items-center space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={() => openEditModal(pkg)}
-                    className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                    className="flex-1 px-3 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700"
                   >
                     Edit
                   </button>
@@ -303,7 +303,7 @@ const SMSPackages: React.FC = () => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g., Starter Pack"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       required
                     />
                   </div>
@@ -318,7 +318,7 @@ const SMSPackages: React.FC = () => {
                       value={slug}
                       onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
                       placeholder="e.g., starter-pack"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       required
                     />
                   </div>
@@ -334,7 +334,7 @@ const SMSPackages: React.FC = () => {
                       onChange={(e) => setCredits(e.target.value)}
                       placeholder="100"
                       min="1"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       required
                     />
                   </div>
@@ -351,7 +351,7 @@ const SMSPackages: React.FC = () => {
                       placeholder="10"
                       min="0"
                       step="0.01"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       required
                     />
                   </div>
@@ -368,7 +368,7 @@ const SMSPackages: React.FC = () => {
                       placeholder="0"
                       min="0"
                       max="100"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
 
@@ -383,7 +383,7 @@ const SMSPackages: React.FC = () => {
                       onChange={(e) => setDisplayOrder(e.target.value)}
                       placeholder="0"
                       min="0"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
                 </div>
@@ -399,7 +399,7 @@ const SMSPackages: React.FC = () => {
                     placeholder="A brief description of this package..."
                     rows={3}
                     maxLength={500}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                   <p className="text-xs text-gray-500 mt-1">{description.length}/500 characters</p>
                 </div>
@@ -417,7 +417,7 @@ const SMSPackages: React.FC = () => {
                           value={feature}
                           onChange={(e) => updateFeature(index, e.target.value)}
                           placeholder="e.g., Valid for 12 months"
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
                         {features.length > 1 && (
                           <button
@@ -433,7 +433,7 @@ const SMSPackages: React.FC = () => {
                     <button
                       type="button"
                       onClick={addFeature}
-                      className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                      className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
                     >
                       + Add Feature
                     </button>
@@ -447,7 +447,7 @@ const SMSPackages: React.FC = () => {
                       type="checkbox"
                       checked={isPrimary}
                       onChange={(e) => setIsPrimary(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
                     <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                       Mark as Primary/Recommended Package
@@ -470,7 +470,7 @@ const SMSPackages: React.FC = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? 'Saving...' : editingPackage ? 'Update Package' : 'Create Package'}
                   </button>

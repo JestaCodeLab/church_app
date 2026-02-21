@@ -128,10 +128,10 @@ const AdminPlans = () => {
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl p-6 border border-primary-300 dark:border-primary-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Churches</p>
-              <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{totalChurches}</p>
+              <p className="text-sm font-medium text-primary-600 dark:text-primary-400">Total Churches</p>
+              <p className="text-3xl font-bold text-primary-900 dark:text-primary-100 mt-2">{totalChurches}</p>
             </div>
-            <Users className="w-12 h-12 text-blue-300 dark:text-blue-700 opacity-50" />
+            <Users className="w-12 h-12 text-blue-300 dark:text-primary-700 opacity-50" />
           </div>
         </div>
 
@@ -150,10 +150,10 @@ const AdminPlans = () => {
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/10 rounded-xl p-6 border border-primary-300 dark:border-primary-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Monthly Revenue</p>
-              <p className="text-3xl font-bold text-purple-900 dark:text-purple-100 mt-2">GHS {totalRevenue.toLocaleString()}</p>
+              <p className="text-sm font-medium text-primary-600 dark:text-primary-400">Monthly Revenue</p>
+              <p className="text-3xl font-bold text-purple-900 dark:text-primary-100 mt-2">GHS {totalRevenue.toLocaleString()}</p>
             </div>
-            <DollarSign className="w-12 h-12 text-purple-300 dark:text-purple-700 opacity-50" />
+            <DollarSign className="w-12 h-12 text-purple-300 dark:text-primary-700 opacity-50" />
           </div>
         </div>
       </div>
@@ -182,7 +182,7 @@ const AdminPlans = () => {
                   <div className="flex items-center space-x-3">
                     <div className={`p-3 rounded-lg ${
                       plan.type === 'free' ? 'bg-gray-100 dark:bg-gray-700' :
-                      plan.type === 'basic' ? 'bg-blue-100 dark:bg-blue-900/30' :
+                      plan.type === 'basic' ? 'bg-primary-100 dark:bg-primary-900/30' :
                       plan.type === 'pro' ? 'bg-purple-100 dark:bg-purple-900/30' :
                       'bg-orange-100 dark:bg-orange-900/30'
                     }`}>
@@ -205,7 +205,7 @@ const AdminPlans = () => {
                     )}
                     {plan.badge?.text && (
                       <span className={`text-xs font-bold px-2 py-1 rounded-full text-white ${
-                        plan.badge.color === 'blue' ? 'bg-blue-500' :
+                        plan.badge.color === 'blue' ? 'bg-primary-500' :
                         plan.badge.color === 'purple' ? 'bg-purple-500' :
                         plan.badge.color === 'green' ? 'bg-emerald-500' :
                         plan.badge.color === 'orange' ? 'bg-orange-500' :

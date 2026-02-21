@@ -176,7 +176,7 @@ const PublicPartnershipRegistration = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Loading partnership programme...</p>
         </div>
       </div>
@@ -250,7 +250,7 @@ const PublicPartnershipRegistration = () => {
           
           <div className="p-8">
             <div className="flex items-center gap-3 mb-4">
-              <Heart className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+              <Heart className="w-8 h-8 text-primary-600 dark:text-primary-400" />
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{programme.name}</h2>
             </div>
             

@@ -154,7 +154,7 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Pastor,Yo
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <FileSpreadsheet className="w-6 h-6 text-blue-600" />
+              <FileSpreadsheet className="w-6 h-6 text-primary-600" />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Import Members
               </h3>
@@ -170,19 +170,19 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Pastor,Yo
           {/* Content */}
           <div className="p-6">
             {/* Download Template */}
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="mb-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  <p className="text-sm font-medium text-primary-900 dark:text-primary-100">
                     Need a template?
                   </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  <p className="text-xs text-primary-700 dark:text-blue-300 mt-1">
                     Download our CSV template with sample data to get started
                   </p>
                 </div>
                 <button
                   onClick={downloadTemplate}
-                  className="flex items-center px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                  className="flex items-center px-3 py-2 text-sm font-medium text-primary-700 dark:text-blue-300 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-primary-50 dark:hover:bg-blue-900/30 transition-colors"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download Template
@@ -198,7 +198,7 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Pastor,Yo
                 onDrop={handleDrop}
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                   isDragging
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    ? 'border-blue-500 bg-primary-50 dark:bg-primary-900/20'
                     : 'border-gray-300 dark:border-gray-600'
                 }`}
               >
@@ -226,7 +226,7 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Pastor,Yo
                     </p>
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                      className="px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
                     >
                       Browse files
                     </button>
@@ -249,9 +249,9 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Pastor,Yo
             {previewData && !importResults && (
               <div className="mt-6 space-y-4">
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
                     <p className="text-sm text-gray-600 dark:text-gray-400">Total Rows</p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                       {previewData.totalRows}
                     </p>
                   </div>
@@ -363,7 +363,7 @@ Jane,Smith,jane.smith@example.com,+1234567892,1985-05-20,Female,Single,Pastor,Yo
                 <button
                   onClick={handlePreview}
                   disabled={!selectedFile || isProcessing}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? 'Processing...' : 'Preview'}
                 </button>

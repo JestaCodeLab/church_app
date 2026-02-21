@@ -262,7 +262,7 @@ const NewBranch = () => {
           <div className="flex items-start space-x-4">
             <button
               onClick={() => navigate('/branches')}
-              className="p-2 bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 rounded-lg transition-colors"
+              className="p-2 bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-white dark:text-gray-400" />
             </button>

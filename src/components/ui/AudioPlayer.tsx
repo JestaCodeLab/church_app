@@ -261,7 +261,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             </div>
 
             {/* Waveform */}
-            <div className="flex items-center justify-center gap-1 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 mb-6 backdrop-blur-sm">
+            <div className="flex items-center justify-center gap-1 h-16 bg-primary-50 dark:bg-primary-900/20 rounded-xl px-4 mb-6 backdrop-blur-sm">
                 {waveform.map((height, index) => (
                     <div
                         key={index}
