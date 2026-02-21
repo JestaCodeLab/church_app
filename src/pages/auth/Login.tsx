@@ -232,7 +232,7 @@ const Login = () => {
 
           {/* Dot indicators */}
           {slides.length > 1 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            <div className="absolute bottom-6 left-14 p-4 -translate-x-1/2 z-10 flex gap-2">
               {slides.map((_, index) => (
                 <button
                   key={index}
