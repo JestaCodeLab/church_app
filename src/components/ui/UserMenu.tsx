@@ -8,6 +8,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmModal from '../modals/ConfirmModal';
 
 interface UserMenuProps {
   showEmail?: boolean;
@@ -17,6 +18,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ showEmail = true }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -34,6 +36,11 @@ const UserMenu: React.FC<UserMenuProps> = ({ showEmail = true }) => {
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
+  };
+
+  const handleLogoutClick = () => {
+    setIsOpen(false);
+    setShowLogoutModal(true);
   };
 
   const menuItems = [
@@ -71,7 +78,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ showEmail = true }) => {
     {
       icon: LogOut,
       label: 'Log out',
-      onClick: handleLogout,
+      onClick: handleLogoutClick,
       danger: true,
     },
   ];
@@ -150,6 +157,18 @@ const UserMenu: React.FC<UserMenuProps> = ({ showEmail = true }) => {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to log out? Any unsaved changes will be lost."
+        confirmText="Log Out"
+        cancelText="Cancel"
+        type="warning"
+      />
     </div>
   );
 };
