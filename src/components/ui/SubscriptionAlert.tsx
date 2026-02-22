@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { AlertCircle, XCircle } from 'lucide-react';
 
 interface SubscriptionAlertProps {
-  status: 'expired' | 'cancelled' | 'expiring-soon' | 'expiring_soon' | 'active' | 'free-tier';
+  status: 'expired' | 'cancelled' | 'expiring-soon' | 'expiring_soon' | 'active' | 'free-tier' | 'grace-period' | 'auto-downgraded';
   planName?: string;
   expiryDate?: string;
   daysUntilRenewal?: number;
+  graceDaysRemaining?: number;
   onDismiss: () => void;
 }
 
@@ -23,6 +24,7 @@ const SubscriptionAlert: React.FC<SubscriptionAlertProps> = ({
   planName = 'your',
   expiryDate,
   daysUntilRenewal = 0,
+  graceDaysRemaining,
   onDismiss
 }) => {
   const navigate = useNavigate();
@@ -38,6 +40,34 @@ const SubscriptionAlert: React.FC<SubscriptionAlertProps> = ({
 
   // Alert configurations based on subscription status and days remaining
   const getAlertConfig = () => {
+    // Grace Period Alert
+    if (status === 'grace-period') {
+      return {
+        bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+        borderColor: 'border-l-4 border-[1px] border-orange-500',
+        textColor: 'text-orange-900 dark:text-orange-100',
+        icon: '⏳',
+        title: 'Grace Period Active',
+        message: `Your ${planName.toUpperCase()} subscription has expired. You have ${graceDaysRemaining} day${graceDaysRemaining !== 1 ? 's' : ''} remaining to renew before being automatically downgraded to the FREE tier.`,
+        buttonLabel: 'Renew Now',
+        urgency: 'GRACE_PERIOD'
+      };
+    }
+
+    // Auto-Downgraded Alert
+    if (status === 'auto-downgraded') {
+      return {
+        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+        borderColor: 'border-l-4 border-[1px] border-blue-500',
+        textColor: 'text-blue-900 dark:text-blue-100',
+        icon: 'ℹ️',
+        title: 'Downgraded to Free Tier',
+        message: `Your subscription has been downgraded to the FREE tier. You can still view all your data, but some features are limited. Upgrade anytime to restore full access.`,
+        buttonLabel: 'Upgrade Now',
+        urgency: 'INFO'
+      };
+    }
+    
     if (status === 'expired') {
       return {
         bgColor: 'bg-red-50 dark:bg-red-900/20',
@@ -74,7 +104,7 @@ const SubscriptionAlert: React.FC<SubscriptionAlertProps> = ({
           textColor: 'text-red-900 dark:text-red-100',
           icon: '🚨',
           title: 'Subscription Expiring Today',
-          message: `Your ${planName.toUpperCase()} subscription expires TODAY! Premium features will be locked after tonight.`,
+          message: `Your ${planName.toUpperCase()} subscription expires TODAY! You'll have a 3-day grace period before being downgraded to FREE tier.`,
           buttonLabel: 'Renew Now',
           urgency: 'CRITICAL'
         };
@@ -86,7 +116,7 @@ const SubscriptionAlert: React.FC<SubscriptionAlertProps> = ({
           textColor: 'text-orange-900 dark:text-orange-100',
           icon: '⚠️',
           title: 'Subscription Expiring Soon',
-          message: `Your ${planName.toUpperCase()} subscription expires in ${daysUntilRenewal} day${daysUntilRenewal !== 1 ? 's' : ''}. Renew to keep your premium features active.`,
+          message: `Your ${planName.toUpperCase()} subscription expires in ${daysUntilRenewal} day${daysUntilRenewal !== 1 ? 's' : ''}. Renew now or you'll enter a 3-day grace period.`,
           buttonLabel: 'Renew Subscription',
           urgency: 'WARNING'
         };
@@ -98,7 +128,7 @@ const SubscriptionAlert: React.FC<SubscriptionAlertProps> = ({
           textColor: 'text-yellow-900 dark:text-yellow-100',
           icon: '⏰',
           title: 'Subscription Expiring Soon',
-          message: `Your ${planName.toUpperCase()} subscription expires in ${daysUntilRenewal} days. After that, you'll be downgraded to the FREE tier.`,
+          message: `Your ${planName.toUpperCase()} subscription expires in ${daysUntilRenewal} days. After expiry, you'll have a 3-day grace period before downgrade to FREE tier.`,
           buttonLabel: 'Renew Now',
           urgency: 'CAUTION'
         };
