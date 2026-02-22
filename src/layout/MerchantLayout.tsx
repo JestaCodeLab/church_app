@@ -140,7 +140,9 @@ const MerchantLayout = () => {
   const daysUntilExpiry = getDaysUntilExpiry();
 
   // ✅ Determine alert status based on subscription expiration status
-  const getAlertStatus = (): 'expired' | 'cancelled' | 'expiring-soon' | null => {
+  const getAlertStatus = (): 'expired' | 'cancelled' | 'expiring-soon' | 'grace-period' | 'auto-downgraded' | null => {
+    if (expirationStatus === 'grace-period') return 'grace-period';
+    if (expirationStatus === 'auto-downgraded') return 'auto-downgraded';
     if (expirationStatus === 'expired') return 'expired';
     if (expirationStatus === 'cancelled') return 'cancelled';
     if (expirationStatus === 'expiring-soon' || expirationStatus === 'expiring_soon') return 'expiring-soon';
@@ -150,10 +152,28 @@ const MerchantLayout = () => {
       return 'expiring-soon';
     }
     if (expiryDate && daysUntilExpiry <= 0) {
+      // Check if in grace period (3 days after expiration)
+      const daysExpired = Math.abs(daysUntilExpiry);
+      if (daysExpired <= 3) {
+        return 'grace-period';
+      }
       return 'expired';
     }
     
     return null;
+  };
+  
+  // Calculate grace days remaining
+  const getGraceDaysRemaining = (): number | null => {
+    if (expirationStatus !== 'grace-period' && !expiryDate) return null;
+    if (daysUntilExpiry >= 0) return null; // Not expired yet
+    
+    const daysExpired = Math.abs(daysUntilExpiry);
+    const GRACE_PERIOD_DAYS = 3;
+    if (daysExpired <= GRACE_PERIOD_DAYS) {
+      return GRACE_PERIOD_DAYS - daysExpired;
+    }
+    return 0;
   };
 
   // ✅ State for alert visibility
@@ -798,6 +818,7 @@ const MerchantLayout = () => {
                   planName={planName}
                   expiryDate={expiryDate}
                   daysUntilRenewal={daysUntilExpiry}
+                  graceDaysRemaining={getGraceDaysRemaining() || undefined}
                   onDismiss={() => setShowAlert(false)}
                 />
               </div>

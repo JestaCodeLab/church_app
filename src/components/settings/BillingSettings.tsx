@@ -464,13 +464,25 @@ const BillingSettings = () => {
                             Active subscription
                           </span>
                         )} */}
+                        {subscription?.expirationStatus === 'grace-period' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 rounded-full text-xs font-medium">
+                            <AlertCircle className="w-3 h-3" />
+                            Grace Period
+                          </span>
+                        )}
+                        {subscription?.expirationStatus === 'auto-downgraded' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-medium">
+                            <Info className="w-3 h-3" />
+                            Auto-Downgraded
+                          </span>
+                        )}
                         {subscription?.expirationStatus === 'expiring-soon' && (
                           <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full text-xs font-medium">
                             <AlertCircle className="w-3 h-3" />
                             Expiring soon
                           </span>
                         )}
-                        {subscription?.expirationStatus === 'expired' && (
+                        {(subscription?.expirationStatus === 'expired' || subscription?.status === 'expired') && (
                           <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full text-xs font-medium">
                             <XCircle className="w-3 h-3" />
                             Expired
@@ -493,15 +505,22 @@ const BillingSettings = () => {
           
           
 
-          {/* Renew Button for Expired or Expiring Soon Subscriptions */}
-          {(subscription?.expirationStatus === 'expired' || subscription?.expirationStatus === 'expiring-soon') && (
+          {/* Renew Button for Expired, Grace Period, or Expiring Soon Subscriptions */}
+          {(subscription?.status === 'expired' ||
+            subscription?.status === 'cancelled' ||
+            subscription?.expirationStatus === 'grace-period' ||
+            subscription?.expirationStatus === 'auto-downgraded' ||
+            subscription?.expirationStatus === 'expired' || 
+            subscription?.expirationStatus === 'expiring-soon' || 
+            subscription?.expirationStatus === 'expiring_soon' ||
+            subscription?.expirationStatus === 'cancelled') && (
             <button
               onClick={handleRenewSubscription}
               disabled={actionLoading || paymentLoading || !scriptLoaded}
               className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RotateCw className="w-4 h-4" />
-              {actionLoading || paymentLoading ? 'Processing...' : 'Renew Subscription'}
+              {actionLoading || paymentLoading ? 'Processing...' : subscription?.expirationStatus === 'auto-downgraded' ? 'Upgrade Now' : 'Renew Subscription'}
             </button>
           )}
         </div>
