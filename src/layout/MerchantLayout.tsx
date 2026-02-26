@@ -475,49 +475,49 @@ const MerchantLayout = () => {
         name: 'Social Media',
         icon: Share2,
         requiresFeature: 'socialMedia',
-        requiredPermissions: ['socialMedia.view'],
+        requiredPermissions: ['social_media.view'],
         children: [
           {
             name: 'Dashboard',
             href: '/social-media',
             icon: LayoutDashboard,
             requiresFeature: 'socialMedia',
-            requiredPermissions: ['socialMedia.view']
+            requiredPermissions: ['social_media.viewDashboard']
           },
           {
             name: 'Accounts',
             href: '/social-media/accounts',
             icon: Link2,
             requiresFeature: 'socialMedia',
-            requiredPermissions: ['socialMedia.view']
+            requiredPermissions: ['social_media.viewAccounts']
           },
           {
             name: 'Calendar',
             href: '/social-media/calendar',
             icon: CalendarDays,
             requiresFeature: 'socialMedia',
-            requiredPermissions: ['socialMedia.view']
+            requiredPermissions: ['social_media.viewCalendar']
           },
           {
             name: 'Create Post',
             href: '/social-media/create',
             icon: PenSquare,
             requiresFeature: 'socialMedia',
-            requiredPermissions: ['socialMedia.view']
+            requiredPermissions: ['social_media.createPost']
           },
           {
             name: 'Templates',
             href: '/social-media/templates',
             icon: FileText,
             requiresFeature: 'socialMedia',
-            requiredPermissions: ['socialMedia.view']
+            requiredPermissions: ['social_media.viewTemplates']
           },
           {
             name: 'Analytics',
             href: '/social-media/analytics',
             icon: BarChart3,
             requiresFeature: 'socialMedia',
-            requiredPermissions: ['socialMedia.view']
+            requiredPermissions: ['social_media.viewAnalytics']
           }
         ]
       }
