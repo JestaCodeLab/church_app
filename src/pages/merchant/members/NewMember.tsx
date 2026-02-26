@@ -5,19 +5,21 @@ import api, { memberAPI, branchAPI, departmentAPI } from '../../../services/api'
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
 import { useAuth } from '../../../context/AuthContext';
+import { useBranch } from '../../../context/BranchContext';
 import { validateEmail, validatePhone } from '../../../utils/validators';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import { PermissionRoute } from '../../../components/guards/PermissionRoute';
+import BranchField from '../../../components/forms/BranchField';
 
 
 const NewMember = () => {
   const { user, fetchAndUpdateSubscription } = useAuth()
+  const { selectedBranch, branches } = useBranch();
   const merchant = user?.merchant;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [branches, setBranches] = useState<any[]>([]);
   const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [emailError, setEmailError] = useState<string>('');
@@ -66,10 +68,16 @@ const NewMember = () => {
 
   useEffect(() => {
     if(memberLimit?.canCreate){
-      fetchBranches();
+      // Auto-populate branch from context (locked user or active branch switch)
+      if (selectedBranch) {
+        setFormData(prev => ({
+          ...prev,
+          branch: selectedBranch._id
+        }));
+      }
       fetchDepartments();
     }
-  }, []);
+  }, [selectedBranch]);
 
   const fetchDepartments = async () => {
     try {
@@ -79,16 +87,6 @@ const NewMember = () => {
       }
     } catch (error) {
       console.error('Error fetching departments:', error);
-    }
-  };
-
-  const fetchBranches = async () => {
-    try {
-      const response = await branchAPI.getBranches({ limit: 100, status: 'active' });
-      setBranches(response.data.data.branches);
-    } catch (error) {
-      console.error('Failed to load branches:', error);
-      showToast.error('Failed to load branches');
     }
   };
 
@@ -673,28 +671,14 @@ const NewMember = () => {
 
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* ADDED: Branch Selection Field */}
+                  {/* Branch Selection Field - Auto-populated and scoped */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Branch <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="branch"
+                    <BranchField
                       value={formData.branch}
-                      onChange={handleChange}
+                      onChange={(branchId) => setFormData(prev => ({ ...prev, branch: branchId }))}
                       required
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-colors"
-                    >
-                      <option value="">Select Branch</option>
-                      {branches.map((branch) => (
-                        <option key={branch._id} value={branch._id}>
-                          {branch.name} ({branch.code})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Select which branch this member belongs to
-                    </p>
+                      allBranches={branches}
+                    />
                   </div>
 
                   <div>

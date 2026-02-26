@@ -10,7 +10,7 @@ import useSEO from '../../hooks/useSEO';
 import ThemeToggle from '../../components/ui/ThemeToggle';
 import AppLogo from '../../components/ui/AppLogo';
 
-const SLIDE_1 = '/images/churchhq-register.jpg';
+const SLIDE_1 = '/images/slider04.jpg';
 
 const Register = () => {
   const navigate = useNavigate();

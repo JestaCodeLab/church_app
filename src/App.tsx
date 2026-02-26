@@ -6,6 +6,7 @@ import AnimatedRoutes from './components/auth/AnimatedRoutes';
 import { LanguageProvider } from './context/LanguageContext';
 import { MerchantProvider } from './context/MerchantContext';
 import { NetworkProvider } from './context/NetworkContext';
+import { BranchProvider } from './context/BranchContext';
 import OfflineBanner from './components/ui/OfflineBanner';
 
 
@@ -17,6 +18,7 @@ const App = () => {
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
+            <BranchProvider>
               <Toaster
                 position="top-right"
                 reverseOrder={false}
@@ -47,6 +49,7 @@ const App = () => {
                 }}
               />
               <AnimatedRoutes />
+            </BranchProvider>
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>

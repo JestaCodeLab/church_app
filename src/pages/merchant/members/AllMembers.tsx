@@ -1,6 +1,6 @@
 import React, { useState, useEffect, use } from 'react';
 import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
@@ -18,7 +18,6 @@ const AllMembers = () => {
   const merchantId = user?.merchant?.id;
   const merchantName = user?.merchant?.name || 'Church';
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,7 +57,6 @@ const AllMembers = () => {
     status: '',
     gender: '',
     membershipType: '',
-    branch: '',
     registrationType: '',
   });
 
@@ -68,14 +66,6 @@ const AllMembers = () => {
 
   const frontendUrl = process.env.REACT_APP_FRONTEND_URL || window.location.origin;
   const registrationLink = `${frontendUrl}/register/${merchantId}`;
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const branchId = params.get('branchId');
-    if (branchId) {
-      setFilters(f => ({ ...f, branch: branchId }));
-    }
-  }, [location.search]);
 
   useEffect(() => {
     fetchMembers();
@@ -97,7 +87,6 @@ const AllMembers = () => {
 
       if (filters.status) params.status = filters.status;
       if (filters.gender) params.gender = filters.gender;
-      if (filters.branch) params.branch = filters.branch;
 
       if (filters.membershipType && activeTab === 'all') {
         params.membershipType = filters.membershipType;

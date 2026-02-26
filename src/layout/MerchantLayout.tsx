@@ -38,7 +38,8 @@ import {
   Share2,
   Link2,
   CalendarDays,
-  PenSquare
+  PenSquare,
+  GitBranch
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -48,6 +49,8 @@ import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
 import SubscriptionAlert from '../components/ui/SubscriptionAlert';
 import ChurchSelector from '../components/selectors/ChurchSelector';
+import BranchSelector from '../components/selectors/BranchSelector';
+import { useBranch } from '../context/BranchContext';
 import NotificationCenter from '../components/ui/NotificationCenter';
 import {usePermission} from '../hooks/usePermission';
 import { announcementAPI } from '../services/api';
@@ -65,11 +68,12 @@ interface NavigationItem {
 }
 
 const MerchantLayout = () => {
-  const { user } = useAuth();
+  const { user, fetchAndUpdateSubscription } = useAuth();
   const navigate = useNavigate();
   const { hasFeature } = useFeatureFlag();
   const location = useLocation();
   const { selectedMerchantId, setSelectedMerchantId, setSelectedMerchantSubdomain } = useMerchant();
+  const { selectedBranch, clearBranchContext, isLockedToBranch, switching } = useBranch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const activityLogPermission = usePermission('settings.viewActivityLogs');
@@ -165,8 +169,9 @@ const MerchantLayout = () => {
   
   // Calculate grace days remaining
   const getGraceDaysRemaining = (): number | null => {
-    if (expirationStatus !== 'grace-period' && !expiryDate) return null;
-    if (daysUntilExpiry >= 0) return null; // Not expired yet
+    // Only calculate if in grace period
+    if (expirationStatus !== 'grace-period') return null;
+    if (!expiryDate) return null;
     
     const daysExpired = Math.abs(daysUntilExpiry);
     const GRACE_PERIOD_DAYS = 3;
@@ -182,6 +187,30 @@ const MerchantLayout = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  // ✅ CRITICAL: Refetch subscription status on component mount and periodically
+  // Only poll when subscription is in a state that might change (expired, grace-period, expiring-soon)
+  useEffect(() => {
+    const refetchSubscription = async () => {
+      await fetchAndUpdateSubscription();
+    };
+
+    // Refetch immediately on mount
+    refetchSubscription();
+
+    // Only set up polling if subscription is in a changeable state
+    const shouldPoll = 
+      expirationStatus === 'grace-period' || 
+      expirationStatus === 'expired' || 
+      expirationStatus === 'expiring-soon' ||
+      expirationStatus === 'expiring_soon';
+
+    if (shouldPoll) {
+      // Poll every 5 minutes to catch status changes (grace period -> auto-downgraded)
+      const interval = setInterval(refetchSubscription, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [expirationStatus, fetchAndUpdateSubscription]);
 
   const alertStatus = getAlertStatus();
 
@@ -494,8 +523,14 @@ const MerchantLayout = () => {
       }
     ];
 
-    return filterNavigation(allNavigation);
-  }, [hasFeature, user?.role?._id, user?.merchant?.id]);
+    // Hide Branches menu when viewing a specific branch
+    const filteredNav = allNavigation.filter(item => {
+      if (item.name === 'Branches' && (selectedBranch || isLockedToBranch)) return false;
+      return true;
+    });
+
+    return filterNavigation(filteredNav);
+  }, [hasFeature, user?.role?._id, user?.merchant?.id, selectedBranch, isLockedToBranch]);
 
   //  Initialize expanded menus based on current route
   const getInitialExpandedMenus = (): string[] => {
@@ -777,6 +812,11 @@ const MerchantLayout = () => {
                 />
               )}
 
+              {/* Branch Selector for church_admin and branch_admin */}
+              {hasFeature('branchManagement' as any) && user?.role?.slug !== 'super_admin' && (
+                <BranchSelector className="hidden sm:block" />
+              )}
+
               {/* Search Bar */}
               <div className="hidden sm:flex flex-1 max-w-md">
                 <div className="relative w-full">
@@ -810,6 +850,28 @@ const MerchantLayout = () => {
         {/* Page Content */}
         <main className="flex-1 bg-gray-100 min-h-screen dark:bg-gray-900 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-full mx-auto">
+            {/* Branch Context Banner */}
+            {selectedBranch && (
+              <div className="mb-4 flex items-center justify-between px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <GitBranch className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Viewing: {selectedBranch.name}
+                  </span>
+                  <span className="text-xs text-blue-500 dark:text-blue-400">
+                    — Data is filtered to this branch
+                  </span>
+                </div>
+                <button
+                  onClick={clearBranchContext}
+                  className="flex items-center space-x-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Clear</span>
+                </button>
+              </div>
+            )}
+
             {/* ✅ SUBSCRIPTION ALERT - Shows on every page */}
             {alertStatus && showAlert && (
               <div className="mb-6">
@@ -823,7 +885,15 @@ const MerchantLayout = () => {
                 />
               </div>
             )}
-            <Outlet />
+            {/* Loading overlay during branch switch */}
+            {switching ? (
+              <div className="flex flex-col items-center justify-center py-32">
+                <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Switching branch context...</p>
+              </div>
+            ) : (
+              <Outlet key={selectedBranch?._id || 'all'} />
+            )}
           </div>
         </main>
       </div>
