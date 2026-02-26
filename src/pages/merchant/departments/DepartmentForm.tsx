@@ -8,6 +8,8 @@ import FeatureGate from '../../../components/access/FeatureGate';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import { useAuth } from '../../../context/AuthContext';
 import { PermissionRoute } from '../../../components/guards/PermissionRoute';
+import { useBranch } from '../../../context/BranchContext';
+import BranchField from '../../../components/forms/BranchField';
 
 
 const DAYS = ['None', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -23,6 +25,7 @@ const ICONS = ['👥', '🎵', '🙏', '📖', '🎤', '👨‍👩‍👧‍�
 const DepartmentForm = () => {
   const navigate = useNavigate();
   const { fetchAndUpdateSubscription } = useAuth();
+  const { selectedBranch, branches: contextBranches } = useBranch();
   const { id } = useParams();
   const isEdit = Boolean(id);
 
@@ -63,6 +66,12 @@ const DepartmentForm = () => {
     }
   }, [id]);
 
+  // Auto-populate branch from context (locked user or active branch switch)
+  useEffect(() => {
+    if (selectedBranch && !isEdit) {
+      setFormData(prev => ({ ...prev, branchId: selectedBranch._id }));
+    }
+  }, [selectedBranch, isEdit]);
 
   const fetchDepartment = async () => {
     try {
@@ -266,25 +275,13 @@ const DepartmentForm = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Branch (Optional)
-                  </label>
-                  <select
-                    name="branchId"
+                  <BranchField
                     value={formData.branchId}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="">All Branches</option>
-                    {branches.map(branch => (
-                      <option key={branch._id} value={branch._id}>
-                        {branch.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Leave empty for church-wide department
-                  </p>
+                    onChange={(branchId) => setFormData(prev => ({ ...prev, branchId }))}
+                    required={false}
+                    label="Branch (Optional)"
+                    allBranches={branches.length > 0 ? branches : contextBranches}
+                  />
                 </div>
 
                 <div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader, Mail, User, UserCog } from 'lucide-react';
-import { teamAPI } from '../../services/api';
+import { X, Loader, Mail, User, UserCog, GitBranch } from 'lucide-react';
+import { teamAPI, branchAPI } from '../../services/api';
 import api from '../../services/api';
 import { showToast } from '../../utils/toasts';
 
@@ -16,48 +16,75 @@ interface RoleOption {
   description: string;
 }
 
+interface BranchOption {
+  _id: string;
+  name: string;
+}
+
+const ADMIN_ROLES = ['super_admin', 'church_admin'];
+
 const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
+  const [branches, setBranches] = useState<BranchOption[]>([]);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     role: '',
+    branch: '',
   });
 
-  // Fetch available roles on mount
+  // Fetch available roles and branches on mount
   useEffect(() => {
-    const fetchRoles = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/roles');
+        const [rolesRes, branchesRes] = await Promise.all([
+          api.get('/roles'),
+          branchAPI.getBranches({ status: 'active', limit: 100 }),
+        ]);
+
         // Filter out super_admin role
-        const filteredRoles = response.data.data.filter(
+        const filteredRoles = rolesRes.data.data.filter(
           (role: RoleOption) => role.slug !== 'super_admin'
         );
         setRoleOptions(filteredRoles);
+
         // Set default to first role
         if (filteredRoles.length > 0) {
           setFormData(prev => ({ ...prev, role: filteredRoles[0].slug }));
         }
+
+        // Set branches
+        const branchList = branchesRes.data.data?.branches || branchesRes.data.data || [];
+        setBranches(branchList);
       } catch (error) {
-        console.error('Failed to fetch roles:', error);
-        showToast.error('Failed to load available roles');
+        console.error('Failed to fetch data:', error);
+        showToast.error('Failed to load roles or branches');
       } finally {
         setFetching(false);
       }
     };
 
-    fetchRoles();
+    fetchData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+      // Clear branch when switching to an admin role
+      if (name === 'role' && ADMIN_ROLES.includes(value)) {
+        updated.branch = '';
+      }
+      return updated;
     });
   };
+
+  const selectedRole = roleOptions.find(r => r.slug === formData.role);
+  const isAdminRole = selectedRole ? ADMIN_ROLES.includes(selectedRole.slug) : false;
+  const showBranchSelector = !isAdminRole && branches.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +97,18 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
     setLoading(true);
 
     try {
-      await teamAPI.inviteTeamMember(formData);
+      const payload: any = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        role: formData.role,
+      };
+      // Only send branch if one is selected (not "All Branches")
+      if (formData.branch) {
+        payload.branch = formData.branch;
+      }
+
+      await teamAPI.inviteTeamMember(payload);
       showToast.success('Team member invited successfully!');
       onSuccess();
     } catch (error: any) {
@@ -180,6 +218,34 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess })
               </select>
             </div>
           </div>
+
+          {/* Branch Selector — only shown for non-admin roles */}
+          {showBranchSelector && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Assign to Branch
+              </label>
+              <div className="relative">
+                <GitBranch className="absolute left-3 top-3.5 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <select
+                  name="branch"
+                  value={formData.branch}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none cursor-pointer"
+                >
+                  <option value="">All Branches</option>
+                  {branches.map((branch) => (
+                    <option key={branch._id} value={branch._id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                Restrict this user's access to a specific branch, or leave as "All Branches" for full access.
+              </p>
+            </div>
+          )}
 
           {/* Info Box */}
           <div className="bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-blue-500/30 rounded-lg p-4">

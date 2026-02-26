@@ -3,10 +3,13 @@ import { Search, UserPlus, Trash2, Mail, Loader, Shield, Edit2, Users } from 'lu
 import { teamAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { useAuth } from '../../context/AuthContext';
+import { useResourceLimit } from '../../hooks/useResourceLimit';
 import InviteUserModal from '../modals/InviteUserModal';
 import EditTeamMemberModal from '../modals/EditTeamMemberModal';
 import ConfirmModal from '../modals/ConfirmModal';
 import ManageRolesModal from '../roles/ManageRolesModal';
+import LimitReachedModal from '../modals/LimitReachedModal';
+import PermissionGuard from '../guards/PermissionGuard';
 
 interface TeamMember {
   _id: string;
@@ -26,6 +29,7 @@ interface TeamMember {
 
 const TeamManagement = () => {
   const { fetchAndUpdateSubscription, user } = useAuth();
+  const userLimit = useResourceLimit('users');
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +39,7 @@ const TeamManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showManageRoles, setShowManageRoles] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
   const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -43,6 +48,15 @@ const TeamManagement = () => {
   const roleOptions = [
     { value: 'church_admin', label: 'Admin' },
   ];
+
+  // Handle invite button with limit check
+  const handleInviteClick = () => {
+    if (!userLimit?.canCreate) {
+      setShowLimitModal(true);
+      return;
+    }
+    setShowInviteModal(true);
+  };
 
   useEffect(() => {
     fetchTeamMembers();
@@ -222,6 +236,7 @@ const TeamManagement = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <PermissionGuard permission="settings.manageRoles">
           <button
             onClick={() => setShowManageRoles(true)}
             className="flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
@@ -229,13 +244,16 @@ const TeamManagement = () => {
             <Shield className="w-5 h-5" />
             <span>Manage Roles</span>
           </button>
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
-          >
-            <UserPlus className="w-5 h-5" />
-            <span>Invite User</span>
-          </button>
+          </PermissionGuard>
+          <PermissionGuard permission="settings.inviteTeamMember">
+            <button
+              onClick={handleInviteClick}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+            >
+              <UserPlus className="w-5 h-5" />
+              <span>Invite User</span>
+            </button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -436,6 +454,16 @@ const TeamManagement = () => {
         message={`Are you sure you want to remove ${memberToDelete?.name || 'this team member'} from your team? This action cannot be undone.`}
         type="danger"
         isLoading={deleting}
+      />
+
+      {/* Limit Reached Modal */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        resourceType="members"
+        current={userLimit?.current || 0}
+        limit={userLimit?.limit || 0}
+        planName={user?.merchant?.subscription?.plan || 'starter'}
       />
     </div>
   );

@@ -48,6 +48,12 @@ api.interceptors.request.use(
       } catch (e) {
         // Silently fail if can't parse user
       }
+
+      // Add branch context header if a branch is selected
+      const selectedBranchId = localStorage.getItem('selectedBranchId');
+      if (selectedBranchId) {
+        config.headers['X-Branch-Id'] = selectedBranchId;
+      }
     }
 
     // If FormData is being sent, remove the default Content-Type header
@@ -464,6 +470,9 @@ export const adminAPI = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
+
+  // Subscription Management
+  triggerSubscriptionCheck: () => api.post('/admin/subscriptions/check-expirations'),
 
   // Communications
   getRecipients: (type?: 'merchants' | 'users') => api.get('/admin/communications/recipients', { params: { type } }),

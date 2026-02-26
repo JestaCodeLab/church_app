@@ -170,10 +170,12 @@ const SubscriptionAlert: React.FC<SubscriptionAlertProps> = ({
         <button
           onClick={() => navigate('/settings?tab=billing')}
           className={`px-4 py-2 rounded-md font-medium text-sm transition-colors whitespace-nowrap ${
-            config.urgency === 'CRITICAL'
+            config.urgency === 'CRITICAL' || config.urgency === 'EXPIRED'
               ? 'bg-red-600 hover:bg-red-700 text-white'
-              : config.urgency === 'WARNING'
+              : config.urgency === 'WARNING' || config.urgency === 'GRACE_PERIOD' || config.urgency === 'CANCELLED'
               ? 'bg-orange-600 hover:bg-orange-700 text-white'
+              : config.urgency === 'INFO'
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
               : 'bg-yellow-600 hover:bg-yellow-700 text-white'
           }`}
         >

@@ -99,6 +99,10 @@ interface User {
   role: Role;
   photo?: string | null;
   phone?: string | null;
+  memberProfile?: {
+    _id: string;
+    branch?: { _id: string; name: string; code?: string } | null;
+  } | null;
   merchant?: {
     id: string;
     name: string;
@@ -191,7 +195,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               ...prevUser.merchant.subscription,
               usage: subscriptionData.usage,
               limits: subscriptionData.limits,
-              planDetails: subscriptionData.planDetails
+              planDetails: subscriptionData.planDetails,
+              expirationStatus: subscriptionData.expirationStatus,
+              expirationDate: subscriptionData.expirationDate,
+              gracePeriodEnds: subscriptionData.gracePeriodEnds,
+              status: subscriptionData.status
             }
           }
         };
@@ -323,6 +331,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
+      // Clear branch context to prevent stale branch data on next login
+      localStorage.removeItem('selectedBranchId');
+      localStorage.removeItem('selectedBranchName');
       setUser(null);
       setIsAuthenticated(false);
     }

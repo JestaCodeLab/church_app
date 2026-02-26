@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Plus, Trash2, GripVertical, Upload, X, Image as ImageIcon } from 'lucide-react';
-import { partnershipAPI } from '../../../../services/api';
+import { partnershipAPI, branchAPI } from '../../../../services/api';
 import { showToast } from '../../../../utils/toasts';
 import { getMerchantCurrency } from '../../../../utils/currency';
+import { useBranch } from '../../../../context/BranchContext';
+import BranchField from '../../../../components/forms/BranchField';
 
 interface Tier {
   name: string;
@@ -25,12 +27,14 @@ interface FormField {
 const NewPartnership = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { selectedBranch, branches } = useBranch();
   const isEditMode = !!id;
   const merchantCurrency = getMerchantCurrency();
 
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [branchList, setBranchList] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -39,6 +43,7 @@ const NewPartnership = () => {
     endDate: '',
     status: 'draft' as 'draft' | 'active' | 'paused' | 'completed',
     showTargetAmount: true,
+    branch: '',
   });
 
   const [tiers, setTiers] = useState<Tier[]>([
@@ -75,10 +80,25 @@ const NewPartnership = () => {
   ]);
 
   useEffect(() => {
+    fetchBranches();
     if (isEditMode) {
       loadProgramme();
+    } else if (selectedBranch) {
+      setFormData(prev => ({
+        ...prev,
+        branch: selectedBranch._id
+      }));
     }
-  }, [id]);
+  }, [id, selectedBranch]);
+
+  const fetchBranches = async () => {
+    try {
+      const response = await branchAPI.getBranches({ limit: 100, status: 'active' });
+      setBranchList(response.data.data.branches);
+    } catch (error) {
+      console.error('Failed to load branches:', error);
+    }
+  };
 
   const loadProgramme = async () => {
     try {
@@ -94,6 +114,7 @@ const NewPartnership = () => {
         endDate: programme.dates?.endDate ? new Date(programme.dates.endDate).toISOString().split('T')[0] : '',
         status: programme.status || 'draft',
         showTargetAmount: programme.publicSettings?.showTargetAmount !== undefined ? programme.publicSettings.showTargetAmount : true,
+        branch: programme.branch?._id || programme.branch || '',
       });
 
       if (programme.tiers && programme.tiers.length > 0) {
@@ -401,6 +422,15 @@ const NewPartnership = () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div>
+              <BranchField
+                value={formData.branch}
+                onChange={(branchId) => setFormData(prev => ({ ...prev, branch: branchId }))}
+                required
+                allBranches={branchList.length > 0 ? branchList : branches}
+              />
             </div>
 
             <div>

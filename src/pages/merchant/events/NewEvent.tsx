@@ -12,6 +12,8 @@ import ImageUploader, { GalleryUploader } from '../../../components/modals/Image
 import FeatureGate from '../../../components/access/FeatureGate';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import { PermissionRoute } from '../../../components/guards/PermissionRoute';
+import { useBranch } from '../../../context/BranchContext';
+import BranchField from '../../../components/forms/BranchField';
 
 interface FormData {
   title: string;
@@ -49,6 +51,7 @@ interface FormData {
 const NewEvent: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { selectedBranch, branches } = useBranch();
   const isEdit = Boolean(id);
   const eventLimit = useResourceLimit('events');
 
@@ -101,22 +104,25 @@ const NewEvent: React.FC = () => {
   const [showAddSpeakerModal, setShowAddSpeakerModal] = useState(false);
 
   // Other state
-  const [branches, setBranches] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>({});
 
   useEffect(() => {
       fetchInitialData();
-  }, [id]);
+      
+      // Auto-populate branch from context (locked user or active branch switch)
+      if (selectedBranch && !isEdit) {
+        setFormData(prev => ({
+          ...prev,
+          branch: selectedBranch._id
+        }));
+      }
+  }, [id, selectedBranch]);
 
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-
-      // Fetch branches
-      const branchResponse = await branchAPI.getBranches({ limit: 100 });
-      setBranches(branchResponse.data.data.branches);
 
       // Fetch members for host/speaker selection
       const memberResponse = await memberAPI.getMembers({ 
@@ -785,25 +791,13 @@ const NewEvent: React.FC = () => {
 
                   {/* Branch */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Branch *
-                    </label>
-                    <select
-                      name="branch"
+                    <BranchField
                       value={formData.branch}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    >
-                      <option value="">Select a Branch</option>
-                      {branches.map(branch => (
-                        <option key={branch._id} value={branch._id}>
-                          {branch.name}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.branch && (
-                      <p className="text-sm text-red-600 mt-1">{errors.branch}</p>
-                    )}
+                      onChange={(branchId) => setFormData(prev => ({ ...prev, branch: branchId }))}
+                      required
+                      allBranches={branches}
+                      error={errors.branch}
+                    />
                   </div>
 
                   {/* Status & Visibility */}

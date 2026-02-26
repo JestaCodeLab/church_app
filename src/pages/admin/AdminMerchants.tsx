@@ -14,7 +14,8 @@ import {
   Users,
   UserCheck,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -50,6 +51,7 @@ const AdminMerchants = () => {
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteInputValue, setDeleteInputValue] = useState('');
+  const [isCheckingSubscriptions, setIsCheckingSubscriptions] = useState(false);
 
   useEffect(() => {
     fetchMerchants();
@@ -120,6 +122,22 @@ const AdminMerchants = () => {
     }
   };
 
+  const handleSubscriptionCheck = async () => {
+    try {
+      setIsCheckingSubscriptions(true);
+      const response = await adminAPI.triggerSubscriptionCheck();
+      const data = response.data.data;
+      toast.success(
+        `Check complete: ${data.expiredSubscriptions} expired, ${data.downgradedCount} downgraded`
+      );
+      fetchMerchants();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to run subscription check');
+    } finally {
+      setIsCheckingSubscriptions(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
   const colors: any = {
     active: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300',
@@ -164,8 +182,18 @@ const AdminMerchants = () => {
             Manage all churches on the platform
           </p>
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          Total Merchants: <span className="font-semibold text-gray-900 dark:text-gray-100">{totalMerchants}</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleSubscriptionCheck}
+            disabled={isCheckingSubscriptions}
+            className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${isCheckingSubscriptions ? 'animate-spin' : ''}`} />
+            {isCheckingSubscriptions ? 'Checking...' : 'Check Subscriptions'}
+          </button>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Total Merchants: <span className="font-semibold text-gray-900 dark:text-gray-100">{totalMerchants}</span>
+          </div>
         </div>
       </div>
 
