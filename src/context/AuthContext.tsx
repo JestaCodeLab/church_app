@@ -57,7 +57,9 @@ interface Plan {
     users: number | null;
     smsCredits: number;
     emailCredits: number;
+    [key: string]: number | null;
   };
+  dynamicLimits?: Record<string, number | null>;
   features: {
     memberManagement: boolean;
     branchManagement: boolean;
@@ -99,6 +101,7 @@ interface User {
   role: Role;
   photo?: string | null;
   phone?: string | null;
+  branch?: { _id: string; name: string; code?: string } | null;
   memberProfile?: {
     _id: string;
     branch?: { _id: string; name: string; code?: string } | null;

@@ -24,7 +24,8 @@ import {
   Zap,
   DollarSign,
   Megaphone,
-  Mail
+  Mail,
+  SlidersHorizontal
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -51,6 +52,7 @@ const AdminLayout = () => {
     { name: 'All Plans', href: '/admin/plans', icon: Crown },
     { name: 'Discounts', href: '/admin/discounts', icon: Percent },
     { name: 'Features', href: '/admin/features', icon: Sparkles },
+    { name: 'Limits', href: '/admin/limits', icon: SlidersHorizontal },
   ];
 
   // ✅ NEW: Messaging submenu items

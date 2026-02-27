@@ -73,9 +73,9 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
   // Branch-locked users see a static label (branch_admin, or any role assigned to a branch)
   if (isLockedToBranch) {
     return (
-      <div className={`flex items-center space-x-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg ${className}`}>
-        <GitBranch className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-        <span className="text-sm font-medium text-blue-700 dark:text-blue-300 max-w-[150px] truncate">
+      <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg max-w-[200px] ${className}`}>
+        <GitBranch className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+        <span className="text-sm font-medium text-blue-700 dark:text-blue-300 truncate">
           {selectedBranch?.name || 'Branch'}
         </span>
       </div>
@@ -98,7 +98,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={`
-            flex items-center space-x-2 px-3 py-1.5 rounded-lg border text-sm font-medium
+            inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium max-w-[220px]
             transition-all duration-200
             ${selectedBranch
               ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
@@ -106,11 +106,11 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
             }
           `}
         >
-          <GitBranch className="w-4 h-4" />
-          <span className="max-w-[150px] truncate">
+          <GitBranch className="w-4 h-4 shrink-0" />
+          <span className="truncate">
             {selectedBranch ? selectedBranch.name : 'All Branches'}
           </span>
-          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {isOpen && (

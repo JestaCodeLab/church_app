@@ -1,67 +1,12 @@
 import { useAuth } from '../context/AuthContext';
 
-export type Feature = 
-  // Core Features
-  | 'memberManagement'
-  | 'branchManagement'
-  | 'departmentManagement'
-  | 'eventManagement'
-  | 'eventDonations'
-  | 'attendanceTracking'
-  | 'sermonManagement'
-  | 'financialManagement'
-  | 'financeDonations'
-  | 'financeWallet'
-  | 'expenseTracking'
-  | 'incomeTracking'
-  | 'tithingManagement'
-  | 'financialReports'
-  | 'transactionManagement'
-  // Communication Features
-  | 'emailCommunications'
-  | 'smsCommunications'
-  | 'bulkMessaging'
-  | 'smsAutomation'
-  | 'smsSend'
-  | 'smsHistory'
-  | 'smsAnalytics'
-  | 'smsTemplates'
-  | 'smsCredits'
-  | 'smsSenderId'
-  // Reporting Features
-  | 'basicReports'
-  | 'advancedReports'
-  | 'customReports'
-  | 'dataExport'
-  // Integration Features
-  | 'apiAccess'
-  | 'webhooks'
-  | 'thirdPartyIntegrations'
-  // Support Features
-  | 'emailSupport'
-  | 'prioritySupport'
-  | 'dedicatedAccountManager'
-  | 'phoneSupport'
-  // Customization Features
-  | 'customBranding'
-  | 'customDomain'
-  | 'whiteLabel'
-  // Advanced Features
-  | 'multiLanguage'
-  | 'mobileApp'
-  | 'automatedWorkflows'
-  // Social Media
-  | 'socialMedia';
-
-type Limit = 
-  | 'members'
-  | 'branches'
-  | 'events'
-  | 'sermons'
-  | 'storage'
-  | 'users'
-  | 'smsCredits'
-  | 'emailCredits';
+/**
+ * Feature and Limit types are dynamic strings — new features and limits
+ * can be created from the super admin dashboard without code changes.
+ * The runtime checks are simple object key lookups.
+ */
+export type Feature = string;
+export type Limit = string;
 
 interface FeatureAccess {
   hasFeature: (feature: Feature) => boolean;
@@ -80,7 +25,7 @@ export const useFeatureFlag = (): FeatureAccess => {
     if (!user?.merchant?.subscription?.features) {
       return false;
     }
-    
+
     return user.merchant.subscription.features[feature] === true;
   };
 
@@ -90,12 +35,19 @@ export const useFeatureFlag = (): FeatureAccess => {
       return Infinity; // Represent unlimited as Infinity
     }
 
-    if (!user?.merchant?.subscription?.planDetails?.limits) {
+    const planDetails = user?.merchant?.subscription?.planDetails;
+    if (!planDetails) {
       return null;
     }
 
-    const value = user.merchant.subscription.planDetails.limits[limit];
-    return value === null ? Infinity : value; // null in DB means unlimited
+    // Check dynamicLimits first, then legacy limits
+    const dynamicValue = planDetails?.dynamicLimits?.[limit];
+    if (dynamicValue !== undefined) {
+      return dynamicValue === null ? Infinity : dynamicValue;
+    }
+
+    const value = planDetails?.limits?.[limit];
+    return value === null ? Infinity : (value ?? null); // null in DB means unlimited
   };
 
   return { hasFeature, getLimit };
