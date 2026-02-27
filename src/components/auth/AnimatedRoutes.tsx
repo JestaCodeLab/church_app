@@ -30,6 +30,7 @@ import NewBranch from '../../pages/merchant/branches/NewBranch';
 import BranchDetails from '../../pages/merchant/branches/BranchDetails';
 import EditBranch from '../../pages/merchant/branches/EditBranch';
 import AdminFeatures from '../../pages/admin/AdminFeatures';
+import AdminLimits from '../../pages/admin/AdminLimits';
 import AdminMerchantDetails from '../../pages/admin/AdminMerchantDetails';
 import AdminUserDetails from '../../pages/admin/AdminUserDetails';
 import OnboardingSuccess from '../onboarding/OnboardingSuccess';
@@ -287,6 +288,7 @@ const AnimatedRoutes = () => {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/users/:id" element={<AdminUserDetails />} />
             <Route path="/admin/features" element={<AdminFeatures />} />
+            <Route path="/admin/limits" element={<AdminLimits />} />
 
             {/* Plans */}
             <Route path="/admin/plans" element={<AdminPlans />} />

@@ -15,7 +15,8 @@ import {
   Zap,
   Award,
   Wallet,
-  X
+  X,
+  Loader
 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
@@ -87,6 +88,7 @@ const MessagingCredits: React.FC = () => {
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [pendingPackage, setPendingPackage] = useState<CreditPackage | null>(null);
+  const [processingPaymentMethod, setProcessingPaymentMethod] = useState<'wallet' | 'paystack' | null>(null);
 
   useEffect(() => {
     checkSMSAccess();
@@ -150,15 +152,20 @@ const handlePurchase = async (pkg: CreditPackage) => {
 
   const handlePaymentMethodSelect = async (method: 'wallet' | 'paystack') => {
     if (!pendingPackage) return;
-    
-    setShowPaymentMethodModal(false);
+
+    setProcessingPaymentMethod(method);
     setPurchasing(true);
     setSelectedPackage(pendingPackage.slug);
 
-    if (method === 'wallet') {
-      handleWalletPurchase(pendingPackage);
-    } else {
-      handlePaystackPurchase(pendingPackage);
+    try {
+      if (method === 'wallet') {
+        await handleWalletPurchase(pendingPackage);
+      } else {
+        await handlePaystackPurchase(pendingPackage);
+      }
+    } finally {
+      setProcessingPaymentMethod(null);
+      setShowPaymentMethodModal(false);
     }
   };
 
@@ -724,17 +731,27 @@ const handlePurchase = async (pkg: CreditPackage) => {
       {/* Payment Method Selection Modal */}
       {showPaymentMethodModal && pendingPackage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+          <div
+            className="fixed inset-0"
+            onClick={() => {
+              if (processingPaymentMethod) return;
+              setShowPaymentMethodModal(false);
+              setPendingPackage(null);
+            }}
+          />
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Choose Payment Method
               </h3>
               <button
                 onClick={() => {
+                  if (processingPaymentMethod) return;
                   setShowPaymentMethodModal(false);
                   setPendingPackage(null);
                 }}
-                className="text-gray-400 hover:text-gray-500"
+                disabled={!!processingPaymentMethod}
+                className="text-gray-400 hover:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -771,23 +788,29 @@ const handlePurchase = async (pkg: CreditPackage) => {
               {/* Wallet Payment Option */}
               <button
                 onClick={() => handlePaymentMethodSelect('wallet')}
-                disabled={walletBalance < pendingPackage.price}
+                disabled={walletBalance < pendingPackage.price || !!processingPaymentMethod}
                 className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
-                  walletBalance >= pendingPackage.price
+                  walletBalance >= pendingPackage.price && !processingPaymentMethod
                     ? 'border-blue-500 hover:bg-primary-50 dark:hover:bg-blue-900/20 cursor-pointer'
                     : 'border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed'
                 }`}
               >
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mr-3">
-                    <Wallet className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    {processingPaymentMethod === 'wallet' ? (
+                      <Loader className="w-5 h-5 text-primary-600 dark:text-primary-400 animate-spin" />
+                    ) : (
+                      <Wallet className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    )}
                   </div>
                   <div className="text-left">
-                    <p className="font-semibold text-gray-900 dark:text-white">Pay with Wallet</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {processingPaymentMethod === 'wallet' ? 'Processing...' : 'Pay with Wallet'}
+                    </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Use your available balance</p>
                   </div>
                 </div>
-                {walletBalance >= pendingPackage.price && (
+                {!processingPaymentMethod && walletBalance >= pendingPackage.price && (
                   <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 )}
               </button>
@@ -795,14 +818,25 @@ const handlePurchase = async (pkg: CreditPackage) => {
               {/* Paystack Payment Option */}
               <button
                 onClick={() => handlePaymentMethodSelect('paystack')}
-                className="w-full flex items-center justify-between p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
+                disabled={!!processingPaymentMethod}
+                className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                  processingPaymentMethod
+                    ? 'border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                }`}
               >
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mr-3">
-                    <CreditCard className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    {processingPaymentMethod === 'paystack' ? (
+                      <Loader className="w-5 h-5 text-primary-600 dark:text-primary-400 animate-spin" />
+                    ) : (
+                      <CreditCard className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    )}
                   </div>
                   <div className="text-left">
-                    <p className="font-semibold text-gray-900 dark:text-white">Pay with Card</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {processingPaymentMethod === 'paystack' ? 'Processing...' : 'Pay with Card'}
+                    </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Paystack secure payment</p>
                   </div>
                 </div>

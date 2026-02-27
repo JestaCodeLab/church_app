@@ -399,6 +399,12 @@ export const adminAPI = {
   updatePlanFeatures: (planId: any, data: any) => api.patch(`/admin/plans/${planId}/features`, data),
   overrideMerchantFeatures: (merchantId: any, data: any) => api.put(`/admin/merchants/${merchantId}/features`, data),
 
+  // Limit Definition Management
+  getLimitDefinitions: () => api.get('/admin/limits'),
+  createLimitDefinition: (data: any) => api.post('/admin/limits', data),
+  updateLimitDefinition: (id: string, data: any) => api.put(`/admin/limits/${id}`, data),
+  deleteLimitDefinition: (id: string) => api.delete(`/admin/limits/${id}`),
+
   getAllBranches: (params: any) => api.get('/admin/branches', { params }),
   getUserById: (id: any) => api.get(`/admin/users/${id}`),
   lockUser: (id: any, data: any) => api.patch(`/admin/users/${id}/lock`, data),
@@ -578,18 +584,10 @@ export const planAPI = {
 
   updatePlan: (id: string, data: any) => api.put(`/admin/plans/${id}`, data),
 
-  updatePlanLimits: (id: string, limits: {
-    members?: number | null;
-    branches?: number | null;
-    events?: number | null;
-    sermons?: number | null;
-    storage?: number | null;
-    users?: number | null;
-    smsCredits?: number | null;
-    emailCredits?: number | null;
-  }) => api.patch(`/admin/plans/${id}/limits`, { limits }),
+  updatePlanLimits: (id: string, limits: Record<string, number | null>) =>
+    api.patch(`/admin/plans/${id}/limits`, { limits }),
 
-  updatePlanFeatures: (id: string, features: Record<string, boolean>) => api.patch(`/admin/plans/${id}/features`, { features }),
+  updatePlanFeatures: (id: string, data: any) => api.patch(`/admin/plans/${id}/features`, data),
   togglePlanVisibility: (id: string) => api.patch(`/admin/plans/${id}/visibility`),
   getPlanStats: (id: string) => api.get(`/admin/plans/${id}/stats`),
   deletePlan: (id: string, permanent: boolean = false) => api.delete(`/admin/plans/${id}`, { params: { permanent } }),

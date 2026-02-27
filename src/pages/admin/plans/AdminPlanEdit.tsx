@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader, AlertCircle, Plus, X } from 'lucide-react';
-import { planAPI } from '../../../services/api';
+import { planAPI, adminAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 
-interface PlanLimits {
-  members: number | null;
-  branches: number | null;
-  events: number | null;
-  sermons: number | null;
-  storage: number | null;
-  users: number | null;
-  smsCredits: number | null;
-  emailCredits: number | null;
+interface FeatureDoc {
+  _id: string;
+  key: string;
+  name: string;
+  category: string;
+  description?: string;
+  beta?: boolean;
 }
 
-interface PlanFeatures {
-  [key: string]: boolean;
+interface LimitDefinition {
+  _id: string;
+  key: string;
+  name: string;
+  category: string;
+  unit: string;
+  description?: string;
+  displayOrder: number;
 }
 
 const AdminPlanEdit = () => {
@@ -25,7 +29,7 @@ const AdminPlanEdit = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'limits' | 'features'>('basic');
-  
+
   // Form state
   const [plan, setPlan] = useState<any>(null);
   const [name, setName] = useState('');
@@ -33,38 +37,58 @@ const AdminPlanEdit = () => {
   const [price, setPrice] = useState({ amount: 0, currency: 'GHS' });
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [highlights, setHighlights] = useState<string[]>([]);
-  const [limits, setLimits] = useState<PlanLimits>({
-    members: null,
-    branches: null,
-    events: null,
-    sermons: null,
-    storage: null,
-    users: null,
-    smsCredits: null,
-    emailCredits: null
-  });
-  const [features, setFeatures] = useState<PlanFeatures>({});
+
+  // Dynamic features
+  const [allFeatures, setAllFeatures] = useState<FeatureDoc[]>([]);
+  const [selectedFeatureKeys, setSelectedFeatureKeys] = useState<string[]>([]);
+
+  // Dynamic limits
+  const [limitDefinitions, setLimitDefinitions] = useState<LimitDefinition[]>([]);
+  const [limitValues, setLimitValues] = useState<Record<string, number | null>>({});
+
+  // Feature category ordering
+  const CATEGORY_ORDER = ['Core', 'Financial', 'Communication', 'Reporting', 'Attendance', 'Integration', 'Support', 'Customization', 'Advanced'];
 
   useEffect(() => {
     if (id) {
-      fetchPlan();
+      fetchData();
     }
   }, [id]);
 
-  const fetchPlan = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await planAPI.getPlan(id!);
-      const planData = response.data.data.plan;
-      
+      const [planRes, featuresRes, limitsRes] = await Promise.all([
+        planAPI.getPlan(id!),
+        adminAPI.getFeatures(),
+        adminAPI.getLimitDefinitions().catch(() => ({ data: { data: { limits: [] } } }))
+      ]);
+
+      const planData = planRes.data.data.plan;
       setPlan(planData);
       setName(planData.name);
       setDescription(planData.description || '');
       setPrice(planData.price);
       setBillingCycle(planData.billingCycle);
       setHighlights(planData.highlights || []);
-      setLimits(planData.limits);
-      setFeatures(planData.features);
+
+      // Features
+      const features = featuresRes.data?.data?.features || [];
+      setAllFeatures(features);
+      setSelectedFeatureKeys(planData.featureKeys || []);
+
+      // Limits
+      const limits = limitsRes.data?.data?.limits || [];
+      setLimitDefinitions(limits);
+      // Merge legacy limits and dynamicLimits for display
+      const mergedLimits: Record<string, number | null> = {};
+      limits.forEach((def: LimitDefinition) => {
+        // Check dynamicLimits first, then legacy limits
+        const dynamicValue = planData.dynamicLimits?.[def.key];
+        const legacyValue = planData.limits?.[def.key];
+        mergedLimits[def.key] = dynamicValue !== undefined ? dynamicValue : (legacyValue ?? null);
+      });
+      setLimitValues(mergedLimits);
     } catch (error) {
       showToast.error('Failed to fetch plan');
       navigate('/admin/plans');
@@ -84,7 +108,7 @@ const AdminPlanEdit = () => {
         highlights: highlights.filter(h => h.trim() !== '')
       });
       showToast.success('Plan updated successfully');
-      fetchPlan();
+      fetchData();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to update plan');
     } finally {
@@ -95,9 +119,9 @@ const AdminPlanEdit = () => {
   const handleSaveLimits = async () => {
     try {
       setSaving(true);
-      await planAPI.updatePlanLimits(id!, limits);
+      await planAPI.updatePlanLimits(id!, limitValues);
       showToast.success('Plan limits updated successfully');
-      fetchPlan();
+      fetchData();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to update limits');
     } finally {
@@ -108,10 +132,10 @@ const AdminPlanEdit = () => {
   const handleSaveFeatures = async () => {
     try {
       setSaving(true);
-      const response = await planAPI.updatePlanFeatures(id!, features);
+      const response = await planAPI.updatePlanFeatures(id!, { featureKeys: selectedFeatureKeys });
       const merchantsAffected = response.data.data.merchantsAffected;
       showToast.success(`Features updated. ${merchantsAffected} church(es) affected.`);
-      fetchPlan();
+      fetchData();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to update features');
     } finally {
@@ -119,18 +143,19 @@ const AdminPlanEdit = () => {
     }
   };
 
-  const handleLimitChange = (key: keyof PlanLimits, value: string) => {
-    setLimits(prev => ({
+  const handleLimitChange = (key: string, value: string) => {
+    setLimitValues(prev => ({
       ...prev,
       [key]: value === '' ? null : parseInt(value)
     }));
   };
 
   const handleFeatureToggle = (key: string) => {
-    setFeatures(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    setSelectedFeatureKeys(prev =>
+      prev.includes(key)
+        ? prev.filter(k => k !== key)
+        : [...prev, key]
+    );
   };
 
   const handleAddHighlight = () => {
@@ -147,112 +172,44 @@ const AdminPlanEdit = () => {
     setHighlights(newHighlights);
   };
 
-  // Helper function to convert camelCase to Title Case
-  const formatLabel = (key: string): string => {
-    return key
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, str => str.toUpperCase())
-      .trim();
-  };
-
-  // Feature categorization based on naming conventions
-  const featureCategoryMap: { [key: string]: string } = {
-    // Core Features (Management)
-    memberManagement: 'Core Features',
-    branchManagement: 'Core Features',
-    departmentManagement: 'Core Features',
-    eventManagement: 'Core Features',
-    sermonManagement: 'Core Features',
-    attendanceTracking: 'Core Features',
-    
-    // Financial Features
-    financialManagement: 'Financial',
-    eventDonations: 'Financial',
-    expenseTracking: 'Financial',
-    incomeTracking: 'Financial',
-    tithingManagement: 'Financial',
-    financialReports: 'Financial',
-    transactionManagement: 'Financial',
-    
-    // Communications Features (Email, SMS, Messaging)
-    emailCommunications: 'Communications',
-    smsCommunications: 'Communications',
-    bulkMessaging: 'Communications',
-    smsAutomation: 'Communications',
-    smsSend: 'Communications',
-    smsHistory: 'Communications',
-    smsAnalytics: 'Communications',
-    smsTemplates: 'Communications',
-    smsCredits: 'Communications',
-    smsSenderID: 'Communications',
-
-    
-    // Reporting Features
-    basicReports: 'Reporting',
-    advancedReports: 'Reporting',
-    customReports: 'Reporting',
-    dataExport: 'Reporting',
-    
-    // Integration Features
-    apiAccess: 'Integration',
-    webhooks: 'Integration',
-    thirdPartyIntegrations: 'Integration',
-    
-    // Support Features
-    emailSupport: 'Support',
-    prioritySupport: 'Support',
-    dedicatedAccountManager: 'Support',
-    phoneSupport: 'Support',
-    
-    // Customization Features
-    customBranding: 'Customization',
-    customDomain: 'Customization',
-    whiteLabel: 'Customization',
-    
-    // Advanced Features
-    multiLanguage: 'Advanced',
-    mobileApp: 'Advanced',
-    automatedWorkflows: 'Advanced'
-  };
-
-  // Generate feature categories dynamically from features object
-  const generateFeatureCategories = () => {
-    const categorizedFeatures: { [key: string]: Array<{ key: string; label: string }> } = {};
-    
-    // Group features by category
-    Object.keys(features).forEach(featureKey => {
-      const category = featureCategoryMap[featureKey] || 'Other';
-      if (!categorizedFeatures[category]) {
-        categorizedFeatures[category] = [];
-      }
-      categorizedFeatures[category].push({
-        key: featureKey,
-        label: formatLabel(featureKey === 'eventManagement' ? 'Service Management' : featureKey)
-      });
+  // Group features by category
+  const featuresByCategory = () => {
+    const grouped: Record<string, FeatureDoc[]> = {};
+    allFeatures.forEach(f => {
+      const cat = f.category || 'Other';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(f);
     });
 
-    // Sort categories and features for consistent display
-    const categoryOrder = [
-      'Core Features',
-      'Financial',
-      'Communications',
-      'Reporting',
-      'Integration',
-      'Support',
-      'Customization',
-      'Advanced',
-      'Other'
-    ];
-
-    return categoryOrder
-      .filter(cat => categorizedFeatures[cat])
-      .map(cat => ({
-        name: cat,
-        features: categorizedFeatures[cat].sort((a, b) => a.label.localeCompare(b.label))
-      }));
+    return CATEGORY_ORDER
+      .filter(cat => grouped[cat]?.length > 0)
+      .map(cat => ({ name: cat, features: grouped[cat] }))
+      .concat(
+        // Add any categories not in the predefined order
+        Object.keys(grouped)
+          .filter(cat => !CATEGORY_ORDER.includes(cat))
+          .map(cat => ({ name: cat, features: grouped[cat] }))
+      );
   };
 
-  const featureCategories = generateFeatureCategories();
+  // Group limits by category
+  const limitsByCategory = () => {
+    const grouped: Record<string, LimitDefinition[]> = {};
+    limitDefinitions.forEach(l => {
+      const cat = l.category || 'Other';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(l);
+    });
+
+    return CATEGORY_ORDER
+      .filter(cat => grouped[cat]?.length > 0)
+      .map(cat => ({ name: cat, limits: grouped[cat].sort((a, b) => a.displayOrder - b.displayOrder) }))
+      .concat(
+        Object.keys(grouped)
+          .filter(cat => !CATEGORY_ORDER.includes(cat))
+          .map(cat => ({ name: cat, limits: grouped[cat] }))
+      );
+  };
 
   if (loading) {
     return (
@@ -454,22 +411,57 @@ const AdminPlanEdit = () => {
               Leave empty or set to 0 for unlimited. These limits control what churches can create.
             </p>
 
-            <div className="grid grid-cols-2 gap-6">
-              {Object.keys(limits).map((key) => (
-                <div key={key}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </label>
-                  <input
-                    type="number"
-                    value={limits[key as keyof PlanLimits] ?? ''}
-                    onChange={(e) => handleLimitChange(key as keyof PlanLimits, e.target.value)}
-                    placeholder="Unlimited"
-                    className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+            {limitDefinitions.length > 0 ? (
+              limitsByCategory().map(category => (
+                <div key={category.name}>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                    {category.name}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    {category.limits.map(limitDef => (
+                      <div key={limitDef.key}>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          {limitDef.name}
+                          {limitDef.unit && limitDef.unit !== 'count' && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                              ({limitDef.unit})
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="number"
+                          value={limitValues[limitDef.key] ?? ''}
+                          onChange={(e) => handleLimitChange(limitDef.key, e.target.value)}
+                          placeholder="Unlimited"
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                        {limitDef.description && (
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{limitDef.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              // Fallback to legacy limits if no limit definitions exist yet
+              <div className="grid grid-cols-2 gap-6">
+                {plan.limits && Object.keys(plan.limits).map((key) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </label>
+                    <input
+                      type="number"
+                      value={limitValues[key] ?? ''}
+                      onChange={(e) => handleLimitChange(key, e.target.value)}
+                      placeholder="Unlimited"
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="flex justify-end">
               <button
@@ -496,63 +488,97 @@ const AdminPlanEdit = () => {
         {/* Features Tab */}
         {activeTab === 'features' && (
           <div className="space-y-6">
-            {featureCategories.map((category) => (
-              <div key={category.name}>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                  {category.name}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {category.features.map((feature) => (
-                    <div
-                      key={feature.key}
-                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
-                    >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {feature.label}
-                      </span>
-
-                      <button
-                        onClick={() => handleFeatureToggle(feature.key)}
-                        className={`
-                          relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                          ${features[feature.key]
-                            ? 'bg-primary-600'
-                            : 'bg-gray-300 dark:bg-gray-600'
-                          }
-                        `}
-                      >
-                        <span
-                          className={`
-                            inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                            ${features[feature.key] ? 'translate-x-6' : 'translate-x-1'}
-                          `}
-                        />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+            {allFeatures.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 dark:text-gray-400 mb-3">
+                  No features defined yet. Create features from the Feature Management page first.
+                </p>
+                <button
+                  onClick={() => navigate('/admin/features')}
+                  className="text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Go to Feature Management
+                </button>
               </div>
-            ))}
+            ) : (
+              featuresByCategory().map((category) => (
+                <div key={category.name}>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                    {category.name}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {category.features.map((feature) => (
+                      <div
+                        key={feature.key}
+                        className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                          selectedFeatureKeys.includes(feature.key)
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0 mr-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                              {feature.name}
+                            </span>
+                            {feature.beta && (
+                              <span className="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-semibold bg-yellow-100 text-yellow-800 rounded">
+                                BETA
+                              </span>
+                            )}
+                          </div>
+                          {feature.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                              {feature.description}
+                            </p>
+                          )}
+                        </div>
 
-            <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={handleSaveFeatures}
-                disabled={saving}
-                className="inline-flex items-center px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-medium rounded-lg transition-colors"
-              >
-                {saving ? (
-                  <>
-                    <Loader className="w-5 h-5 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5 mr-2" />
-                    Save Features
-                  </>
-                )}
-              </button>
-            </div>
+                        <button
+                          onClick={() => handleFeatureToggle(feature.key)}
+                          className={`
+                            relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0
+                            ${selectedFeatureKeys.includes(feature.key)
+                              ? 'bg-primary-600'
+                              : 'bg-gray-300 dark:bg-gray-600'
+                            }
+                          `}
+                        >
+                          <span
+                            className={`
+                              inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                              ${selectedFeatureKeys.includes(feature.key) ? 'translate-x-6' : 'translate-x-1'}
+                            `}
+                          />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+
+            {allFeatures.length > 0 && (
+              <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={handleSaveFeatures}
+                  disabled={saving}
+                  className="inline-flex items-center px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-medium rounded-lg transition-colors"
+                >
+                  {saving ? (
+                    <>
+                      <Loader className="w-5 h-5 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5 mr-2" />
+                      Save Features
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

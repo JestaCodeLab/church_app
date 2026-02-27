@@ -814,7 +814,7 @@ const MerchantLayout = () => {
 
               {/* Branch Selector for church_admin and branch_admin */}
               {hasFeature('branchManagement' as any) && user?.role?.slug !== 'super_admin' && (
-                <BranchSelector className="hidden sm:block" />
+                <BranchSelector className="hidden sm:inline-flex" />
               )}
 
               {/* Search Bar */}

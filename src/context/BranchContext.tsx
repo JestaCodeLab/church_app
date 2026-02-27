@@ -35,12 +35,13 @@ export const BranchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const userRoleSlug = user?.role?.slug;
   const isBranchAdmin = userRoleSlug === 'branch_admin';
 
-  // Derive the user's assigned branch from their member profile
-  const userBranch: Branch | null = user?.memberProfile?.branch
+  // Derive the user's assigned branch from their direct branch assignment or member profile
+  const branchSource = user?.branch || user?.memberProfile?.branch;
+  const userBranch: Branch | null = branchSource
     ? {
-        _id: user.memberProfile.branch._id,
-        name: user.memberProfile.branch.name,
-        code: user.memberProfile.branch.code,
+        _id: branchSource._id,
+        name: branchSource.name,
+        code: branchSource.code,
       }
     : null;
 
