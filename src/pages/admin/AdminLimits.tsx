@@ -9,8 +9,11 @@ interface LimitDefinition {
   name: string;
   description?: string;
   category: string;
+  valueType: 'numeric' | 'enum' | 'boolean';
   unit: string;
   defaultValue: number | null;
+  allowedValues?: string[];
+  defaultSelection?: string[];
   displayOrder: number;
   enabled: boolean;
 }
@@ -20,17 +23,26 @@ interface FormData {
   name: string;
   description: string;
   category: string;
+  valueType: 'numeric' | 'enum' | 'boolean';
   unit: string;
   defaultValue: string;
+  allowedValues: string;
+  defaultSelection: string;
   displayOrder: number;
 }
 
-const CATEGORIES = ['Core', 'Financial', 'Communication', 'Reporting', 'Attendance', 'Integration', 'Support', 'Customization', 'Advanced'];
+const CATEGORIES = ['Core', 'Financial', 'Communication','Socials', 'Reporting', 'Attendance', 'Integration', 'Support', 'Customization', 'Advanced'];
+const VALUE_TYPES = [
+  { value: 'numeric', label: 'Numeric' },
+  { value: 'enum', label: 'Enum (Select Options)' },
+  { value: 'boolean', label: 'Boolean (Yes/No)' }
+];
 const UNITS = [
   { value: 'count', label: 'Count' },
   { value: 'GB', label: 'GB (Storage)' },
   { value: 'per-month', label: 'Per Month' },
   { value: 'credits', label: 'Credits' },
+  { value: 'items', label: 'Items' }
 ];
 
 const AdminLimits = () => {
@@ -46,8 +58,11 @@ const AdminLimits = () => {
     name: '',
     description: '',
     category: 'Core',
+    valueType: 'numeric',
     unit: 'count',
     defaultValue: '',
+    allowedValues: '',
+    defaultSelection: '',
     displayOrder: 0
   });
 
@@ -74,8 +89,11 @@ const AdminLimits = () => {
       name: '',
       description: '',
       category: 'Core',
+      valueType: 'numeric',
       unit: 'count',
       defaultValue: '',
+      allowedValues: '',
+      defaultSelection: '',
       displayOrder: limits.length
     });
     setShowModal(true);
@@ -88,8 +106,11 @@ const AdminLimits = () => {
       name: limit.name,
       description: limit.description || '',
       category: limit.category,
+      valueType: limit.valueType || 'numeric',
       unit: limit.unit,
       defaultValue: limit.defaultValue !== null ? String(limit.defaultValue) : '',
+      allowedValues: limit.allowedValues?.join(', ') || '',
+      defaultSelection: limit.defaultSelection?.join(', ') || '',
       displayOrder: limit.displayOrder
     });
     setShowModal(true);
@@ -102,12 +123,45 @@ const AdminLimits = () => {
         return;
       }
 
+      // Validate enum limits
+      if (formData.valueType === 'enum' && !formData.allowedValues.trim()) {
+        showToast.error('Enum limits must have allowed values');
+        return;
+      }
+
       setSaving(true);
 
-      const payload = {
-        ...formData,
-        defaultValue: formData.defaultValue === '' ? null : parseInt(formData.defaultValue)
+      const payload: any = {
+        key: formData.key,
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        valueType: formData.valueType,
+        displayOrder: formData.displayOrder
       };
+
+      // Handle numeric vs enum fields
+      if (formData.valueType === 'numeric') {
+        payload.unit = formData.unit;
+        payload.defaultValue = formData.defaultValue === '' ? null : parseInt(formData.defaultValue);
+        payload.allowedValues = [];
+        payload.defaultSelection = [];
+      } else if (formData.valueType === 'enum') {
+        payload.unit = formData.unit;
+        payload.allowedValues = formData.allowedValues
+          .split(',')
+          .map((v: string) => v.trim())
+          .filter((v: string) => v.length > 0);
+        payload.defaultSelection = formData.defaultSelection
+          .split(',')
+          .map((v: string) => v.trim())
+          .filter((v: string) => v.length > 0);
+        payload.defaultValue = null;
+      } else if (formData.valueType === 'boolean') {
+        payload.unit = 'count';
+        payload.allowedValues = ['true', 'false'];
+        payload.defaultValue = null;
+      }
 
       if (editingLimit) {
         const { key, ...updateData } = payload;
@@ -356,6 +410,24 @@ const AdminLimits = () => {
                   </select>
                 </div>
 
+                {/* Value Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Value Type
+                  </label>
+                  <select
+                    value={formData.valueType}
+                    onChange={(e) => setFormData({ ...formData, valueType: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  >
+                    {VALUE_TYPES.map(vt => (
+                      <option key={vt.value} value={vt.value}>{vt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 {/* Unit */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -371,38 +443,72 @@ const AdminLimits = () => {
                     ))}
                   </select>
                 </div>
+
+                {/* Default Value (for numeric) */}
+                {formData.valueType === 'numeric' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Default Value
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.defaultValue}
+                      onChange={(e) => setFormData({ ...formData, defaultValue: e.target.value })}
+                      placeholder="Unlimited"
+                      min="0"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for unlimited</p>
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Default Value */}
+              {/* Allowed Values (for enum) */}
+              {formData.valueType === 'enum' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Default Value
+                    Allowed Values *
                   </label>
-                  <input
-                    type="number"
-                    value={formData.defaultValue}
-                    onChange={(e) => setFormData({ ...formData, defaultValue: e.target.value })}
-                    placeholder="Unlimited"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  <textarea
+                    value={formData.allowedValues}
+                    onChange={(e) => setFormData({ ...formData, allowedValues: e.target.value })}
+                    placeholder="e.g., facebook, whatsapp, instagram&#10;(comma-separated)"
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-mono text-sm"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for unlimited</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter comma-separated values</p>
                 </div>
+              )}
 
-                {/* Display Order */}
+              {/* Default Selection (for enum) */}
+              {formData.valueType === 'enum' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Display Order
+                    Default Selection
                   </label>
                   <input
-                    type="number"
-                    value={formData.displayOrder}
-                    onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })}
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    type="text"
+                    value={formData.defaultSelection}
+                    onChange={(e) => setFormData({ ...formData, defaultSelection: e.target.value })}
+                    placeholder="e.g., facebook, whatsapp"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-mono text-sm"
                   />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Which values should be selected by default?</p>
                 </div>
+              )}
+
+              <div>
+                {/* Display Order */}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Display Order
+                </label>
+                <input
+                  type="number"
+                  value={formData.displayOrder}
+                  onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })}
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                />
               </div>
             </div>
 

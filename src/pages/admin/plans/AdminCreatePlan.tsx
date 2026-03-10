@@ -18,9 +18,12 @@ interface LimitDefinition {
   key: string;
   name: string;
   category: string;
+  valueType: 'numeric' | 'enum' | 'boolean';
   unit: string;
   description?: string;
   displayOrder: number;
+  allowedValues?: string[];
+  defaultSelection?: string[];
 }
 
 const CATEGORY_ORDER = ['Core', 'Financial', 'Communication', 'Reporting', 'Attendance', 'Integration', 'Support', 'Customization', 'Advanced'];
@@ -51,7 +54,7 @@ const AdminCreatePlan = () => {
 
   // Dynamic limits
   const [limitDefinitions, setLimitDefinitions] = useState<LimitDefinition[]>([]);
-  const [limitValues, setLimitValues] = useState<Record<string, number | null>>({});
+  const [limitValues, setLimitValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
     fetchData();
@@ -70,10 +73,14 @@ const AdminCreatePlan = () => {
 
       const limits = limitsRes.data?.data?.limits || [];
       setLimitDefinitions(limits);
-      // Initialize all limits to null (unlimited)
-      const initialLimits: Record<string, number | null> = {};
+      // Initialize all limits (null for numeric, empty array for enum)
+      const initialLimits: Record<string, any> = {};
       limits.forEach((def: LimitDefinition) => {
-        initialLimits[def.key] = null;
+        if (def.valueType === 'enum') {
+          initialLimits[def.key] = def.defaultSelection || [];
+        } else {
+          initialLimits[def.key] = null;
+        }
       });
       setLimitValues(initialLimits);
     } catch (error) {
@@ -90,10 +97,10 @@ const AdminCreatePlan = () => {
     setSlug(autoSlug);
   };
 
-  const handleLimitChange = (key: string, value: string) => {
+  const handleLimitChange = (key: string, value: string | string[] | number | null) => {
     setLimitValues(prev => ({
       ...prev,
-      [key]: value === '' ? null : parseInt(value)
+      [key]: value
     }));
   };
 
@@ -476,16 +483,45 @@ const AdminCreatePlan = () => {
                             </span>
                           )}
                         </label>
-                        <input
-                          type="number"
-                          value={limitValues[limitDef.key] ?? ''}
-                          onChange={(e) => handleLimitChange(limitDef.key, e.target.value)}
-                          placeholder="Unlimited"
-                          min="0"
-                          className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        />
+
+                        {/* Numeric Limit Input */}
+                        {limitDef.valueType === 'numeric' && (
+                          <input
+                            type="number"
+                            value={limitValues[limitDef.key] ?? ''}
+                            onChange={(e) => handleLimitChange(limitDef.key, e.target.value === '' ? null : parseInt(e.target.value))}
+                            placeholder="Unlimited"
+                            min="0"
+                            className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          />
+                        )}
+
+                        {/* Enum Checkboxes */}
+                        {limitDef.valueType === 'enum' && limitDef.allowedValues && (
+                          <div className="space-y-2">
+                            {limitDef.allowedValues.map(value => (
+                              <label key={value} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={(limitValues[limitDef.key] || []).includes(value)}
+                                  onChange={(e) => {
+                                    const currentValues = limitValues[limitDef.key] || [];
+                                    if (e.target.checked) {
+                                      handleLimitChange(limitDef.key, [...currentValues, value]);
+                                    } else {
+                                      handleLimitChange(limitDef.key, currentValues.filter((v: string) => v !== value));
+                                    }
+                                  }}
+                                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{value}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+
                         {limitDef.description && (
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{limitDef.description}</p>
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{limitDef.description}</p>
                         )}
                       </div>
                     ))}

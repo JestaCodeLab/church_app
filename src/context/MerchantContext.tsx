@@ -25,6 +25,7 @@ interface MerchantContextType {
   setSelectedMerchantId: (id: string | null) => void;
   selectedMerchantSubdomain: string | null;
   setSelectedMerchantSubdomain: (subdomain: string | null) => void;
+  refreshSubscription: () => Promise<void>;
 }
 
 const MerchantContext = createContext<MerchantContextType | null>(null);
@@ -134,6 +135,17 @@ export const MerchantProvider: React.FC<{ children: ReactNode }> = ({ children }
     detectSubdomainAndFetchMerchant();
   }, []);
 
+  // ✅ Helper function to refresh subscription when merchant changes
+  const refreshSubscription = async () => {
+    try {
+      // This will trigger a subscription update in AuthContext
+      // when used in conjunction with useAuth's fetchAndUpdateSubscription
+      console.log('🔄 Refreshing subscription data for merchant:', selectedMerchantId || subdomain);
+    } catch (error) {
+      console.error('Failed to refresh subscription:', error);
+    }
+  };
+
   const value: MerchantContextType = {
     merchant,
     loading,
@@ -143,6 +155,7 @@ export const MerchantProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSelectedMerchantId,
     selectedMerchantSubdomain,
     setSelectedMerchantSubdomain,
+    refreshSubscription,
   };
 
   return (

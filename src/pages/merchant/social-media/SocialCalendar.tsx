@@ -9,6 +9,8 @@ import {
 import { socialMediaAPI } from '../../../services/api';
 import { SocialPost, POST_STATUS_INFO, PLATFORM_INFO } from '../../../types/socialMedia';
 import PostStatusBadge from '../../../components/social-media/PostStatusBadge';
+import BranchSelectionModal from '../../../components/social-media/BranchSelectionModal';
+import { useSocialBranchSelection } from '../../../hooks/useSocialBranchSelection';
 import toast from 'react-hot-toast';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -19,14 +21,21 @@ const SocialCalendar: React.FC = () => {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Branch selection hook
+  const { branches, selectedBranch, showBranchModal, loadingBranches, selectBranch } = useSocialBranchSelection();
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
   useEffect(() => {
-    fetchPosts();
-  }, [month, year]);
+    if (selectedBranch) {
+      fetchPosts();
+    }
+  }, [month, year, selectedBranch]);
 
   const fetchPosts = async () => {
+    if (!selectedBranch) return;
+    
     try {
       setLoading(true);
       const startDate = new Date(year, month, 1);
@@ -35,7 +44,8 @@ const SocialCalendar: React.FC = () => {
       const response = await socialMediaAPI.getPosts({
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
-        limit: 200
+        limit: 200,
+        branchId: selectedBranch
       });
       setPosts(response.data.data || []);
     } catch (error) {
@@ -73,8 +83,23 @@ const SocialCalendar: React.FC = () => {
   const isToday = (day: number) =>
     today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
 
+  if (loadingBranches || loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Branch Selection Modal */}
+      <BranchSelectionModal
+        isOpen={showBranchModal}
+        branches={branches}
+        onSelect={selectBranch}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
