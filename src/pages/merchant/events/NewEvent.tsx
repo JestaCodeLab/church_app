@@ -339,7 +339,7 @@ const NewEvent: React.FC = () => {
     e.preventDefault();
     
     if (!validateForm()) {
-      showToast.error('Please fill in all required fieldszzz');
+      showToast.error('Please fill in all required fields');
       return;
     }
     
@@ -633,6 +633,7 @@ const NewEvent: React.FC = () => {
                           <input
                             type="date"
                             value={formData.recurrence?.startDate || ''}
+                            min={new Date().toISOString().split('T')[0]}
                             onChange={(e) => setFormData(prev => ({
                               ...prev,
                               recurrence: { ...prev.recurrence!, startDate: e.target.value }
@@ -709,6 +710,7 @@ const NewEvent: React.FC = () => {
                         <option value="service">Service</option>
                         <option value="meeting">Meeting</option>
                         <option value="conference">Conference</option>
+                        <option value="seminar">Seminar</option>
                         <option value="workshop">Workshop</option>
                         <option value="social">Social Event</option>
                         <option value="outreach">Outreach</option>
@@ -750,6 +752,7 @@ const NewEvent: React.FC = () => {
                           type="date"
                           name="eventDate"
                           value={formData.eventDate}
+                          min={new Date().toISOString().split('T')[0]}
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         />
