@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { RRule } from 'rrule';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, Calendar, Clock, MapPin, Users, 
@@ -38,14 +39,45 @@ interface FormData {
   // Recurring event support
   isRecurring: boolean;
   recurrence?: {
-    frequency: 'daily' | 'weekly' | 'monthly';
+    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
     daysOfWeek: number[];
     baseTime: string;
     baseEndTime?: string;
     startDate: string;
     endDate: string;
+    rruleString?: string;
+    monthlyType?: 'date' | 'relative';
+    monthlyOrdinal?: number;   // 1=first, 2=second, 3=third, 4=fourth, -1=last
+    monthlyWeekday?: number;   // 0=Sun … 6=Sat
+    yearlyMonth?: number;      // 1–12
+    yearlyDay?: number;        // 1–31
   };
   allowSelfCheckin?: boolean;
+}
+
+type RecurrenceData = NonNullable<FormData['recurrence']>;
+
+function buildRRuleString(r: RecurrenceData): string {
+  if (!r.startDate) throw new Error('startDate required');
+  const dtstart = new Date(r.startDate + 'T00:00:00Z');
+  const WD = [RRule.SU, RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR, RRule.SA];
+
+  if (r.frequency === 'daily')
+    return new RRule({ freq: RRule.DAILY, dtstart }).toString();
+
+  if (r.frequency === 'weekly')
+    return new RRule({ freq: RRule.WEEKLY, byweekday: r.daysOfWeek.map(d => WD[d]), dtstart }).toString();
+
+  if (r.frequency === 'monthly') {
+    if (r.monthlyType === 'relative' && r.monthlyWeekday != null && r.monthlyOrdinal != null)
+      return new RRule({ freq: RRule.MONTHLY, byweekday: WD[r.monthlyWeekday].nth(r.monthlyOrdinal), dtstart }).toString();
+    return new RRule({ freq: RRule.MONTHLY, bymonthday: r.daysOfWeek[0] || 1, dtstart }).toString();
+  }
+
+  if (r.frequency === 'yearly' && r.yearlyMonth != null && r.yearlyDay != null)
+    return new RRule({ freq: RRule.YEARLY, bymonth: r.yearlyMonth, bymonthday: r.yearlyDay, dtstart }).toString();
+
+  throw new Error('Incomplete recurrence data for buildRRuleString');
 }
 
 const NewEvent: React.FC = () => {
@@ -153,14 +185,42 @@ const NewEvent: React.FC = () => {
           isPublic: event.isPublic !== false,
           status: event.status || 'draft',
           isRecurring: event.isRecurring || false,
-          recurrence: event.isRecurring && event.recurrence ? {
-            frequency: event.recurrence.frequency || 'weekly',
-            daysOfWeek: event.recurrence.daysOfWeek || [0],
-            baseTime: event.recurrence.baseTime || '09:00',
-            baseEndTime: event.recurrence.baseEndTime || '',
-            startDate: event.recurrence.startDate ? event.recurrence.startDate.split('T')[0] : '',
-            endDate: event.recurrence.endDate ? event.recurrence.endDate.split('T')[0] : ''
-          } : {
+          recurrence: event.isRecurring && event.recurrence ? (() => {
+            const r = event.recurrence;
+            const base = {
+              frequency: r.frequency || 'weekly',
+              daysOfWeek: r.daysOfWeek || [0],
+              baseTime: r.baseTime || '09:00',
+              baseEndTime: r.baseEndTime || '',
+              startDate: r.startDate ? r.startDate.split('T')[0] : '',
+              endDate: r.endDate ? r.endDate.split('T')[0] : '',
+              rruleString: r.rruleString || '',
+              monthlyType: 'date' as 'date' | 'relative',
+              monthlyOrdinal: undefined as number | undefined,
+              monthlyWeekday: undefined as number | undefined,
+              yearlyMonth: undefined as number | undefined,
+              yearlyDay: undefined as number | undefined,
+            };
+            if (r.rruleString) {
+              try {
+                const rule = RRule.fromString(r.rruleString);
+                const opts = rule.origOptions;
+                if (r.frequency === 'monthly' && opts.byweekday) {
+                  const wd = Array.isArray(opts.byweekday) ? opts.byweekday[0] : opts.byweekday;
+                  base.monthlyType = 'relative';
+                  base.monthlyOrdinal = (wd as any).n;
+                  base.monthlyWeekday = (wd as any).weekday;
+                } else if (r.frequency === 'monthly' && opts.bymonthday) {
+                  base.monthlyType = 'date';
+                  base.daysOfWeek = [Array.isArray(opts.bymonthday) ? opts.bymonthday[0] : opts.bymonthday];
+                } else if (r.frequency === 'yearly') {
+                  base.yearlyMonth = Array.isArray(opts.bymonth) ? opts.bymonth[0] : opts.bymonth as number;
+                  base.yearlyDay = Array.isArray(opts.bymonthday) ? opts.bymonthday[0] : opts.bymonthday as number;
+                }
+              } catch {}
+            }
+            return base;
+          })() : {
             frequency: 'weekly',
             daysOfWeek: [0],
             baseTime: '09:00',
@@ -320,8 +380,20 @@ const NewEvent: React.FC = () => {
     if (formData.isRecurring) {
       if (!formData.recurrence?.baseTime) newErrors['recurrence.baseTime'] = 'Base time is required';
       if (!formData.recurrence?.startDate) newErrors['recurrence.startDate'] = 'Start date is required';
-      if (!formData.recurrence?.daysOfWeek || formData.recurrence.daysOfWeek.length === 0) {
+      const freq = formData.recurrence?.frequency;
+      if (freq === 'weekly' && (!formData.recurrence?.daysOfWeek || formData.recurrence.daysOfWeek.length === 0)) {
         newErrors['recurrence.daysOfWeek'] = 'Select at least one day';
+      }
+      if (freq === 'monthly' && formData.recurrence?.monthlyType === 'relative') {
+        if (formData.recurrence.monthlyOrdinal == null) newErrors['recurrence.monthlyOrdinal'] = 'Select an ordinal (first, second…)';
+        if (formData.recurrence.monthlyWeekday == null) newErrors['recurrence.monthlyWeekday'] = 'Select a weekday';
+      }
+      if (freq === 'monthly' && formData.recurrence?.monthlyType === 'date') {
+        if (!formData.recurrence.daysOfWeek[0]) newErrors['recurrence.daysOfWeek'] = 'Enter a day of month';
+      }
+      if (freq === 'yearly') {
+        if (formData.recurrence?.yearlyMonth == null) newErrors['recurrence.yearlyMonth'] = 'Select a month';
+        if (formData.recurrence?.yearlyDay == null) newErrors['recurrence.yearlyDay'] = 'Enter a day';
       }
     } else {
       if (!formData.eventDate) newErrors.eventDate = 'Event date is required';
@@ -377,7 +449,13 @@ const NewEvent: React.FC = () => {
       // Add recurring event data
       submitData.append('isRecurring', String(formData.isRecurring));
       if (formData.isRecurring && formData.recurrence) {
-        submitData.append('recurrence', JSON.stringify(formData.recurrence));
+        let recurrenceToSend = formData.recurrence;
+        try {
+          recurrenceToSend = { ...formData.recurrence, rruleString: buildRRuleString(formData.recurrence) };
+        } catch (e) {
+          // If buildRRuleString fails (incomplete data), send without rruleString
+        }
+        submitData.append('recurrence', JSON.stringify(recurrenceToSend));
       }
       
       // Add self check-in setting
@@ -549,13 +627,14 @@ const NewEvent: React.FC = () => {
                             value={formData.recurrence?.frequency || 'weekly'}
                             onChange={(e) => setFormData(prev => ({
                               ...prev,
-                              recurrence: { ...prev.recurrence!, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' }
+                              recurrence: { ...prev.recurrence!, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly', monthlyType: 'date' }
                             }))}
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           >
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
                             <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
                           </select>
                         </div>
 
@@ -589,6 +668,117 @@ const NewEvent: React.FC = () => {
                                   {day}
                                 </button>
                               ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Monthly options */}
+                        {formData.recurrence?.frequency === 'monthly' && (
+                          <div className="space-y-3">
+                            <select
+                              value={formData.recurrence?.monthlyType || 'date'}
+                              onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                recurrence: { ...prev.recurrence!, monthlyType: e.target.value as 'date' | 'relative' }
+                              }))}
+                              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            >
+                              <option value="date">On a specific date (e.g. the 15th)</option>
+                              <option value="relative">On a relative day (e.g. first Tuesday)</option>
+                            </select>
+
+                            {(formData.recurrence?.monthlyType === 'date' || !formData.recurrence?.monthlyType) && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day of month</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={31}
+                                  placeholder="1–31"
+                                  value={formData.recurrence?.daysOfWeek[0] ?? ''}
+                                  onChange={(e) => setFormData(prev => ({
+                                    ...prev,
+                                    recurrence: { ...prev.recurrence!, daysOfWeek: [parseInt(e.target.value) || 1] }
+                                  }))}
+                                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                />
+                              </div>
+                            )}
+
+                            {formData.recurrence?.monthlyType === 'relative' && (
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Which</label>
+                                  <select
+                                    value={formData.recurrence?.monthlyOrdinal ?? ''}
+                                    onChange={(e) => setFormData(prev => ({
+                                      ...prev,
+                                      recurrence: { ...prev.recurrence!, monthlyOrdinal: parseInt(e.target.value) }
+                                    }))}
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                  >
+                                    <option value="">Select…</option>
+                                    <option value="1">First</option>
+                                    <option value="2">Second</option>
+                                    <option value="3">Third</option>
+                                    <option value="4">Fourth</option>
+                                    <option value="-1">Last</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weekday</label>
+                                  <select
+                                    value={formData.recurrence?.monthlyWeekday ?? ''}
+                                    onChange={(e) => setFormData(prev => ({
+                                      ...prev,
+                                      recurrence: { ...prev.recurrence!, monthlyWeekday: parseInt(e.target.value) }
+                                    }))}
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                  >
+                                    <option value="">Select…</option>
+                                    {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d, i) => (
+                                      <option key={i} value={i}>{d}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Yearly options */}
+                        {formData.recurrence?.frequency === 'yearly' && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month</label>
+                              <select
+                                value={formData.recurrence?.yearlyMonth ?? ''}
+                                onChange={(e) => setFormData(prev => ({
+                                  ...prev,
+                                  recurrence: { ...prev.recurrence!, yearlyMonth: parseInt(e.target.value) }
+                                }))}
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              >
+                                <option value="">Select…</option>
+                                {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                                  <option key={i} value={i + 1}>{m}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day</label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={31}
+                                placeholder="1–31"
+                                value={formData.recurrence?.yearlyDay ?? ''}
+                                onChange={(e) => setFormData(prev => ({
+                                  ...prev,
+                                  recurrence: { ...prev.recurrence!, yearlyDay: parseInt(e.target.value) }
+                                }))}
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              />
                             </div>
                           </div>
                         )}
@@ -676,21 +866,24 @@ const NewEvent: React.FC = () => {
                         </div>
 
                         {/* Recurrence Pattern Display */}
-                        <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Pattern: {formData.recurrence?.frequency === 'weekly'
-                              ? `Every ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                                  .filter((_, i) => (formData.recurrence?.daysOfWeek || []).includes(i))
-                                  .join(', ')} at ${formData.recurrence?.baseTime || '09:00'}${formData.recurrence?.baseEndTime ? ` - ${formData.recurrence.baseEndTime}` : ''}`
-                              : `${formData.recurrence?.frequency === 'daily' ? 'Daily' : 'Monthly'} at ${formData.recurrence?.baseTime || '09:00'}${formData.recurrence?.baseEndTime ? ` - ${formData.recurrence.baseEndTime}` : ''}`
-                            }
-                          </p>
-                          {formData.recurrence?.startDate && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              Starting {new Date(formData.recurrence.startDate).toLocaleDateString()} {formData.recurrence?.endDate ? `until ${new Date(formData.recurrence.endDate).toLocaleDateString()}` : '(ongoing)'}
-                            </p>
-                          )}
-                        </div>
+                        {formData.recurrence?.startDate && (() => {
+                          let patternText = '';
+                          try { patternText = RRule.fromString(buildRRuleString(formData.recurrence!)).toText(); } catch {}
+                          return (
+                            <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                              {patternText && (
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Pattern: <span className="capitalize">{patternText}</span>
+                                  {formData.recurrence?.baseTime ? ` at ${formData.recurrence.baseTime}` : ''}
+                                  {formData.recurrence?.baseEndTime ? ` – ${formData.recurrence.baseEndTime}` : ''}
+                                </p>
+                              )}
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Starting {new Date(formData.recurrence!.startDate).toLocaleDateString()}{formData.recurrence?.endDate ? ` until ${new Date(formData.recurrence.endDate).toLocaleDateString()}` : ' (ongoing)'}
+                              </p>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

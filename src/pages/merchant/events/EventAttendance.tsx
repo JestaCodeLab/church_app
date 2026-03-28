@@ -11,7 +11,9 @@ import {
   RefreshCw,
   ArrowUpCircle,
   MoreVertical,
-  Mail
+  Mail,
+  UserPlus,
+  X
 } from 'lucide-react';
 import { eventAPI, branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -51,12 +53,26 @@ const EventAttendance = () => {
   const [pendingCheckInAbsentee, setPendingCheckInAbsentee] = useState<any>(null);
   const [stats, setStats] = useState({ total: 0, members: 0, guests: 0, absentees: 0 });
 
+  // Manual check-in modal
+  const [showManualCheckInModal, setShowManualCheckInModal] = useState(false);
+  const [checkInTab, setCheckInTab] = useState<'member' | 'guest'>('member');
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberSearchResults, setMemberSearchResults] = useState<any[]>([]);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [memberSearchLoading, setMemberSearchLoading] = useState(false);
+  const [guestData, setGuestData] = useState({ firstName: '', lastName: '', phone: '', email: '' });
+  const [submittingCheckIn, setSubmittingCheckIn] = useState(false);
+
+  // Date range filter
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   useEffect(() => {
     if (id) {
       fetchEventDetails();
       fetchAttendance();
     }
-  }, [id, activeTab, currentPage]);
+  }, [id, activeTab, currentPage, startDate, endDate]);
 
   useEffect(() => {
     if (event && id) {
@@ -121,15 +137,19 @@ const EventAttendance = () => {
       let response;
       if (isRecurring && selectedInstanceId) {
         // Fetch attendance for selected instance of recurring event
-        response = await eventAPI.getAttendance(selectedInstanceId, {
+        response = await eventAPI.getAttendance(id!, {
           page: currentPage,
-          limit: 20
+          limit: 20,
+          ...(startDate ? { startDate } : {}),
+          ...(endDate ? { endDate } : {})
         });
       } else {
         // One-time event or all instances
         response = await eventAPI.getAttendance(id!, {
           page: currentPage,
-          limit: 20
+          limit: 20,
+          ...(startDate ? { startDate } : {}),
+          ...(endDate ? { endDate } : {})
         });
       }
       setAttendance(response.data.data.attendance);
@@ -291,6 +311,88 @@ const EventAttendance = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await eventAPI.exportAttendance(id!, startDate || undefined, endDate || undefined);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `attendance-${event?.title?.replace(/\s+/g, '-') || id}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      showToast.success('Attendance exported successfully');
+    } catch (error) {
+      showToast.error('Failed to export attendance');
+    }
+  };
+
+  const handleMemberSearch = async (query: string) => {
+    setMemberSearch(query);
+    setSelectedMember(null);
+    if (!query.trim() || query.length < 2) {
+      setMemberSearchResults([]);
+      return;
+    }
+    setMemberSearchLoading(true);
+    try {
+      const response = await memberAPI.getMembers({ search: query, limit: 10, status: 'active' });
+      setMemberSearchResults(response.data.data.members || []);
+    } catch {
+      setMemberSearchResults([]);
+    } finally {
+      setMemberSearchLoading(false);
+    }
+  };
+
+  const resetCheckInModal = () => {
+    setCheckInTab('member');
+    setMemberSearch('');
+    setMemberSearchResults([]);
+    setSelectedMember(null);
+    setGuestData({ firstName: '', lastName: '', phone: '', email: '' });
+  };
+
+  const handleManualCheckIn = async () => {
+    setSubmittingCheckIn(true);
+    try {
+      if (checkInTab === 'member') {
+        if (!selectedMember) {
+          showToast.error('Please select a member');
+          setSubmittingCheckIn(false);
+          return;
+        }
+        await eventAPI.checkInAttendance(id!, {
+          attendeeType: 'member',
+          memberId: selectedMember._id,
+          checkInMethod: 'manual'
+        });
+        showToast.success(`${selectedMember.firstName} ${selectedMember.lastName} checked in`);
+      } else {
+        if (!guestData.phone) {
+          showToast.error('Guest phone number is required');
+          setSubmittingCheckIn(false);
+          return;
+        }
+        await eventAPI.checkInAttendance(id!, {
+          attendeeType: 'guest',
+          guest: guestData,
+          checkInMethod: 'manual'
+        });
+        showToast.success('Guest checked in successfully');
+      }
+      setShowManualCheckInModal(false);
+      resetCheckInModal();
+      await fetchAttendance();
+      await fetchAbsentees();
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Check-in failed');
+    } finally {
+      setSubmittingCheckIn(false);
+    }
+  };
+
   const formatCheckInTime = (timestamp: string) => {
     return format(new Date(timestamp), 'MMM dd, yyyy HH:mm');
   };
@@ -354,11 +456,18 @@ const EventAttendance = () => {
                 <RefreshCw className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
               <button
-                onClick={() => {/* Export to CSV */}}
+                onClick={handleExport}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Export"
               >
                 <Download className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </button>
+              <button
+                onClick={() => setShowManualCheckInModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <UserPlus className="w-4 h-4" />
+                Check In
               </button>
             </div>
           </div>
@@ -420,8 +529,8 @@ const EventAttendance = () => {
         {/* Search and Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6">
           {/* Search Bar */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="relative">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+            <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
@@ -430,6 +539,34 @@ const EventAttendance = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all"
               />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                type="date"
+                value={startDate}
+                max={endDate || undefined}
+                onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+                className="px-3 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                title="From date"
+              />
+              <span className="text-gray-400 dark:text-gray-500 text-sm">–</span>
+              <input
+                type="date"
+                value={endDate}
+                min={startDate || undefined}
+                onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+                className="px-3 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                title="To date"
+              />
+              {(startDate || endDate) && (
+                <button
+                  onClick={() => { setStartDate(''); setEndDate(''); setCurrentPage(1); }}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Clear date filter"
+                >
+                  <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -750,6 +887,181 @@ const EventAttendance = () => {
                   </>
                 ) : (
                   'Convert'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Check-In Modal */}
+      {showManualCheckInModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Check In Attendee</h3>
+              <button
+                onClick={() => { setShowManualCheckInModal(false); resetCheckInModal(); }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border border-gray-200 dark:border-gray-700 rounded-lg mb-5 overflow-hidden">
+              <button
+                onClick={() => setCheckInTab('member')}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  checkInTab === 'member'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Member
+              </button>
+              <button
+                onClick={() => setCheckInTab('guest')}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  checkInTab === 'guest'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Guest
+              </button>
+            </div>
+
+            {/* Member Tab */}
+            {checkInTab === 'member' && (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or phone..."
+                    value={memberSearch}
+                    onChange={(e) => handleMemberSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  {memberSearchLoading && (
+                    <Loader className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+                  )}
+                </div>
+
+                {/* Search Results */}
+                {memberSearchResults.length > 0 && !selectedMember && (
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                    {memberSearchResults.map((m) => (
+                      <button
+                        key={m._id}
+                        onClick={() => { setSelectedMember(m); setMemberSearchResults([]); }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors"
+                      >
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {m.firstName} {m.lastName}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{m.phone}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Selected Member */}
+                {selectedMember && (
+                  <div className="flex items-center justify-between px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-primary-900 dark:text-primary-100">
+                        {selectedMember.firstName} {selectedMember.lastName}
+                      </p>
+                      <p className="text-xs text-primary-700 dark:text-primary-400">{selectedMember.phone}</p>
+                    </div>
+                    <button
+                      onClick={() => { setSelectedMember(null); setMemberSearch(''); }}
+                      className="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-200"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {memberSearch.length >= 2 && memberSearchResults.length === 0 && !memberSearchLoading && !selectedMember && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">No members found</p>
+                )}
+              </div>
+            )}
+
+            {/* Guest Tab */}
+            {checkInTab === 'guest' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
+                    <input
+                      type="text"
+                      placeholder="First name"
+                      value={guestData.firstName}
+                      onChange={(e) => setGuestData({ ...guestData, firstName: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      placeholder="Last name"
+                      value={guestData.lastName}
+                      onChange={(e) => setGuestData({ ...guestData, lastName: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Phone <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+233..."
+                    value={guestData.phone}
+                    onChange={(e) => setGuestData({ ...guestData, phone: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                  <input
+                    type="email"
+                    placeholder="email@example.com"
+                    value={guestData.email}
+                    onChange={(e) => setGuestData({ ...guestData, email: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => { setShowManualCheckInModal(false); resetCheckInModal(); }}
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition-colors text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleManualCheckIn}
+                disabled={submittingCheckIn}
+                className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2"
+              >
+                {submittingCheckIn ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Checking in...
+                  </>
+                ) : (
+                  'Check In'
                 )}
               </button>
             </div>
