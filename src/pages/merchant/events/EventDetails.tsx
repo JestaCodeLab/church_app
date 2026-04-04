@@ -246,7 +246,7 @@ const EventDetails: React.FC = () => {
 
   const getCheckInUrl = () => {
     if (event.isRecurring) {
-      return `${window.location.origin}/events/attend/${event._id}`;
+      return `${window.location.origin}/attend/${event._id}`;
     } else {
       return `${window.location.origin}/events/attend/${event.qrCode?.data}`;
     }

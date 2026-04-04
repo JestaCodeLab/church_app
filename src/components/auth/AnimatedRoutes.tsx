@@ -179,6 +179,9 @@ const AnimatedRoutes = () => {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Recurring event direct URL */}
+          <Route path="/attend/:eventId" element={<EventCheckIn />} />
+          {/* QR code URL patterns */}
           <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
           <Route path="/events/attend/:eventId" element={<EventCheckIn />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
