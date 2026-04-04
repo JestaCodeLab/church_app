@@ -15,7 +15,7 @@ const EventCheckIn = () => {
   // Otherwise, it's new system (recurring event with just ObjectId)
   const paramValue = eventId || qrData;
   const isNewSystem = paramValue ? !paramValue.includes('_qr_') : false;
-  
+
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
   // State
@@ -33,6 +33,10 @@ const EventCheckIn = () => {
     firstName: '', // For old system: guest first name
     lastName: '' // For old system: guest last name
   });
+
+  // After the event loads, refine: if the URL looks like new system but the event
+  // is actually non-recurring, fall back to the old system (name/phone form).
+  const useNewSystem = isNewSystem && (event?.isRecurring !== false);
 
   const fetchEvent = useCallback(async () => {
     try {
@@ -79,7 +83,7 @@ const EventCheckIn = () => {
     setError('');
 
     try {
-      if (isNewSystem) {
+      if (useNewSystem) {
         // New system: check-in with event code
         if (!formData.code.trim()) {
           toast.error('Please enter the event code');
@@ -261,7 +265,7 @@ const EventCheckIn = () => {
             >
               Done
             </button>
-            {isNewSystem && (
+            {useNewSystem && (
               <button
                 onClick={() => {
                   setSuccess(false);
@@ -355,7 +359,7 @@ const EventCheckIn = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {isNewSystem ? (
+              {useNewSystem ? (
                 // New System: Event Code Check-in
                 <>
                   {/* Event Code Field - Prominent */}
