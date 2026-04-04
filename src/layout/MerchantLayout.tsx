@@ -39,7 +39,9 @@ import {
   Link2,
   CalendarDays,
   PenSquare,
-  GitBranch
+  GitBranch,
+  MessageCircle,
+  Book
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -230,6 +232,9 @@ const MerchantLayout = () => {
   const handleSelectChurch = (church: any) => {
     setSelectedMerchantId(church._id);
     setSelectedMerchantSubdomain(church.subdomain);
+    
+    // ✅ Refresh subscription data when switching churches
+    fetchAndUpdateSubscription();
   };
 
   // ✅ Helper function to filter navigation based on features AND permissions
@@ -479,7 +484,7 @@ const MerchantLayout = () => {
         children: [
           {
             name: 'Dashboard',
-            href: '/social-media',
+            href: '/social-media/dashboard',
             icon: LayoutDashboard,
             requiresFeature: 'socialMedia',
             requiredPermissions: ['social_media.viewDashboard']
@@ -492,18 +497,18 @@ const MerchantLayout = () => {
             requiredPermissions: ['social_media.viewAccounts']
           },
           {
-            name: 'Calendar',
+            name: 'Planner',
             href: '/social-media/calendar',
             icon: CalendarDays,
             requiresFeature: 'socialMedia',
             requiredPermissions: ['social_media.viewCalendar']
           },
           {
-            name: 'Create Post',
-            href: '/social-media/create',
-            icon: PenSquare,
+            name: 'All Posts',
+            href: '/social-media/posts',
+            icon: FileText,
             requiresFeature: 'socialMedia',
-            requiredPermissions: ['social_media.createPost']
+            requiredPermissions: ['social_media.viewPosts']
           },
           {
             name: 'Templates',
@@ -518,7 +523,7 @@ const MerchantLayout = () => {
             icon: BarChart3,
             requiresFeature: 'socialMedia',
             requiredPermissions: ['social_media.viewAnalytics']
-          }
+          },
         ]
       }
     ];
@@ -757,6 +762,21 @@ const MerchantLayout = () => {
               </Link>
             )
           }
+          <Link
+            to="/documentation"
+            onClick={() => setSidebarOpen(false)}
+            className={`
+              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+              transition-all duration-200
+              ${isActive('/documentation')
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }
+            `}
+          >
+            <Book className="w-5 h-5 mr-3" />
+            Documentation
+          </Link>
           {
             (settingsPermission.hasPermission || settingsPermission.isSuperAdmin) && (
             <Link

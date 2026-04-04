@@ -775,12 +775,18 @@ export const messagingAPI = {
     getVariables: () => api.get('/sms/templates/variables'),
   },
 
-  // WhatsApp Methods (Coming Soon)
+  // WhatsApp Methods
   whatsapp: {
-    send: (data: any) => {
-      // TODO: Implement when WhatsApp is ready
-      throw new Error('WhatsApp messaging coming soon!');
-    },
+    initAuth: (branchId: string) => api.post('/social-media/whatsapp/auth/init', { branchId, platform: 'whatsapp' }),
+    getStatus: () => api.get('/social-media/whatsapp/status'),
+    getQRStreamUrl: () => `${API_BASE_URL}/social-media/whatsapp/auth/qr-stream`,
+    send: (data: { phoneNumber: string; message: string }) =>
+      api.post('/social-media/whatsapp/send', data),
+    sendMedia: (formData: FormData) =>
+      api.post('/social-media/whatsapp/send-media', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+    disconnect: () => api.post('/social-media/whatsapp/disconnect'),
   },
 
   // Balance
@@ -930,8 +936,8 @@ export const transactionAPI = {
 // Social Media API
 export const socialMediaAPI = {
   // OAuth / Accounts
-  initOAuth: (platform: string) => api.get(`/social-media/auth/${platform}`),
-  getAccounts: () => api.get('/social-media/accounts'),
+  initOAuth: (platform: string, options?: { branchId?: string }) => api.post(`/social-media/auth/${platform}/init`, options),
+  getAccounts: (params?: { branchId?: string }) => api.get('/social-media/accounts', { params }),
   getAccount: (id: string) => api.get(`/social-media/accounts/${id}`),
   refreshToken: (id: string) => api.post(`/social-media/accounts/${id}/refresh-token`),
   disconnectAccount: (id: string) => api.delete(`/social-media/accounts/${id}`),
@@ -959,7 +965,7 @@ export const socialMediaAPI = {
   // Analytics
   getAnalyticsOverview: (params?: any) => api.get('/social-media/analytics/overview', { params }),
   getEngagement: (params?: any) => api.get('/social-media/analytics/engagement', { params }),
-  getBestTimes: () => api.get('/social-media/analytics/best-times'),
+  getBestTimes: (params?: any) => api.get('/social-media/analytics/best-times', { params }),
   getGrowth: (params?: any) => api.get('/social-media/analytics/growth', { params }),
 
   // Settings

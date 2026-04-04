@@ -17,6 +17,8 @@ import {
 import { socialMediaAPI } from '../../../services/api';
 import { SocialPost, SocialAccount, POST_STATUS_INFO, PLATFORM_INFO } from '../../../types/socialMedia';
 import PostStatusBadge from '../../../components/social-media/PostStatusBadge';
+import BranchSelectionModal from '../../../components/social-media/BranchSelectionModal';
+import { useSocialBranchSelection } from '../../../hooks/useSocialBranchSelection';
 import toast from 'react-hot-toast';
 
 const SocialDashboard: React.FC = () => {
@@ -31,17 +33,24 @@ const SocialDashboard: React.FC = () => {
     totalEngagement: 0
   });
 
+  // Branch selection hook
+  const { branches, selectedBranch, showBranchModal, loadingBranches, selectBranch } = useSocialBranchSelection();
+
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (selectedBranch) {
+      fetchDashboardData();
+    }
+  }, [selectedBranch]);
 
   const fetchDashboardData = async () => {
+    if (!selectedBranch) return;
+    
     try {
       setLoading(true);
       const [accountsRes, postsRes, scheduledRes] = await Promise.all([
-        socialMediaAPI.getAccounts(),
-        socialMediaAPI.getPosts({ limit: 5, page: 1 }),
-        socialMediaAPI.getPosts({ status: 'scheduled', limit: 100 })
+        socialMediaAPI.getAccounts({ branchId: selectedBranch }),
+        socialMediaAPI.getPosts({ limit: 5, page: 1, branchId: selectedBranch }),
+        socialMediaAPI.getPosts({ status: 'scheduled', limit: 100, branchId: selectedBranch })
       ]);
 
       const accountsData = accountsRes.data.data || [];
@@ -111,7 +120,7 @@ const SocialDashboard: React.FC = () => {
     }
   ];
 
-  if (loading) {
+  if (loadingBranches) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
@@ -121,8 +130,24 @@ const SocialDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Branch Selection Modal */}
+      <BranchSelectionModal
+        isOpen={showBranchModal}
+        branches={branches}
+        onSelect={selectBranch}
+      />
+
+      {/* Loading state for data */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        </div>
+      )}
+
+      {!loading && (
+        <>
+          {/* Header */}
+          <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Social Media
@@ -350,6 +375,8 @@ const SocialDashboard: React.FC = () => {
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 };
