@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Heart, User, Phone, Mail, DollarSign, CheckCircle2, AlertCircle, Loader2, Check } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Heart, User, Phone, Mail, CheckCircle2, AlertCircle, Loader2, Check } from 'lucide-react';
 import { partnershipAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { formatCurrency } from '../../utils/currency';
@@ -50,7 +50,6 @@ interface Programme {
 
 const PublicPartnershipRegistration = () => {
   const { merchantId, programmeId } = useParams();
-  const navigate = useNavigate();
 
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,6 +64,7 @@ const PublicPartnershipRegistration = () => {
 
   useEffect(() => {
     loadProgramme();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchantId, programmeId]);
 
   // SEO Configuration - Updates when programme data changes
