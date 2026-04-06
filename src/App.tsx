@@ -8,53 +8,56 @@ import { MerchantProvider } from './context/MerchantContext';
 import { NetworkProvider } from './context/NetworkContext';
 import { BranchProvider } from './context/BranchContext';
 import OfflineBanner from './components/ui/OfflineBanner';
-
+import { Analytics } from "@vercel/analytics/react"
 
 const App = () => {
   return (
-    <NetworkProvider>
-      <OfflineBanner />
-      <MerchantProvider>
-        <ThemeProvider>
-          <LanguageProvider>
-            <AuthProvider>
-            <BranchProvider>
-              <Toaster
-                position="top-right"
-                reverseOrder={false}
-                gutter={8}
-                toastOptions={{
-                  // Default options
-                  duration: 4000,
-                  style: {
-                    background: '#363636',
-                    color: '#fff',
-                  },
-                  // Success
-                  success: {
+    <div>
+      <NetworkProvider>
+        <OfflineBanner />
+        <MerchantProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <AuthProvider>
+              <BranchProvider>
+                <Toaster
+                  position="top-right"
+                  reverseOrder={false}
+                  gutter={8}
+                  toastOptions={{
+                    // Default options
                     duration: 4000,
-                    iconTheme: {
-                      primary: '#10B981',
-                      secondary: '#fff',
+                    style: {
+                      background: '#363636',
+                      color: '#fff',
                     },
-                  },
-                  // Error
-                  error: {
-                    duration: 5000,
-                    iconTheme: {
-                      primary: '#EF4444',
-                      secondary: '#fff',
+                    // Success
+                    success: {
+                      duration: 4000,
+                      iconTheme: {
+                        primary: '#10B981',
+                        secondary: '#fff',
+                      },
                     },
-                  },
-                }}
-              />
-              <AnimatedRoutes />
-            </BranchProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </MerchantProvider>
-    </NetworkProvider>
+                    // Error
+                    error: {
+                      duration: 5000,
+                      iconTheme: {
+                        primary: '#EF4444',
+                        secondary: '#fff',
+                      },
+                    },
+                  }}
+                />
+                <AnimatedRoutes />
+              </BranchProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </ThemeProvider>
+        </MerchantProvider>
+      </NetworkProvider>
+      <Analytics />
+    </div>
   );
 }
 
