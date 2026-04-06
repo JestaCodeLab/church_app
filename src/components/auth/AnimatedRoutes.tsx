@@ -49,9 +49,11 @@ import AllEvents from '../../pages/merchant/events/AllEvents';
 import NewEvent from '../../pages/merchant/events/NewEvent';
 import EventDetails from '../../pages/merchant/events/EventDetails';
 import EventAttendance from '../../pages/merchant/events/EventAttendance';
+import EventRegistrations from '../../pages/merchant/events/EventRegistrations';
 import GuestManagement from '../../pages/merchant/events/GuestManagement';
 import EventCheckIn from '../../pages/public/EventCheckIn';
 import PublicRegistration from '../../pages/public/PublicRegistration';
+import EventRegistrationPage from '../../pages/public/EventRegistrationPage';
 import EventDonations from '../../pages/merchant/events/EventDonations';
 import AllDepartments from '../../pages/merchant/departments/AllDepartments';
 import DepartmentForm from '../../pages/merchant/departments/DepartmentForm';
@@ -184,6 +186,7 @@ const AnimatedRoutes = () => {
           {/* QR code URL patterns */}
           <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
           <Route path="/events/attend/:eventId" element={<EventCheckIn />} />
+          <Route path="/events/register/:eventId" element={<EventRegistrationPage />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
           <Route path="/donate/:uniqueId" element={<PublicEventDonation />} />
           <Route path="/donate/:uniqueId/status" element={<DonationStatus />} />
@@ -230,6 +233,7 @@ const AnimatedRoutes = () => {
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/events/:id/edit" element={<NewEvent />} />
             <Route path="/events/:id/attendance" element={<EventAttendance />} />
+            <Route path="/events/:id/registrations" element={<EventRegistrations />} />
             <Route path="/events/:id/donations" element={<EventDonations />} />
             <Route path="/events/guests" element={<GuestManagement />} />
 
