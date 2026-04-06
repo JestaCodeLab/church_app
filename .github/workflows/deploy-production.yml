@@ -1,4 +1,4 @@
-name: Deploy to Vercel Staging
+name: Deploy to Vercel Production - app.churchhq.com
 
 on:
   push:
@@ -28,5 +28,5 @@ jobs:
       - name: Build React app
         run: DISABLE_ESLINT_PLUGIN=true npm run build
 
-      - name: Deploy to Vercel Staging
+      - name: Deploy to Vercel
         run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
