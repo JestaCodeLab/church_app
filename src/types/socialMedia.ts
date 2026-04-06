@@ -1,4 +1,4 @@
-export type Platform = 'facebook' | 'instagram';
+export type Platform = 'facebook' | 'instagram' | 'whatsapp' | 'tiktok' | 'youtube' | 'telegram';
 export type PostStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'partially_published' | 'failed';
 export type PostType = 'text' | 'image' | 'carousel' | 'video' | 'reel' | 'story';
 export type AccountStatus = 'active' | 'token_expired' | 'disconnected' | 'error';
@@ -167,8 +167,12 @@ export interface SocialSettings {
 
 // Helper to get platform display info
 export const PLATFORM_INFO: Record<Platform, { name: string; color: string; bgColor: string }> = {
-  facebook: { name: 'Facebook', color: 'text-primary-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
+  facebook: { name: 'Facebook', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
   instagram: { name: 'Instagram', color: 'text-pink-600', bgColor: 'bg-pink-100 dark:bg-pink-900/30' },
+  whatsapp: { name: 'WhatsApp', color: 'text-green-600', bgColor: 'bg-green-100 dark:bg-green-900/30' },
+  tiktok: { name: 'TikTok', color: 'text-gray-900 dark:text-white', bgColor: 'bg-gray-100 dark:bg-gray-800' },
+  youtube: { name: 'YouTube', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' },
+  telegram: { name: 'Telegram', color: 'text-blue-500', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
 };
 
 export const POST_STATUS_INFO: Record<PostStatus, { label: string; color: string; bgColor: string }> = {

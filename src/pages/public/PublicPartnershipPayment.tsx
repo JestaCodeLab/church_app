@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Heart, User, Phone, Mail, Loader2, Check, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Heart, User, Phone, Loader2, Check, ArrowLeft, AlertCircle } from 'lucide-react';
 import { partnershipAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
 import { formatCurrency } from '../../utils/currency';
@@ -88,6 +88,7 @@ const PublicPartnershipPayment = () => {
       // Redirect to status page
       navigate(`/partnership/payment/${merchantId}/${programmeId}/status?reference=${reference}`);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchantId, programmeId, navigate]);
 
   // SEO Configuration - Updates when programme data changes
@@ -202,6 +203,7 @@ const PublicPartnershipPayment = () => {
     }, 300);
 
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberSearchQuery, selectedMember]);
 
   const handleSubmit = async (e: React.FormEvent) => {

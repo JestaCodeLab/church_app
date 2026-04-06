@@ -18,9 +18,12 @@ interface LimitDefinition {
   key: string;
   name: string;
   category: string;
+  valueType: 'numeric' | 'enum' | 'boolean';
   unit: string;
   description?: string;
   displayOrder: number;
+  allowedValues?: string[];
+  defaultSelection?: string[];
 }
 
 const AdminPlanEdit = () => {
@@ -44,7 +47,7 @@ const AdminPlanEdit = () => {
 
   // Dynamic limits
   const [limitDefinitions, setLimitDefinitions] = useState<LimitDefinition[]>([]);
-  const [limitValues, setLimitValues] = useState<Record<string, number | null>>({});
+  const [limitValues, setLimitValues] = useState<Record<string, any>>({});
 
   // Feature category ordering
   const CATEGORY_ORDER = ['Core', 'Financial', 'Communication', 'Reporting', 'Attendance', 'Integration', 'Support', 'Customization', 'Advanced'];
@@ -81,12 +84,27 @@ const AdminPlanEdit = () => {
       const limits = limitsRes.data?.data?.limits || [];
       setLimitDefinitions(limits);
       // Merge legacy limits and dynamicLimits for display
-      const mergedLimits: Record<string, number | null> = {};
+      const mergedLimits: Record<string, any> = {};
       limits.forEach((def: LimitDefinition) => {
         // Check dynamicLimits first, then legacy limits
         const dynamicValue = planData.dynamicLimits?.[def.key];
         const legacyValue = planData.limits?.[def.key];
-        mergedLimits[def.key] = dynamicValue !== undefined ? dynamicValue : (legacyValue ?? null);
+        const value = dynamicValue !== undefined ? dynamicValue : (legacyValue ?? null);
+        
+        // For enum types, ensure value is an array and clean it
+        if (def.valueType === 'enum' && value && !Array.isArray(value)) {
+          mergedLimits[def.key] = typeof value === 'string' ? [value] : [];
+        } else if (def.valueType === 'enum' && !value) {
+          mergedLimits[def.key] = [];
+        } else if (def.valueType === 'enum' && Array.isArray(value)) {
+          // ✅ Clean up array: remove duplicates and extra quotes
+          const cleanedArray = value
+            .map(v => String(v).replace(/^['"]|['"]$/g, '').trim()) // Remove quotes
+            .filter((v, index, self) => v && self.indexOf(v) === index); // Remove duplicates and empty
+          mergedLimits[def.key] = cleanedArray;
+        } else {
+          mergedLimits[def.key] = value;
+        }
       });
       setLimitValues(mergedLimits);
     } catch (error) {
@@ -119,7 +137,24 @@ const AdminPlanEdit = () => {
   const handleSaveLimits = async () => {
     try {
       setSaving(true);
-      await planAPI.updatePlanLimits(id!, limitValues);
+      
+      // ✅ Clean up limit values before saving
+      const cleanedLimits: Record<string, any> = {};
+      Object.keys(limitValues).forEach(key => {
+        const value = limitValues[key];
+        
+        // Handle arrays (enum types)
+        if (Array.isArray(value)) {
+          const cleanedArray = value
+            .map(v => String(v).replace(/^['"]|['"]$/g, '').trim()) // Remove quotes
+            .filter((v, index, self) => v && self.indexOf(v) === index); // Remove duplicates
+          cleanedLimits[key] = cleanedArray.length > 0 ? cleanedArray : [];
+        } else {
+          cleanedLimits[key] = value;
+        }
+      });
+      
+      await planAPI.updatePlanLimits(id!, cleanedLimits);
       showToast.success('Plan limits updated successfully');
       fetchData();
     } catch (error: any) {
@@ -143,10 +178,10 @@ const AdminPlanEdit = () => {
     }
   };
 
-  const handleLimitChange = (key: string, value: string) => {
+  const handleLimitChange = (key: string, value: string | string[] | number | null) => {
     setLimitValues(prev => ({
       ...prev,
-      [key]: value === '' ? null : parseInt(value)
+      [key]: value
     }));
   };
 
@@ -428,15 +463,44 @@ const AdminPlanEdit = () => {
                             </span>
                           )}
                         </label>
-                        <input
-                          type="number"
-                          value={limitValues[limitDef.key] ?? ''}
-                          onChange={(e) => handleLimitChange(limitDef.key, e.target.value)}
-                          placeholder="Unlimited"
-                          className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        />
+
+                        {/* Numeric Limit Input */}
+                        {limitDef.valueType === 'numeric' && (
+                          <input
+                            type="number"
+                            value={limitValues[limitDef.key] ?? ''}
+                            onChange={(e) => handleLimitChange(limitDef.key, e.target.value === '' ? null : parseInt(e.target.value))}
+                            placeholder="Unlimited"
+                            className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          />
+                        )}
+
+                        {/* Enum Checkboxes */}
+                        {limitDef.valueType === 'enum' && limitDef.allowedValues && (
+                          <div className="space-y-2">
+                            {limitDef.allowedValues.map(value => (
+                              <label key={value} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={(limitValues[limitDef.key] || []).includes(value)}
+                                  onChange={(e) => {
+                                    const currentValues = limitValues[limitDef.key] || [];
+                                    if (e.target.checked) {
+                                      handleLimitChange(limitDef.key, [...currentValues, value]);
+                                    } else {
+                                      handleLimitChange(limitDef.key, currentValues.filter((v: string) => v !== value));
+                                    }
+                                  }}
+                                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{value}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+
                         {limitDef.description && (
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{limitDef.description}</p>
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{limitDef.description}</p>
                         )}
                       </div>
                     ))}

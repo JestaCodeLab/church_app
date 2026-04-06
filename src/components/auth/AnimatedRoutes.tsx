@@ -104,10 +104,14 @@ import AllTransactions from '../../pages/merchant/AllTransactions';
 import SocialDashboard from '../../pages/merchant/social-media/SocialDashboard';
 import SocialAccounts from '../../pages/merchant/social-media/SocialAccounts';
 import SocialCalendar from '../../pages/merchant/social-media/SocialCalendar';
+import SocialPosts from '../../pages/merchant/social-media/SocialPosts';
 import CreateSocialPost from '../../pages/merchant/social-media/CreatePost';
 import SocialPostDetail from '../../pages/merchant/social-media/PostDetail';
 import SocialTemplates from '../../pages/merchant/social-media/SocialTemplates';
 import SocialAnalytics from '../../pages/merchant/social-media/SocialAnalytics';
+
+// Documentation
+import Documentation from '../../pages/merchant/Documentation';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -262,14 +266,18 @@ const AnimatedRoutes = () => {
             <Route path="/sermons" element={<SermonManagement />} />
 
             {/* Social Media Routes */}
-            <Route path="/social-media" element={<SocialDashboard />} />
+            <Route path="/social-media/dashboard" element={<SocialDashboard />} />
             <Route path="/social-media/accounts" element={<SocialAccounts />} />
             <Route path="/social-media/calendar" element={<SocialCalendar />} />
+            <Route path="/social-media/posts" element={<SocialPosts />} />
             <Route path="/social-media/create" element={<CreateSocialPost />} />
             <Route path="/social-media/posts/:id" element={<SocialPostDetail />} />
             <Route path="/social-media/posts/:id/edit" element={<CreateSocialPost />} />
             <Route path="/social-media/templates" element={<SocialTemplates />} />
             <Route path="/social-media/analytics" element={<SocialAnalytics />} />
+
+            {/* Documentation Route */}
+            <Route path="/documentation" element={<Documentation />} />
 
             <Route path="/activity-logs" element={<ActivityLogs />} />
             <Route path="/settings" element={<Settings />} />

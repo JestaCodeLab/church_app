@@ -3,6 +3,7 @@ import api, { messagingAPI } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import FeatureGate from '../../../components/access/FeatureGate';
+import ConfirmModal from '../../../components/modals/ConfirmModal';
 
 interface Template {
   _id: string;
@@ -39,6 +40,11 @@ const SMSTemplates: React.FC = () => {
   const [message, setMessage] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Delete confirmation state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     checkSMSAccess();
@@ -143,20 +149,31 @@ const SMSTemplates: React.FC = () => {
     }
   };
 
-  const handleDelete = async (templateId: string, templateName: string) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${templateName}"?`
-    );
+  const handleDeleteClick = (templateId: string, templateName: string) => {
+    setTemplateToDelete({ id: templateId, name: templateName });
+    setShowDeleteModal(true);
+  };
 
-    if (!confirmed) return;
+  const handleDeleteConfirm = async () => {
+    if (!templateToDelete) return;
 
     try {
-      await api.delete(`/sms/templates/${templateId}`);
+      setDeleting(true);
+      await api.delete(`/sms/templates/${templateToDelete.id}`);
       toast.success('Template deleted successfully');
+      setShowDeleteModal(false);
+      setTemplateToDelete(null);
       fetchTemplates();
     } catch (error: any) {
       toast.error('Failed to delete template');
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setTemplateToDelete(null);
   };
 
   const handleToggleActive = async (template: Template) => {
@@ -305,7 +322,7 @@ const SMSTemplates: React.FC = () => {
                     {template.isActive ? 'Deactivate' : 'Activate'}
                   </button>
                   <button
-                    onClick={() => handleDelete(template._id, template.name)}
+                    onClick={() => handleDeleteClick(template._id, template.name)}
                     className="px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700"
                   >
                     Delete
@@ -468,6 +485,19 @@ const SMSTemplates: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Template"
+        message={`Are you sure you want to delete "${templateToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={deleting}
+      />
       </div>
     </FeatureGate>
 

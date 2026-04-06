@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, XCircle, Loader2, Heart, ArrowLeft } from 'lucide-react';
 import { partnershipAPI } from '../../services/api';
-import { showToast } from '../../utils/toasts';
 import { formatCurrency } from '../../utils/currency';
 
 interface PaymentData {

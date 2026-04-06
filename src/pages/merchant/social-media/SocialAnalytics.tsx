@@ -18,6 +18,8 @@ import {
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { socialMediaAPI } from '../../../services/api';
+import BranchSelectionModal from '../../../components/social-media/BranchSelectionModal';
+import { useSocialBranchSelection } from '../../../hooks/useSocialBranchSelection';
 import toast from 'react-hot-toast';
 
 interface OverviewData {
@@ -79,20 +81,29 @@ const SocialAnalytics: React.FC = () => {
   const [engagementDays, setEngagementDays] = useState(30);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Branch selection hook
+  const { branches, selectedBranch, showBranchModal, loadingBranches, selectBranch } = useSocialBranchSelection();
 
   useEffect(() => {
-    fetchEngagement();
-  }, [engagementDays]);
+    if (selectedBranch) {
+      fetchData();
+    }
+  }, [selectedBranch]);
+
+  useEffect(() => {
+    if (selectedBranch) {
+      fetchEngagement();
+    }
+  }, [engagementDays, selectedBranch]);
 
   const fetchData = async () => {
+    if (!selectedBranch) return;
+    
     try {
       setLoading(true);
       const [overviewRes, bestTimesRes] = await Promise.all([
-        socialMediaAPI.getAnalyticsOverview(),
-        socialMediaAPI.getBestTimes()
+        socialMediaAPI.getAnalyticsOverview({ branchId: selectedBranch }),
+        socialMediaAPI.getBestTimes({ branchId: selectedBranch })
       ]);
       setOverview(overviewRes.data.data);
       setBestTimes(bestTimesRes.data.data || []);
@@ -105,8 +116,10 @@ const SocialAnalytics: React.FC = () => {
   };
 
   const fetchEngagement = async () => {
+    if (!selectedBranch) return;
+    
     try {
-      const res = await socialMediaAPI.getEngagement({ days: engagementDays });
+      const res = await socialMediaAPI.getEngagement({ days: engagementDays, branchId: selectedBranch });
       setEngagementData(res.data.data || []);
     } catch (error) {
       // Silently fail — overview still shows
@@ -138,7 +151,7 @@ const SocialAnalytics: React.FC = () => {
     return 'bg-green-200 dark:bg-green-300';
   };
 
-  if (loading) {
+  if (loadingBranches || loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
@@ -150,6 +163,13 @@ const SocialAnalytics: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Branch Selection Modal */}
+      <BranchSelectionModal
+        isOpen={showBranchModal}
+        branches={branches}
+        onSelect={selectBranch}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

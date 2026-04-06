@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { settingsAPI } from '../../services/api';
 import { showToast } from '../../utils/toasts';
-import { Check, Crown, Users, Zap, TrendingUp, AlertCircle, Church, Download, Calendar, FileText, CreditCard, DollarSign, Filter, X, FileDown, CalendarDays, BookOpen, HardDrive, UserCircle, Building2, ChevronRight, CheckCircle, XCircle, Info, RotateCw, Wallet, Loader } from 'lucide-react';
+import { Check, Crown, Users, Zap, TrendingUp, AlertCircle, Church, Download, Calendar, FileText, CreditCard, DollarSign, Filter, X, FileDown, CalendarDays, BookOpen, HardDrive, UserCircle, Building2, ChevronRight, CheckCircle, XCircle, Info, RotateCw, Wallet, Loader, Share2, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usePaystackPayment } from '../../hooks/usePaystackPayment';
 import DiscountCodeInput from '../ui/DiscountCodeInput';
@@ -364,6 +364,8 @@ const BillingSettings = () => {
       'Sermons': BookOpen,
       'Users': UserCircle,
       'Storage (GB)': HardDrive,
+      'Social Accounts': Share2,
+      'Social Posts': MessageSquare,
     };
     return iconMap[metricName] || Users;
   };
@@ -377,6 +379,8 @@ const BillingSettings = () => {
       'Sermons': 'Sermon recordings and notes',
       'Users': 'Staff and admin user accounts',
       'Storage (GB)': 'File storage for media and documents',
+      'Social Accounts': 'Connected social media accounts',
+      'Social Posts': 'Published and scheduled social media posts',
     };
     return descriptions[metricName] || '';
   };
@@ -418,13 +422,18 @@ const BillingSettings = () => {
       { key: 'sermons', name: 'Sermons' },
       { key: 'users', name: 'Users' },
       { key: 'storage', name: 'Storage (GB)' },
+      { key: 'socialAccounts', name: 'Social Accounts' },
+      { key: 'socialPosts', name: 'Social Posts' },
     ];
 
     return allMetrics.filter(metric => {
       const hasLimit = subscription.limits?.[metric.key] !== undefined;
-      if (!hasLimit) return false;
+      const hasUsage = subscription.usage?.[metric.key] !== undefined && subscription.usage[metric.key] > 0;
       
-      if (!showAllMetrics) {
+      // Show metric if it has a limit OR if it has usage data (for informational metrics)
+      if (!hasLimit && !hasUsage) return false;
+      
+      if (!showAllMetrics && hasLimit) {
         const percentage = getUtilizationPercentage(
           subscription.usage[metric.key] || 0,
           subscription.limits[metric.key]
@@ -432,6 +441,7 @@ const BillingSettings = () => {
         return percentage >= 50; // Show only metrics above 50% when filtered
       }
       
+      // Always show metrics with usage data even if no limit defined
       return true;
     });
   };
@@ -776,8 +786,8 @@ const BillingSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {getFilteredMetrics().map((metric) => {
               const current = subscription.usage[metric.key] || 0;
-              const limit = subscription.limits[metric.key];
-              const percentage = getUtilizationPercentage(current, limit);
+              const limit = subscription.limits[metric.key] || null;
+              const percentage = limit ? getUtilizationPercentage(current, limit) : 0;
               const status = getUtilizationStatus(percentage);
               const Icon = getMetricIcon(metric.name);
               const isExpanded = expandedMetric === metric.key;
@@ -793,16 +803,16 @@ const BillingSettings = () => {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${
-                        percentage >= 90 
+                        limit && percentage >= 90 
                           ? 'bg-red-100 dark:bg-red-900/30'
-                          : percentage >= 80
+                          : limit && percentage >= 80
                           ? 'bg-yellow-100 dark:bg-yellow-900/30'
                           : 'bg-primary-100 dark:bg-primary-900/30'
                       }`}>
                         <Icon className={`w-5 h-5 ${
-                          percentage >= 90 
+                          limit && percentage >= 90 
                             ? 'text-red-600 dark:text-red-400'
-                            : percentage >= 80
+                            : limit && percentage >= 80
                             ? 'text-yellow-600 dark:text-yellow-400'
                             : 'text-primary-600 dark:text-primary-400'
                         }`} />
@@ -812,49 +822,60 @@ const BillingSettings = () => {
                           {metric.name}
                         </h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {current.toLocaleString()} / {limit ? limit.toLocaleString() : '∞'}
+                          {limit ? `${current.toLocaleString()} / ${limit.toLocaleString()}` : `${current.toLocaleString()} in use`}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        percentage >= 90 
-                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                          : percentage >= 80
-                          ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                          : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                      }`}>
-                        {percentage}%
-                      </span>
-                    </div>
+                    {limit && (
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          percentage >= 90 
+                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                            : percentage >= 80
+                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                        }`}>
+                          {percentage}%
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Progress Bar */}
-                  <div className="mb-3">
-                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${
-                          percentage >= 90 
-                            ? 'bg-red-500'
-                            : percentage >= 80
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                        }`}
-                        style={{ width: `${Math.min(percentage, 100)}%` }}
-                      />
+                  {/* Progress Bar - Only show if limit exists */}
+                  {limit && (
+                    <div className="mb-3">
+                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 ${
+                            percentage >= 90 
+                              ? 'bg-red-500'
+                              : percentage >= 80
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                          }`}
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Stats Row */}
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                      <status.icon className={`w-3 h-3 ${status.color}`} />
-                      <span>{status.text}</span>
-                    </div>
-                    {limit && (
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {remaining > 0 ? `${remaining.toLocaleString()} remaining` : 'Limit reached'}
-                      </span>
+                    {limit ? (
+                      <>
+                        <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                          <status.icon className={`w-3 h-3 ${status.color}`} />
+                          <span>{status.text}</span>
+                        </div>
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {remaining > 0 ? `${remaining.toLocaleString()} remaining` : 'Limit reached'}
+                        </span>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                        <Info className="w-3 h-3" />
+                        <span>Informational metric</span>
+                      </div>
                     )}
                   </div>
 
