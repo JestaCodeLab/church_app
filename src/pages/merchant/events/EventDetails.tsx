@@ -246,7 +246,7 @@ const EventDetails: React.FC = () => {
 
   const getCheckInUrl = () => {
     if (event.isRecurring) {
-      return `${window.location.origin}/events/attend/${event._id}`;
+      return `${window.location.origin}/attend/${event._id}`;
     } else {
       return `${window.location.origin}/events/attend/${event.qrCode?.data}`;
     }
@@ -352,6 +352,15 @@ const EventDetails: React.FC = () => {
                 </button>
               )}
               </PermissionGuard>
+              {event.registration?.enabled && (
+                <button
+                  onClick={() => navigate(`/events/${id}/registrations`)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Registrations</span>
+                </button>
+              )}
               <PermissionGuard permission="events.delete">
               <button
                 onClick={() => {
@@ -822,6 +831,37 @@ const EventDetails: React.FC = () => {
                 qrUrl={getCheckInUrl()}
                 onRegenerate={handleRegenerateQR}
               />
+            )}
+
+            {/* Registration URL */}
+            {event.registration?.enabled && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                  <Users className="w-5 h-5 mr-2" />
+                  Event Registration
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Share this link with members to allow them to register for the event.
+                </p>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}/events/register/${event._id}`}
+                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/events/register/${event._id}`);
+                      showToast.success('Registration link copied to clipboard');
+                    }}
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    title="Copy registration URL"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* Date & Time */}
