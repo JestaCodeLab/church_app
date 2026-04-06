@@ -1,4 +1,4 @@
-name: Deploy to Vercel Staging
+name: Deploy to Vercel Staging UAT - app.churchhq.site
 
 on:
   push:
