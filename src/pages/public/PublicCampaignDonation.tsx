@@ -78,8 +78,6 @@ const PublicCampaignDonation: React.FC = () => {
   const [merchant, setMerchant] = useState<MerchantData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [paymentInitialized, setPaymentInitialized] = useState(false);
-  const [donationId, setDonationId] = useState<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
@@ -142,6 +140,7 @@ const PublicCampaignDonation: React.FC = () => {
     if (reference) {
       verifyPaymentFromRedirect(reference);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignId, searchParams]);
 
   const verifyPaymentFromRedirect = async (reference: string) => {
@@ -248,9 +247,6 @@ const PublicCampaignDonation: React.FC = () => {
         return;
       }
 
-      setDonationId(res.data.data.donationId);
-      setPaymentInitialized(true);
-      
       // Initialize Paystack popup
       const PaystackPop = (window as any).PaystackPop;
       if (!PaystackPop) {
@@ -276,14 +272,11 @@ const PublicCampaignDonation: React.FC = () => {
           ]
         },
         onClose: () => {
-          setPaymentInitialized(false);
           toast.error('Payment cancelled');
         },
         callback: (response: any) => {
           // Called when payment is completed
           console.log('Payment callback response:', response);
-          setPaymentInitialized(false);
-          
           // Verify payment with backend
           if (response.status === 'success' || response.status === 'approved') {
             verifyPaymentFromRedirect(response.reference);

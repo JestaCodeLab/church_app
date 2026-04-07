@@ -67,9 +67,27 @@ const SMSHistory = () => {
 
   useEffect(() => {
     checkSMSAccess();
-    // Initial load on mount
+    // Initial load on mount - fetch counts for all tabs
+    fetchAllTabCounts();
     handleTabChange('regular');
   }, []);
+
+  const fetchAllTabCounts = async () => {
+    try {
+      // Fetch counts for all tabs simultaneously
+      const [regularRes, scheduledRes, failedRes] = await Promise.all([
+        messagingAPI.sms.getLogs({ page: 1, limit: 1 }),
+        messagingAPI.sms.getScheduled({ page: 1, limit: 1 }),
+        messagingAPI.sms.getLogs({ page: 1, limit: 1, status: 'failed' })
+      ]);
+
+      setRegularTotalItems(regularRes.data?.data?.pagination?.totalItems || 0);
+      setScheduledTotalItems(scheduledRes.data?.data?.pagination?.totalItems || 0);
+      setFailedTotalItems(failedRes.data?.data?.pagination?.totalItems || 0);
+    } catch (error) {
+      console.error('Failed to fetch tab counts:', error);
+    }
+  };
 
   useEffect(() => {
     // Check if tab changed

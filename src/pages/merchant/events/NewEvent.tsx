@@ -53,6 +53,12 @@ interface FormData {
     yearlyDay?: number;        // 1–31
   };
   allowSelfCheckin?: boolean;
+  // Registration support
+  registrationEnabled?: boolean;
+  registrationStartDate?: string;
+  registrationEndDate?: string;
+  registrationMaxCapacity?: number;
+  allowGuestRegistration?: boolean;
 }
 
 type RecurrenceData = NonNullable<FormData['recurrence']>;
@@ -117,7 +123,12 @@ const NewEvent: React.FC = () => {
       startDate: '',
       endDate: ''
     },
-    allowSelfCheckin: false
+    allowSelfCheckin: false,
+    registrationEnabled: false,
+    registrationStartDate: '',
+    registrationEndDate: '',
+    registrationMaxCapacity: undefined,
+    allowGuestRegistration: true
   });
 
   // Image uploads
@@ -228,7 +239,12 @@ const NewEvent: React.FC = () => {
             startDate: '',
             endDate: ''
           },
-          allowSelfCheckin: event.allowSelfCheckin || false
+          allowSelfCheckin: event.allowSelfCheckin || false,
+          registrationEnabled: event.registration?.enabled || false,
+          registrationStartDate: event.registration?.startDate ? event.registration.startDate.replace('Z', '').slice(0, 16) : '',
+          registrationEndDate: event.registration?.endDate ? event.registration.endDate.replace('Z', '').slice(0, 16) : '',
+          registrationMaxCapacity: event.registration?.maxCapacity || undefined,
+          allowGuestRegistration: event.registration?.allowGuestRegistration !== false
         });
 
         // Load cover image preview
@@ -460,6 +476,21 @@ const NewEvent: React.FC = () => {
       
       // Add self check-in setting
       submitData.append('allowSelfCheckin', String(formData.allowSelfCheckin || false));
+      
+      // Add registration settings
+      submitData.append('registrationEnabled', String(formData.registrationEnabled || false));
+      if (formData.registrationEnabled) {
+        if (formData.registrationStartDate) {
+          submitData.append('registrationStartDate', formData.registrationStartDate);
+        }
+        if (formData.registrationEndDate) {
+          submitData.append('registrationEndDate', formData.registrationEndDate);
+        }
+        if (formData.registrationMaxCapacity) {
+          submitData.append('registrationMaxCapacity', String(formData.registrationMaxCapacity));
+        }
+        submitData.append('allowGuestRegistration', String(formData.allowGuestRegistration !== false));
+      }
       
       // Add cover image
       if (coverImage) {
@@ -1114,6 +1145,121 @@ const NewEvent: React.FC = () => {
                   maxImages={10}
                   maxSize={5}
                 />
+              </div>
+
+              {/* Pre-Registration Settings */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  Pre-Registration (Optional)
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="registrationEnabled"
+                      checked={formData.registrationEnabled || false}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        registrationEnabled: e.target.checked
+                      }))}
+                      className="w-4 h-4 text-primary-600 rounded cursor-pointer"
+                    />
+                    <label htmlFor="registrationEnabled" className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                      Enable Pre-Registration for this event
+                    </label>
+                  </div>
+                  
+                  {formData.registrationEnabled && (
+                    <div className="space-y-4 pl-6 border-l-2 border-primary-200 dark:border-primary-800">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Registration Opens */}
+                        <div>
+                          <label htmlFor="registrationStartDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Registration Opens
+                          </label>
+                          <input
+                            type="datetime-local"
+                            id="registrationStartDate"
+                            value={formData.registrationStartDate || ''}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              registrationStartDate: e.target.value
+                            }))}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          {errors.registrationStartDate && (
+                            <p className="text-red-600 text-sm mt-1">{errors.registrationStartDate}</p>
+                          )}
+                        </div>
+
+                        {/* Registration Closes */}
+                        <div>
+                          <label htmlFor="registrationEndDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Registration Closes
+                          </label>
+                          <input
+                            type="datetime-local"
+                            id="registrationEndDate"
+                            value={formData.registrationEndDate || ''}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              registrationEndDate: e.target.value
+                            }))}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          {errors.registrationEndDate && (
+                            <p className="text-red-600 text-sm mt-1">{errors.registrationEndDate}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Max Capacity */}
+                      <div>
+                        <label htmlFor="registrationMaxCapacity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Max Capacity (Leave blank for unlimited)
+                        </label>
+                        <input
+                          type="number"
+                          id="registrationMaxCapacity"
+                          value={formData.registrationMaxCapacity || ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            registrationMaxCapacity: e.target.value ? parseInt(e.target.value) : undefined
+                          }))}
+                          min="1"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="e.g., 100"
+                        />
+                        {errors.registrationMaxCapacity && (
+                          <p className="text-red-600 text-sm mt-1">{errors.registrationMaxCapacity}</p>
+                        )}
+                      </div>
+
+                      {/* Allow Guest Registration */}
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          id="allowGuestRegistration"
+                          checked={formData.allowGuestRegistration !== false}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            allowGuestRegistration: e.target.checked
+                          }))}
+                          className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                        />
+                        <label htmlFor="allowGuestRegistration" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Allow guest registration (non-members)
+                        </label>
+                      </div>
+
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                        <p className="text-sm text-blue-800 dark:text-blue-300">
+                          <span className="font-semibold">Note:</span> Pre-registration allows attendees to register their intent to attend before the event date. Registrations are separate from check-ins.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Hosts */}

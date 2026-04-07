@@ -10,7 +10,12 @@ const EventCheckIn = () => {
   // Support both old (qrData) and new (eventId) params
   const { qrData, eventId } = useParams();
   const navigate = useNavigate();
-  const isNewSystem = !!eventId;
+  
+  // Determine system type: if parameter contains '_qr_', it's old system (one-time event)
+  // Otherwise, it's new system (recurring event with just ObjectId)
+  const paramValue = eventId || qrData;
+  const isNewSystem = paramValue ? !paramValue.includes('_qr_') : false;
+
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
   // State
@@ -29,20 +34,26 @@ const EventCheckIn = () => {
     lastName: '' // For old system: guest last name
   });
 
+  // After the event loads, refine: if the URL looks like new system but the event
+  // is actually non-recurring, fall back to the old system (name/phone form).
+  const useNewSystem = isNewSystem && (event?.isRecurring !== false);
+
   const fetchEvent = useCallback(async () => {
     try {
       setLoading(true);
       let response;
 
       if (isNewSystem) {
-        // New system: fetch event info with event code
-        response = await axios.get(`${API_BASE_URL}/attendance/public/event/${eventId}`);
+        // New system: fetch event info with event code (recurring events)
+        // Use the clean eventId (no _qr_ pattern)
+        response = await axios.get(`${API_BASE_URL}/attendance/public/event/${paramValue}`);
         if (response.data.success) {
           setEvent(response.data.data.event);
         }
       } else {
-        // Old system: fetch via QR data
-        response = await axios.get(`${API_BASE_URL}/public/events/qr/${qrData}`);
+        // Old system: fetch via QR data (one-time events)
+        // Use the full qrData string (contains _qr_ pattern)
+        response = await axios.get(`${API_BASE_URL}/public/events/qr/${paramValue}`);
         setEvent(response.data.data.event);
       }
     } catch (error: any) {
@@ -52,7 +63,7 @@ const EventCheckIn = () => {
     } finally {
       setLoading(false);
     }
-  }, [qrData, eventId, isNewSystem, API_BASE_URL]);
+  }, [paramValue, isNewSystem, API_BASE_URL]);
 
   useEffect(() => {
     fetchEvent();
@@ -72,7 +83,7 @@ const EventCheckIn = () => {
     setError('');
 
     try {
-      if (isNewSystem) {
+      if (useNewSystem) {
         // New system: check-in with event code
         if (!formData.code.trim()) {
           toast.error('Please enter the event code');
@@ -103,7 +114,7 @@ const EventCheckIn = () => {
         localStorage.setItem('deviceId', deviceId);
 
         const response = await axios.post(`${API_BASE_URL}/attendance/public/checkin`, {
-          eventId,
+          eventId: paramValue, // Use paramValue which contains the clean eventId for recurring events
           code: formData.code,
           phone: formData.phone,
           deviceId,
@@ -131,7 +142,7 @@ const EventCheckIn = () => {
           return;
         }
 
-        const response = await axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, {
+        const response = await axios.post(`${API_BASE_URL}/public/events/qr/${paramValue}/checkin`, {
           firstName: formData.firstName,
           lastName: formData.lastName,
           phone: formData.phone
@@ -254,7 +265,7 @@ const EventCheckIn = () => {
             >
               Done
             </button>
-            {isNewSystem && (
+            {useNewSystem && (
               <button
                 onClick={() => {
                   setSuccess(false);
@@ -348,7 +359,7 @@ const EventCheckIn = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {isNewSystem ? (
+              {useNewSystem ? (
                 // New System: Event Code Check-in
                 <>
                   {/* Event Code Field - Prominent */}

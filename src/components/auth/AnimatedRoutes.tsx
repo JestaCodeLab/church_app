@@ -49,9 +49,11 @@ import AllEvents from '../../pages/merchant/events/AllEvents';
 import NewEvent from '../../pages/merchant/events/NewEvent';
 import EventDetails from '../../pages/merchant/events/EventDetails';
 import EventAttendance from '../../pages/merchant/events/EventAttendance';
+import EventRegistrations from '../../pages/merchant/events/EventRegistrations';
 import GuestManagement from '../../pages/merchant/events/GuestManagement';
 import EventCheckIn from '../../pages/public/EventCheckIn';
 import PublicRegistration from '../../pages/public/PublicRegistration';
+import EventRegistrationPage from '../../pages/public/EventRegistrationPage';
 import EventDonations from '../../pages/merchant/events/EventDonations';
 import AllDepartments from '../../pages/merchant/departments/AllDepartments';
 import DepartmentForm from '../../pages/merchant/departments/DepartmentForm';
@@ -104,10 +106,14 @@ import AllTransactions from '../../pages/merchant/AllTransactions';
 import SocialDashboard from '../../pages/merchant/social-media/SocialDashboard';
 import SocialAccounts from '../../pages/merchant/social-media/SocialAccounts';
 import SocialCalendar from '../../pages/merchant/social-media/SocialCalendar';
+import SocialPosts from '../../pages/merchant/social-media/SocialPosts';
 import CreateSocialPost from '../../pages/merchant/social-media/CreatePost';
 import SocialPostDetail from '../../pages/merchant/social-media/PostDetail';
 import SocialTemplates from '../../pages/merchant/social-media/SocialTemplates';
 import SocialAnalytics from '../../pages/merchant/social-media/SocialAnalytics';
+
+// Documentation
+import Documentation from '../../pages/merchant/Documentation';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -175,8 +181,12 @@ const AnimatedRoutes = () => {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Recurring event direct URL */}
+          <Route path="/attend/:eventId" element={<EventCheckIn />} />
+          {/* QR code URL patterns */}
           <Route path="/events/attend/:qrData" element={<EventCheckIn />} />
           <Route path="/events/attend/:eventId" element={<EventCheckIn />} />
+          <Route path="/events/register/:eventId" element={<EventRegistrationPage />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
           <Route path="/donate/:uniqueId" element={<PublicEventDonation />} />
           <Route path="/donate/:uniqueId/status" element={<DonationStatus />} />
@@ -223,6 +233,7 @@ const AnimatedRoutes = () => {
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/events/:id/edit" element={<NewEvent />} />
             <Route path="/events/:id/attendance" element={<EventAttendance />} />
+            <Route path="/events/:id/registrations" element={<EventRegistrations />} />
             <Route path="/events/:id/donations" element={<EventDonations />} />
             <Route path="/events/guests" element={<GuestManagement />} />
 
@@ -262,14 +273,18 @@ const AnimatedRoutes = () => {
             <Route path="/sermons" element={<SermonManagement />} />
 
             {/* Social Media Routes */}
-            <Route path="/social-media" element={<SocialDashboard />} />
+            <Route path="/social-media/dashboard" element={<SocialDashboard />} />
             <Route path="/social-media/accounts" element={<SocialAccounts />} />
             <Route path="/social-media/calendar" element={<SocialCalendar />} />
+            <Route path="/social-media/posts" element={<SocialPosts />} />
             <Route path="/social-media/create" element={<CreateSocialPost />} />
             <Route path="/social-media/posts/:id" element={<SocialPostDetail />} />
             <Route path="/social-media/posts/:id/edit" element={<CreateSocialPost />} />
             <Route path="/social-media/templates" element={<SocialTemplates />} />
             <Route path="/social-media/analytics" element={<SocialAnalytics />} />
+
+            {/* Documentation Route */}
+            <Route path="/documentation" element={<Documentation />} />
 
             <Route path="/activity-logs" element={<ActivityLogs />} />
             <Route path="/settings" element={<Settings />} />
