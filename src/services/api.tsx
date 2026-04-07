@@ -659,6 +659,7 @@ export const eventAPI = {
   // Attendance
   checkInAttendance: (id: string, data: any) => api.post(`/events/${id}/attendance`, data),
   getAttendance: (id: string, params?: any) => api.get(`/events/${id}/attendance`, { params }),
+  exportAttendance: (id: string, startDate?: string, endDate?: string) => api.get(`/events/${id}/attendance/export`, { responseType: 'blob', params: { ...(startDate ? { startDate } : {}), ...(endDate ? { endDate } : {}) } }),
 
   // Guest Management
   getUnconvertedGuests: (params?: any) => api.get('/events/guests/unconverted', { params }),
