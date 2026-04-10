@@ -299,7 +299,7 @@ const SMSTemplates: React.FC = () => {
 
                 {/* Stats */}
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-                  <span>Used {template.usageCount} times</span>
+                  <span>{template.usageCount} {template.usageCount === 1 ? 'use' : 'uses'}</span>
                   <span>by {template.createdBy.firstName}</span>
                 </div>
 

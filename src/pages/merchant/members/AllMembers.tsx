@@ -1,5 +1,5 @@
 import React, { useState, useEffect, use } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -25,8 +25,14 @@ const AllMembers = () => {
   const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportDateRange, setExportDateRange] = useState('all'); // 'all', 'today', 'yesterday', 'custom'
+  const [exportCustomStartDate, setExportCustomStartDate] = useState('');
+  const [exportCustomEndDate, setExportCustomEndDate] = useState('');
+  const [exportMembershipType, setExportMembershipType] = useState('all'); // 'all', 'member', 'visitor', 'leader'
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showPublicLinks, setShowPublicLinks] = useState(false);
 
   const [stats, setStats] = useState({
     total: 0,
@@ -145,21 +151,61 @@ const AllMembers = () => {
     navigate('/members/new');
   };
 
-  const handleExport = async () => {
+  const handleExport = () => {
+    setShowExportModal(true);
+  };
+
+  const executeExport = async () => {
     try {
       setIsExporting(true);
-      const response = await memberAPI.exportMembers();
+
+      const params: any = {};
+
+      // Add date range params
+      if (exportDateRange === 'today') {
+        const today = new Date();
+        params.startDate = today.toISOString().split('T')[0];
+        params.endDate = today.toISOString().split('T')[0];
+      } else if (exportDateRange === 'yesterday') {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        params.startDate = yesterday.toISOString().split('T')[0];
+        params.endDate = yesterday.toISOString().split('T')[0];
+      } else if (exportDateRange === 'custom') {
+        if (!exportCustomStartDate || !exportCustomEndDate) {
+          showToast.error('Please select both start and end dates');
+          setIsExporting(false);
+          return;
+        }
+        params.startDate = exportCustomStartDate;
+        params.endDate = exportCustomEndDate;
+      }
+
+      // Add membership type filter
+      if (exportMembershipType !== 'all') {
+        params.membershipStatus = exportMembershipType;
+      }
+
+      const response = await memberAPI.exportMembers(params);
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `members_${new Date().getTime()}.csv`);
+      const dateLabel = exportDateRange === 'all' ? 'all' : exportDateRange === 'today' ? 'today' : exportDateRange === 'yesterday' ? 'yesterday' : `${exportCustomStartDate}_to_${exportCustomEndDate}`;
+      const typeLabel = exportMembershipType !== 'all' ? `_${exportMembershipType}` : '';
+      link.setAttribute('download', `members_${dateLabel}${typeLabel}_${new Date().getTime()}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
       showToast.success('Members exported successfully!');
+      setShowExportModal(false);
+      // Reset state
+      setExportDateRange('all');
+      setExportCustomStartDate('');
+      setExportCustomEndDate('');
+      setExportMembershipType('all');
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to export members');
     } finally {
@@ -370,6 +416,18 @@ const AllMembers = () => {
               </button>
             </PermissionGuard>
 
+            {/* Show/Hide Public Links Button */}
+            <PermissionGuard permission="members.registrationLink">
+              <button
+                onClick={() => setShowPublicLinks(!showPublicLinks)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                title={showPublicLinks ? 'Hide public links' : 'Show public links'}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                {showPublicLinks ? 'Hide' : 'Show'} Links
+              </button>
+            </PermissionGuard>
+
             {/* Add Member Button */}
             <PermissionGuard permission="members.create">
               <button
@@ -393,6 +451,7 @@ const AllMembers = () => {
         </div>
 
         {/* Member Usage Card - Progressive status with visual feedback */}
+        {showPublicLinks && (
         <div className={`rounded-xl p-6 border-[1px] transition-all ${!memberLimit.canCreate
           ? 'bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800'
           : memberLimit.isNearLimit
@@ -527,6 +586,7 @@ const AllMembers = () => {
             </div>
           </div>
         </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1002,6 +1062,164 @@ const AllMembers = () => {
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
         />
+
+        {/* Export Modal */}
+        {showExportModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  Export Members
+                </h3>
+                
+                <div className="space-y-4">
+                  {/* Membership Type Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Membership Type
+                    </label>
+                    <select
+                      value={exportMembershipType}
+                      onChange={(e) => setExportMembershipType(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="all">All Members</option>
+                      <option value="member">Members Only</option>
+                      <option value="visitor">Visitors Only</option>
+                      <option value="leader">Leaders Only</option>
+                    </select>
+                  </div>
+
+                  {/* Date Range Options */}
+                  <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Join Date Range
+                    </label>
+                    
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="exportDateRange"
+                          value="all"
+                          checked={exportDateRange === 'all'}
+                          onChange={(e) => setExportDateRange(e.target.value)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">All Time</span>
+                      </label>
+
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="exportDateRange"
+                          value="today"
+                          checked={exportDateRange === 'today'}
+                          onChange={(e) => setExportDateRange(e.target.value)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Today</span>
+                      </label>
+
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="exportDateRange"
+                          value="yesterday"
+                          checked={exportDateRange === 'yesterday'}
+                          onChange={(e) => setExportDateRange(e.target.value)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Yesterday</span>
+                      </label>
+
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="exportDateRange"
+                          value="custom"
+                          checked={exportDateRange === 'custom'}
+                          onChange={(e) => setExportDateRange(e.target.value)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Custom Range</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Custom Date Range Inputs */}
+                  {exportDateRange === 'custom' && (
+                    <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={exportCustomStartDate}
+                          onChange={(e) => setExportCustomStartDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          End Date {!exportCustomStartDate && <span className="text-gray-500 text-xs">(Select start date first)</span>}
+                        </label>
+                        <input
+                          type="date"
+                          value={exportCustomEndDate}
+                          onChange={(e) => setExportCustomEndDate(e.target.value)}
+                          disabled={!exportCustomStartDate}
+                          min={exportCustomStartDate}
+                          max={exportCustomStartDate ? new Date(new Date(exportCustomStartDate).setMonth(new Date(exportCustomStartDate).getMonth() + 3)).toISOString().split('T')[0] : ''}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-700"
+                        />
+                        {exportCustomStartDate && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Max: {new Date(new Date(exportCustomStartDate).setMonth(new Date(exportCustomStartDate).getMonth() + 3)).toISOString().split('T')[0]}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Actions */}
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowExportModal(false);
+                      setExportDateRange('all');
+                      setExportCustomStartDate('');
+                      setExportCustomEndDate('');
+                      setExportMembershipType('all');
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={executeExport}
+                    disabled={isExporting || (exportDateRange === 'custom' && (!exportCustomStartDate || !exportCustomEndDate))}
+                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isExporting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Exporting...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        Export
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </FeatureGate>
   );

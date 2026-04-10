@@ -503,7 +503,7 @@ const handlePurchase = async (pkg: CreditPackage) => {
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Price</p>
                             <div className="flex items-baseline">
                               <span className="text-3xl font-bold text-gray-900 dark:text-white">
-                                {pkg.currency} {pkg.price}
+                                {pkg.currency} {pkg.price.toLocaleString()}
                               </span>
                             </div>
                           </div>
@@ -765,7 +765,7 @@ const handlePurchase = async (pkg: CreditPackage) => {
                 Credits: <span className="font-semibold text-gray-900 dark:text-white">{pendingPackage.credits.toLocaleString()}</span>
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Amount: <span className="font-semibold text-gray-900 dark:text-white">{pendingPackage.currency} {pendingPackage.price}</span>
+                Amount: <span className="font-semibold text-gray-900 dark:text-white">{pendingPackage.currency} {pendingPackage.price.toLocaleString()}</span>
               </p>
             </div>
 
