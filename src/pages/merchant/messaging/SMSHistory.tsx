@@ -49,6 +49,7 @@ const SMSHistory = () => {
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [scheduledMessages, setScheduledMessages] = useState<ScheduledMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
   const [selectedLog, setSelectedLog] = useState<SmsLog | ScheduledMessage | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [hasSMSAccess, setHasSMSAccess] = useState<boolean | null>(null);
@@ -56,6 +57,8 @@ const SMSHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [cancelling, setCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [regularTotalPages, setRegularTotalPages] = useState(1);
   const [scheduledTotalPages, setScheduledTotalPages] = useState(1);
   const [regularTotalItems, setRegularTotalItems] = useState(0);
@@ -76,14 +79,20 @@ const SMSHistory = () => {
     try {
       // Fetch counts for all tabs simultaneously
       const [regularRes, scheduledRes, failedRes] = await Promise.all([
-        messagingAPI.sms.getLogs({ page: 1, limit: 1 }),
+        messagingAPI.sms.getLogs({ page: 1, limit: 1, status: 'completed' }),
         messagingAPI.sms.getScheduled({ page: 1, limit: 1 }),
         messagingAPI.sms.getLogs({ page: 1, limit: 1, status: 'failed' })
       ]);
 
-      setRegularTotalItems(regularRes.data?.data?.pagination?.totalItems || 0);
-      setScheduledTotalItems(scheduledRes.data?.data?.pagination?.totalItems || 0);
-      setFailedTotalItems(failedRes.data?.data?.pagination?.totalItems || 0);
+      const regularCount = regularRes.data?.data?.pagination?.totalItems || 0;
+      const scheduledCount = scheduledRes.data?.data?.pagination?.totalItems || 0;
+      const failedCount = failedRes.data?.data?.pagination?.totalItems || 0;
+
+      setRegularTotalItems(regularCount);
+      setScheduledTotalItems(scheduledCount);
+      setFailedTotalItems(failedCount);
+
+      console.log('Tab counts fetched:', { regularCount, scheduledCount, failedCount });
     } catch (error) {
       console.error('Failed to fetch tab counts:', error);
     }
@@ -118,9 +127,10 @@ const SMSHistory = () => {
 
   const fetchLogsQuietly = async () => {
     try {
-      // Don't show loading spinner for tab changes
+      // Show tab loading spinner for tab changes
+      setTabLoading(true);
       if (messageType === 'regular') {
-        const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE });
+        const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE, status: 'completed' });
         const responseData = res.data?.data || {};
         setLogs(responseData.logs || []);
         const totalPagesValue = responseData.pagination?.totalPages || 1;
@@ -144,9 +154,13 @@ const SMSHistory = () => {
         setRegularTotalPages(totalPagesValue);
         setFailedTotalItems(totalItemsValue);
       }
+      // Update counts for all other tabs
+      fetchAllTabCounts();
     } catch (error: any) {
       console.error('Fetch error:', error);
       showToast.error('Failed to load SMS history');
+    } finally {
+      setTabLoading(false);
     }
   };
 
@@ -154,7 +168,7 @@ const SMSHistory = () => {
     try {
       setRefreshing(true);
       if (messageType === 'regular') {
-        const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE });
+        const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE, status: 'completed' });
         console.log('Regular SMS Response:', res);
         const responseData = res.data?.data || {};
         setLogs(responseData.logs || []);
@@ -181,6 +195,8 @@ const SMSHistory = () => {
         setRegularTotalPages(totalPagesValue);
         setFailedTotalItems(totalItemsValue);
       }
+      // Update counts for all other tabs
+      fetchAllTabCounts();
     } catch (error: any) {
       console.error('Fetch error:', error);
       showToast.error('Failed to load SMS history');
@@ -212,6 +228,37 @@ const SMSHistory = () => {
     );
   };
 
+  const formatDateTime = (date: string | Date) => {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    
+    // Get day with ordinal suffix (1st, 2nd, 3rd, etc.)
+    const day = d.getDate();
+    const getOrdinal = (n: number) => {
+      if (n > 3 && n < 21) return `${n}th`;
+      switch (n % 10) {
+        case 1: return `${n}st`;
+        case 2: return `${n}nd`;
+        case 3: return `${n}rd`;
+        default: return `${n}th`;
+      }
+    };
+    
+    // Get month name
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    
+    // Get 12-hour time with AM/PM
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+    
+    return `${getOrdinal(day)} ${month}, ${year} ${hours}:${minutes}${ampm}`;
+  };
+
   const viewDetails = async (log: SmsLog | ScheduledMessage) => {
     setSelectedLog(log);
     setShowDetails(true);
@@ -228,6 +275,24 @@ const SMSHistory = () => {
       showToast.error(error.response?.data?.message || 'Failed to cancel scheduled message');
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleResendMessage = async (messageId: string) => {
+    try {
+      setResending(true);
+      setResendingId(messageId);
+      await api.post(`/sms/resend-failed/${messageId}`);
+      showToast.success('Message resend initiated');
+      // Remove the resent message from the failed messages list immediately
+      setLogs(prevLogs => prevLogs.filter(log => log._id !== messageId));
+      // Also refresh to sync with server
+      fetchLogs();
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to resend message');
+    } finally {
+      setResending(false);
+      setResendingId(null);
     }
   };
 
@@ -254,7 +319,10 @@ const SMSHistory = () => {
           SMS History
         </h2>
         <button
-          onClick={fetchLogs}
+          onClick={() => {
+            fetchLogs();
+            fetchAllTabCounts();
+          }}
           disabled={refreshing}
           className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
             refreshing
@@ -283,7 +351,7 @@ const SMSHistory = () => {
               : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
           }`}
         >
-          Regular ({regularTotalItems})
+          Delivered ({regularTotalItems})
         </button>
         <button
           onClick={() => handleTabChange('scheduled')}
@@ -358,7 +426,16 @@ const SMSHistory = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {paginatedData.length === 0 ? (
+              {tabLoading ? (
+                <tr>
+                  <td colSpan={messageType === 'scheduled' ? 7 : 8} className="px-6 py-8 text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      <Loader className="w-5 h-5 animate-spin text-primary-600" />
+                      <span className="text-gray-600 dark:text-gray-400">Loading messages...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan={messageType === 'scheduled' ? 7 : 8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     No {messageType} messages found
@@ -417,17 +494,26 @@ const SMSHistory = () => {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => viewDetails(item)}
-                            className="text-primary-600 hover:text-primary-700 font-medium"
+                            className="px-2 py-1 text-xs border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded font-medium transition-colors"
                           >
                             View
                           </button>
                           {isScheduled && (scheduled as ScheduledMessage).status === 'pending' && (
                             <button
                               onClick={() => setShowCancelConfirm(item._id)}
-                              className="text-red-600 hover:text-red-700 font-medium flex items-center space-x-1"
+                              className="px-2 py-1 text-xs border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded font-medium flex items-center space-x-1 transition-colors"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3 h-3" />
                               <span>Cancel</span>
+                            </button>
+                          )}
+                          {messageType === 'failed' && (
+                            <button
+                              onClick={() => handleResendMessage(item._id)}
+                              disabled={resending && resendingId === item._id}
+                              className="px-2 py-1 text-xs border border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {resending && resendingId === item._id ? 'Resending...' : 'Resend'}
                             </button>
                           )}
                         </div>
@@ -443,13 +529,17 @@ const SMSHistory = () => {
         {/* Pagination Controls */}
         {totalPages > 0 && (
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Page {currentPage} of {totalPages} • Showing {paginatedData.length} records
-            </p>
+            {tabLoading ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">Loading page data...</p>
+            ) : (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Page {currentPage} of {totalPages} • Showing {paginatedData.length} records
+              </p>
+            )}
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || tabLoading}
                 className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -460,16 +550,17 @@ const SMSHistory = () => {
                   if (i === 0) return 1;
                   if (totalPages <= 5) return i + 1;
                   if (i === 4) return totalPages;
-                  return currentPage + (i - 2);
+                  return (tabLoading ? 1 : currentPage) + (i - 2);
                 }).filter((page, idx, arr) => page && arr.indexOf(page) === idx && page > 0 && page <= totalPages).map((page) => (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
+                    disabled={tabLoading}
                     className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                      currentPage === page
+                      (tabLoading ? 1 : currentPage) === page
                         ? 'bg-primary-600 text-white'
                         : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
+                    } ${tabLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {page}
                   </button>
@@ -477,7 +568,7 @@ const SMSHistory = () => {
               </div>
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || tabLoading}
                 className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -555,12 +646,70 @@ const SMSHistory = () => {
                             </p>
                             {recipient.deliveredAt && (
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Delivered: {new Date(recipient.deliveredAt).toLocaleString()}
+                                Delivered: {formatDateTime(recipient.deliveredAt)}
                               </p>
                             )}
                             {recipient.failureReason && (
                               <p className="text-xs text-red-600 dark:text-red-400">
                                 {recipient.failureReason}
+                              </p>
+                            )}
+                          </div>
+                          {getStatusBadge(recipient.status)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {messageType === 'failed' && (
+                <>
+                  {/* Overall Stats - Failed */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-red-600 dark:text-red-400">Failed</p>
+                      <p className="text-2xl font-bold text-red-900 dark:text-red-100">
+                        {(selectedLog as SmsLog).failedDeliveries}
+                      </p>
+                    </div>
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-primary-600 dark:text-primary-400">Credits Used</p>
+                      <p className="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                        {(selectedLog as SmsLog).creditsUsed}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-blue-600 dark:text-blue-400">Sent Date</p>
+                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                        {(selectedLog as SmsLog).createdAt ? formatDateTime((selectedLog as SmsLog).createdAt) : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Recipients List - Failed */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
+                      Failed Recipients ({(selectedLog as SmsLog).recipients.filter(r => r.status === 'failed').length})
+                    </h4>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {(selectedLog as SmsLog).recipients.map((recipient, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {recipient.phoneNumber}
+                            </p>
+                            {recipient.sentAt && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Attempt: {formatDateTime(recipient.sentAt)}
+                              </p>
+                            )}
+                            {recipient.failureReason && (
+                              <p className="text-xs text-red-600 dark:text-red-400">
+                                Reason: {recipient.failureReason}
                               </p>
                             )}
                           </div>
@@ -579,7 +728,7 @@ const SMSHistory = () => {
                     <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
                       <p className="text-sm text-primary-600 dark:text-primary-400">Scheduled For</p>
                       <p className="text-base font-semibold text-primary-900 dark:text-primary-100">
-                        {new Date((selectedLog as ScheduledMessage).scheduledAt).toLocaleString()}
+                        {formatDateTime((selectedLog as ScheduledMessage).scheduledAt)}
                       </p>
                     </div>
                     <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
@@ -625,7 +774,7 @@ const SMSHistory = () => {
                     <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                       <p className="text-sm text-green-600 dark:text-green-400 mb-2">Sent At</p>
                       <p className="text-sm text-green-900 dark:text-green-100">
-                        {new Date((selectedLog as ScheduledMessage).sentAt!).toLocaleString()}
+                        {formatDateTime((selectedLog as ScheduledMessage).sentAt!)}
                       </p>
                     </div>
                   )}
