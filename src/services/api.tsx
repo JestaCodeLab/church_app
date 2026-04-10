@@ -355,7 +355,7 @@ export const memberAPI = {
   },
   deleteMember: (id: any, permanent = false) => api.delete(`/members/${id}`, { params: { permanent } }),
   getStats: () => api.get('/members/stats'),
-  exportMembers: () => api.get('/members/export', { responseType: 'blob' }),
+  exportMembers: (params?: any) => api.get('/members/export', { params, responseType: 'blob' }),
   previewImport: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);

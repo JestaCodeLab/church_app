@@ -347,14 +347,14 @@ const MerchantLayout = () => {
         requiresFeature: 'financialManagement',
         requiredPermissions: ['finance.view'],
         children: [
-          {
-            name: 'Overview',
-            href: '/finance/overview',
-            icon: PieChart,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.overview'],
-            lockedFeature: null
-          },
+          // {
+          //   name: 'Overview',
+          //   href: '/finance/overview',
+          //   icon: PieChart,
+          //   requiresFeature: 'financialManagement',
+          //   requiredPermissions: ['finance.overview'],
+          //   lockedFeature: null
+          // },
           {
             name: 'Income',
             href: '/finance/income',
@@ -387,15 +387,14 @@ const MerchantLayout = () => {
             requiredPermissions: ['finance.viewReports'],
             lockedFeature: 'financialReports'
           },
-
-          {
-            name: 'Donations',
-            href: '/finance/donations',
-            icon: HandHeart,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewDonations'],
-            lockedFeature: 'financeDonations'
-          },
+          // {
+          //   name: 'Donations',
+          //   href: '/finance/donations',
+          //   icon: HandHeart,
+          //   requiresFeature: 'financialManagement',
+          //   requiredPermissions: ['finance.viewDonations'],
+          //   lockedFeature: 'financeDonations'
+          // },
           {
             name: 'My Wallet',
             href: '/finance/wallet',
