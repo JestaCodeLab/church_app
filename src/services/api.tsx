@@ -884,8 +884,8 @@ export const partnershipAPI = {
   // Transactions
   getTransactions: (id: string, params?: any) =>
     api.get(`/partnerships/${id}/transactions`, { params }),
-  exportTransactions: (id: string) =>
-    api.get(`/partnerships/${id}/transactions/export`, { responseType: 'blob' }),
+  exportTransactions: (id: string, params?: any) =>
+    api.get(`/partnerships/${id}/transactions/export`, { params, responseType: 'blob' }),
 
   createManualTransaction: (id: string, data: any) =>
     api.post(`/partnerships/${id}/transactions`, data),

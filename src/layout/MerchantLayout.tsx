@@ -6,12 +6,10 @@ import {
   Calendar,
   MessageSquare,
   Settings,
-  Bell,
   Search,
   Menu,
   X,
   Church,
-  FileVolume,
   HandCoins,
   FolderKanban,
   ChevronDown,
@@ -22,7 +20,6 @@ import {
   CreditCard,
   BarChart3,
   Cake,
-  DollarSign,
   TrendingUp,
   Wallet,
   Receipt,
@@ -38,10 +35,7 @@ import {
   Share2,
   Link2,
   CalendarDays,
-  PenSquare,
   GitBranch,
-  MessageCircle,
-  Book
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -762,21 +756,6 @@ const MerchantLayout = () => {
               </Link>
             )
           }
-          <Link
-            to="/documentation"
-            onClick={() => setSidebarOpen(false)}
-            className={`
-              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
-              transition-all duration-200
-              ${isActive('/documentation')
-                ? 'bg-primary-600 text-white'
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }
-            `}
-          >
-            <Book className="w-5 h-5 mr-3" />
-            Documentation
-          </Link>
           {
             (settingsPermission.hasPermission || settingsPermission.isSuperAdmin) && (
             <Link
