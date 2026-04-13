@@ -11,7 +11,6 @@ import {
   Search,
   Link2,
   Copy,
-  ExternalLink,
   Loader2,
   CreditCard,
   Plus,
@@ -19,15 +18,17 @@ import {
   X,
   Settings,
   QrCode,
-  DollarSign,
+  Settings2,
+  AlertCircle,
+  Coins,
 } from 'lucide-react';
 import { partnershipAPI, memberAPI } from '../../../../services/api';
-import api from '../../../../services/api';
 import { showToast } from '../../../../utils/toasts';
 import { formatCurrency, getMerchantCurrency } from '../../../../utils/currency';
 import { format } from 'date-fns';
 import PermissionGuard from '../../../../components/guards/PermissionGuard';
 import { useAuth } from '../../../../context/AuthContext';
+import TransactionBarChart from '../../../../components/charts/TransactionBarChart';
 import EditPartnerModal from './EditPartnerModal';
 import QRCodeModal from '../../../../components/modals/QRCodeModal';
 
@@ -159,6 +160,7 @@ const PartnershipDetails = () => {
   const [loadingPartners, setLoadingPartners] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'partners' | 'transactions' | 'messages'>('overview');
+  const [showPublicLinks, setShowPublicLinks] = useState(false);
 
   // QR Code state
   const [qrModal, setQrModal] = useState<{
@@ -185,17 +187,36 @@ const PartnershipDetails = () => {
   const [partnerSearch, setPartnerSearch] = useState('');
   const [partnerTypeFilter, setPartnerTypeFilter] = useState('all');
   const [transactionSearch, setTransactionSearch] = useState('');
+  const [transactionSearchType, setTransactionSearchType] = useState('name');
   const [transactionStatusFilter, setTransactionStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('thisMonth');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [transactionStartDate, setTransactionStartDate] = useState('');
+  const [transactionEndDate, setTransactionEndDate] = useState('');
+  const [transactionPaymentMethod, setTransactionPaymentMethod] = useState('all');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Temporary filter state for the advanced filter modal
+  const [tempStatusFilter, setTempStatusFilter] = useState('all');
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
+  const [tempPaymentMethod, setTempPaymentMethod] = useState('all');
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPartners, setIsExportingPartners] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportDateRange, setExportDateRange] = useState('today'); // 'today', 'yesterday', 'custom'
+  const [exportCustomStartDate, setExportCustomStartDate] = useState('');
+  const [exportCustomEndDate, setExportCustomEndDate] = useState('');
   
   // Pagination
   const [partnersCurrentPage, setPartnersCurrentPage] = useState(1);
-  const partnersPerPage = 10;
+  const partnersPerPage = 20;
+  const transactionsPerPage = 50;
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [transactionsTotalCount, setTransactionsTotalCount] = useState(0);
+  const [transactionsTotalPages, setTransactionsTotalPages] = useState(1);
 
   // Modals
   const [showAddPartnerModal, setShowAddPartnerModal] = useState(false);
@@ -231,8 +252,9 @@ const PartnershipDetails = () => {
     registrationId: '',
     amount: '',
     currency: merchantCurrency,
-    paymentMethod: 'manual',
+    paymentMethod: 'cash',
     notes: '',
+    transactionDate: new Date().toISOString().split('T')[0],
   });
 
   // Member search state for transaction modal
@@ -263,8 +285,11 @@ const PartnershipDetails = () => {
       }
       // Then load the updated programme details
       await loadProgrammeDetails();
+      // Load filtered stats for overview tab (which is active by default)
+      await loadFilteredStats();
       await loadTierBreakdown();
-      await loadAllTransactions(); // Load all transactions for date filtering
+      // Load transactions count for current month (for tab display)
+      await loadTransactionsCount();
     };
 
     initializeData();
@@ -274,22 +299,20 @@ const PartnershipDetails = () => {
     if (activeTab === 'partners') {
       loadPartners();
     } else if (activeTab === 'transactions') {
-      loadTransactions();
+      // Load transactions with current month filter
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startDate = monthStart.toISOString().split('T')[0];
+      const endDate = now.toISOString().split('T')[0];
+      
+      loadTransactions(1, {
+        startDate,
+        endDate,
+      });
     } else if (activeTab === 'messages') {
       loadMessages();
     }
   }, [activeTab]);
-
-  // Reload transactions when search or status filter changes
-  useEffect(() => {
-    if (activeTab === 'transactions') {
-      const timer = setTimeout(() => {
-        loadTransactions();
-      }, 300); // Debounce search by 300ms
-
-      return () => clearTimeout(timer);
-    }
-  }, [transactionSearch, transactionStatusFilter]);
 
   // Reload stats when date filter changes in overview tab
   useEffect(() => {
@@ -440,6 +463,7 @@ const PartnershipDetails = () => {
         currency: addTransactionData.currency,
         paymentMethod: addTransactionData.paymentMethod,
         notes: addTransactionData.notes,
+        transactionDate: addTransactionData.transactionDate,
       };
 
       if (transactionTab === 'guest') {
@@ -491,15 +515,25 @@ const PartnershipDetails = () => {
         registrationId: '',
         amount: '',
         currency: merchantCurrency,
-        paymentMethod: 'manual',
+        paymentMethod: 'cash',
         notes: '',
+        transactionDate: new Date().toISOString().split('T')[0],
       });
       setMemberSearchQuery('');
       setSelectedMember(null);
       setGuestData({ fullName: '', phone: '', email: '' });
       setTransactionTab('member');
       
-      await loadTransactions();
+      // Load transactions with current month filter (default behavior)
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startDate = monthStart.toISOString().split('T')[0];
+      const endDate = now.toISOString().split('T')[0];
+      
+      await loadTransactions(1, {
+        startDate,
+        endDate,
+      });
       await loadProgrammeDetails();
       
       // Refresh partners if new registration was created
@@ -541,25 +575,81 @@ const PartnershipDetails = () => {
     }
   };
 
-  const loadTransactions = async () => {
+  const loadTransactionsCount = async () => {
+    try {
+      // Get current month date range
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startDate = monthStart.toISOString().split('T')[0];
+      const endDate = now.toISOString().split('T')[0];
+
+      const params: any = {
+        page: 1,
+        limit: 1, // We only need the count, not the data
+        startDate,
+        endDate,
+      };
+
+      const response = await partnershipAPI.getTransactions(id!, params);
+      setTransactionsTotalCount(response.data.data.pagination?.total || 0);
+    } catch (error: any) {
+      console.error('Failed to load transactions count:', error);
+    }
+  };
+
+  const loadTransactions = async (
+    pageNumber: number = 1,
+    overrideFilters?: {
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      paymentMethod?: string;
+    }
+  ) => {
     try {
       setLoadingTransactions(true);
       const params: any = {
-        limit: 20,
+        page: pageNumber,
+        limit: transactionsPerPage,
       };
 
       // Add search filter if present
       if (transactionSearch.trim()) {
         params.search = transactionSearch.trim();
+        if (transactionSearchType !== 'all') {
+          params.searchType = transactionSearchType;
+        }
       }
 
+      // Use override filters if provided, otherwise use state
+      const statusFilter = overrideFilters?.status ?? transactionStatusFilter;
+      const startDate = overrideFilters?.startDate ?? transactionStartDate;
+      const endDate = overrideFilters?.endDate ?? transactionEndDate;
+      const paymentMethod = overrideFilters?.paymentMethod ?? transactionPaymentMethod;
+
       // Add status filter if not 'all'
-      if (transactionStatusFilter !== 'all') {
-        params.status = transactionStatusFilter;
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+
+      // Add date range filters
+      if (startDate) {
+        params.startDate = startDate;
+      }
+      if (endDate) {
+        params.endDate = endDate;
+      }
+
+      // Add payment method filter
+      if (paymentMethod !== 'all') {
+        params.paymentMethod = paymentMethod;
       }
 
       const response = await partnershipAPI.getTransactions(id!, params);
       setTransactions(response.data.data.transactions || []);
+      setTransactionsTotalCount(response.data.data.pagination?.total || 0);
+      setTransactionsTotalPages(response.data.data.pagination?.pages || 1);
+      setTransactionsPage(pageNumber);
     } catch (error: any) {
       showToast.error('Failed to load transactions');
       console.error(error);
@@ -568,14 +658,6 @@ const PartnershipDetails = () => {
     }
   };
 
-  const loadAllTransactions = async () => {
-    try {
-      const response = await partnershipAPI.getTransactions(id!, { limit: 10000 });
-      setAllTransactions(response.data.data.transactions || []);
-    } catch (error: any) {
-      console.error('Failed to load all transactions:', error);
-    }
-  };
 
   const loadFilteredStats = async () => {
     try {
@@ -908,24 +990,176 @@ const PartnershipDetails = () => {
 
   const handleExportTransactions = async () => {
     try {
+      setShowExportModal(true);
+    } catch (error: any) {
+      showToast.error('Failed to open export dialog');
+    }
+  };
+
+  // Execute the actual export with selected date range
+  const executeExport = async () => {
+    try {
       setIsExporting(true);
-      const response = await partnershipAPI.exportTransactions(id!);
+      
+      let startDate = '';
+      let endDate = '';
+
+      if (exportDateRange === 'today') {
+        const today = new Date();
+        startDate = today.toISOString().split('T')[0];
+        endDate = today.toISOString().split('T')[0];
+      } else if (exportDateRange === 'yesterday') {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        startDate = yesterday.toISOString().split('T')[0];
+        endDate = yesterday.toISOString().split('T')[0];
+      } else if (exportDateRange === 'custom') {
+        if (!exportCustomStartDate || !exportCustomEndDate) {
+          showToast.error('Please select both start and end dates');
+          setIsExporting(false);
+          return;
+        }
+        startDate = exportCustomStartDate;
+        endDate = exportCustomEndDate;
+      }
+
+      const response = await partnershipAPI.exportTransactions(id!, {
+        startDate,
+        endDate
+      });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `partnership_transactions_${id}_${new Date().getTime()}.xlsx`);
+      const dateLabel = exportDateRange === 'today' ? 'today' : exportDateRange === 'yesterday' ? 'yesterday' : `${exportCustomStartDate}_to_${exportCustomEndDate}`;
+      link.setAttribute('download', `partnership_transactions_${dateLabel}_${new Date().getTime()}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
       showToast.success('Transactions exported successfully');
+      setShowExportModal(false);
+      // Reset export modal state
+      setExportDateRange('today');
+      setExportCustomStartDate('');
+      setExportCustomEndDate('');
     } catch (error: any) {
       showToast.error('Failed to export transactions');
     } finally {
       setIsExporting(false);
     }
+  };
+
+  // Count active transaction filters
+  const activeTransactionFilters = [
+    transactionStatusFilter !== 'all',
+    transactionStartDate !== '',
+    transactionEndDate !== '',
+    transactionPaymentMethod !== 'all'
+  ].filter(Boolean).length;
+
+  // Apply advanced filters - this is called when user clicks the Apply button
+  const applyAdvancedFilters = () => {
+    // Update state with temp values
+    setTransactionStatusFilter(tempStatusFilter);
+    setTransactionStartDate(tempStartDate);
+    setTransactionEndDate(tempEndDate);
+    setTransactionPaymentMethod(tempPaymentMethod);
+    setShowAdvancedFilters(false);
+    
+    // Load transactions immediately with the temp filter values (no state delay)
+    loadTransactions(1, {
+      status: tempStatusFilter,
+      startDate: tempStartDate,
+      endDate: tempEndDate,
+      paymentMethod: tempPaymentMethod,
+    });
+  };
+
+  // Handle transaction search button click
+  const handleTransactionSearch = () => {
+    loadTransactions(1); // Reset to first page when searching
+  };
+
+  const handleClearTransactionSearch = () => {
+    setTransactionSearch('');
+    setTransactionSearchType('name');
+    // Load current month transactions without search parameters
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startDate = monthStart.toISOString().split('T')[0];
+    const endDate = now.toISOString().split('T')[0];
+    
+    // Call API directly without search params
+    loadTransactionsWithoutSearch(1, startDate, endDate);
+  };
+
+  const loadTransactionsWithoutSearch = async (
+    pageNumber: number = 1,
+    startDate: string = '',
+    endDate: string = ''
+  ) => {
+    try {
+      setLoadingTransactions(true);
+      const params: any = {
+        page: pageNumber,
+        limit: transactionsPerPage,
+      };
+
+      // Add date range filters only (no search)
+      if (startDate) {
+        params.startDate = startDate;
+      }
+      if (endDate) {
+        params.endDate = endDate;
+      }
+
+      const response = await partnershipAPI.getTransactions(id!, params);
+      setTransactions(response.data.data.transactions || []);
+      setTransactionsTotalCount(response.data.data.pagination?.total || 0);
+      setTransactionsTotalPages(response.data.data.pagination?.pages || 1);
+      setTransactionsPage(pageNumber);
+    } catch (error: any) {
+      showToast.error('Failed to load transactions');
+      console.error(error);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+
+  // Open advanced filters modal and populate temp state with current filters
+  const openAdvancedFilters = () => {
+    setTempStatusFilter(transactionStatusFilter);
+    setTempStartDate(transactionStartDate);
+    setTempEndDate(transactionEndDate);
+    setTempPaymentMethod(transactionPaymentMethod);
+    setShowAdvancedFilters(true);
+  };
+
+  // Clear all transaction filters
+  const clearTransactionFilters = () => {
+    setTransactionStatusFilter('all');
+    setTransactionStartDate('');
+    setTransactionEndDate('');
+    setTransactionPaymentMethod('all');
+    setTempStatusFilter('all');
+    setTempStartDate('');
+    setTempEndDate('');
+    setTempPaymentMethod('all');
+    
+    // Load transactions with current month filter (default behavior)
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startDate = monthStart.toISOString().split('T')[0];
+    const endDate = now.toISOString().split('T')[0];
+    
+    loadTransactions(1, {
+      status: 'all',
+      startDate,
+      endDate,
+      paymentMethod: 'all',
+    });
   };
 
   const handleExportPartners = async () => {
@@ -1052,8 +1286,6 @@ const PartnershipDetails = () => {
   );
   const partnersTotalPages = Math.ceil(filteredPartners.length / partnersPerPage);
 
-  // Transactions are already filtered on backend, no need for client-side filtering
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -1079,7 +1311,7 @@ const PartnershipDetails = () => {
   );
 
   return (
-    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-4 py-3">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -1118,13 +1350,21 @@ const PartnershipDetails = () => {
                 <Edit2 className="w-4 h-4 mr-2" />
                 Edit
               </button>
+              <button
+                onClick={() => setShowPublicLinks(!showPublicLinks)}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                title={showPublicLinks ? 'Hide public links' : 'Show public links'}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                {showPublicLinks ? 'Hide' : 'Show'} Links
+              </button>
             </PermissionGuard>
           </div>
         </div>
       </div>
 
       {/* Public Links Section */}
-      {programme.status === 'active' && (
+      {programme.status === 'active' && showPublicLinks && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
           {/* Public Registration Link */}
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 sm:p-6">
@@ -1260,7 +1500,7 @@ const PartnershipDetails = () => {
               : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
-            Transactions ({programme.stats.totalTransactions})
+            Transactions ({transactionsTotalCount ?? programme.stats.totalTransactions})
           </button>
           <button
             onClick={() => setActiveTab('messages')}
@@ -1289,21 +1529,18 @@ const PartnershipDetails = () => {
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
                     disabled={loadingTransactions}
-                    className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="all">All Time</option>
                     <option value="today">Today</option>
                     <option value="yesterday">Yesterday</option>
                     <option value="thisWeek">This Week</option>
                     <option value="lastWeek">Last Week</option>
                     <option value="thisMonth">This Month</option>
                     <option value="lastMonth">Last Month</option>
-                    <option value="thisYear">This Year</option>
-                    <option value="lastYear">Last Year</option>
                     <option value="custom">Custom Range</option>
                   </select>
                   {loadingTransactions && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-white">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
                       <span>Loading...</span>
                     </div>
@@ -1411,30 +1648,22 @@ const PartnershipDetails = () => {
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="relative overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-all">
-            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-purple-600 to-purple-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Goal Progress</h3>
-            <div className="space-y-4">
-              <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                <div
-                  className="h-3 rounded-full bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-500"
-                  style={{ width: `${filteredProgress}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Progress</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{filteredProgress.toFixed(1)}%</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Remaining</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {formatCurrency((programme.goal?.targetAmount || 0) - filteredRaisedAmount, programme.goal?.currency || merchantCurrency)}
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* Transaction Bar Chart */}
+          <div className="relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-all">
+            {/* <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-purple-600 to-purple-400" /> */}
+            <TransactionBarChart
+              transactions={allTransactions}
+              currency={programme.goal?.currency || merchantCurrency}
+              groupBy="day"
+              title="Monthly Transaction Progress"
+              height={400}
+              showLegend={true}
+              colors={{
+                completed: '#10b981',
+                pending: '#f59e0b',
+                failed: '#ef4444',
+              }}
+            />
           </div>
 
           {/* Tier Totals Breakdown */}
@@ -1789,33 +2018,71 @@ const PartnershipDetails = () => {
           {/* Filters and Actions */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
             <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by name, phone, email, or reference..."
-                  value={transactionSearch}
-                  onChange={(e) => setTransactionSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                />
+              <div className="flex-1 relative flex gap-2">
+                <div className="flex-1 relative flex items-center">
+                  <select
+                    value={transactionSearchType}
+                    onChange={(e) => setTransactionSearchType(e.target.value)}
+                    className="absolute left-0 top-0 h-full px-3 py-2 bg-transparent border-r border-gray-300 dark:border-gray-600 rounded-l-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm appearance-none cursor-pointer z-10"
+                    style={{ width: 'auto', minWidth: '100px' }}
+                  >
+                    {/* <option value="all">All Fields</option> */}
+                    <option value="name">Name</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="reference">Transaction ID</option>
+                  </select>
+                  <input
+                    type="text"
+                    placeholder={
+                      transactionSearchType === 'name'
+                        ? 'Search by name...'
+                        : transactionSearchType === 'email'
+                        ? 'Search by email...'
+                        : transactionSearchType === 'phone'
+                        ? 'Search by phone...'
+                        : 'Search by transaction ID...'
+                    }
+                    value={transactionSearch}
+                    onChange={(e) => setTransactionSearch(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleTransactionSearch()}
+                    className="w-full pl-32 pr-10 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  {transactionSearch && (
+                    <button
+                      onClick={handleClearTransactionSearch}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      title="Clear search"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={handleTransactionSearch}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  Search
+                </button>
               </div>
               <div className="flex gap-3 flex-shrink-0">
-                <select
-                  value={transactionStatusFilter}
-                  onChange={(e) => setTransactionStatusFilter(e.target.value)}
-                  className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
-                >
-                  <option value="all">All Status</option>
-                  <option value="completed">Completed</option>
-                  <option value="pending">Pending</option>
-                  <option value="failed">Failed</option>
-                </select>
+               
                 <button
                   onClick={() => setShowAddTransactionModal(true)}
                   className="inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Transaction
+                </button>
+                 <button
+                  onClick={openAdvancedFilters}
+                  className="relative inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Settings2 className="w-4 h-4 mr-2" />
+                  Filters
+                  {activeTransactionFilters > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-primary-600 rounded-full"></span>
+                  )}
                 </button>
                 <button
                   onClick={handleExportTransactions}
@@ -1829,13 +2096,176 @@ const PartnershipDetails = () => {
             </div>
           </div>
 
+          {/* Advanced Filters Modal */}
+          {showAdvancedFilters && (
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Status Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={tempStatusFilter}
+                    onChange={(e) => setTempStatusFilter(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+
+                {/* Start Date Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={tempStartDate}
+                    onChange={(e) => setTempStartDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                  />
+                </div>
+
+                {/* End Date Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={tempEndDate}
+                    onChange={(e) => setTempEndDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                </div>
+
+                {/* Payment Method Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Payment Method
+                  </label>
+                  <select
+                    value={tempPaymentMethod}
+                    onChange={(e) => setTempPaymentMethod(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                  >
+                    <option value="all">All Methods</option>
+                    <option value="paystack">Paystack</option>
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="mobile_money">Mobile Money</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Filter Actions */}
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                  {activeTransactionFilters > 0 && (
+                    <button
+                      onClick={clearTransactionFilters}
+                      className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Clear All Filters
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowAdvancedFilters(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={applyAdvancedFilters}
+                    className="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Transactions Summary */}
+          {transactions.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              {/* Total Transactions Card */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Transactions</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{transactionsTotalCount}</p>
+                  </div>
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                    <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Amount Card */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Amount</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      {formatCurrency(
+                        transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0),
+                        transactions[0]?.currency || programme.goal?.currency || merchantCurrency
+                      )}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                    <Coins className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Completed Card */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Completed</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {transactions.filter(tx => tx.status === 'completed').length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                    <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pending Card */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Pending/Failed</p>
+                    <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                      {transactions.filter(tx => tx.status !== 'completed').length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                    <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Transactions Table */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700 ">
                 <tr className='dark:text-white'>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ref / Code
+                    Transaction ID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Partner
@@ -1901,17 +2331,17 @@ const PartnershipDetails = () => {
                     return (
                       <tr key={transaction._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-mono font-medium dark:text-white px-2 py-1 rounded">
+                          <div className="text-sm font-mono font-medium dark:text-white px-0 py-1 rounded">
                             {transaction.paymentReference || transaction.transactionCode || transaction._id?.substring(0, 8)}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {transaction.paymentMethod?.toUpperCase()}
+                            {transaction.paymentMethod?.toUpperCase()} | {transaction.registration.partnerType === 'member' ? 'Member' : 'Guest'}
                           </div>
-                          {transaction.registration?.partnerType && (
+                          {/* {transaction.registration?.partnerType && (
                             <div className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                               {transaction.registration.partnerType === 'member' ? 'Member' : 'Guest'}
                             </div>
-                          )}
+                          )} */}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{payerName}</div>
@@ -1927,7 +2357,7 @@ const PartnershipDetails = () => {
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                          <div className="text-sm text-gray-600 dark:text-gray-300">
                             {payerEmail && <div>{payerEmail}</div>}
                             {payerPhone && <div>{payerPhone}</div>}
                           </div>
@@ -1973,6 +2403,46 @@ const PartnershipDetails = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {transactionsTotalPages > 1 && (
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Page {transactionsPage} of {transactionsTotalPages} • Showing {transactions.length} of {transactionsTotalCount} transactions
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => loadTransactions(Math.max(1, transactionsPage - 1))}
+                  disabled={transactionsPage === 1}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: transactionsTotalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => loadTransactions(page)}
+                      className={`px-3 py-1.5 rounded text-sm font-medium ${
+                        transactionsPage === page
+                          ? 'bg-primary-600 text-white'
+                          : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => loadTransactions(Math.min(transactionsTotalPages, transactionsPage + 1))}
+                  disabled={transactionsPage === transactionsTotalPages}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2622,9 +3092,8 @@ const PartnershipDetails = () => {
                 onChange={(e) => setAddTransactionData({ ...addTransactionData, paymentMethod: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
               >
-                <option value="manual">Manual</option>
-                <option value="bank_transfer">Bank Transfer</option>
                 <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank Transfer</option>
                 <option value="momo">Mobile Money</option>
                 <option value="paystack">Paystack</option>
               </select>
@@ -2635,6 +3104,22 @@ const PartnershipDetails = () => {
                 onChange={(e) => setAddTransactionData({ ...addTransactionData, notes: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent resize-none h-20"
               />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Transaction Date
+                </label>
+                <input
+                  type="date"
+                  value={addTransactionData.transactionDate}
+                  onChange={(e) => setAddTransactionData({ ...addTransactionData, transactionDate: e.target.value })}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  The date when the payment was made (defaults to today)
+                </p>
+              </div>
 
               <div className="flex gap-3 pt-4">
                 <button
@@ -2720,6 +3205,134 @@ const PartnershipDetails = () => {
                     <Trash2 className="w-4 h-4" />
                   )}
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Transactions Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Export Transactions
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Date Range Options */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Select Date Range
+                  </label>
+                  
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="exportDateRange"
+                        value="today"
+                        checked={exportDateRange === 'today'}
+                        onChange={(e) => setExportDateRange(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Today</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="exportDateRange"
+                        value="yesterday"
+                        checked={exportDateRange === 'yesterday'}
+                        onChange={(e) => setExportDateRange(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Yesterday</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="exportDateRange"
+                        value="custom"
+                        checked={exportDateRange === 'custom'}
+                        onChange={(e) => setExportDateRange(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Custom Range</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Custom Date Range Inputs */}
+                {exportDateRange === 'custom' && (
+                  <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={exportCustomStartDate}
+                        onChange={(e) => setExportCustomStartDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        End Date {!exportCustomStartDate && <span className="text-gray-500 text-xs">(Select start date first)</span>}
+                      </label>
+                      <input
+                        type="date"
+                        value={exportCustomEndDate}
+                        onChange={(e) => setExportCustomEndDate(e.target.value)}
+                        disabled={!exportCustomStartDate}
+                        min={exportCustomStartDate}
+                        max={exportCustomStartDate ? new Date(new Date(exportCustomStartDate).setMonth(new Date(exportCustomStartDate).getMonth() + 3)).toISOString().split('T')[0] : ''}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-700"
+                      />
+                      {exportCustomStartDate && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Max: {new Date(new Date(exportCustomStartDate).setMonth(new Date(exportCustomStartDate).getMonth() + 3)).toISOString().split('T')[0]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Actions */}
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowExportModal(false);
+                    setExportDateRange('today');
+                    setExportCustomStartDate('');
+                    setExportCustomEndDate('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeExport}
+                  disabled={isExporting || (exportDateRange === 'custom' && (!exportCustomStartDate || !exportCustomEndDate))}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      Export
+                    </>
+                  )}
                 </button>
               </div>
             </div>

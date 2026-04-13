@@ -355,7 +355,7 @@ export const memberAPI = {
   },
   deleteMember: (id: any, permanent = false) => api.delete(`/members/${id}`, { params: { permanent } }),
   getStats: () => api.get('/members/stats'),
-  exportMembers: () => api.get('/members/export', { responseType: 'blob' }),
+  exportMembers: (params?: any) => api.get('/members/export', { params, responseType: 'blob' }),
   previewImport: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -659,6 +659,7 @@ export const eventAPI = {
   // Attendance
   checkInAttendance: (id: string, data: any) => api.post(`/events/${id}/attendance`, data),
   getAttendance: (id: string, params?: any) => api.get(`/events/${id}/attendance`, { params }),
+  exportAttendance: (id: string, startDate?: string, endDate?: string) => api.get(`/events/${id}/attendance/export`, { responseType: 'blob', params: { ...(startDate ? { startDate } : {}), ...(endDate ? { endDate } : {}) } }),
 
   // Guest Management
   getUnconvertedGuests: (params?: any) => api.get('/events/guests/unconverted', { params }),
@@ -883,8 +884,8 @@ export const partnershipAPI = {
   // Transactions
   getTransactions: (id: string, params?: any) =>
     api.get(`/partnerships/${id}/transactions`, { params }),
-  exportTransactions: (id: string) =>
-    api.get(`/partnerships/${id}/transactions/export`, { responseType: 'blob' }),
+  exportTransactions: (id: string, params?: any) =>
+    api.get(`/partnerships/${id}/transactions/export`, { params, responseType: 'blob' }),
 
   createManualTransaction: (id: string, data: any) =>
     api.post(`/partnerships/${id}/transactions`, data),

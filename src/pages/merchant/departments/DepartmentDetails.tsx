@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  Users, 
-  UserCheck, 
-  Clock, 
-  Mail, 
-  Phone, 
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Users,
+  UserCheck,
+  Clock,
+  Mail,
+  Phone,
   MapPin,
   Loader,
   Send,
@@ -23,7 +23,6 @@ import {
 import { showToast } from '../../../utils/toasts';
 import { departmentAPI, memberAPI } from '../../../services/api';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
-import { P } from 'framer-motion/dist/types.d-BJcRxCew';
 
 interface Member {
   _id: string;
@@ -49,21 +48,21 @@ const DepartmentDetails = () => {
   const [statistics, setStatistics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [membersLoading, setMembersLoading] = useState(false);
-  
+
   // ✅ Member List Search
   const [searchTerm, setSearchTerm] = useState('');
   const [searching, setSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>(null);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // Add Members Modal
   const [showAddMembersModal, setShowAddMembersModal] = useState(false);
   const [availableMembers, setAvailableMembers] = useState<Member[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [addingMembers, setAddingMembers] = useState(false);
-  
+
   // ✅ Modal Search
   const [memberSearchTerm, setMemberSearchTerm] = useState('');
   const [modalSearching, setModalSearching] = useState(false);
@@ -177,9 +176,9 @@ const DepartmentDetails = () => {
   const fetchAvailableMembers = async () => {
     try {
       setModalSearching(true);
-      
-      const response = await memberAPI.getMembers({ 
-        status: 'active', 
+
+      const response = await memberAPI.getMembers({
+        status: 'active',
         limit: 50,
         search: memberSearchTerm || undefined
       });
@@ -213,7 +212,7 @@ const DepartmentDetails = () => {
       const promises = selectedMemberIds.map(memberId => {
         const member = availableMembers.find(m => m._id === memberId);
         const currentDepartments = member?.departments || [];
-        
+
         return memberAPI.updateMember(memberId, {
           departments: [...currentDepartments, id]
         });
@@ -240,7 +239,7 @@ const DepartmentDetails = () => {
 
     try {
       setRemovingMember(true);
-      
+
       // ✅ FIXED: Remove department from member's departments array
       // departments array contains ObjectIds (strings), so compare directly
       const updatedDepartments = memberToRemove.departments.filter(
@@ -298,15 +297,15 @@ const DepartmentDetails = () => {
           >
             <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
-          
+
           <div className="flex items-start space-x-4">
-            <div 
+            <div
               className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl"
               style={{ backgroundColor: `${department.color}20` }}
             >
               {department.icon}
             </div>
-            
+
             <div>
               <div className="flex flex-col items-start space-y-2">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -467,7 +466,7 @@ const DepartmentDetails = () => {
                       className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     >
                       <div className="flex items-center space-x-4">
-                        <div 
+                        <div
                           className="flex-shrink-0 cursor-pointer"
                           onClick={() => navigate(`/members/${member._id}`)}
                         >
@@ -485,8 +484,8 @@ const DepartmentDetails = () => {
                             </div>
                           )}
                         </div>
-                        
-                        <div 
+
+                        <div
                           className="flex-1 min-w-0 cursor-pointer"
                           onClick={() => navigate(`/members/${member._id}`)}
                         >
@@ -540,7 +539,7 @@ const DepartmentDetails = () => {
                       >
                         Previous
                       </button>
-                      
+
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         Page {currentPage} of {totalPages}
                       </span>
@@ -613,7 +612,7 @@ const DepartmentDetails = () => {
                   {department.contactEmail && (
                     <div className="flex items-center space-x-2 mb-2">
                       <Mail className="w-4 h-4 text-gray-400" />
-                      <a 
+                      <a
                         href={`mailto:${department.contactEmail}`}
                         className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                       >
@@ -624,7 +623,7 @@ const DepartmentDetails = () => {
                   {department.contactPhone && (
                     <div className="flex items-center space-x-2">
                       <Phone className="w-4 h-4 text-gray-400" />
-                      <a 
+                      <a
                         href={`tel:${department.contactPhone}`}
                         className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                       >
@@ -681,7 +680,7 @@ const DepartmentDetails = () => {
           </div>
         </div>
 
-        
+
       </div>
 
       {/* ✅ Add Members Modal with API Search */}

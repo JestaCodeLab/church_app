@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { QrCode, Download, RotateCw, Copy, Printer, CheckCircle } from 'lucide-react';
+import { QrCode, Download, RotateCw, Copy, Printer, CheckCircle, Share2 } from 'lucide-react';
 import { showToast } from '../../utils/toasts';
 
 interface QRCodeDisplayProps {
@@ -92,6 +92,27 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     }
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: eventTitle,
+      text: `Check in to ${eventTitle} using this link`,
+      url: qrUrl,
+    };
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(qrUrl);
+        showToast.success('Check-in link copied to clipboard');
+      }
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        showToast.error('Failed to share link');
+      }
+    }
+  };
+
   const handleCopyUrl = async () => {
     try {
       await navigator.clipboard.writeText(qrUrl);
@@ -162,13 +183,13 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           Print
         </button>
 
-        {/* <button
+        <button
           onClick={handleShare}
           className="flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
         >
           <Share2 className="w-4 h-4 mr-2" />
-          Share Link
-        </button> */}
+          Share
+        </button>
 
         {onRegenerate && (
           <button

@@ -217,9 +217,19 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                 </span> • 
                               </>
                             )}
-                            {notification.recipientFilter.type === 'all_members' 
-                              ? ' All members' 
-                              : ` ${(notification.recipientFilter.departments?.length || 0) + (notification.recipientFilter.branches?.length || 0)} filter(s)`}
+                            {notification.recipientFilter.type === 'all_members'
+                              ? 'All members'
+                              : (() => {
+                                  const parts = [];
+                                  if (notification.recipientFilter.departments?.length) parts.push(`${notification.recipientFilter.departments.length} dept(s)`);
+                                  if (notification.recipientFilter.branches?.length) parts.push(`${notification.recipientFilter.branches.length} branch(es)`);
+                                  if (notification.recipientFilter.gender) parts.push(notification.recipientFilter.gender);
+                                  if (notification.recipientFilter.membershipTypes?.length) parts.push(notification.recipientFilter.membershipTypes.join(', '));
+                                  if (notification.recipientFilter.ageRange?.min || notification.recipientFilter.ageRange?.max) {
+                                    parts.push(`age ${notification.recipientFilter.ageRange.min || '0'}–${notification.recipientFilter.ageRange.max || '∞'}`);
+                                  }
+                                  return parts.length ? parts.join(' • ') : 'Filtered';
+                                })()}
                           </p>
                         </div>
                       </div>
@@ -451,6 +461,110 @@ const SmsAutomationSettings: React.FC<Props> = ({ value, onChange }) => {
                                         })}
                                       </div>
                                     )}
+                                  </div>
+
+                                  {/* Gender */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                                      Gender
+                                    </label>
+                                    <select
+                                      value={notification.recipientFilter.gender || ''}
+                                      onChange={(e) => updateNotification(index, {
+                                        recipientFilter: {
+                                          ...notification.recipientFilter,
+                                          gender: e.target.value as 'male' | 'female' | undefined || undefined
+                                        }
+                                      })}
+                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    >
+                                      <option value="">All genders</option>
+                                      <option value="male">Male</option>
+                                      <option value="female">Female</option>
+                                    </select>
+                                  </div>
+
+                                  {/* Membership Types */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                                      Membership Type
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {['member', 'pastor', 'leader', 'elder', 'deacon', 'visitor', 'first-timer'].map(type => {
+                                        const isSelected = (notification.recipientFilter.membershipTypes || []).includes(type);
+                                        return (
+                                          <button
+                                            key={type}
+                                            type="button"
+                                            onClick={() => {
+                                              const current = notification.recipientFilter.membershipTypes || [];
+                                              const updated = isSelected
+                                                ? current.filter(t => t !== type)
+                                                : [...current, type];
+                                              updateNotification(index, {
+                                                recipientFilter: { ...notification.recipientFilter, membershipTypes: updated }
+                                              });
+                                            }}
+                                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize ${
+                                              isSelected
+                                                ? 'bg-primary-600 border-primary-600 text-white'
+                                                : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-primary-400'
+                                            }`}
+                                          >
+                                            {type}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {/* Age Range */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                                      Age Range
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Min age</label>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="120"
+                                          placeholder="e.g. 18"
+                                          value={notification.recipientFilter.ageRange?.min || ''}
+                                          onChange={(e) => updateNotification(index, {
+                                            recipientFilter: {
+                                              ...notification.recipientFilter,
+                                              ageRange: {
+                                                ...notification.recipientFilter.ageRange,
+                                                min: e.target.value ? parseInt(e.target.value) : undefined
+                                              }
+                                            }
+                                          })}
+                                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Max age</label>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="120"
+                                          placeholder="e.g. 65"
+                                          value={notification.recipientFilter.ageRange?.max || ''}
+                                          onChange={(e) => updateNotification(index, {
+                                            recipientFilter: {
+                                              ...notification.recipientFilter,
+                                              ageRange: {
+                                                ...notification.recipientFilter.ageRange,
+                                                max: e.target.value ? parseInt(e.target.value) : undefined
+                                              }
+                                            }
+                                          })}
+                                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                        />
+                                      </div>
+                                    </div>
                                   </div>
 
                                   {/* Branches */}
