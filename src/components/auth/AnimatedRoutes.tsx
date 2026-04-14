@@ -102,6 +102,9 @@ import TransactionManagement from '../../pages/admin/TransactionManagement';
 import AdminFinanceOverview from '../../pages/admin/FinanceOverview';
 import AllTransactions from '../../pages/merchant/AllTransactions';
 
+// Calendar
+import CalendarPage from '../../pages/merchant/calendar/CalendarPage';
+
 // Social Media
 import SocialDashboard from '../../pages/merchant/social-media/SocialDashboard';
 import SocialAccounts from '../../pages/merchant/social-media/SocialAccounts';
@@ -229,6 +232,7 @@ const AnimatedRoutes = () => {
             <Route path="/members/partnership/:id" element={<PartnershipDetails />} />
 
             <Route path="/events" element={<AllEvents />} />
+            <Route path="/events/calendar" element={<CalendarPage />} />
             <Route path="/events/new" element={<NewEvent />} />
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/events/:id/edit" element={<NewEvent />} />
