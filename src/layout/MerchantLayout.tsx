@@ -338,6 +338,13 @@ const MerchantLayout = () => {
             requiredPermissions: ['events.viewAttendance'],
             lockedFeature: 'attendanceTracking'
           },
+          {
+            name: 'Calendar',
+            href: '/events/calendar',
+            icon: CalendarDays,
+            requiresFeature: 'eventManagement',
+            requiredPermissions: ['events.view']
+          },
         ]
       },
       {

@@ -979,4 +979,13 @@ export const socialMediaAPI = {
   getOptimalTimes: () => api.get('/social-media/ai/optimal-times'),
 };
 
+// Calendar API
+export const calendarAPI = {
+  getEvents: (params?: any) => api.get('/calendar', { params }),
+  getEvent: (id: string) => api.get(`/calendar/${id}`),
+  createEvent: (data: any) => api.post('/calendar', data),
+  updateEvent: (id: string, data: any) => api.put(`/calendar/${id}`, data),
+  deleteEvent: (id: string) => api.delete(`/calendar/${id}`),
+};
+
 export default api;
