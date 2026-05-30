@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Calendar, Clock, MapPin, Users, Edit, Trash2,
   MoreVertical, UserCircle, Mic, Image as ImageIcon,
   ExternalLink, X, Repeat2, Copy, CheckCircle, Code,
-  Trash, RotateCw, MessageSquare, DollarSign, Save, Mail
+  Trash, RotateCw, MessageSquare, DollarSign, Save, Mail, Building2
 } from 'lucide-react';
 import api, { eventAPI, eventCodeAPI, merchantAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -18,7 +18,9 @@ import PermissionGuard from '../../../components/guards/PermissionGuard';
 const EventDetails: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+  const { pathname } = useLocation();
+  const isServiceRoute = pathname.startsWith('/services/');
+
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -163,7 +165,7 @@ const EventDetails: React.FC = () => {
       }
     } catch (error: any) {
       showToast.error('Failed to load event details');
-      navigate('/events');
+      navigate(isServiceRoute ? '/services' : '/events');
     } finally {
       setLoading(false);
     }
@@ -186,7 +188,7 @@ const EventDetails: React.FC = () => {
       setDeleting(true);
       await eventAPI.deleteEvent(id!);
       showToast.success('Event deleted successfully');
-      navigate('/events');
+      navigate(isServiceRoute ? '/services' : '/events');
     } catch (error: any) {
       showToast.error('Failed to delete event');
     } finally {
@@ -258,21 +260,70 @@ const EventDetails: React.FC = () => {
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'draft':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'completed':
-        return 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
+
+  const scheduleText = (() => {
+    if (!event) return '';
+    const DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const ORD: Record<number, string> = { 1: '1st', 2: '2nd', 3: '3rd', 4: '4th', [-1]: 'Last' };
+    const fmtTime = (t: string) => {
+      if (!t) return '';
+      const [h, m] = t.split(':').map(Number);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hr = h % 12 || 12;
+      return m === 0 ? `${hr}:00 ${ampm}` : `${hr}:${String(m).padStart(2, '0')} ${ampm}`;
+    };
+
+    if (!event.isRecurring) {
+      return event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1);
+    }
+
+    const r = event.recurrence || {};
+    const time = r.baseTime ? ` - ${fmtTime(r.baseTime)}` : '';
+
+    if (r.frequency === 'daily') return `Daily${time}`;
+
+    if (r.frequency === 'weekly') {
+      const names = [...(r.daysOfWeek || [])].sort().map((d: number) => DAY[d]);
+      if (!names.length) return `Weekly${time}`;
+      if (names.length === 1) return `${names[0]}s${time}`;
+      const last = names.pop();
+      return `${names.join(', ')} & ${last}s${time}`;
+    }
+
+    if (r.frequency === 'monthly') {
+      if (r.monthlyType === 'relative' && r.monthlyOrdinal != null && r.monthlyWeekday != null) {
+        const ord = ORD[r.monthlyOrdinal] ?? `${r.monthlyOrdinal}th`;
+        return `${ord} ${DAY[r.monthlyWeekday]} of the month${time}`;
+      }
+      const day = r.daysOfWeek?.[0];
+      if (day) {
+        const sfx = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th';
+        return `${day}${sfx} of the month${time}`;
+      }
+      return `Monthly${time}`;
+    }
+
+    if (r.frequency === 'yearly') {
+      if (r.yearlyMonth && r.yearlyDay) {
+        return `${MONTH[r.yearlyMonth - 1]} ${r.yearlyDay}${time}`;
+      }
+      return `Yearly${time}`;
+    }
+
+    return event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1);
+  })();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading event...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading {isServiceRoute ? 'Service' : 'Event'}...</p>
         </div>
       </div>
     );
@@ -294,11 +345,11 @@ const EventDetails: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/events')}
+            onClick={() => navigate(isServiceRoute ? '/services' : '/events')}
             className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Back to Events</span>
+            <span>Back to {isServiceRoute ? 'Services' : 'Events'}</span>
           </button>
 
           <div className="flex items-start justify-between">
@@ -317,7 +368,7 @@ const EventDetails: React.FC = () => {
                 )}
               </div>
               <p className="text-gray-600 dark:text-gray-400">
-                {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)} • {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
+                {scheduleText}
               </p>
             </div>
 
@@ -325,7 +376,7 @@ const EventDetails: React.FC = () => {
             <div className="flex items-center space-x-2">
               <PermissionGuard permission="events.edit">
               <button
-                onClick={() => navigate(`/events/${id}/edit`)}
+                onClick={() => navigate(`/${event.eventType === 'service' ? 'services' : 'events'}/${id}/edit`)}
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
               >
                 <Edit className="w-4 h-4" />
@@ -334,7 +385,7 @@ const EventDetails: React.FC = () => {
               </PermissionGuard>
               <PermissionGuard permission="events.viewAttendance">
               <button
-                onClick={() => navigate(`/events/${id}/attendance`)}
+                onClick={() => navigate(isServiceRoute ? '/attendance' : `/events/${id}/attendance`)}
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
               >
                 <span>Attendance</span>
@@ -718,7 +769,7 @@ const EventDetails: React.FC = () => {
             )}
 
             {/* Donation Settings */}
-            {!features.eventDonations ? (
+            {!isServiceRoute && (!features.eventDonations ? (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 relative opacity-60">
                 <div className="inset-0 flex items-center justify-center bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 rounded-xl">
                   <div className="text-center">
@@ -816,7 +867,7 @@ const EventDetails: React.FC = () => {
                 onChange={setDonations}
               />
             </div>
-            )}
+            ))}
           </div>
 
           {/* Sidebar */}
@@ -1020,38 +1071,49 @@ const EventDetails: React.FC = () => {
               </div>
             )}
 
-            {/* Location */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
-                <MapPin className="w-5 h-5" />
-                <span>Location</span>
-              </h2>
-              <div className="space-y-2">
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {event.location?.venue}
-                </p>
-                {event.location?.address && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {[
-                      event.location.address.street,
-                      event.location.address.city,
-                      event.location.address.state,
-                      event.location.address.country
-                    ].filter(Boolean).join(', ')}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Branch */}
-            {event.branch && (
+            {/* Branch & Location */}
+            {(event.branch || event.location?.venue || event.location?.address) && (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Branch
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                  <MapPin className="w-5 h-5" />
+                  <span>Branch & Location</span>
                 </h2>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {event.branch.name}
-                </p>
+                <div className="space-y-4">
+                  {event.branch && (
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                        <Building2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Branch</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{event.branch.name}</p>
+                      </div>
+                    </div>
+                  )}
+                  {(event.location?.venue || event.location?.address) && (
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                        <MapPin className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Venue</p>
+                        {event.location?.venue && (
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{event.location.venue}</p>
+                        )}
+                        {event.location?.address && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                            {[
+                              event.location.address.street,
+                              event.location.address.city,
+                              event.location.address.state,
+                              event.location.address.country
+                            ].filter(Boolean).join(', ')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1084,8 +1146,8 @@ const EventDetails: React.FC = () => {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
-        title="Delete Event"
-        message={`Are you sure you want to delete "${event.title}"? This action cannot be undone and will also delete all attendance records.`}
+        title={`Delete ${isServiceRoute ? 'Service' : 'Event'}`}
+        message={`Are you sure you want to delete "${event.title}"? This will permanently remove the ${isServiceRoute ? 'service' : 'event'} and all associated data including attendance records, check-ins, registrations, and SMS logs. This action cannot be undone.`}
         type="danger"
         isLoading={deleting}
       />

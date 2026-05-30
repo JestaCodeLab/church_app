@@ -37,6 +37,7 @@ const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadManagerRef = useRef<Bytescale.UploadManager | null>(null);
+  const churchSlugRef = useRef<string>('church');
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [uploadedFile, setUploadedFile] = useState<{
@@ -57,11 +58,13 @@ const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
     const initializeUploadManager = async () => {
       try {
         const response = await sermonAPI.getUploadToken();
-        const { publicApiKey, merchantId } = response.data.data;
+        const { publicApiKey, churchSlug } = response.data.data;
 
         uploadManagerRef.current = new Bytescale.UploadManager({
-          apiKey: publicApiKey // Public API key for browser uploads
+          apiKey: publicApiKey
         });
+
+        churchSlugRef.current = churchSlug || 'church';
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to initialize upload manager';
         setError(errorMsg);
@@ -104,6 +107,9 @@ const BytescaleUploader: React.FC<BytescaleUploaderProps> = ({
           data: file,
           mime: file.type,
           originalFileName: file.name,
+          path: {
+            folderPath: `/sermons/${churchSlugRef.current}/${acceptType}`
+          },
           onProgress: ({ progress }) => {
             // progress is a number between 0 and 1, cap at 100%
             const percentage = Math.min(Math.round(progress * 100), 100);

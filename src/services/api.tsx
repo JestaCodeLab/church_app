@@ -659,6 +659,7 @@ export const eventAPI = {
   // Attendance
   checkInAttendance: (id: string, data: any) => api.post(`/events/${id}/attendance`, data),
   getAttendance: (id: string, params?: any) => api.get(`/events/${id}/attendance`, { params }),
+  getAttendanceGrid: (id: string, params?: any) => api.get(`/events/${id}/attendance/grid`, { params }),
   exportAttendance: (id: string, startDate?: string, endDate?: string) => api.get(`/events/${id}/attendance/export`, { responseType: 'blob', params: { ...(startDate ? { startDate } : {}), ...(endDate ? { endDate } : {}) } }),
 
   // Guest Management
@@ -868,8 +869,25 @@ export const sermonAPI = {
 
   deleteSermon: (id: string) => api.delete(`/sermons/${id}`),
 
-  getVaultUsage: () => api.get('/sermons/vault/usage')
+  getVaultUsage: () => api.get('/sermons/vault/usage'),
 
+  trackPlay: (id: string) => api.post(`/public/sermons/${id}/play`).catch(() => {}),
+
+  trackDownload: (id: string) => api.post(`/public/sermons/${id}/download`).catch(() => {})
+};
+
+export const preacherAPI = {
+  getPreachers: () => api.get('/preachers'),
+
+  getPreacher: (id: string) => api.get(`/preachers/${id}`),
+
+  createPreacher: (data: FormData) =>
+    api.post('/preachers', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  updatePreacher: (id: string, data: FormData) =>
+    api.put(`/preachers/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  deletePreacher: (id: string) => api.delete(`/preachers/${id}`)
 };
 
 // Partnership API

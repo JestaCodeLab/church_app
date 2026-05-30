@@ -12,6 +12,7 @@ interface BranchFieldProps {
   allBranches?: Array<{ _id: string; name: string }>;
   disabled?: boolean;
   className?: string;
+  compact?: boolean;
 }
 
 /**
@@ -36,6 +37,7 @@ export const BranchField: React.FC<BranchFieldProps> = ({
   allBranches = [],
   disabled = false,
   className = '',
+  compact = false,
 }) => {
   const { selectedBranch, isLockedToBranch, branches } = useBranch();
   const { user } = useAuth();
@@ -78,19 +80,17 @@ export const BranchField: React.FC<BranchFieldProps> = ({
   // No branch context — show dropdown with all branches
   return (
     <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <label className={`block text-sm font-medium text-gray-700 dark:text-gray-300 ${compact ? 'mb-1' : 'mb-2'}`}>
         {label}
         {required && <span className="text-red-500">*</span>}
       </label>
 
       <div className="relative">
-        <div className="flex items-center gap-2 mb-2">
-          <Building2 className="w-4 h-4 text-gray-500" />
           <select
             value={value || selectedBranch?._id || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className={`w-full px-4 py-2.5 border rounded-lg text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 transition-colors ${
+            className={`w-full px-4 ${compact ? 'py-2' : 'py-2.5'} border rounded-lg text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 transition-colors ${
               error
                 ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500'
@@ -103,10 +103,8 @@ export const BranchField: React.FC<BranchFieldProps> = ({
               </option>
             ))}
           </select>
-        </div>
 
-        {/* Show current selection info */}
-        {value && (
+        {!compact && value && (
           <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
             <span>📍 Selected: <span className="font-medium">{branchOptions.find(b => b._id === value)?.name || 'Unknown'}</span></span>
           </div>
@@ -120,10 +118,11 @@ export const BranchField: React.FC<BranchFieldProps> = ({
         </div>
       )}
 
-      {/* Info text */}
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-        📌 This entity will be created/updated in the selected branch only.
-      </p>
+      {!compact && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          📌 This entity will be created/updated in the selected branch only.
+        </p>
+      )}
     </div>
   );
 };

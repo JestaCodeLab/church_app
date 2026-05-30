@@ -32,10 +32,14 @@ import {
   Coins,
   Activity,
   Music,
+  Headphones,
+  Video,
+  Mic2,
   Share2,
   Link2,
   CalendarDays,
   GitBranch,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -312,13 +316,20 @@ const MerchantLayout = () => {
         ]
       },
       {
-        name: 'Events',
+        name: 'Services & Events',
         icon: Calendar,
         requiresFeature: 'eventManagement',
         requiredPermissions: ['events.view'],
         children: [
           {
-            name: 'All Events',
+            name: 'Services',
+            href: '/services',
+            icon: Clock,
+            requiresFeature: 'eventManagement',
+            requiredPermissions: ['events.view']
+          },
+          {
+            name: 'Events',
             href: '/events',
             icon: Calendar,
             requiresFeature: 'eventManagement',
@@ -326,15 +337,15 @@ const MerchantLayout = () => {
           },
           {
             name: 'Attendance',
-            href: '/events/attendance',
+            href: '/attendance',
             icon: CheckCircle2,
             requiresFeature: 'eventManagement',
             requiredPermissions: ['events.viewAttendance'],
-            lockedFeature: 'attendanceTracking'
+            // lockedFeature: 'attendanceTracking'
           },
           {
             name: 'Calendar',
-            href: '/events/calendar',
+            href: '/calendar',
             icon: CalendarDays,
             requiresFeature: 'eventManagement',
             requiredPermissions: ['events.view']
@@ -343,10 +354,32 @@ const MerchantLayout = () => {
       },
       {
         name: 'Sermons',
-        href: '/sermons',
         icon: Music,
         requiresFeature: 'sermonManagement',
-        requiredPermissions: ['sermons.view']
+        requiredPermissions: ['sermons.views'],
+        children: [
+          {
+            name: 'Audio',
+            href: '/sermons/audio',
+            icon: Headphones,
+            requiresFeature: 'sermonManagement',
+            requiredPermissions: ['sermons.views']
+          },
+          {
+            name: 'Video',
+            href: '/sermons/video',
+            icon: Video,
+            requiresFeature: 'sermonManagement',
+            requiredPermissions: ['sermons.views']
+          },
+          {
+            name: 'Preachers',
+            href: '/sermons/preachers',
+            icon: Mic2,
+            requiresFeature: 'sermonManagement',
+            requiredPermissions: ['sermons.views']
+          }
+        ]
       },
       {
         name: 'Finance',
@@ -442,14 +475,7 @@ const MerchantLayout = () => {
             requiredPermissions: ['communications.sendSMS'],
             lockedFeature: 'smsSend'
           },
-          {
-            name: 'History',
-            href: '/messaging/history',
-            icon: History,
-            requiresFeature: 'smsHistory',
-            requiredPermissions: ['communications.history'],
-            lockedFeature: 'smsHistory'
-          },
+          
           {
             name: 'Templates',
             href: '/messaging/templates',
@@ -473,6 +499,14 @@ const MerchantLayout = () => {
             requiresFeature: 'smsSenderId',
             requiredPermissions: ['communications.smsSenderID'],
             lockedFeature: 'smsSenderId'
+          },
+          {
+            name: 'History',
+            href: '/messaging/history',
+            icon: History,
+            requiresFeature: 'smsHistory',
+            requiredPermissions: ['communications.history'],
+            lockedFeature: 'smsHistory'
           }
         ]
       },

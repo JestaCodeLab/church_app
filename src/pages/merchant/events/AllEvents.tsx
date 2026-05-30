@@ -28,7 +28,13 @@ import { useAuth } from '../../../context/AuthContext';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
 
-const AllEvents = () => {
+interface AllEventsProps {
+  mode: 'services' | 'events';
+}
+
+const EVENT_TYPES_EXCLUDE_SERVICE = 'conference,seminar,workshop,social,outreach,meeting,other';
+
+const AllEvents = ({ mode }: AllEventsProps) => {
   const navigate = useNavigate();
   const { user, fetchAndUpdateSubscription } = useAuth();
   const plan = user?.merchant?.subscription?.plan;
@@ -37,7 +43,6 @@ const AllEvents = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -46,12 +51,16 @@ const AllEvents = () => {
   const [deleting, setDeleting] = useState(false);
   const [usageData, setUsageData] = useState<any>(null);
   const eventLimit = useResourceLimit('events');
- 
+
+  const isServices = mode === 'services';
+  const label = isServices ? 'Service' : 'Event';
+  const labelPlural = isServices ? 'Services' : 'Events';
+  const eventTypeParam = isServices ? 'service' : EVENT_TYPES_EXCLUDE_SERVICE;
 
   useEffect(() => {
     fetchEvents();
     fetchUsageData();
-  }, [currentPage, statusFilter, eventTypeFilter, searchQuery]);
+  }, [currentPage, statusFilter, searchQuery, mode]);
 
   const fetchEvents = async () => {
     try {
@@ -60,7 +69,7 @@ const AllEvents = () => {
         page: currentPage,
         limit: 10,
         status: statusFilter !== 'all' ? statusFilter : undefined,
-        eventType: eventTypeFilter !== 'all' ? eventTypeFilter : undefined,
+        eventType: eventTypeParam,
         search: searchQuery || undefined
       });
 
@@ -94,7 +103,7 @@ const AllEvents = () => {
         setDeleting(true);
         await eventAPI.deleteEvent(eventToDelete._id);
         await fetchUsageData();
-        showToast.success('Service deleted successfully');
+        showToast.success(`${label} deleted successfully`);
         setShowDeleteModal(false);
         setDeleting(false);
         setEventToDelete(null);
@@ -105,9 +114,6 @@ const AllEvents = () => {
     const badges = {
       draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
       published: 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400',
-      ongoing: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-      completed: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-primary-400',
-      cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
     };
     return badges[status as keyof typeof badges] || badges.draft;
   };
@@ -124,7 +130,7 @@ const AllEvents = () => {
       setShowLimitModal(true);
       return;
     }
-    navigate('/events/new');
+    navigate(isServices ? '/services/new' : '/events/new');
   };
 
   return (
@@ -133,10 +139,12 @@ const AllEvents = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Events
+            {labelPlural}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your church events and track attendance
+            {isServices
+              ? 'Manage your regular church services and track attendance'
+              : 'Manage your church events and track attendance'}
           </p>
         </div>
         <PermissionGuard permission="events.create">
@@ -146,7 +154,7 @@ const AllEvents = () => {
             className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center shadow-md"
           >
             <Plus className="w-5 h-5 mr-2" />
-            Create Event
+            New {label}
           </button>
           {usageData?.events && (
             <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -159,13 +167,13 @@ const AllEvents = () => {
 
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search events..."
+              placeholder={`Search ${labelPlural.toLowerCase()}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
@@ -181,32 +189,27 @@ const AllEvents = () => {
             <option value="all">All Status</option>
             <option value="draft">Draft</option>
             <option value="published">Published</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-
-          {/* Event Type Filter */}
-          <select
-            value={eventTypeFilter}
-            onChange={(e) => setEventTypeFilter(e.target.value)}
-            className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-          >
-            <option value="all">All Types</option>
-            <option value="service">Service</option>
-            <option value="conference">Conference</option>
-            <option value="seminar">Seminar</option>
-            <option value="workshop">Workshop</option>
-            <option value="social">Social</option>
-            <option value="outreach">Outreach</option>
-            <option value="meeting">Meeting</option>
-            <option value="other">Other</option>
           </select>
         </div>
       </div>
 
       {/* Events List */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+
+        {/* Summary bar */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 dark:border-gray-700">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {loading
+              ? 'Loading…'
+              : `Showing (${totalEvents.toLocaleString()}) ${totalEvents === 1 ? label.toLowerCase() : labelPlural.toLowerCase()}`}
+          </span>
+          {!loading && totalPages > 1 && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              Page {currentPage} of {totalPages}
+            </span>
+          )}
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader className="w-8 h-8 animate-spin text-primary-600" />
@@ -215,17 +218,17 @@ const AllEvents = () => {
           <div className="text-center py-12">
             <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              No events found
+              No {labelPlural.toLowerCase()} found
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Create your first event to get started
+              Create your first {label.toLowerCase()} to get started
             </p>
             <PermissionGuard permission="events.create">
             <button
-              onClick={() => navigate('/events/new')}
+              onClick={() => navigate(isServices ? '/services/new' : '/events/new')}
               className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
             >
-              Create Event
+              New {label}
             </button>
             </PermissionGuard>
           </div>
@@ -237,7 +240,7 @@ const AllEvents = () => {
                 <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Service
+                      {label}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Date & Time
@@ -263,7 +266,7 @@ const AllEvents = () => {
                   {events.map((event) => (
                     <tr
                       key={event._id}
-                      onClick={() => navigate(`/events/${event._id}`)}
+                      onClick={() => navigate(`/${isServices ? 'services' : 'events'}/${event._id}`)}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                     >
                       {/* Event */}
@@ -342,7 +345,7 @@ const AllEvents = () => {
                         <div className="flex items-center justify-end space-x-2">
                           <PermissionGuard permission="events.edit">
                           <button
-                            onClick={(e) => { e.stopPropagation(); navigate(`/events/${event._id}/edit`); }}
+                            onClick={(e) => { e.stopPropagation(); navigate(`/${isServices ? 'services' : 'events'}/${event._id}/edit`); }}
                             className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                             title="Edit"
                           >
@@ -371,7 +374,7 @@ const AllEvents = () => {
               <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalEvents)} of {totalEvents} events
+                    Page {currentPage} of {totalPages}
                   </p>
                   <div className="flex items-center space-x-2">
                     <button
@@ -381,9 +384,6 @@ const AllEvents = () => {
                     >
                       Previous
                     </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Page {currentPage} of {totalPages}
-                    </span>
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
@@ -403,8 +403,8 @@ const AllEvents = () => {
             isOpen={showDeleteModal}
             onClose={() => setShowDeleteModal(false)}
             onConfirm={confirmDelete}
-            title="Delete Event"
-            message="This action will delete this event from your list of events."
+            title={`Delete ${label}`}
+            message={`Are you sure you want to delete "${eventToDelete?.title}"? This will permanently remove the ${label.toLowerCase()} and all associated data including attendance records, check-ins, registrations, and SMS logs. This action cannot be undone.`}
             type="danger"
             isLoading={deleting}
         /> 

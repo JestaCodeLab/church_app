@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RRule } from 'rrule';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, Calendar, Clock, MapPin, Users, 
   Save, X, UserCircle, Plus, Mic, Image as ImageIcon
@@ -15,6 +15,8 @@ import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import { PermissionRoute } from '../../../components/guards/PermissionRoute';
 import { useBranch } from '../../../context/BranchContext';
 import BranchField from '../../../components/forms/BranchField';
+import DatePicker from '../../../components/ui/DatePicker';
+import TimePicker from '../../../components/ui/TimePicker';
 
 interface FormData {
   title: string;
@@ -23,7 +25,6 @@ interface FormData {
   startTime: string;
   endTime: string;
   eventType: string;
-  category: string;
   location: {
     venue: string;
     address: {
@@ -86,12 +87,20 @@ function buildRRuleString(r: RecurrenceData): string {
   throw new Error('Incomplete recurrence data for buildRRuleString');
 }
 
-const NewEvent: React.FC = () => {
+interface NewEventProps {
+  fixedType?: 'service' | 'event';
+}
+
+const NewEvent: React.FC<NewEventProps> = ({ fixedType }) => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { selectedBranch, branches } = useBranch();
   const isEdit = Boolean(id);
   const eventLimit = useResourceLimit('events');
+  const typeParam = !isEdit
+    ? (fixedType ?? searchParams.get('type') ?? 'service')
+    : (fixedType ?? null);
 
   // Basic form state
   const [formData, setFormData] = useState<FormData>({
@@ -100,8 +109,7 @@ const NewEvent: React.FC = () => {
     eventDate: '',
     startTime: '',
     endTime: '',
-    eventType: 'service',
-    category: 'general',
+    eventType: typeParam === 'event' ? 'conference' : 'service',
     location: {
       venue: '',
       address: {
@@ -114,7 +122,7 @@ const NewEvent: React.FC = () => {
     branch: '',
     isPublic: true,
     status: 'draft',
-    isRecurring: false,
+    isRecurring: typeParam === 'service',
     recurrence: {
       frequency: 'weekly',
       daysOfWeek: [0], // Sunday
@@ -187,7 +195,6 @@ const NewEvent: React.FC = () => {
           startTime: event.startTime || '',
           endTime: event.endTime || '',
           eventType: event.eventType || 'service',
-          category: event.category || 'general',
           location: event.location || {
             venue: '',
             address: { street: '', city: '', state: '', country: '' }
@@ -454,7 +461,6 @@ const NewEvent: React.FC = () => {
       }
       
       submitData.append('eventType', formData.eventType);
-      submitData.append('category', formData.category);
       submitData.append('branch', formData.branch);
       submitData.append('isPublic', String(formData.isPublic));
       submitData.append('status', formData.status);
@@ -542,7 +548,7 @@ const NewEvent: React.FC = () => {
       }
       
       showToast.success(isEdit ? 'Event updated successfully' : 'Event created successfully');
-      navigate(`/events/${response.data.data.event._id}`);
+      navigate(`/${formData.eventType === 'service' ? 'services' : 'events'}/${response.data.data.event._id}`);
       
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to save event');
@@ -552,12 +558,17 @@ const NewEvent: React.FC = () => {
     }
   };
 
+  const backPath = formData.eventType === 'service' ? '/services' : '/events';
+  const backLabel = formData.eventType === 'service' ? 'Services' : 'Events';
+  const label = formData.eventType === 'service' ? 'Service' : 'Event';
+  const isService = formData.eventType === 'service';
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading event...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading new {label.toLowerCase()}...</p>
         </div>
       </div>
     );
@@ -571,18 +582,18 @@ const NewEvent: React.FC = () => {
             {/* Header */}
             <div className="mb-8">
               <button
-                onClick={() => navigate('/events')}
+                onClick={() => navigate(backPath)}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span>Back to Events</span>
+                <span>Back to {backLabel}</span>
               </button>
               
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {isEdit ? 'Edit Event' : 'New Event'}
+                {isEdit ? `Edit ${label}` : `New ${label}`}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-0">
-                {isEdit ? 'Update event details' : 'Fill in the details to create a new event'}
+                {isEdit ? `Update ${label.toLowerCase()} details` : `Fill in the details to create a new ${label.toLowerCase()}`}
               </p>
             </div>
 
@@ -599,7 +610,7 @@ const NewEvent: React.FC = () => {
                   {/* Title */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Event Title *
+                      {label} Title *
                     </label>
                     <input
                       type="text"
@@ -607,7 +618,7 @@ const NewEvent: React.FC = () => {
                       value={formData.title}
                       onChange={handleChange}
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      placeholder="e.g., Sunday Morning Service"
+                      placeholder={`${isService ? 'Sunday Morning Service' : 'Youth Summit Event'}`}
                     />
                     {errors.title && (
                       <p className="text-sm text-red-600 mt-1">{errors.title}</p>
@@ -625,258 +636,260 @@ const NewEvent: React.FC = () => {
                       onChange={handleChange}
                       rows={4}
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
-                      placeholder="Describe the event..."
+                      placeholder={`Describe the ${label.toLowerCase()}...`}
                     />
                   </div>
 
-                  {/* Recurring Event */}
+                  {/* Recurring toggle — events only; services are always recurring */}
                   <div>
-                    <div className="flex items-center mb-4">
-                      <input
-                        type="checkbox"
-                        id="isRecurring"
-                        checked={formData.isRecurring}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          isRecurring: e.target.checked
-                        }))}
-                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                      />
-                      <label htmlFor="isRecurring" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Recurring Event (e.g., Sunday Services)
-                      </label>
-                    </div>
+                    {!isService && (
+                      <div className="flex items-center mb-4">
+                        <input
+                          type="checkbox"
+                          id="isRecurring"
+                          checked={formData.isRecurring}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            isRecurring: e.target.checked
+                          }))}
+                          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                        />
+                        <label htmlFor="isRecurring" className="ml-2 text-sm cursor-pointer font-medium text-gray-700 dark:text-gray-300">
+                          Recurring Event (e.g., Youth Summit, Annual Conference)
+                        </label>
+                      </div>
+                    )}
 
                     {formData.isRecurring && (
                       <div className="space-y-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
-                        {/* Frequency */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Recurrence Pattern
-                          </label>
-                          <select
-                            value={formData.recurrence?.frequency || 'weekly'}
-                            onChange={(e) => setFormData(prev => ({
-                              ...prev,
-                              recurrence: { ...prev.recurrence!, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly', monthlyType: 'date' }
-                            }))}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                          >
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                          </select>
-                        </div>
-
-                        {/* Days of Week (for weekly) */}
-                        {formData.recurrence?.frequency === 'weekly' && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Days of Week
+                        {/* Pattern row — secondary fields sit inline to the right */}
+                        <div className="flex gap-4 items-start">
+                          {/* Pattern select */}
+                          <div className="w-36 shrink-0">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Pattern
                             </label>
-                            <div className="grid grid-cols-7 gap-2">
-                              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                                <button
-                                  key={index}
-                                  type="button"
-                                  onClick={() => {
-                                    const days = formData.recurrence?.daysOfWeek || [];
-                                    const updated = days.includes(index)
-                                      ? days.filter(d => d !== index)
-                                      : [...days, index];
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      recurrence: { ...prev.recurrence!, daysOfWeek: updated }
-                                    }));
-                                  }}
-                                  className={`py-2 rounded-lg font-medium text-sm transition-colors ${
-                                    (formData.recurrence?.daysOfWeek || []).includes(index)
-                                      ? 'bg-primary-600 text-white'
-                                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                                  }`}
-                                >
-                                  {day}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Monthly options */}
-                        {formData.recurrence?.frequency === 'monthly' && (
-                          <div className="space-y-3">
                             <select
-                              value={formData.recurrence?.monthlyType || 'date'}
+                              value={formData.recurrence?.frequency || 'weekly'}
                               onChange={(e) => setFormData(prev => ({
                                 ...prev,
-                                recurrence: { ...prev.recurrence!, monthlyType: e.target.value as 'date' | 'relative' }
+                                recurrence: { ...prev.recurrence!, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly', monthlyType: 'date' }
                               }))}
                               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             >
-                              <option value="date">On a specific date (e.g. the 15th)</option>
-                              <option value="relative">On a relative day (e.g. first Tuesday)</option>
+                              <option value="daily">Daily</option>
+                              <option value="weekly">Weekly</option>
+                              <option value="monthly">Monthly</option>
+                              <option value="yearly">Yearly</option>
                             </select>
+                          </div>
 
-                            {(formData.recurrence?.monthlyType === 'date' || !formData.recurrence?.monthlyType) && (
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day of month</label>
+                          {/* Weekly: day buttons */}
+                          {formData.recurrence?.frequency === 'weekly' && (
+                            <div className="flex-1">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Days of Week
+                              </label>
+                              <div className="grid grid-cols-7 gap-2">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                                  <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => {
+                                      const days = formData.recurrence?.daysOfWeek || [];
+                                      const updated = days.includes(index)
+                                        ? days.filter(d => d !== index)
+                                        : [...days, index];
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        recurrence: { ...prev.recurrence!, daysOfWeek: updated }
+                                      }));
+                                    }}
+                                    className={`py-2 rounded-lg font-medium text-sm transition-colors ${
+                                      (formData.recurrence?.daysOfWeek || []).includes(index)
+                                        ? 'bg-primary-600 text-white'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                    }`}
+                                  >
+                                    {day}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Monthly: type + sub-fields */}
+                          {formData.recurrence?.frequency === 'monthly' && (
+                            <div className="flex-1 flex gap-3 items-start">
+                              <div className="flex-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                                <select
+                                  value={formData.recurrence?.monthlyType || 'date'}
+                                  onChange={(e) => setFormData(prev => ({
+                                    ...prev,
+                                    recurrence: { ...prev.recurrence!, monthlyType: e.target.value as 'date' | 'relative' }
+                                  }))}
+                                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                >
+                                  <option value="date">Specific date</option>
+                                  <option value="relative">Relative day</option>
+                                </select>
+                              </div>
+
+                              {(formData.recurrence?.monthlyType === 'date' || !formData.recurrence?.monthlyType) && (
+                                <div className="flex-1">
+                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day</label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={31}
+                                    placeholder="1–31"
+                                    value={formData.recurrence?.daysOfWeek[0] ?? ''}
+                                    onChange={(e) => setFormData(prev => ({
+                                      ...prev,
+                                      recurrence: { ...prev.recurrence!, daysOfWeek: [parseInt(e.target.value) || 1] }
+                                    }))}
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                  />
+                                </div>
+                              )}
+
+                              {formData.recurrence?.monthlyType === 'relative' && (
+                                <>
+                                  <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Which</label>
+                                    <select
+                                      value={formData.recurrence?.monthlyOrdinal ?? ''}
+                                      onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        recurrence: { ...prev.recurrence!, monthlyOrdinal: parseInt(e.target.value) }
+                                      }))}
+                                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    >
+                                      <option value="">Select…</option>
+                                      <option value="1">First</option>
+                                      <option value="2">Second</option>
+                                      <option value="3">Third</option>
+                                      <option value="4">Fourth</option>
+                                      <option value="-1">Last</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weekday</label>
+                                    <select
+                                      value={formData.recurrence?.monthlyWeekday ?? ''}
+                                      onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        recurrence: { ...prev.recurrence!, monthlyWeekday: parseInt(e.target.value) }
+                                      }))}
+                                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    >
+                                      <option value="">Select…</option>
+                                      {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d, i) => (
+                                        <option key={i} value={i}>{d}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Yearly: month + day */}
+                          {formData.recurrence?.frequency === 'yearly' && (
+                            <div className="flex-1 flex gap-3 items-start">
+                              <div className="flex-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month</label>
+                                <select
+                                  value={formData.recurrence?.yearlyMonth ?? ''}
+                                  onChange={(e) => setFormData(prev => ({
+                                    ...prev,
+                                    recurrence: { ...prev.recurrence!, yearlyMonth: parseInt(e.target.value) }
+                                  }))}
+                                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                >
+                                  <option value="">Select…</option>
+                                  {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                                    <option key={i} value={i + 1}>{m}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day</label>
                                 <input
                                   type="number"
                                   min={1}
                                   max={31}
                                   placeholder="1–31"
-                                  value={formData.recurrence?.daysOfWeek[0] ?? ''}
+                                  value={formData.recurrence?.yearlyDay ?? ''}
                                   onChange={(e) => setFormData(prev => ({
                                     ...prev,
-                                    recurrence: { ...prev.recurrence!, daysOfWeek: [parseInt(e.target.value) || 1] }
+                                    recurrence: { ...prev.recurrence!, yearlyDay: parseInt(e.target.value) }
                                   }))}
                                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 />
                               </div>
-                            )}
-
-                            {formData.recurrence?.monthlyType === 'relative' && (
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Which</label>
-                                  <select
-                                    value={formData.recurrence?.monthlyOrdinal ?? ''}
-                                    onChange={(e) => setFormData(prev => ({
-                                      ...prev,
-                                      recurrence: { ...prev.recurrence!, monthlyOrdinal: parseInt(e.target.value) }
-                                    }))}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                  >
-                                    <option value="">Select…</option>
-                                    <option value="1">First</option>
-                                    <option value="2">Second</option>
-                                    <option value="3">Third</option>
-                                    <option value="4">Fourth</option>
-                                    <option value="-1">Last</option>
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weekday</label>
-                                  <select
-                                    value={formData.recurrence?.monthlyWeekday ?? ''}
-                                    onChange={(e) => setFormData(prev => ({
-                                      ...prev,
-                                      recurrence: { ...prev.recurrence!, monthlyWeekday: parseInt(e.target.value) }
-                                    }))}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                  >
-                                    <option value="">Select…</option>
-                                    {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d, i) => (
-                                      <option key={i} value={i}>{d}</option>
-                                    ))}
-                                  </select>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Yearly options */}
-                        {formData.recurrence?.frequency === 'yearly' && (
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month</label>
-                              <select
-                                value={formData.recurrence?.yearlyMonth ?? ''}
-                                onChange={(e) => setFormData(prev => ({
-                                  ...prev,
-                                  recurrence: { ...prev.recurrence!, yearlyMonth: parseInt(e.target.value) }
-                                }))}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                              >
-                                <option value="">Select…</option>
-                                {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
-                                  <option key={i} value={i + 1}>{m}</option>
-                                ))}
-                              </select>
                             </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day</label>
-                              <input
-                                type="number"
-                                min={1}
-                                max={31}
-                                placeholder="1–31"
-                                value={formData.recurrence?.yearlyDay ?? ''}
-                                onChange={(e) => setFormData(prev => ({
-                                  ...prev,
-                                  recurrence: { ...prev.recurrence!, yearlyDay: parseInt(e.target.value) }
-                                }))}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                              />
-                            </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
 
                         {/* Service Time */}
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Event Start Time *
+                              Start Time *
                             </label>
-                            <input
-                              type="time"
+                            <TimePicker
                               value={formData.recurrence?.baseTime || '09:00'}
-                              onChange={(e) => setFormData(prev => ({
+                              onChange={(v) => setFormData(prev => ({
                                 ...prev,
-                                recurrence: { ...prev.recurrence!, baseTime: e.target.value }
+                                recurrence: { ...prev.recurrence!, baseTime: v }
                               }))}
-                              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Event End Time (Optional)
+                              End Time <span className="text-gray-400 font-normal">(optional)</span>
                             </label>
-                            <input
-                              type="time"
+                            <TimePicker
                               value={formData.recurrence?.baseEndTime || ''}
-                              onChange={(e) => setFormData(prev => ({
+                              onChange={(v) => setFormData(prev => ({
                                 ...prev,
-                                recurrence: { ...prev.recurrence!, baseEndTime: e.target.value }
+                                recurrence: { ...prev.recurrence!, baseEndTime: v }
                               }))}
-                              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              placeholder="Select end time"
                             />
                           </div>
                         </div>
 
-                        {/* Start Date */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Start Date *
-                          </label>
-                          <input
-                            type="date"
-                            value={formData.recurrence?.startDate || ''}
-                            min={new Date().toISOString().split('T')[0]}
-                            onChange={(e) => setFormData(prev => ({
-                              ...prev,
-                              recurrence: { ...prev.recurrence!, startDate: e.target.value }
-                            }))}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                          />
-                        </div>
+                        {/* Start Date / End Date */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Start Date *
+                            </label>
+                            <DatePicker
+                              value={formData.recurrence?.startDate || ''}
+                              min={new Date().toISOString().split('T')[0]}
+                              onChange={(v) => setFormData(prev => ({
+                                ...prev,
+                                recurrence: { ...prev.recurrence!, startDate: v }
+                              }))}
+                            />
+                          </div>
 
-                        {/* End Date (Optional) */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            End Date (Optional - leave empty for ongoing)
-                          </label>
-                          <input
-                            type="date"
-                            value={formData.recurrence?.endDate || ''}
-                            onChange={(e) => setFormData(prev => ({
-                              ...prev,
-                              recurrence: { ...prev.recurrence!, endDate: e.target.value }
-                            }))}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                          />
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              End Date <span className="text-gray-400 font-normal">(optional)</span>
+                            </label>
+                            <DatePicker
+                              value={formData.recurrence?.endDate || ''}
+                              onChange={(v) => setFormData(prev => ({
+                                ...prev,
+                                recurrence: { ...prev.recurrence!, endDate: v }
+                              }))}
+                            />
+                          </div>
                         </div>
 
                         {/* Self Check-in */}
@@ -920,49 +933,32 @@ const NewEvent: React.FC = () => {
                   </div>
 
                   {/* Event Type & Category */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Event Type *
-                      </label>
-                      <select
-                        name="eventType"
-                        value={formData.eventType}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="service">Service</option>
-                        <option value="meeting">Meeting</option>
-                        <option value="conference">Conference</option>
-                        <option value="seminar">Seminar</option>
-                        <option value="workshop">Workshop</option>
-                        <option value="social">Social Event</option>
-                        <option value="outreach">Outreach</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    {typeParam !== 'service' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {label} Type *
+                        </label>
+                        <select
+                          name="eventType"
+                          value={formData.eventType}
+                          onChange={handleChange}
+                          disabled={typeParam === 'service'}
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {typeParam !== 'service' && <>
+                            <option value="meeting">Meeting</option>
+                            <option value="conference">Conference</option>
+                            <option value="seminar">Seminar</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="social">Social Event</option>
+                            <option value="outreach">Outreach</option>
+                            <option value="other">Other</option>
+                          </>}
+                        </select>
+                      </div>
+                    )}
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Category *
-                      </label>
-                      <select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="general">General</option>
-                        <option value="worship">Worship</option>
-                        <option value="prayer">Prayer</option>
-                        <option value="leadership">Leadership</option>
-                        <option value="youth">Youth</option>
-                        <option value="children">Children</option>
-                        <option value="men">Men</option>
-                        <option value="women">Women</option>
-                        <option value="special">Special</option>
-                      </select>
-                    </div>
                   </div>
 
                   {/* Date & Time - Only for one-time events */}
@@ -970,15 +966,12 @@ const NewEvent: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Event Date *
+                          {label} Date *
                         </label>
-                        <input
-                          type="date"
-                          name="eventDate"
+                        <DatePicker
                           value={formData.eventDate}
                           min={new Date().toISOString().split('T')[0]}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          onChange={(v) => setFormData(prev => ({ ...prev, eventDate: v }))}
                         />
                         {errors.eventDate && (
                           <p className="text-sm text-red-600 mt-1">{errors.eventDate}</p>
@@ -989,12 +982,9 @@ const NewEvent: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Start Time *
                         </label>
-                        <input
-                          type="time"
-                          name="startTime"
+                        <TimePicker
                           value={formData.startTime}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          onChange={(v) => setFormData(prev => ({ ...prev, startTime: v }))}
                         />
                         {errors.startTime && (
                           <p className="text-sm text-red-600 mt-1">{errors.startTime}</p>
@@ -1003,32 +993,28 @@ const NewEvent: React.FC = () => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          End Time
+                          End Time <span className="text-gray-400 font-normal">(optional)</span>
                         </label>
-                        <input
-                          type="time"
-                          name="endTime"
+                        <TimePicker
                           value={formData.endTime}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          onChange={(v) => setFormData(prev => ({ ...prev, endTime: v }))}
+                          placeholder="Select end time"
                         />
                       </div>
                     </div>
                   )}
 
-                  {/* Branch */}
-                  <div>
+                  {/* Branch / Status / Visibility */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <BranchField
                       value={formData.branch}
                       onChange={(branchId) => setFormData(prev => ({ ...prev, branch: branchId }))}
                       required
                       allBranches={branches}
                       error={errors.branch}
+                      compact
                     />
-                  </div>
 
-                  {/* Status & Visibility */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Status
@@ -1041,22 +1027,21 @@ const NewEvent: React.FC = () => {
                       >
                         <option value="draft">Draft</option>
                         <option value="published">Published</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="completed">Completed</option>
                       </select>
                     </div>
 
-                    <div className="flex items-center pt-7">
-                      <input
-                        type="checkbox"
-                        name="isPublic"
-                        checked={formData.isPublic}
-                        onChange={handleChange}
-                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                      />
-                      <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Public Event (visible to non-members)
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Visibility
                       </label>
+                      <select
+                        value={formData.isPublic ? 'public' : 'private'}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isPublic: e.target.value === 'public' }))}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -1124,7 +1109,7 @@ const NewEvent: React.FC = () => {
                   <span>Cover Image</span>
                 </h3>
                 <ImageUploader
-                  label="Event Cover Image (Optional)"
+                  label={`${label} Cover Image (Optional)`}
                   preview={coverImagePreview}
                   onImageSelect={handleCoverImageSelect}
                   onImageRemove={removeCoverImage}
@@ -1138,7 +1123,7 @@ const NewEvent: React.FC = () => {
                   Gallery Images
                 </h3>
                 <GalleryUploader
-                  label="Event Gallery (Optional)"
+                  label={`${label} Gallery (Optional)`}
                   previews={galleryPreviews}
                   onImagesSelect={handleGalleryImagesSelect}
                   onImageRemove={removeGalleryImage}
@@ -1148,7 +1133,7 @@ const NewEvent: React.FC = () => {
               </div>
 
               {/* Pre-Registration Settings */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              {!isService && <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                   Pre-Registration (Optional)
                 </h3>
@@ -1260,14 +1245,14 @@ const NewEvent: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </div>}
 
               {/* Hosts */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              {!isService && <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
                     <Users className="w-5 h-5" />
-                    <span>Event Hosts (Optional)</span>
+                    <span>{label} Hosts (Optional)</span>
                   </h3>
                   <button
                     type="button"
@@ -1323,14 +1308,14 @@ const NewEvent: React.FC = () => {
                     No hosts added yet
                   </p>
                 )}
-              </div>
+              </div>}
 
               {/* Speakers */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              {!isService && <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
                     <Mic className="w-5 h-5" />
-                    <span>Event Speakers (Optional)</span>
+                    <span>{label} Speakers (Optional)</span>
                   </h3>
                   <button
                     type="button"
@@ -1391,13 +1376,13 @@ const NewEvent: React.FC = () => {
                     No speakers added yet
                   </p>
                 )}
-              </div>
+              </div>}
 
               {/* Submit Buttons */}
               <div className="flex items-center justify-end space-x-4">
                 <button
                   type="button"
-                  onClick={() => navigate('/events')}
+                  onClick={() => navigate(backPath)}
                   className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancel
@@ -1415,7 +1400,7 @@ const NewEvent: React.FC = () => {
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>{isEdit ? 'Update Event' : 'Create Event'}</span>
+                      <span>{isEdit ? `Update ${label}` : `Create ${label}`}</span>
                     </>
                   )}
                 </button>

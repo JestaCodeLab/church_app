@@ -49,6 +49,7 @@ import AllEvents from '../../pages/merchant/events/AllEvents';
 import NewEvent from '../../pages/merchant/events/NewEvent';
 import EventDetails from '../../pages/merchant/events/EventDetails';
 import EventAttendance from '../../pages/merchant/events/EventAttendance';
+import Attendance from '../../pages/merchant/attendance/Attendance';
 import EventRegistrations from '../../pages/merchant/events/EventRegistrations';
 import GuestManagement from '../../pages/merchant/events/GuestManagement';
 import EventCheckIn from '../../pages/public/EventCheckIn';
@@ -97,7 +98,10 @@ import CampaignDetails from '../../pages/merchant/finance/CampaignDetails';
 import Wallet from '../../pages/merchant/finance/Wallet';
 import ActivityLogs from '../../pages/merchant/ActivityLogs';
 import WithdrawalManagement from '../../pages/admin/WithdrawalManagement';
-import SermonManagement from '../../pages/merchant/sermons/SermonManagement';
+// import SermonManagement from '../../pages/merchant/sermons/SermonManagement';
+import AudioSermons from '../../pages/merchant/sermons/AudioSermons';
+import VideoSermons from '../../pages/merchant/sermons/VideoSermons';
+import Preachers from '../../pages/merchant/sermons/Preachers';
 import TransactionManagement from '../../pages/admin/TransactionManagement';
 import AdminFinanceOverview from '../../pages/admin/FinanceOverview';
 import AllTransactions from '../../pages/merchant/AllTransactions';
@@ -231,11 +235,16 @@ const AnimatedRoutes = () => {
             <Route path="/members/partnership/:id/edit" element={<NewPartnership />} />
             <Route path="/members/partnership/:id" element={<PartnershipDetails />} />
 
-            <Route path="/events" element={<AllEvents />} />
-            <Route path="/events/calendar" element={<CalendarPage />} />
-            <Route path="/events/new" element={<NewEvent />} />
+            <Route path="/services" element={<AllEvents mode="services" />} />
+            <Route path="/events" element={<AllEvents mode="events" />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/services/new" element={<NewEvent fixedType="service" />} />
+            <Route path="/services/:id" element={<EventDetails />} />
+            <Route path="/services/:id/edit" element={<NewEvent fixedType="service" />} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/events/new" element={<NewEvent fixedType="event" />} />
             <Route path="/events/:id" element={<EventDetails />} />
-            <Route path="/events/:id/edit" element={<NewEvent />} />
+            <Route path="/events/:id/edit" element={<NewEvent fixedType="event" />} />
             <Route path="/events/:id/attendance" element={<EventAttendance />} />
             <Route path="/events/:id/registrations" element={<EventRegistrations />} />
             <Route path="/events/:id/donations" element={<EventDonations />} />
@@ -274,7 +283,10 @@ const AnimatedRoutes = () => {
             <Route path="/finance/transactions" element={<AllTransactions />} />
 
             {/* Sermon Routes */}
-            <Route path="/sermons" element={<SermonManagement />} />
+            {/* <Route path="/sermons" element={<SermonManagement />} /> */}
+            <Route path="/sermons/audio" element={<AudioSermons />} />
+            <Route path="/sermons/video" element={<VideoSermons />} />
+            <Route path="/sermons/preachers" element={<Preachers />} />
 
             {/* Social Media Routes */}
             <Route path="/social-media/dashboard" element={<SocialDashboard />} />
