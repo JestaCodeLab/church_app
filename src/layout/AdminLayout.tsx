@@ -25,7 +25,8 @@ import {
   DollarSign,
   Megaphone,
   Mail,
-  SlidersHorizontal
+  SlidersHorizontal,
+  LifeBuoy
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -380,6 +381,21 @@ const AdminLayout = () => {
           >
             <FileText className="w-5 h-5 mr-3" />
             System Logs
+          </Link>
+          <Link
+            to="/admin/support"
+            onClick={() => setSidebarOpen(false)}
+            className={`
+              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+              transition-all duration-200
+              ${isActive('/admin/support')
+                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/50'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }
+            `}
+          >
+            <LifeBuoy className="w-5 h-5 mr-3" />
+            Support Tickets
           </Link>
           <Link
             to="/admin/settings"

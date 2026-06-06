@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Loader, Music, CheckCircle, Play, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sermonAPI } from '../../../services/api';
-import BytescaleUploader from '../../../components/ui/BytescaleUploader';
+import B2FileUploader from '../../../components/ui/B2FileUploader';
 import AudioPlayer from '../../../components/ui/AudioPlayer';
 import VideoPlayer from '../../../components/ui/VideoPlayer';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
@@ -438,23 +438,12 @@ const SermonManagement: React.FC = () => {
                     </label>
                   </div>
 
-                  {selectedFile && (
-                    <div className="p-3 bg-secondary-50 dark:bg-secondary-900/20 rounded-lg border border-secondary-200 dark:border-secondary-700/50 flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-secondary-600 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-secondary-800 dark:text-secondary-300">File uploaded</p>
-                        <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
-                          {selectedFile.type === 'audio' ? 'Audio File' : 'Video File'} {formatFileSize(selectedFile.size)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <BytescaleUploader
-                    acceptType={fileType}
-                    maxFileSize={fileType === 'audio' ? 52428800 : 524288000}
-                    onUploadComplete={handleUploadComplete}
-                    onError={(error) => showToast.error(error)}
+                  <B2FileUploader
+                    sermonType={fileType}
+                    accept={fileType === 'audio' ? '.mp3,.wav,.aac,.m4a,.flac' : '.mp4,.mov,.avi,.webm'}
+                    maxSizeMb={fileType === 'audio' ? 50 : 200}
+                    onUploadComplete={f => setSelectedFile({ type: fileType, url: f.url, size: f.size })}
+                    onClear={() => setSelectedFile(null)}
                     disabled={creatingSermon}
                   />
                 </div>

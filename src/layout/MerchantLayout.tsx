@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
@@ -40,6 +41,7 @@ import {
   CalendarDays,
   GitBranch,
   Clock,
+  Headset,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -777,6 +779,21 @@ const MerchantLayout = () => {
 
         {/* Bottom Links - Fixed at bottom */}
         <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
+          <Link
+            to="/support"
+            onClick={() => setSidebarOpen(false)}
+            className={`
+              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+              transition-all duration-200
+              ${isActive('/support')
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }
+            `}
+          >
+            <Headset className="w-5 h-5 mr-3" />
+            Support
+          </Link>
           {
             (activityLogPermission.hasPermission || activityLogPermission.isSuperAdmin) && (
               <Link
@@ -879,7 +896,7 @@ const MerchantLayout = () => {
               <NotificationCenter />
 
               {/* User Menu */}
-              <div className="pl-3 border-l border-gray-200 dark:border-gray-700">
+              <div className="pl-2 border-l border-gray-200 dark:border-gray-700">
                 <UserMenu />
               </div>
             </div>
@@ -931,7 +948,17 @@ const MerchantLayout = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">Switching branch context...</p>
               </div>
             ) : (
-              <Outlet key={selectedBranch?._id || 'all'} />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${location.pathname}-${selectedBranch?._id || 'all'}`}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                >
+                  <Outlet />
+                </motion.div>
+              </AnimatePresence>
             )}
           </div>
         </main>

@@ -855,7 +855,8 @@ export const financeAPI = {
 
 // Sermon API
 export const sermonAPI = {
-  getUploadToken: () => api.post('/sermons/upload-token'),
+  getPresignedUrl: (data: { fileName: string; contentType: string; sermonType: 'audio' | 'video'; fileSizeBytes: number }) =>
+    api.post('/sermons/presigned-url', data),
 
   getSermons: (params?: any) => api.get('/sermons', { params }),
 
@@ -1004,6 +1005,29 @@ export const calendarAPI = {
   createEvent: (data: any) => api.post('/calendar', data),
   updateEvent: (id: string, data: any) => api.put(`/calendar/${id}`, data),
   deleteEvent: (id: string) => api.delete(`/calendar/${id}`),
+};
+
+// Support Ticket API (merchant portal)
+export const supportAPI = {
+  createTicket: (data: FormData) =>
+    api.post('/support/tickets', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getTickets: (params?: any) => api.get('/support/tickets', { params }),
+  getTicket: (id: string) => api.get(`/support/tickets/${id}`),
+  replyToTicket: (id: string, data: FormData) =>
+    api.post(`/support/tickets/${id}/messages`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  cancelTicket: (id: string) => api.patch(`/support/tickets/${id}/cancel`)
+};
+
+// Admin Support API (super admin portal)
+export const adminSupportAPI = {
+  getStats: () => api.get('/admin/support/stats'),
+  getTickets: (params?: any) => api.get('/admin/support', { params }),
+  getTicket: (id: string) => api.get(`/admin/support/${id}`),
+  replyToTicket: (id: string, data: FormData) =>
+    api.post(`/admin/support/${id}/messages`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateStatus: (id: string, data: { status?: string; priority?: string }) =>
+    api.patch(`/admin/support/${id}/status`, data),
+  cancelTicket: (id: string) => api.patch(`/admin/support/${id}/cancel`)
 };
 
 export default api;

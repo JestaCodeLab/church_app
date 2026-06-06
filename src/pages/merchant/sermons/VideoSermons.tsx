@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Loader, Video, CheckCircle, Play, Share2 } from 'lucide-react';
+import { Plus, Trash2, Loader, Video, Play, Share2, RefreshCw } from 'lucide-react';
 import { sermonAPI, preacherAPI } from '../../../services/api';
-import BytescaleUploader from '../../../components/ui/BytescaleUploader';
+import B2FileUploader from '../../../components/ui/B2FileUploader';
 import VideoPlayer from '../../../components/ui/VideoPlayer';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import { showToast } from '../../../utils/toasts';
@@ -32,6 +32,7 @@ const VideoSermons: React.FC = () => {
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [preachers, setPreachers] = useState<Preacher[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vaultUsage, setVaultUsage] = useState<any>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{ url: string; size: number } | null>(null);
   const [newSermonData, setNewSermonData] = useState({
@@ -61,8 +62,12 @@ const VideoSermons: React.FC = () => {
     }
   }, []);
 
+  const refreshVault = () =>
+    sermonAPI.getVaultUsage().then(r => setVaultUsage(r.data.data)).catch(() => {});
+
   useEffect(() => {
     fetchSermons();
+    refreshVault();
     preacherAPI.getPreachers().then(r => setPreachers(r.data.data || [])).catch(() => {});
   }, [fetchSermons]);
 
@@ -86,6 +91,7 @@ const VideoSermons: React.FC = () => {
       setSelectedFile(null);
       setShowUploadModal(false);
       fetchSermons();
+      refreshVault();
     } catch {
       showToast.error('Failed to create sermon');
     } finally {
@@ -101,6 +107,7 @@ const VideoSermons: React.FC = () => {
       setShowDeleteModal(false);
       setSermonToDelete(null);
       fetchSermons();
+      refreshVault();
       showToast.success('Sermon deleted');
     } catch {
       showToast.error('Failed to delete sermon');
@@ -125,12 +132,45 @@ const VideoSermons: React.FC = () => {
             <p className="text-sm text-gray-500 dark:text-gray-400">Manage video sermon recordings</p>
           </div>
         </div>
-        <button onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
-          <Plus className="w-5 h-5" />
-          Upload Video
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { fetchSermons(); refreshVault(); }}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+          <button onClick={() => setShowUploadModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+            <Plus className="w-5 h-5" />
+            Upload Video
+          </button>
+        </div>
       </div>
+
+      {/* Vault Storage */}
+      {vaultUsage && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Sermon Vault Storage</p>
+            <span className="text-xs font-semibold px-2 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 rounded-full">
+              {vaultUsage.percentage}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+            <div
+              className={`h-2 rounded-full transition-all ${
+                vaultUsage.percentage < 50 ? 'bg-green-500' :
+                vaultUsage.percentage < 80 ? 'bg-yellow-500' : 'bg-red-500'
+              }`}
+              style={{ width: `${Math.min(vaultUsage.percentage, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {vaultUsage.formattedCurrent} of {vaultUsage.formattedLimit} used · {vaultUsage.sermonCount} total sermons
+          </p>
+        </div>
+      )}
 
       {/* Sermons Table */}
       {loading ? (
@@ -233,15 +273,14 @@ const VideoSermons: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Video File *</label>
-                {selectedFile && (
-                  <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span className="text-sm text-green-800 dark:text-green-300">File uploaded successfully</span>
-                  </div>
-                )}
-                <BytescaleUploader acceptType="video" maxFileSize={524288000}
+                <B2FileUploader
+                  sermonType="video"
+                  accept=".mp4,.mov,.avi,.webm"
+                  maxSizeMb={200}
                   onUploadComplete={f => setSelectedFile({ url: f.url, size: f.size })}
-                  onError={err => showToast.error(err)} disabled={creatingSermon} />
+                  onClear={() => setSelectedFile(null)}
+                  disabled={creatingSermon}
+                />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => { setShowUploadModal(false); setSelectedFile(null); }}

@@ -49,6 +49,7 @@ const AdminPlanEdit = () => {
   const [limitDefinitions, setLimitDefinitions] = useState<LimitDefinition[]>([]);
   const [limitValues, setLimitValues] = useState<Record<string, any>>({});
 
+
   // Feature category ordering
   const CATEGORY_ORDER = ['Core', 'Financial', 'Communication', 'Reporting', 'Attendance', 'Integration', 'Support', 'Customization', 'Advanced'];
 

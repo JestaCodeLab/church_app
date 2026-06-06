@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Edit2, Loader, Headphones, CheckCircle, Play, Copy, Check, Share2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader, Headphones, Play, Copy, Check, Share2, RefreshCw } from 'lucide-react';
 import { sermonAPI, preacherAPI } from '../../../services/api';
-import BytescaleUploader from '../../../components/ui/BytescaleUploader';
+import B2FileUploader from '../../../components/ui/B2FileUploader';
 import AudioPlayer from '../../../components/ui/AudioPlayer';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import { showToast } from '../../../utils/toasts';
@@ -145,13 +145,22 @@ const AudioSermons: React.FC = () => {
             <p className="text-sm text-gray-500 dark:text-gray-400">Manage audio sermon recordings</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          Upload Audio
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { fetchSermons(); sermonAPI.getVaultUsage().then(r => setVaultUsage(r.data.data)).catch(() => {}); }}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+          >
+            <Plus className="w-5 h-5" />
+            Upload Audio
+          </button>
+        </div>
       </div>
 
       {/* Vault + Podcast Feed */}
@@ -159,7 +168,7 @@ const AudioSermons: React.FC = () => {
         {vaultUsage && (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Storage</p>
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Sermon Vault Storage</p>
               <span className="text-xs font-semibold px-2 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 rounded-full">
                 {vaultUsage.percentage}%
               </span>
@@ -168,7 +177,7 @@ const AudioSermons: React.FC = () => {
               <div className={`${getStorageColor(vaultUsage.percentage)} h-2 rounded-full`} style={{ width: `${vaultUsage.percentage}%` }} />
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {vaultUsage.formattedCurrent} of {vaultUsage.formattedLimit} used · {vaultUsage.sermonCount} sermons
+              {vaultUsage.formattedCurrent} of {vaultUsage.formattedLimit} used · {vaultUsage.sermonCount} total sermons
             </p>
           </div>
         )}
@@ -296,15 +305,14 @@ const AudioSermons: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Audio File *</label>
-                {selectedFile && (
-                  <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span className="text-sm text-green-800 dark:text-green-300">File uploaded successfully</span>
-                  </div>
-                )}
-                <BytescaleUploader acceptType="audio" maxFileSize={52428800}
+                <B2FileUploader
+                  sermonType="audio"
+                  accept=".mp3,.wav,.aac,.m4a,.flac"
+                  maxSizeMb={50}
                   onUploadComplete={f => setSelectedFile({ url: f.url, size: f.size })}
-                  onError={err => showToast.error(err)} disabled={creatingSermon} />
+                  onClear={() => setSelectedFile(null)}
+                  disabled={creatingSermon}
+                />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => { setShowUploadModal(false); setSelectedFile(null); }}

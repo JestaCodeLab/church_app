@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
 import AdminLayout from '../../layout/AdminLayout';
@@ -122,6 +121,12 @@ import SocialAnalytics from '../../pages/merchant/social-media/SocialAnalytics';
 // Documentation
 import Documentation from '../../pages/merchant/Documentation';
 
+// Support
+import Support from '../../pages/merchant/support/Support';
+import SupportTicketDetail from '../../pages/merchant/support/SupportTicketDetail';
+import AdminSupport from '../../pages/admin/support/AdminSupport';
+import AdminSupportTicketDetail from '../../pages/admin/support/AdminSupportTicketDetail';
+
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
   const { isMainDomain, loading } = useMerchant();
@@ -146,7 +151,6 @@ const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
 
 const AnimatedRoutes = () => {
   const { user } = useAuth();
-  const location = useLocation();
   const { merchant, isMainDomain } = useMerchant();
 
   // Update document title based on subdomain
@@ -171,8 +175,7 @@ const AnimatedRoutes = () => {
   }, [merchant]);
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <Routes>
         {/* Landing Page - Main Domain */}
         {isMainDomain && <Route path="/login" element={<Login />} />}
 
@@ -303,6 +306,8 @@ const AnimatedRoutes = () => {
             <Route path="/documentation" element={<Documentation />} />
 
             <Route path="/activity-logs" element={<ActivityLogs />} />
+            <Route path="/support" element={<Support />} />
+            <Route path="/support/:id" element={<SupportTicketDetail />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
@@ -349,6 +354,8 @@ const AnimatedRoutes = () => {
             <Route path="/admin/announcements" element={<AdminAnnouncements />} />
             <Route path="/admin/comms" element={<AdminComms />} />
             <Route path="/admin/logs" element={<AdminLogs />} />
+            <Route path="/admin/support" element={<AdminSupport />} />
+            <Route path="/admin/support/:id" element={<AdminSupportTicketDetail />} />
           </Route>
         </Route>
 
@@ -356,7 +363,6 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </AnimatePresence>
   );
 };
 
