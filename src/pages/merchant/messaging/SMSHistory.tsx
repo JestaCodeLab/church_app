@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CheckCircle, Clock, XCircle, AlertCircle, Loader, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import api, { messagingAPI } from '../../../services/api';
 import FeatureGate from '../../../components/access/FeatureGate';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { usePageTour } from '../../../hooks/usePageTour';
 
 interface Recipient {
   phoneNumber: string;
@@ -46,6 +48,7 @@ interface ScheduledMessage {
 }
 
 const SMSHistory = () => {
+  usePageTour('messaging_send');
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [scheduledMessages, setScheduledMessages] = useState<ScheduledMessage[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -23,6 +23,7 @@ import {
 import { showToast } from '../../../utils/toasts';
 import { departmentAPI, memberAPI } from '../../../services/api';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import LucideIconRenderer from '../../../components/ui/LucideIconRenderer';
 
 interface Member {
   _id: string;
@@ -42,6 +43,11 @@ interface Member {
 const DepartmentDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+
+  // Convert text to sentence case (first letter uppercase, rest lowercase)
+  const toSentenceCase = (text: string) => {
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
 
   const [department, setDepartment] = useState<any>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -300,16 +306,16 @@ const DepartmentDetails = () => {
 
           <div className="flex items-start space-x-4">
             <div
-              className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl"
+              className="w-16 h-16 rounded-xl flex items-center justify-center"
               style={{ backgroundColor: `${department.color}20` }}
             >
-              {department.icon}
+              <LucideIconRenderer iconName={department.icon} className="w-8 h-8" style={{ color: department.color }} />
             </div>
 
             <div>
               <div className="flex flex-col items-start space-y-2">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                  {department.name}
+                  {toSentenceCase(department.name)}
                 </h1>
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                   department.isActive

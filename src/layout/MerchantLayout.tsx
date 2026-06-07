@@ -595,12 +595,9 @@ const MerchantLayout = () => {
   useEffect(() => {
     const menusToExpand = navigation
       .filter(item => item.children && isParentActive(item))
-      .map(item => item.name)
-      .filter(name => !expandedMenus.includes(name));
+      .map(item => item.name);
 
-    if (menusToExpand.length > 0) {
-      setExpandedMenus(prev => Array.from(new Set([...prev, ...menusToExpand])));
-    }
+    setExpandedMenus(menusToExpand);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
@@ -617,8 +614,8 @@ const MerchantLayout = () => {
   const toggleMenu = (menuName: string) => {
     setExpandedMenus(prev =>
       prev.includes(menuName)
-        ? prev.filter(name => name !== menuName)
-        : [...prev, menuName]
+        ? [] // Close the menu if it's already open
+        : [menuName] // Close all others and open only this one (accordion behavior)
     );
   };
 
@@ -721,7 +718,10 @@ const MerchantLayout = () => {
       <Link
         key={item.name}
         to={item.href || '#'}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => {
+          setSidebarOpen(false);
+          setExpandedMenus([]);
+        }}
         className={`
           flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
           transition-all duration-200
@@ -870,7 +870,9 @@ const MerchantLayout = () => {
 
               {/* Branch Selector for church_admin and branch_admin */}
               {hasFeature('branchManagement' as any) && user?.role?.slug !== 'super_admin' && (
-                <BranchSelector className="hidden sm:inline-flex" />
+                <div data-tour="dashboard-branch-filter">
+                  <BranchSelector className="hidden sm:inline-flex" />
+                </div>
               )}
 
               {/* Search Bar */}

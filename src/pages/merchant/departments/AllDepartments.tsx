@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Loader, 
+import {
+  Users,
+  Plus,
+  Edit,
+  Trash2,
+  Loader,
   Search,
   MoreVertical,
   UserCheck,
@@ -23,6 +23,8 @@ import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import LucideIconRenderer from '../../../components/ui/LucideIconRenderer';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
 
 interface Department {
   _id: string;
@@ -52,9 +54,7 @@ interface Department {
 
 const AllDepartments = () => {
   const navigate = useNavigate();
-  const plan = useAuth()?.user?.merchant?.subscription?.plan
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
+  const plan = useAuth()?.user?.merchant?.subscription?.plan;
   const [searchTerm, setSearchTerm] = useState('');
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -64,30 +64,35 @@ const AllDepartments = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const departmentLimit = useResourceLimit('departments');
 
-  useEffect(() => {
-    fetchDepartments();
-  }, [filterActive]);
-
-  const fetchDepartments = async () => {
-    try {
-      setLoading(true);      
-      const params: any = {};
-
-      if (filterActive !== null) {
-        params.isActive = filterActive;
-      }
-
-      const response = await departmentAPI.getDepartments(params);
-
-      if (response.data.success) {
-        setDepartments(response.data.data.departments);
-      }
-    } catch (error: any) {
-      showToast.error(error.response?.data?.message || 'Failed to load departments');
-    } finally {
-      setLoading(false);
-    }
+  // Convert text to sentence case (first letter uppercase, rest lowercase)
+  const toSentenceCase = (text: string) => {
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
+
+  // Paginated departments fetcher
+  const departmentsFetcher = async (params: any) => {
+    const response = await departmentAPI.getDepartments(params);
+    return {
+      items: response.data.data.departments,
+      pagination: {
+        currentPage: response.data.data.pagination?.currentPage || 1,
+        pages: response.data.data.pagination?.pages || 1,
+        totalItems: response.data.data.pagination?.totalItems || response.data.data.departments.length,
+      },
+    };
+  };
+
+  const { data: departments, loading, setFilters, refetch: refetchDepartments } =
+    usePaginatedQuery<Department>('departments', departmentsFetcher, { limit: 50 });
+
+  // Update filters when filterActive changes
+  useEffect(() => {
+    if (filterActive !== null) {
+      setFilters({ isActive: filterActive });
+    } else {
+      setFilters({});
+    }
+  }, [filterActive, setFilters]);
 
 
   const handleDelete = async () => {
@@ -102,7 +107,7 @@ const AllDepartments = () => {
       showToast.success('Department deleted successfully');
       setShowDeleteModal(false);
       setDepartmentToDelete(null);
-      fetchDepartments();
+      refetchDepartments();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to delete department');
     } finally {
@@ -281,15 +286,15 @@ const AllDepartments = () => {
                 {/* Title & Icon */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3 flex-1">
-                    <div 
-                      className="w-14 h-14 rounded-lg flex items-center justify-center text-3xl flex-shrink-0 shadow-sm"
+                    <div
+                      className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
                       style={{ backgroundColor: `${dept.color}15`, border: `2px solid ${dept.color}40` }}
                     >
-                      {dept.icon}
+                      <LucideIconRenderer iconName={dept.icon} className="w-6 h-6" style={{ color: dept.color }} />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-1">
-                        {dept.name}
+                        {toSentenceCase(dept.name)}
                       </h3>
                       <div className="flex items-center space-x-2 mt-1 flex-wrap gap-1">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -362,7 +367,7 @@ const AllDepartments = () => {
                     onClick={() => navigate(`/departments/${dept._id}`)}
                     className="inline-flex items-center justify-center px-3 py-2 bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500 text-white text-sm font-semibold rounded-lg transition-colors"
                   >
-                    <Eye className="w-4 h-4 mr-1" />
+                    <Eye className="w-5 h-5 mr-1" />
                     View
                   </button>
                   </PermissionGuard>
@@ -371,7 +376,7 @@ const AllDepartments = () => {
                     onClick={() => navigate(`/departments/${dept._id}/edit`)}
                     className="inline-flex items-center justify-center px-3 py-2 bg-primary-100 dark:bg-primary-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 text-primary-700 dark:text-primary-400 text-sm font-semibold rounded-lg transition-colors"
                   >
-                    <Edit className="w-4 h-4" />
+                    <Edit className="w-5 h-5" />
                   </button>
                   </PermissionGuard>
                   <PermissionGuard permission="departments.delete">
@@ -382,7 +387,7 @@ const AllDepartments = () => {
                     }}
                     className="inline-flex items-center justify-center px-3 py-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 text-sm font-semibold rounded-lg transition-colors"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                   </PermissionGuard>
                 </div>
@@ -398,7 +403,6 @@ const AllDepartments = () => {
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Department</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Leader</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Members</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Schedule</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Status</th>
@@ -410,30 +414,20 @@ const AllDepartments = () => {
                   <tr key={dept._id} onClick={() => navigate(`/departments/${dept._id}`)} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        <div 
-                          className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center"
                           style={{ backgroundColor: `${dept.color}20` }}
                         >
-                          {dept.icon}
+                          <LucideIconRenderer iconName={dept.icon} className="w-5 h-5" style={{ color: dept.color }} />
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900 dark:text-gray-100">{dept.name}</p>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">{toSentenceCase(dept.name)}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{dept.description}</p>
                           {dept.branch && (
                             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0">{dept.branch.name}</p>
                           )}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {dept.leader ? (
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">{dept.leader.firstName} {dept.leader.lastName}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{dept.leader.email}</p>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
-                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">

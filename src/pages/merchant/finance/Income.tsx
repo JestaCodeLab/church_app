@@ -16,6 +16,7 @@ import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import { usePageTour } from '../../../hooks/usePageTour';
 
 interface Income {
   _id: string;
@@ -38,6 +39,7 @@ const INCOME_CATEGORIES = [
 ];
 
 const Income: React.FC = () => {
+  usePageTour('finance_income');
   const [incomeList, setIncomeList] = useState<Income[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);

@@ -1,8 +1,10 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, use, useMemo } from 'react';
 import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { usePageTour } from '../../../hooks/usePageTour';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
 import FeatureGate from '../../../components/access/FeatureGate';
 import ImportMembersModal from '../../../components/modals/ImportMembersModal';
@@ -14,6 +16,7 @@ import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 const AllMembers = () => {
   const { user, fetchAndUpdateSubscription } = useAuth();
+  usePageTour('members_all');
   const plan = user?.merchant?.subscription?.plan;
   const merchantId = user?.merchant?.id;
   const merchantName = user?.merchant?.name || 'Church';
@@ -21,8 +24,6 @@ const AllMembers = () => {
 
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [members, setMembers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -46,10 +47,57 @@ const AllMembers = () => {
     firstTimersCount: 0,
   });
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalMembers, setTotalMembers] = useState(0);
+  // Filters
+  const [filters, setFilterState] = useState({
+    status: '',
+    gender: '',
+    membershipType: '',
+    registrationType: '',
+  });
+
+  // Members fetcher for SWR
+  const membersFetcher = async (params: any) => {
+    const response = await memberAPI.getMembers(params);
+    return {
+      items: response.data.data.members,
+      pagination: {
+        currentPage: response.data.data.pagination?.currentPage || 1,
+        pages: response.data.data.pagination?.totalPages || 1,
+        totalItems: response.data.data.pagination?.totalItems || response.data.data.members.length,
+      },
+    };
+  };
+
+  const {
+    data: members,
+    loading,
+    currentPage,
+    totalPages,
+    totalItems: totalMembers,
+    setPage,
+    setSearch,
+    setFilters,
+    refetch: refetchMembers
+  } = usePaginatedQuery<any>('members', membersFetcher, {
+    limit: 20
+  });
+
+  // Build and apply filters when activeTab or filters change
+  useEffect(() => {
+    const filterObj: any = {};
+    if (activeTab !== 'all') {
+      filterObj.membershipType = activeTab;
+    }
+    if (filters.status) filterObj.status = filters.status;
+    if (filters.gender) filterObj.gender = filters.gender;
+    if (filters.membershipType && activeTab === 'all') {
+      filterObj.membershipType = filters.membershipType;
+    }
+    if (filters.registrationType && activeTab === 'all') {
+      filterObj.registrationType = filters.registrationType;
+    }
+    setFilters(filterObj);
+  }, [activeTab, filters, setFilters]);
 
   // Delete Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -57,14 +105,6 @@ const AllMembers = () => {
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-
-  // Filters
-  const [filters, setFilters] = useState({
-    status: '',
-    gender: '',
-    membershipType: '',
-    registrationType: '',
-  });
 
   // Resource Limits
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -74,43 +114,8 @@ const AllMembers = () => {
   const registrationLink = `${frontendUrl}/register/${merchantId}`;
 
   useEffect(() => {
-    fetchMembers();
     fetchStats();
-  }, [currentPage, searchQuery, activeTab, filters]);
-
-  const fetchMembers = async () => {
-    setLoading(true);
-    try {
-      const params: any = {
-        page: currentPage,
-        limit: 20,
-        search: searchQuery,
-      };
-
-      if (activeTab !== 'all') {
-        params.membershipType = activeTab;
-      }
-
-      if (filters.status) params.status = filters.status;
-      if (filters.gender) params.gender = filters.gender;
-
-      if (filters.membershipType && activeTab === 'all') {
-        params.membershipType = filters.membershipType;
-      }
-      if (filters.registrationType && activeTab === 'all') {
-        params.registrationType = filters.registrationType;
-      }
-
-      const response = await memberAPI.getMembers(params);
-      setMembers(response.data.data.members);
-      setTotalPages(response.data.data.pagination.totalPages);
-      setTotalMembers(response.data.data.pagination.totalItems);
-    } catch (error: any) {
-      showToast.error('Failed to load members');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [activeTab]);
 
   const fetchStats = async () => {
     try {
@@ -214,7 +219,7 @@ const AllMembers = () => {
   };
 
   const handleImportComplete = () => {
-    fetchMembers();
+    refetchMembers();
     fetchStats();
   };
 
@@ -264,7 +269,7 @@ const AllMembers = () => {
       setSelectedMembers(new Set());
       setShowBulkDeleteModal(false);
       await fetchAndUpdateSubscription();
-      await fetchMembers();
+      await refetchMembers();
       await fetchStats();
     } catch (error: any) {
       showToast.error('Failed to delete some members');
@@ -279,7 +284,7 @@ const AllMembers = () => {
     setShowDeleteModal(false);
     setSelectedMember(null);
     await fetchAndUpdateSubscription();
-    await fetchMembers();
+    await refetchMembers();
     await fetchStats();
   };
 
@@ -342,9 +347,8 @@ const AllMembers = () => {
 
   const handleTabClick = (tab: any) => {
     setActiveTab(tab.id);
-    setCurrentPage(1);
-
-    setFilters(prev => ({
+    setPage(1);
+    setFilterState(prev => ({
       ...prev,
       registrationType: '',
       membershipType: ''
@@ -409,6 +413,7 @@ const AllMembers = () => {
             <PermissionGuard permission="members.import">
               <button
                 onClick={() => setShowImportModal(true)}
+                data-tour="members-import"
                 className="flex items-center px-4 py-2 text-sm font-medium text-primary-700 dark:text-blue-300 bg-primary-50 dark:bg-primary-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-colors"
               >
                 <Upload className="w-4 h-4 mr-2" />
@@ -432,6 +437,7 @@ const AllMembers = () => {
             <PermissionGuard permission="members.create">
               <button
                 onClick={handleAddMemberClick}
+                data-tour="members-add-btn"
                 className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${memberLimit.canCreate
                   ? 'text-white bg-primary-600 hover:bg-primary-700'
                   : 'text-gray-400 bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
@@ -672,13 +678,16 @@ const AllMembers = () => {
               </div>
 
               {/* Search */}
-              <div className="relative flex items-center space-x-3">
+              <div className="relative flex items-center space-x-3" data-tour="members-search">
                 <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search members..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSearch(e.target.value);
+                  }}
                   className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
                 {selectedMembers.size > 0 && (
@@ -887,11 +896,11 @@ const AllMembers = () => {
                 <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalMembers)} of {totalMembers} members
+                      Showing {(currentPage - 1) * 20 + 1} to {Math.min(currentPage * 20, totalMembers)} of {totalMembers} members
                     </p>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        onClick={() => currentPage > 1 && setPage(currentPage - 1)}
                         disabled={currentPage === 1}
                         className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
@@ -901,7 +910,7 @@ const AllMembers = () => {
                         Page {currentPage} of {totalPages}
                       </span>
                       <button
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        onClick={() => currentPage < totalPages && setPage(currentPage + 1)}
                         disabled={currentPage === totalPages}
                         className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >

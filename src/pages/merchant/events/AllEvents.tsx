@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Calendar,
@@ -27,6 +27,8 @@ import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { usePageTour } from '../../../hooks/usePageTour';
 
 interface AllEventsProps {
   mode: 'services' | 'events';
@@ -36,16 +38,12 @@ const EVENT_TYPES_EXCLUDE_SERVICE = 'conference,seminar,workshop,social,outreach
 
 const AllEvents = ({ mode }: AllEventsProps) => {
   const navigate = useNavigate();
+  usePageTour('events');
   const { user, fetchAndUpdateSubscription } = useAuth();
   const plan = user?.merchant?.subscription?.plan;
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [events, setEvents] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalEvents, setTotalEvents] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -57,31 +55,40 @@ const AllEvents = ({ mode }: AllEventsProps) => {
   const labelPlural = isServices ? 'Services' : 'Events';
   const eventTypeParam = isServices ? 'service' : EVENT_TYPES_EXCLUDE_SERVICE;
 
-  useEffect(() => {
-    fetchEvents();
-    fetchUsageData();
-  }, [currentPage, statusFilter, searchQuery, mode]);
+  // Events fetcher for SWR
+  const eventsFetcher = async (params: any) => {
+    const response = await eventAPI.getEvents({
+      ...params,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      eventType: eventTypeParam,
+      search: searchQuery || undefined
+    });
 
-  const fetchEvents = async () => {
-    try {
-      setLoading(true);
-      const response = await eventAPI.getEvents({
-        page: currentPage,
-        limit: 10,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        eventType: eventTypeParam,
-        search: searchQuery || undefined
-      });
-
-      setEvents(response.data.data.events);
-      setTotalPages(response.data.data.pagination.pages);
-      setTotalEvents(response.data.data.pagination.total);
-    } catch (error: any) {
-      showToast.error(error.response?.data?.message || 'Failed to fetch events');
-    } finally {
-      setLoading(false);
-    }
+    return {
+      items: response.data.data.events,
+      pagination: {
+        currentPage: response.data.data.pagination?.currentPage || 1,
+        pages: response.data.data.pagination?.pages || 1,
+        totalItems: response.data.data.pagination?.total || response.data.data.events.length,
+      },
+    };
   };
+
+  const {
+    data: events,
+    loading,
+    currentPage,
+    totalPages,
+    totalItems: totalEvents,
+    setPage,
+    refetch: refetchEvents
+  } = usePaginatedQuery<any>('events', eventsFetcher, {
+    limit: 10
+  });
+
+  useEffect(() => {
+    fetchUsageData();
+  }, [mode]);
 
   const fetchUsageData = async () => {
     try {
@@ -107,7 +114,7 @@ const AllEvents = ({ mode }: AllEventsProps) => {
         setShowDeleteModal(false);
         setDeleting(false);
         setEventToDelete(null);
-        fetchEvents();
+        refetchEvents();
     };
 
   const getStatusBadge = (status: string) => {
@@ -378,14 +385,14 @@ const AllEvents = ({ mode }: AllEventsProps) => {
                   </p>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      onClick={() => currentPage > 1 && setPage(currentPage - 1)}
                       disabled={currentPage === 1}
                       className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Previous
                     </button>
                     <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      onClick={() => currentPage < totalPages && setPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
                       className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >

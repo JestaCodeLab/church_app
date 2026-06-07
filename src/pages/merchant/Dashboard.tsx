@@ -22,9 +22,11 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import { showToast } from '../../utils/toasts';
+import { usePageTour } from '../../hooks/usePageTour';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  usePageTour('dashboard');
   const [loading, setLoading] = useState(true);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [stats, setStats] = useState<any>({
@@ -117,7 +119,7 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions Banner */}
-        <div className="mb-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
+        <div className="mb-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6" data-tour="dashboard-quick-actions">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
             <div className="w-full md:w-auto text-center md:text-left">
               <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
@@ -154,7 +156,7 @@ const Dashboard = () => {
         </div>
 
         {/* Main Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-tour="dashboard-stats">
           {/* Total Members */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-4">

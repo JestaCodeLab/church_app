@@ -10,6 +10,8 @@ import { useAuth } from '../../../context/AuthContext';
 import { PermissionRoute } from '../../../components/guards/PermissionRoute';
 import { useBranch } from '../../../context/BranchContext';
 import BranchField from '../../../components/forms/BranchField';
+import { DEPARTMENT_ICONS } from '../../../utils/departmentIconMap';
+import LucideIconRenderer from '../../../components/ui/LucideIconRenderer';
 
 
 const DAYS = ['None', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -19,7 +21,7 @@ const COLORS = [
   '#06B6D4', '#EC4899', '#F97316', '#14B8A6', '#6366F1'
 ];
 
-const ICONS = ['👥', '🎵', '🙏', '📖', '🎤', '👨‍👩‍👧‍👦', '⛪', '🌟', '💒', '✝️', '🕊️', '📚', '🎁', '❤️', '🎨', '⚽', '🏆', '🎭', '📱', '🌍', '🧠', '💡', '🤝', '🎓', '🎸', '🎬', '🏃', '🍽️', '🕯️', '💪', '🌱', '🎪', '📞', '🎯', '⛺', '🚀', '📻', '🎊', '🛐', '👶', '🧒', '👨', '👩', '🕯️', '🌈', '💖', '🎉'];
+const ICONS = DEPARTMENT_ICONS;
 
 
 const DepartmentForm = () => {
@@ -52,7 +54,7 @@ const DepartmentForm = () => {
     isActive: true,
     allowSelfRegistration: true,
     color: COLORS[0],
-    icon: ICONS[0]
+    icon: ICONS[0] || 'Users'
   });
 
   useEffect(() => {
@@ -97,7 +99,7 @@ const DepartmentForm = () => {
           isActive: dept.isActive,
           allowSelfRegistration: dept.allowSelfRegistration,
           color: dept.color || COLORS[0],
-          icon: dept.icon || ICONS[0]
+          icon: dept.icon || ICONS[0] || 'Users'
         });
       }
     } catch (error: any) {
@@ -315,13 +317,16 @@ const DepartmentForm = () => {
                         key={icon}
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, icon }))}
-                        className={`w-12 h-12 text-2xl rounded-lg border-2 transition-all ${
+                        className={`w-12 h-12 flex items-center justify-center rounded-lg border-2 transition-all ${
                           formData.icon === icon
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-110'
-                            : 'border-gray-300 dark:border-gray-600 hover:border-primary-300 hover:scale-105'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-500 hover:scale-105'
                         }`}
                       >
-                        {icon}
+                        <LucideIconRenderer
+                          iconName={icon}
+                          className="w-6 h-6 text-gray-700 dark:text-gray-300"
+                        />
                       </button>
                     ))}
                   </div>

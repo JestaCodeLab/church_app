@@ -35,10 +35,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [plansMenuOpen, setPlansMenuOpen] = useState(false); // ✅ FIXED: Changed from true to false
-  const [messagingMenuOpen, setMessagingMenuOpen] = useState(false); // ✅ NEW: Messaging submenu
-  const [financeMenuOpen, setFinanceMenuOpen] = useState(false); // Finance submenu
-  const [announcementsMenuOpen, setAnnouncementsMenuOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<'plans' | 'messaging' | 'finance' | 'announcements' | null>(null);
 
   // Main navigation (no submenus)
   const navigation = [
@@ -78,31 +75,18 @@ const AdminLayout = () => {
   const isActive = (path: string) => location.pathname === path;
   const isSubmenuActive = (items: any[]) => items.some(item => location.pathname.startsWith(item.href));
 
-  // ✅ Auto-expand messaging menu if on messaging pages
-  React.useEffect(() => {
-    if (isSubmenuActive(messagingSubmenu)) {
-      setMessagingMenuOpen(true);
-    }
-  }, [location.pathname]);
-
-  // ✅ Auto-expand plans menu if on plans pages
+  // Auto-expand the relevant menu based on current route
   React.useEffect(() => {
     if (isSubmenuActive(plansSubmenu)) {
-      setPlansMenuOpen(true);
-    }
-  }, [location.pathname]);
-
-  // Auto-expand announcements menu if on announcements pages
-  React.useEffect(() => {
-    if (isSubmenuActive(announcementsSubmenu)) {
-      setAnnouncementsMenuOpen(true);
-    }
-  }, [location.pathname]);
-
-  // ✅ Auto-expand finance menu if on finance pages
-  React.useEffect(() => {
-    if (isSubmenuActive(financeSubmenu)) {
-      setFinanceMenuOpen(true);
+      setOpenMenu('plans');
+    } else if (isSubmenuActive(messagingSubmenu)) {
+      setOpenMenu('messaging');
+    } else if (isSubmenuActive(financeSubmenu)) {
+      setOpenMenu('finance');
+    } else if (isSubmenuActive(announcementsSubmenu)) {
+      setOpenMenu('announcements');
+    } else {
+      setOpenMenu(null);
     }
   }, [location.pathname]);
 
@@ -139,7 +123,10 @@ const AdminLayout = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                onClick={() => setSidebarOpen(false)}
+                onClick={() => {
+                  setSidebarOpen(false);
+                  setOpenMenu(null);
+                }}
                 className={`
                   flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
                   transition-all duration-200
@@ -158,11 +145,11 @@ const AdminLayout = () => {
           {/* Plans Menu with Submenu */}
           <div>
             <button
-              onClick={() => setPlansMenuOpen(!plansMenuOpen)}
+              onClick={() => setOpenMenu(openMenu === 'plans' ? null : 'plans')}
               className={`
                 w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg
                 transition-all duration-200
-                ${isSubmenuActive(plansSubmenu)
+                ${isSubmenuActive(plansSubmenu) || openMenu === 'plans'
                   ? 'bg-gray-800 text-white'
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }
@@ -172,7 +159,7 @@ const AdminLayout = () => {
                 <Crown className="w-5 h-5 mr-3" />
                 <span>Plans & Billing</span>
               </div>
-              {plansMenuOpen ? (
+              {openMenu === 'plans' ? (
                 <ChevronDown className="w-4 h-4" />
               ) : (
                 <ChevronRight className="w-4 h-4" />
@@ -180,7 +167,7 @@ const AdminLayout = () => {
             </button>
 
             {/* Plans Submenu Items */}
-            {plansMenuOpen && (
+            {openMenu === 'plans' && (
               <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
                 {plansSubmenu.map((item) => {
                   const Icon = item.icon;
@@ -188,7 +175,10 @@ const AdminLayout = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      onClick={() => setSidebarOpen(false)}
+                      onClick={() => {
+                        setSidebarOpen(false);
+                        setOpenMenu(null);
+                      }}
                       className={`
                         flex items-center pl-6 pr-3 py-2 text-sm font-medium rounded-r-lg
                         transition-all duration-200
@@ -210,11 +200,11 @@ const AdminLayout = () => {
           {/* ✅ NEW: Messaging Menu with Submenu */}
           <div>
             <button
-              onClick={() => setMessagingMenuOpen(!messagingMenuOpen)}
+              onClick={() => setOpenMenu(openMenu === 'messaging' ? null : 'messaging')}
               className={`
                 w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg
                 transition-all duration-200
-                ${isSubmenuActive(messagingSubmenu)
+                ${isSubmenuActive(messagingSubmenu) || openMenu === 'messaging'
                   ? 'bg-gray-800 text-white'
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }
@@ -224,7 +214,7 @@ const AdminLayout = () => {
                 <MessageSquare className="w-5 h-5 mr-3" />
                 <span>Messaging</span>
               </div>
-              {messagingMenuOpen ? (
+              {openMenu === 'messaging' ? (
                 <ChevronDown className="w-4 h-4" />
               ) : (
                 <ChevronRight className="w-4 h-4" />
@@ -232,7 +222,7 @@ const AdminLayout = () => {
             </button>
 
             {/* Messaging Submenu Items */}
-            {messagingMenuOpen && (
+            {openMenu === 'messaging' && (
               <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
                 {messagingSubmenu.map((item) => {
                   const Icon = item.icon;
@@ -240,7 +230,10 @@ const AdminLayout = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      onClick={() => setSidebarOpen(false)}
+                      onClick={() => {
+                        setSidebarOpen(false);
+                        setOpenMenu(null);
+                      }}
                       className={`
                         flex items-center pl-6 pr-3 py-2 text-sm font-medium rounded-r-lg
                         transition-all duration-200
@@ -262,11 +255,11 @@ const AdminLayout = () => {
           {/* Finance Menu with Submenu */}
           <div>
             <button
-              onClick={() => setFinanceMenuOpen(!financeMenuOpen)}
+              onClick={() => setOpenMenu(openMenu === 'finance' ? null : 'finance')}
               className={`
                 w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg
                 transition-all duration-200
-                ${isSubmenuActive(financeSubmenu)
+                ${isSubmenuActive(financeSubmenu) || openMenu === 'finance'
                   ? 'bg-gray-800 text-white'
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }
@@ -276,7 +269,7 @@ const AdminLayout = () => {
                 <DollarSign className="w-5 h-5 mr-3" />
                 <span>Finance</span>
               </div>
-              {financeMenuOpen ? (
+              {openMenu === 'finance' ? (
                 <ChevronDown className="w-4 h-4" />
               ) : (
                 <ChevronRight className="w-4 h-4" />
@@ -284,7 +277,7 @@ const AdminLayout = () => {
             </button>
 
             {/* Finance Submenu Items */}
-            {financeMenuOpen && (
+            {openMenu === 'finance' && (
               <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
                 {financeSubmenu.map((item) => {
                   const Icon = item.icon;
@@ -292,7 +285,10 @@ const AdminLayout = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      onClick={() => setSidebarOpen(false)}
+                      onClick={() => {
+                        setSidebarOpen(false);
+                        setOpenMenu(null);
+                      }}
                       className={`
                         flex items-center pl-6 pr-3 py-2 text-sm font-medium rounded-r-lg
                         transition-all duration-200
@@ -314,11 +310,11 @@ const AdminLayout = () => {
           {/* Announcements Menu with Submenu */}
           <div>
             <button
-              onClick={() => setAnnouncementsMenuOpen(!announcementsMenuOpen)}
+              onClick={() => setOpenMenu(openMenu === 'announcements' ? null : 'announcements')}
               className={`
                 w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg
                 transition-all duration-200
-                ${isSubmenuActive(announcementsSubmenu)
+                ${isSubmenuActive(announcementsSubmenu) || openMenu === 'announcements'
                   ? 'bg-gray-800 text-white'
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }
@@ -328,7 +324,7 @@ const AdminLayout = () => {
                 <Megaphone className="w-5 h-5 mr-3" />
                 <span>Announcements</span>
               </div>
-              {announcementsMenuOpen ? (
+              {openMenu === 'announcements' ? (
                 <ChevronDown className="w-4 h-4" />
               ) : (
                 <ChevronRight className="w-4 h-4" />
@@ -336,7 +332,7 @@ const AdminLayout = () => {
             </button>
 
             {/* Announcements Submenu Items */}
-            {announcementsMenuOpen && (
+            {openMenu === 'announcements' && (
               <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
                 {announcementsSubmenu.map((item) => {
                   const Icon = item.icon;
@@ -344,7 +340,10 @@ const AdminLayout = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      onClick={() => setSidebarOpen(false)}
+                      onClick={() => {
+                        setSidebarOpen(false);
+                        setOpenMenu(null);
+                      }}
                       className={`
                         flex items-center pl-6 pr-3 py-2 text-sm font-medium rounded-r-lg
                         transition-all duration-200

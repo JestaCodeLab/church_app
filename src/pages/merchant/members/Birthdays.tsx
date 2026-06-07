@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {  
   Calendar, 
   Send, 
@@ -22,6 +22,7 @@ import api from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
 
 interface Birthday {
   _id: string;
@@ -69,15 +70,13 @@ interface AutomationSettings {
 const Birthdays: React.FC = () => {
   const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [birthdays, setBirthdays] = useState<Birthday[]>([]);
   const [todaysBirthdays, setTodaysBirthdays] = useState<Birthday[]>([]);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<Birthday[]>([]);
   const [stats, setStats] = useState<BirthdayStats | null>(null);
   const [automationSettings, setAutomationSettings] = useState<AutomationSettings | null>(null);
   const [smsCredits, setSmsCredits] = useState<number>(0);
   const [hasSmsAutomationAccess, setHasSmsAutomationAccess] = useState<boolean>(false);
-  
-  const [loading, setLoading] = useState(true);
+
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBranch, setFilterBranch] = useState('');
@@ -87,8 +86,29 @@ const Birthdays: React.FC = () => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  // Birthdays fetcher for SWR
+  const birthdaysFetcher = async (params: any) => {
+    const response = await api.get(`/birthdays/month/${selectedMonth}`);
+    return {
+      items: response.data.data.birthdays || [],
+      pagination: {
+        currentPage: 1,
+        pages: 1,
+        totalItems: response.data.data.birthdays?.length || 0,
+      },
+    };
+  };
+
+  const {
+    data: birthdays,
+    loading,
+    refetch: refetchBirthdays
+  } = usePaginatedQuery<Birthday>('birthdays', birthdaysFetcher, {
+    limit: 100
+  });
+
   useEffect(() => {
-    fetchData();
+    fetchOtherData();
     checkSmsAutomationAccess();
   }, [selectedMonth]);
 
@@ -97,12 +117,9 @@ const Birthdays: React.FC = () => {
     setHasSmsAutomationAccess(hasAccess);
   };
 
-  const fetchData = async () => {
+  const fetchOtherData = async () => {
     try {
-      setLoading(true);
-      
-      const [birthdaysRes, todayRes, upcomingRes, statsRes, settingsRes, creditsRes] = await Promise.all([
-        api.get(`/birthdays/month/${selectedMonth}`),
+      const [todayRes, upcomingRes, statsRes, settingsRes, creditsRes] = await Promise.all([
         api.get('/birthdays/today'),
         api.get('/birthdays/upcoming'),
         api.get('/birthdays/stats'),
@@ -110,7 +127,6 @@ const Birthdays: React.FC = () => {
         api.get('/sms/credits')
       ]);
 
-      setBirthdays(birthdaysRes.data.data.birthdays || []);
       setTodaysBirthdays(todayRes.data.data.birthdays || []);
       setUpcomingBirthdays(upcomingRes.data.data.birthdays || []);
       setStats(statsRes.data.data || null);
@@ -118,10 +134,8 @@ const Birthdays: React.FC = () => {
       setSmsCredits(creditsRes.data.data.credits.balance || 0);
 
     } catch (error: any) {
-      showToast.error('Failed to load birthdays');
+      showToast.error('Failed to load birthday data');
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -130,15 +144,10 @@ const Birthdays: React.FC = () => {
       setSendingTo(memberId);
       await api.post(`/birthdays/send-sms/${memberId}`);
       showToast.success('Birthday SMS sent successfully!');
-      
-      // Update birthday status
-      setBirthdays(prev => prev.map(b => 
-        b._id === memberId ? { ...b, smsSent: true, smsStatus: 'sent' as const } : b
-      ));
-      setTodaysBirthdays(prev => prev.map(b => 
-        b._id === memberId ? { ...b, smsSent: true, smsStatus: 'sent' as const } : b
-      ));
-      
+
+      // Refresh birthdays data
+      refetchBirthdays();
+
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to send SMS');
     } finally {
@@ -148,14 +157,11 @@ const Birthdays: React.FC = () => {
 
   const handleSendBulkSMS = async (memberIds: string[]) => {
     try {
-      setLoading(true);
       await api.post('/birthdays/send-bulk-sms', { memberIds });
       showToast.success(`Birthday SMS sent to ${memberIds.length} member(s)!`);
-      fetchData(); // Refresh data
+      refetchBirthdays();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to send bulk SMS');
-    } finally {
-      setLoading(false);
     }
   };
 
