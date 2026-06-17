@@ -1,7 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { Upload, X, FileAudio, FileVideo, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { sermonAPI } from '../../services/api';
+import { getSecureItem } from '../../utils/encryption';
 import toast from 'react-hot-toast';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
 interface UploadResult {
   url: string;
@@ -51,17 +54,20 @@ const B2FileUploader: React.FC<Props> = ({
     setFileName(file.name);
 
     try {
-      // Step 1: get pre-signed URL from backend
-      const res = await sermonAPI.getPresignedUrl({
-        fileName: file.name,
-        contentType: file.type,
-        sermonType,
-        fileSizeBytes: file.size,
-      });
+      // Get auth token
+      const token = await getSecureItem('accessToken');
+      if (!token) {
+        throw new Error('Not authenticated. Please login first.');
+      }
 
-      const { presignedUrl, publicUrl } = res.data.data;
+      // Upload file to backend (server-side upload to B2, avoiding CORS)
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('sermonType', sermonType);
 
-      // Step 2: upload directly to B2 using XHR (for progress events)
+      let uploadedUrl: string;
+
+      // Use XHR for progress tracking
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhrRef.current = xhr;
@@ -74,7 +80,17 @@ const B2FileUploader: React.FC<Props> = ({
 
         xhr.addEventListener('load', () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
+            try {
+              const response = JSON.parse(xhr.responseText);
+              if (response.success && response.data?.url) {
+                uploadedUrl = response.data.url;
+                resolve();
+              } else {
+                reject(new Error(response.message || 'Upload failed'));
+              }
+            } catch (e) {
+              reject(new Error('Invalid response from server'));
+            }
           } else {
             reject(new Error(`Upload failed: HTTP ${xhr.status}`));
           }
@@ -83,14 +99,14 @@ const B2FileUploader: React.FC<Props> = ({
         xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
         xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
 
-        xhr.open('PUT', presignedUrl);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
+        xhr.open('POST', `${API_BASE_URL}/sermons/upload-file`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(formData);
       });
 
       setState('done');
       setProgress(100);
-      onUploadComplete({ url: publicUrl, size: file.size, fileName: file.name });
+      onUploadComplete({ url: uploadedUrl!, size: file.size, fileName: file.name });
     } catch (err: any) {
       if (err.message === 'Upload cancelled') {
         setState('idle');
@@ -99,7 +115,7 @@ const B2FileUploader: React.FC<Props> = ({
         return;
       }
       setState('error');
-      toast.error(err?.response?.data?.message || err.message || 'Upload failed');
+      toast.error(err?.message || 'Upload failed');
     }
   };
 

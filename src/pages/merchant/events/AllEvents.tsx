@@ -14,7 +14,6 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Loader,
   Repeat2
 } from 'lucide-react';
 import { eventAPI } from '../../../services/api';
@@ -29,6 +28,7 @@ import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
 import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
 import { usePageTour } from '../../../hooks/usePageTour';
+import Loader from '../../../components/ui/Loader';
 
 interface AllEventsProps {
   mode: 'services' | 'events';
@@ -82,7 +82,7 @@ const AllEvents = ({ mode }: AllEventsProps) => {
     totalItems: totalEvents,
     setPage,
     refetch: refetchEvents
-  } = usePaginatedQuery<any>('events', eventsFetcher, {
+  } = usePaginatedQuery<any>(isServices ? 'services' : 'events', eventsFetcher, {
     limit: 10
   });
 
@@ -218,9 +218,7 @@ const AllEvents = ({ mode }: AllEventsProps) => {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader className="w-8 h-8 animate-spin text-primary-600" />
-          </div>
+          <Loader variant="skeleton-table" count={10} />
         ) : events.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />

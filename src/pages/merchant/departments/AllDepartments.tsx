@@ -5,7 +5,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Loader,
   Search,
   MoreVertical,
   UserCheck,
@@ -25,6 +24,7 @@ import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
 import LucideIconRenderer from '../../../components/ui/LucideIconRenderer';
 import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import Loader from '../../../components/ui/Loader';
 
 interface Department {
   _id: string;
@@ -121,11 +121,7 @@ const AllDepartments = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader className="w-8 h-8 animate-spin text-primary-600" />
-      </div>
-    );
+    return <Loader variant="skeleton-list" count={8} />;
   }
 
     const handleAddDepartmentClick = () => {
@@ -526,10 +522,10 @@ const AllDepartments = () => {
               <button
                 onClick={handleDelete}
                 disabled={deleteLoading}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors inline-flex items-center"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors inline-flex items-center gap-2"
               >
-                {deleteLoading && <Loader className="w-4 h-4 mr-2 animate-spin" />}
-                Delete
+                {deleteLoading && <Loader variant="inline" size="sm" />}
+                {!deleteLoading && 'Delete'}
               </button>
             </div>
           </div>

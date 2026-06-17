@@ -1,8 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X } from 'lucide-react';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+
 interface AudioPlayerProps {
-    src: string;
+    src?: string;
+    sermonId?: string;
     title?: string;
     preacher?: string;
     series?: string;
@@ -13,7 +16,8 @@ interface AudioPlayerProps {
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
-    src,
+    src: directSrc,
+    sermonId,
     title = 'Audio',
     preacher,
     series,
@@ -22,6 +26,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     onClose,
     className = ''
 }) => {
+    // Use backend streaming endpoint if sermonId is provided, otherwise use direct src
+    const src = sermonId
+        ? `${API_BASE_URL}/public/sermons/${sermonId}/stream?type=audio`
+        : directSrc;
+
+
     const audioRef = useRef<HTMLAudioElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -52,9 +62,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
     const handlePlayPause = async () => {
         if (!audioRef.current) return;
-        
+
         if (error) {
-            console.error('Cannot play: ', error);
             return;
         }
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Loader,
   TrendingUp,
   TrendingDown,
   Download,
@@ -29,6 +28,7 @@ import { financeAPI } from '../../../services/api';
 import { formatCurrency, getMerchantCurrency } from '../../../utils/currency';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import Loader from '../../../components/ui/Loader';
 
 interface OverviewData {
   kpis: {
@@ -336,8 +336,8 @@ const FinanceOverview: React.FC = () => {
 
   if (loading && !overview) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader className="h-8 w-8 animate-spin text-primary-600" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+        <Loader variant="skeleton-dashboard" />
       </div>
     );
   }

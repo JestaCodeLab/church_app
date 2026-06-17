@@ -62,6 +62,7 @@ const PartnershipProgrammes = () => {
     totalPartners: 0,
     totalRaised: 0,
   });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     fetchProgrammes();
@@ -69,6 +70,7 @@ const PartnershipProgrammes = () => {
 
   const fetchProgrammes = async () => {
     setLoading(true);
+    setStatsLoading(true);
     try {
       const params: any = {};
       if (statusFilter !== 'all') {
@@ -154,6 +156,7 @@ const PartnershipProgrammes = () => {
       console.error(error);
     } finally {
       setLoading(false);
+      setStatsLoading(false);
     }
   };
 
@@ -224,71 +227,89 @@ const PartnershipProgrammes = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        {/* Total Programmes Card */}
-        <div className="relative overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-purple-200 dark:bg-purple-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
-          <div className="relative z-10">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Programmes</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
+        {statsLoading ? (
+          <>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 animate-pulse">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24 mb-3"></div>
+                    <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+                  </div>
+                  <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+                </div>
               </div>
-              <div className="p-3 bg-primary-600/10 dark:bg-purple-500/10 rounded-lg">
-                <Target className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+            ))}
+          </>
+        ) : (
+          <>
+            {/* Total Programmes Card */}
+            <div className="relative overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-purple-200 dark:bg-purple-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Programmes</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
+                  </div>
+                  <div className="p-3 bg-primary-600/10 dark:bg-purple-500/10 rounded-lg">
+                    <Target className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Total Partners Card */}
-        <div className="relative overflow-hidden rounded-xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-green-200 dark:bg-green-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
-          <div className="relative z-10">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Partners</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.totalPartners}</p>
-              </div>
-              <div className="p-3 bg-green-600/10 dark:bg-green-500/10 rounded-lg">
-                <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+            {/* Total Partners Card */}
+            <div className="relative overflow-hidden rounded-xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-green-200 dark:bg-green-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Partners</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.totalPartners}</p>
+                  </div>
+                  <div className="p-3 bg-green-600/10 dark:bg-green-500/10 rounded-lg">
+                    <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Total Raised Card */}
-        <div className="relative overflow-hidden rounded-xl border border-primary-200 dark:border-primary-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-primary-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
-          <div className="relative z-10">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Raised</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  {formatCurrency(stats.totalRaised, merchantCurrency)}
-                </p>
-              </div>
-              <div className="p-3 bg-primary-600/10 dark:bg-primary-500/10 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+            {/* Total Raised Card */}
+            <div className="relative overflow-hidden rounded-xl border border-primary-200 dark:border-primary-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-primary-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Raised</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      {formatCurrency(stats.totalRaised, merchantCurrency)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-primary-600/10 dark:bg-primary-500/10 rounded-lg">
+                    <TrendingUp className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Active Programmes Card */}
-        <div className="relative overflow-hidden rounded-xl border border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50 to-pink-100/50 dark:from-pink-900/20 dark:to-pink-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-pink-200 dark:bg-pink-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
-          <div className="relative z-10">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Active Programmes</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.active}</p>
-              </div>
-              <div className="p-3 bg-pink-600/10 dark:bg-pink-500/10 rounded-lg">
-                <HandHeart className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+            {/* Active Programmes Card */}
+            <div className="relative overflow-hidden rounded-xl border border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50 to-pink-100/50 dark:from-pink-900/20 dark:to-pink-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-pink-200 dark:bg-pink-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Active Programmes</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.active}</p>
+                  </div>
+                  <div className="p-3 bg-pink-600/10 dark:bg-pink-500/10 rounded-lg">
+                    <HandHeart className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Filters */}

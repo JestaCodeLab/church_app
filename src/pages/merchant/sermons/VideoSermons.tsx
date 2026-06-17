@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Loader, Video, Play, Share2, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Video, Play, Share2, RefreshCw, Edit2, Send } from 'lucide-react';
 import { sermonAPI, preacherAPI } from '../../../services/api';
 import B2FileUploader from '../../../components/ui/B2FileUploader';
 import VideoPlayer from '../../../components/ui/VideoPlayer';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import { showToast } from '../../../utils/toasts';
 import SermonShareModal from './SermonShareModal';
+import Loader from '../../../components/ui/Loader';
 
 interface Preacher {
   _id: string;
@@ -40,7 +41,7 @@ const VideoSermons: React.FC = () => {
     description: '',
     preacher: '',
     series: '',
-    visibility: 'public' as const
+    visibility: 'public' as 'public' | 'members-only' | 'premium-only'
   });
   const [creatingSermon, setCreatingSermon] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -48,6 +49,7 @@ const VideoSermons: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [previewSermon, setPreviewSermon] = useState<Sermon | null>(null);
   const [shareSermon, setShareSermon] = useState<Sermon | null>(null);
+  const [editingSermon, setEditingSermon] = useState<Sermon | null>(null);
 
   const fetchSermons = useCallback(async () => {
     try {
@@ -74,29 +76,58 @@ const VideoSermons: React.FC = () => {
   const handleCreateSermon = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSermonData.title) return showToast.error('Title is required');
-    if (!selectedFile) return showToast.error('Please upload a video file');
+    if (!editingSermon && !selectedFile) return showToast.error('Please upload a video file');
+
     try {
       setCreatingSermon(true);
-      await sermonAPI.createSermon({
-        title: newSermonData.title,
-        description: newSermonData.description || undefined,
-        preacher: newSermonData.preacher || undefined,
-        series: newSermonData.series || undefined,
-        visibility: newSermonData.visibility,
-        videoUrl: selectedFile.url,
-        videoSize: selectedFile.size
-      });
-      showToast.success('Video sermon created');
+
+      if (editingSermon) {
+        // Update existing sermon
+        await sermonAPI.updateSermon(editingSermon._id, {
+          title: newSermonData.title,
+          description: newSermonData.description || undefined,
+          preacher: newSermonData.preacher || undefined,
+          series: newSermonData.series || undefined,
+          visibility: newSermonData.visibility
+        });
+        showToast.success('Video sermon updated');
+      } else {
+        // Create new sermon
+        await sermonAPI.createSermon({
+          title: newSermonData.title,
+          description: newSermonData.description || undefined,
+          preacher: newSermonData.preacher || undefined,
+          series: newSermonData.series || undefined,
+          visibility: newSermonData.visibility,
+          videoUrl: selectedFile!.url,
+          videoSize: selectedFile!.size
+        });
+        showToast.success('Video sermon created');
+      }
+
       setNewSermonData({ title: '', description: '', preacher: '', series: '', visibility: 'public' });
       setSelectedFile(null);
       setShowUploadModal(false);
+      setEditingSermon(null);
       fetchSermons();
       refreshVault();
     } catch {
-      showToast.error('Failed to create sermon');
+      showToast.error(editingSermon ? 'Failed to update sermon' : 'Failed to create sermon');
     } finally {
       setCreatingSermon(false);
     }
+  };
+
+  const handleEditSermon = (sermon: Sermon) => {
+    setEditingSermon(sermon);
+    setNewSermonData({
+      title: sermon.title,
+      description: '',
+      preacher: (sermon.preacher as Preacher)?._id || '',
+      series: sermon.series || '',
+      visibility: sermon.visibility
+    });
+    setShowUploadModal(true);
   };
 
   const confirmDelete = async () => {
@@ -174,9 +205,7 @@ const VideoSermons: React.FC = () => {
 
       {/* Sermons Table */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader className="w-8 h-8 text-primary-500 animate-spin" />
-        </div>
+        <Loader variant="skeleton-cards" count={4} />
       ) : sermons.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <Video className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -195,6 +224,7 @@ const VideoSermons: React.FC = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Title</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Preacher</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Series</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Plays</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Visibility</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
@@ -208,6 +238,9 @@ const VideoSermons: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{preacherName(sermon)}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{sermon.series || '—'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                    {new Date(sermon.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{sermon.stats?.plays ?? 0}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
@@ -220,6 +253,9 @@ const VideoSermons: React.FC = () => {
                   <td className="px-6 py-4 text-right flex items-center justify-end gap-1">
                     <button onClick={() => setPreviewSermon(sermon)} className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded" title="Play">
                       <Play className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleEditSermon(sermon)} className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded" title="Edit">
+                      <Edit2 className="w-4 h-4" />
                     </button>
                     <button onClick={() => setShareSermon(sermon)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded" title="Share">
                       <Share2 className="w-4 h-4" />
@@ -240,8 +276,10 @@ const VideoSermons: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Upload Video Sermon</h2>
-              <button onClick={() => { setShowUploadModal(false); setSelectedFile(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {editingSermon ? 'Edit Video Sermon' : 'Upload Video Sermon'}
+              </h2>
+              <button onClick={() => { setShowUploadModal(false); setSelectedFile(null); setEditingSermon(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
             <form onSubmit={handleCreateSermon} className="p-6 space-y-4">
               <div>
@@ -271,24 +309,31 @@ const VideoSermons: React.FC = () => {
                   <option value="premium-only">Premium Only</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Video File *</label>
-                <B2FileUploader
-                  sermonType="video"
-                  accept=".mp4,.mov,.avi,.webm"
-                  maxSizeMb={200}
-                  onUploadComplete={f => setSelectedFile({ url: f.url, size: f.size })}
-                  onClear={() => setSelectedFile(null)}
-                  disabled={creatingSermon}
-                />
-              </div>
+              {!editingSermon && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Video File *</label>
+                  <B2FileUploader
+                    sermonType="video"
+                    accept=".mp4,.mov,.avi,.webm"
+                    maxSizeMb={200}
+                    onUploadComplete={f => setSelectedFile({ url: f.url, size: f.size })}
+                    onClear={() => setSelectedFile(null)}
+                    disabled={creatingSermon}
+                  />
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => { setShowUploadModal(false); setSelectedFile(null); }}
+                <button type="button" onClick={() => { setShowUploadModal(false); setSelectedFile(null); setEditingSermon(null); }}
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
-                <button type="submit" disabled={creatingSermon || !selectedFile}
+                <button type="submit" disabled={creatingSermon || (!editingSermon && !selectedFile)}
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
-                  {creatingSermon && <Loader className="w-4 h-4 animate-spin" />}
-                  {creatingSermon ? 'Creating…' : 'Create Sermon'}
+                  {creatingSermon && <Loader variant="inline" size="sm" />}
+                  <span>
+                    {creatingSermon
+                      ? (editingSermon ? 'Updating…' : 'Creating…')
+                      : (editingSermon ? 'Update Sermon' : 'Create Sermon')
+                    }
+                  </span>
                 </button>
               </div>
             </form>
@@ -304,7 +349,7 @@ const VideoSermons: React.FC = () => {
               <p className="font-semibold text-gray-900 dark:text-white">{previewSermon.title}</p>
               <button onClick={() => setPreviewSermon(null)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
-            <VideoPlayer src={previewSermon.videoUrl!} title={previewSermon.title} />
+            <VideoPlayer sermonId={previewSermon._id} title={previewSermon.title} />
           </div>
         </div>
       )}

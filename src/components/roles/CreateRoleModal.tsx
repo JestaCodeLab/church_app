@@ -7,6 +7,7 @@ interface Role {
   _id: string;
   name: string;
   description: string;
+  type?: 'system' | 'custom';
   permissions: any;
 }
 
@@ -223,8 +224,11 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ role, onClose, onSave
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
+                disabled={role?.type === 'system'}
                 placeholder="e.g., Finance Manager"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  role?.type === 'system' ? 'opacity-75 cursor-not-allowed' : ''
+                }`}
               />
             </div>
 

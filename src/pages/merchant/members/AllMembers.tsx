@@ -1,5 +1,5 @@
 import React, { useState, useEffect, use, useMemo } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -13,6 +13,7 @@ import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import RegistrationSettingsPanel from '../../../components/modals/RegistrationSettingsPanel';
 import { useAuth } from '../../../context/AuthContext';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import Loader from '../../../components/ui/Loader';
 
 const AllMembers = () => {
   const { user, fetchAndUpdateSubscription } = useAuth();
@@ -46,6 +47,7 @@ const AllMembers = () => {
     members: 0,
     firstTimersCount: 0,
   });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Filters
   const [filters, setFilterState] = useState({
@@ -115,9 +117,10 @@ const AllMembers = () => {
 
   useEffect(() => {
     fetchStats();
-  }, [activeTab]);
+  }, []);
 
   const fetchStats = async () => {
+    setStatsLoading(true);
     try {
       const response = await memberAPI.getStats();
       const data = response.data.data?.stats;
@@ -145,6 +148,8 @@ const AllMembers = () => {
       });
     } catch (error) {
       console.error('Failed to load stats');
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -596,61 +601,79 @@ const AllMembers = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Members</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.total}</p>
+          {statsLoading ? (
+            <>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24 mb-3"></div>
+                      <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
+                    </div>
+                    <div className="p-3 bg-gray-300 dark:bg-gray-600 rounded-lg w-12 h-12"></div>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Members</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.total}</p>
+                  </div>
+                  <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+                    <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.active}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.active}</p>
+                  </div>
+                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
-                <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{stats.male}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
+                    <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{stats.male}</p>
+                  </div>
+                  <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+                    <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Female</p>
-                <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mt-1">{stats.female}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Female</p>
+                    <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mt-1">{stats.female}</p>
+                  </div>
+                  <div className="p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
+                    <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Main Content Card */}
@@ -720,9 +743,7 @@ const AllMembers = () => {
 
           {/* Table */}
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
-            </div>
+            <Loader variant="skeleton-table" count={8} />
           ) : members.length === 0 ? (
             <div className="text-center py-12 flex flex-col items-center justify-center">
               <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -1214,7 +1235,7 @@ const AllMembers = () => {
                   >
                     {isExporting ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader variant="inline" size="sm" />
                         Exporting...
                       </>
                     ) : (

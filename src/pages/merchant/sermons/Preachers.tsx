@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Edit2, Loader, Mic2, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Mic2, X } from 'lucide-react';
 import { preacherAPI } from '../../../services/api';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import { showToast } from '../../../utils/toasts';
+import Loader from '../../../components/ui/Loader';
 
 interface Preacher {
   _id: string;
@@ -132,9 +133,7 @@ const Preachers: React.FC = () => {
 
       {/* List */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader className="w-8 h-8 text-primary-500 animate-spin" />
-        </div>
+        <Loader variant="skeleton-cards" count={3} />
       ) : preachers.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <Mic2 className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -231,8 +230,8 @@ const Preachers: React.FC = () => {
                 </button>
                 <button type="submit" disabled={saving}
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
-                  {saving && <Loader className="w-4 h-4 animate-spin" />}
-                  {saving ? 'Saving…' : editing ? 'Update' : 'Add Preacher'}
+                  {saving && <Loader variant="inline" size="sm" />}
+                  <span>{saving ? 'Saving…' : editing ? 'Update' : 'Add Preacher'}</span>
                 </button>
               </div>
             </form>

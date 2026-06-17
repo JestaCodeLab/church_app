@@ -358,28 +358,35 @@ const MerchantLayout = () => {
         name: 'Sermons',
         icon: Music,
         requiresFeature: 'sermonManagement',
-        requiredPermissions: ['sermons.views'],
+        requiredPermissions: ['sermons.view'],
         children: [
           {
             name: 'Audio',
             href: '/sermons/audio',
             icon: Headphones,
             requiresFeature: 'sermonManagement',
-            requiredPermissions: ['sermons.views']
+            requiredPermissions: ['sermons.viewAudio']
           },
           {
             name: 'Video',
             href: '/sermons/video',
             icon: Video,
             requiresFeature: 'sermonManagement',
-            requiredPermissions: ['sermons.views']
+            requiredPermissions: ['sermons.viewVideo']
           },
           {
             name: 'Preachers',
             href: '/sermons/preachers',
             icon: Mic2,
             requiresFeature: 'sermonManagement',
-            requiredPermissions: ['sermons.views']
+            requiredPermissions: ['sermons.viewPreachers']
+          },
+          {
+            name: 'Distribution',
+            href: '/sermons/distribution',
+            icon: Music,
+            requiresFeature: 'sermonManagement',
+            requiredPermissions: ['sermons.viewDistribution']
           }
         ]
       },

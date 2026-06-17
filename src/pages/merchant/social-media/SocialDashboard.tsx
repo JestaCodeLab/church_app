@@ -11,14 +11,14 @@ import {
   Users,
   AlertCircle,
   Clock,
-  CheckCircle2,
-  Loader2
+  CheckCircle2
 } from 'lucide-react';
 import { socialMediaAPI } from '../../../services/api';
 import { SocialPost, SocialAccount, POST_STATUS_INFO, PLATFORM_INFO } from '../../../types/socialMedia';
 import PostStatusBadge from '../../../components/social-media/PostStatusBadge';
 import BranchSelectionModal from '../../../components/social-media/BranchSelectionModal';
 import { useSocialBranchSelection } from '../../../hooks/useSocialBranchSelection';
+import Loader from '../../../components/ui/Loader';
 import toast from 'react-hot-toast';
 
 const SocialDashboard: React.FC = () => {
@@ -121,11 +121,7 @@ const SocialDashboard: React.FC = () => {
   ];
 
   if (loadingBranches) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-      </div>
-    );
+    return <Loader variant="full-page" message="Loading branches..." />;
   }
 
   return (
@@ -139,9 +135,7 @@ const SocialDashboard: React.FC = () => {
 
       {/* Loading state for data */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-        </div>
+        <Loader variant="skeleton-dashboard" />
       )}
 
       {!loading && (

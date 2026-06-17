@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Edit2, Loader, Headphones, Play, Copy, Check, Share2, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Trash2, Edit2, Headphones, Play, Copy, Check, Share2, RefreshCw, Send, X } from 'lucide-react';
 import { sermonAPI, preacherAPI } from '../../../services/api';
 import B2FileUploader from '../../../components/ui/B2FileUploader';
 import AudioPlayer from '../../../components/ui/AudioPlayer';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import { showToast } from '../../../utils/toasts';
 import SermonShareModal from './SermonShareModal';
+import DistributeSermonModal from '../../../components/sermons/DistributeSermonModal';
+import Loader from '../../../components/ui/Loader';
 
 interface Preacher {
   _id: string;
@@ -31,6 +34,7 @@ interface Sermon {
 }
 
 const AudioSermons: React.FC = () => {
+  const navigate = useNavigate();
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [preachers, setPreachers] = useState<Preacher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +46,7 @@ const AudioSermons: React.FC = () => {
     description: '',
     preacher: '',
     series: '',
-    visibility: 'public' as const
+    visibility: 'public' as 'public' | 'members-only' | 'premium-only'
   });
   const [creatingSermon, setCreatingSermon] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -50,7 +54,9 @@ const AudioSermons: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [previewSermon, setPreviewSermon] = useState<Sermon | null>(null);
   const [shareSermon, setShareSermon] = useState<Sermon | null>(null);
-  const [copiedFeedUrl, setCopiedFeedUrl] = useState(false);
+  const [distributeSermon, setDistributeSermon] = useState<Sermon | null>(null);
+  const [showDistributeModal, setShowDistributeModal] = useState(false);
+  const [editingSermon, setEditingSermon] = useState<Sermon | null>(null);
 
   const fetchSermons = useCallback(async () => {
     try {
@@ -74,27 +80,40 @@ const AudioSermons: React.FC = () => {
   const handleCreateSermon = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSermonData.title) return showToast.error('Title is required');
-    if (!selectedFile) return showToast.error('Please upload an audio file');
+    if (!editingSermon && !selectedFile) return showToast.error('Please upload an audio file');
 
     try {
       setCreatingSermon(true);
-      await sermonAPI.createSermon({
-        title: newSermonData.title,
-        description: newSermonData.description || undefined,
-        preacher: newSermonData.preacher || undefined,
-        series: newSermonData.series || undefined,
-        visibility: newSermonData.visibility,
-        audioUrl: selectedFile.url,
-        audioSize: selectedFile.size
-      });
-      showToast.success('Audio sermon created');
-      setNewSermonData({ title: '', description: '', preacher: '', series: '', visibility: 'public' });
-      setSelectedFile(null);
-      setShowUploadModal(false);
+
+      if (editingSermon) {
+        // Update existing sermon
+        await sermonAPI.updateSermon(editingSermon._id, {
+          title: newSermonData.title,
+          description: newSermonData.description || undefined,
+          preacher: newSermonData.preacher || undefined,
+          series: newSermonData.series || undefined,
+          visibility: newSermonData.visibility
+        });
+        showToast.success('Audio sermon updated');
+      } else {
+        // Create new sermon
+        await sermonAPI.createSermon({
+          title: newSermonData.title,
+          description: newSermonData.description || undefined,
+          preacher: newSermonData.preacher || undefined,
+          series: newSermonData.series || undefined,
+          visibility: newSermonData.visibility,
+          audioUrl: selectedFile!.url,
+          audioSize: selectedFile!.size
+        });
+        showToast.success('Audio sermon created');
+      }
+
+      closeUploadModal();
       fetchSermons();
       sermonAPI.getVaultUsage().then(r => setVaultUsage(r.data.data)).catch(() => {});
     } catch {
-      showToast.error('Failed to create sermon');
+      showToast.error(editingSermon ? 'Failed to update sermon' : 'Failed to create sermon');
     } finally {
       setCreatingSermon(false);
     }
@@ -123,13 +142,23 @@ const AudioSermons: React.FC = () => {
   const preacherName = (s: Sermon) =>
     (s.preacher as Preacher)?.name || s.preacherLegacy || '—';
 
-  const feedUrl = vaultUsage ? `${window.location.origin.replace(/^https?:\/\/[^.]+\./, 'https://api.')}/api/v1/public/podcast/${window.location.hostname.split('.')[0]}` : '';
+  const closeUploadModal = () => {
+    setShowUploadModal(false);
+    setSelectedFile(null);
+    setEditingSermon(null);
+    setNewSermonData({ title: '', description: '', preacher: '', series: '', visibility: 'public' });
+  };
 
-  const copyFeedUrl = () => {
-    if (!feedUrl) return;
-    navigator.clipboard.writeText(feedUrl);
-    setCopiedFeedUrl(true);
-    setTimeout(() => setCopiedFeedUrl(false), 2000);
+  const handleEditSermon = (sermon: Sermon) => {
+    setEditingSermon(sermon);
+    setNewSermonData({
+      title: sermon.title,
+      description: '',
+      preacher: (sermon.preacher as Preacher)?._id || '',
+      series: sermon.series || '',
+      visibility: sermon.visibility
+    });
+    setShowUploadModal(true);
   };
 
   return (
@@ -154,7 +183,11 @@ const AudioSermons: React.FC = () => {
             Refresh
           </button>
           <button
-            onClick={() => setShowUploadModal(true)}
+            onClick={() => {
+              setNewSermonData({ title: '', description: '', preacher: '', series: '', visibility: 'public' });
+              setSelectedFile(null);
+              setShowUploadModal(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
           >
             <Plus className="w-5 h-5" />
@@ -163,8 +196,24 @@ const AudioSermons: React.FC = () => {
         </div>
       </div>
 
-      {/* Vault + Podcast Feed */}
+      {/* Vault + Distribution Banner */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div className="bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-900/10 border border-primary-200 dark:border-primary-800 rounded-lg p-4 flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <Send className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-primary-900 dark:text-primary-100">Reach more listeners</p>
+              <p className="text-sm text-primary-700 dark:text-primary-300 mb-3">Distribute your sermons to Spotify, Apple Podcasts, Amazon Music, and more</p>
+              <button
+                onClick={() => navigate('/sermons/distribution')}
+                className="px-4 py-2 mb-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors text-sm text-center w-fit"
+              >
+                Set up distribution
+              </button>
+            </div>
+          </div>
+        </div>
         {vaultUsage && (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
             <div className="flex items-center justify-between mb-3">
@@ -181,31 +230,11 @@ const AudioSermons: React.FC = () => {
             </p>
           </div>
         )}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Podcast RSS Feed</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Submit to Apple Podcasts, Spotify, and Google Podcasts</p>
-          <div className="flex items-center gap-2">
-            <input
-              readOnly
-              value={feedUrl || 'Loading…'}
-              className="flex-1 text-xs px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 truncate"
-            />
-            <button
-              onClick={copyFeedUrl}
-              className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-              title="Copy feed URL"
-            >
-              {copiedFeedUrl ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Sermons Table */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader className="w-8 h-8 text-primary-500 animate-spin" />
-        </div>
+        <Loader variant="skeleton-table" count={4} />
       ) : sermons.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <Headphones className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -226,6 +255,7 @@ const AudioSermons: React.FC = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Title</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Preacher</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Series</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Plays</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Visibility</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
@@ -240,6 +270,9 @@ const AudioSermons: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{preacherName(sermon)}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{sermon.series || '—'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                    {new Date(sermon.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{sermon.stats?.plays ?? 0}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
@@ -253,8 +286,14 @@ const AudioSermons: React.FC = () => {
                     <button onClick={() => { setPreviewSermon(sermon); sermonAPI.trackPlay(sermon._id); }} className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded" title="Play">
                       <Play className="w-4 h-4" />
                     </button>
+                    <button onClick={() => handleEditSermon(sermon)} className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded" title="Edit">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
                     <button onClick={() => setShareSermon(sermon)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded" title="Share">
                       <Share2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => { setDistributeSermon(sermon); setShowDistributeModal(true); }} className="p-1.5 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded" title="Distribute">
+                      <Send className="w-4 h-4" />
                     </button>
                     <button onClick={() => { setSermonToDelete(sermon._id); setShowDeleteModal(true); }} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded" title="Delete">
                       <Trash2 className="w-4 h-4" />
@@ -272,8 +311,10 @@ const AudioSermons: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Upload Audio Sermon</h2>
-              <button onClick={() => { setShowUploadModal(false); setSelectedFile(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {editingSermon ? 'Edit Audio Sermon' : 'Upload Audio Sermon'}
+              </h2>
+              <button onClick={closeUploadModal} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
             <form onSubmit={handleCreateSermon} className="p-6 space-y-4">
               <div>
@@ -303,24 +344,31 @@ const AudioSermons: React.FC = () => {
                   <option value="premium-only">Premium Only</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Audio File *</label>
-                <B2FileUploader
-                  sermonType="audio"
-                  accept=".mp3,.wav,.aac,.m4a,.flac"
-                  maxSizeMb={50}
-                  onUploadComplete={f => setSelectedFile({ url: f.url, size: f.size })}
-                  onClear={() => setSelectedFile(null)}
-                  disabled={creatingSermon}
-                />
-              </div>
+              {!editingSermon && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Audio File *</label>
+                  <B2FileUploader
+                    sermonType="audio"
+                    accept=".mp3,.wav,.aac,.m4a,.flac"
+                    maxSizeMb={50}
+                    onUploadComplete={f => setSelectedFile({ url: f.url, size: f.size })}
+                    onClear={() => setSelectedFile(null)}
+                    disabled={creatingSermon}
+                  />
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => { setShowUploadModal(false); setSelectedFile(null); }}
+                <button type="button" onClick={closeUploadModal}
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
-                <button type="submit" disabled={creatingSermon || !selectedFile}
+                <button type="submit" disabled={creatingSermon || (!editingSermon && !selectedFile)}
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
-                  {creatingSermon && <Loader className="w-4 h-4 animate-spin" />}
-                  {creatingSermon ? 'Creating…' : 'Create Sermon'}
+                  {creatingSermon && <Loader variant="inline" size="sm" />}
+                  <span>
+                    {creatingSermon
+                      ? (editingSermon ? 'Updating…' : 'Creating…')
+                      : (editingSermon ? 'Update Sermon' : 'Create Sermon')
+                    }
+                  </span>
                 </button>
               </div>
             </form>
@@ -333,7 +381,7 @@ const AudioSermons: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full">
             <AudioPlayer
-              src={previewSermon.audioUrl!}
+              sermonId={previewSermon._id}
               title={previewSermon.title}
               preacher={preacherName(previewSermon)}
               series={previewSermon.series}
@@ -350,6 +398,20 @@ const AudioSermons: React.FC = () => {
         type="danger" isLoading={deleting} />
 
       {shareSermon && <SermonShareModal sermon={shareSermon} onClose={() => setShareSermon(null)} />}
+
+      {distributeSermon && (
+        <DistributeSermonModal
+          sermon={distributeSermon}
+          isOpen={showDistributeModal}
+          onClose={() => {
+            setShowDistributeModal(false);
+            setDistributeSermon(null);
+          }}
+          onSuccess={() => {
+            fetchSermons();
+          }}
+        />
+      )}
     </div>
   );
 };

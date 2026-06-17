@@ -1,14 +1,21 @@
 import React, { useRef, useState } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, RotateCcw } from 'lucide-react';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+
 interface VideoPlayerProps {
-    src: string;
+    src?: string;
+    sermonId?: string;
     poster?: string;
     title?: string;
     className?: string;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, poster, title = 'Video', className = '' }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ src: directSrc, sermonId, poster, title = 'Video', className = '' }) => {
+    // Use backend streaming endpoint if sermonId is provided, otherwise use direct src
+    const src = sermonId
+        ? `${API_BASE_URL}/public/sermons/${sermonId}/stream?type=video`
+        : directSrc;
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);

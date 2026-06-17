@@ -753,6 +753,7 @@ export const messagingAPI = {
     getScheduled: (params?: any) => api.get('/sms/scheduled', { params }),
     cancelScheduled: (messageId: string) => api.delete(`/sms/scheduled/${messageId}`),
     getStatistics: (params?: any) => api.get('/sms/statistics', { params }),
+    getTimeSeriesAnalytics: (params?: any) => api.get('/sms/analytics/time-series', { params }),
   },
 
   // ✅ AI Message Generation
@@ -1028,6 +1029,15 @@ export const adminSupportAPI = {
   updateStatus: (id: string, data: { status?: string; priority?: string }) =>
     api.patch(`/admin/support/${id}/status`, data),
   cancelTicket: (id: string) => api.patch(`/admin/support/${id}/cancel`)
+};
+
+// Audio Platform API (sermon distribution)
+export const audioPlatformAPI = {
+  getAccounts: () => api.get('/audio-platforms/accounts'),
+  createAccount: (data: any) => api.post('/audio-platforms/accounts', data),
+  updateAccount: (id: string, data: any) => api.put(`/audio-platforms/accounts/${id}`, data),
+  deleteAccount: (id: string) => api.delete(`/audio-platforms/accounts/${id}`),
+  initAudiomackOAuth: () => api.post('/audio-platforms/auth/audiomack/init')
 };
 
 export default api;

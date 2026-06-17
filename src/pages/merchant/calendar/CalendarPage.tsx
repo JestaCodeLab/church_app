@@ -7,6 +7,7 @@ import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { calendarAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import CalendarEventModal from '../../../components/calendar/CalendarEventModal';
+import './CalendarPage.css';
 
 const localizer = dateFnsLocalizer({
   format,
@@ -49,7 +50,7 @@ const CalendarPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<View>('month');
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedEvent, setSelectedEvent] = useState<Partial<CalendarEventRaw> | null>(null);
 
   const fetchEvents = useCallback(async (date: Date) => {
@@ -88,7 +89,7 @@ const CalendarPage: React.FC = () => {
 
   const handleSelectEvent = (event: BigCalendarEvent) => {
     setSelectedEvent(event.resource);
-    setModalMode('edit');
+    setModalMode('view');
     setModalOpen(true);
   };
 
@@ -211,6 +212,7 @@ const CalendarPage: React.FC = () => {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSaved={() => fetchEvents(currentDate)}
+        onEdit={() => setModalMode('edit')}
         initialData={selectedEvent}
         mode={modalMode}
       />

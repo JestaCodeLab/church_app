@@ -101,6 +101,7 @@ import WithdrawalManagement from '../../pages/admin/WithdrawalManagement';
 import AudioSermons from '../../pages/merchant/sermons/AudioSermons';
 import VideoSermons from '../../pages/merchant/sermons/VideoSermons';
 import Preachers from '../../pages/merchant/sermons/Preachers';
+import AudioDistribution from '../../pages/merchant/sermons/AudioDistribution';
 import TransactionManagement from '../../pages/admin/TransactionManagement';
 import AdminFinanceOverview from '../../pages/admin/FinanceOverview';
 import AllTransactions from '../../pages/merchant/AllTransactions';
@@ -290,6 +291,7 @@ const AnimatedRoutes = () => {
             <Route path="/sermons/audio" element={<AudioSermons />} />
             <Route path="/sermons/video" element={<VideoSermons />} />
             <Route path="/sermons/preachers" element={<Preachers />} />
+            <Route path="/sermons/distribution" element={<AudioDistribution />} />
 
             {/* Social Media Routes */}
             <Route path="/social-media/dashboard" element={<SocialDashboard />} />
