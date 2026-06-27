@@ -80,11 +80,8 @@ interface WalletStats {
   breakdown?: {
     digitalOfferings: number;
     partnerships: number;
-    campaigns: number;
     events: number;
   };
-  campaignDonations?: number;
-  eventDonations?: number;
   totalWithdrawn: number;
   pendingWithdrawals: number;
   lastPayoutDate?: string;
@@ -103,7 +100,6 @@ const Wallet = () => {
     breakdown: {
       digitalOfferings: 0,
       partnerships: 0,
-      campaigns: 0,
       events: 0
     },
     totalWithdrawn: 0,
@@ -250,7 +246,7 @@ const Wallet = () => {
     try {
       setLoading(true);
       const [statsRes, methodsRes] = await Promise.all([
-        api.get('/wallet/balance'),
+        api.get('/wallet/balance/live'),
         api.get('/wallet/payment-methods')
       ]);
 
@@ -575,12 +571,12 @@ const Wallet = () => {
     <div className="min-h-screen dark:bg-slate-900">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div className="max-w-8xl mx-auto px-0 sm:px-6 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Wallet & Payouts</h1>
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1">
-                Manage linked accounts and withdraw funds securely to your bank or mobile wallet.
+                Manage linked accounts and withdraw funds securely.
               </p>
             </div>
             <button
@@ -600,7 +596,7 @@ const Wallet = () => {
         {/* Balance Section - 3 Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Available Balance Card */}
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg sm:rounded-xl border border-primary-200 dark:border-primary-800 p-6 sm:p-8">
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg sm:rounded-xl border border-primary-200 dark:border-primary-800 p-6 sm:p-8 flex flex-col justify-between">
             <div>
               <p className="text-xs sm:text-sm font-semibold text-primary-700 dark:text-blue-300 uppercase tracking-wider mb-2">
                 Available Balance
@@ -608,9 +604,6 @@ const Wallet = () => {
               <h2 className="text-2xl sm:text-3xl font-bold text-primary-900 dark:text-primary-100 mb-2">
                 {formatCurrency(stats.availableBalance, merchantCurrency)}
               </h2>
-              <p className="text-xs text-primary-700 dark:text-blue-300">
-                Ready to withdraw
-              </p>
             </div>
           </div>
 
@@ -624,9 +617,7 @@ const Wallet = () => {
                 <h2 className="text-2xl sm:text-3xl font-bold text-green-900 dark:text-green-100 mb-2">
                   {formatCurrency(stats.totalWithdrawn, merchantCurrency)}
                 </h2>
-                <p className="text-xs text-green-700 dark:text-green-300">
-                  All-time withdrawals
-                </p>
+                
               </div>
               <div className="p-2 sm:p-3 rounded-lg bg-green-100 dark:bg-green-900/30">
                 <TrendingUp className="text-green-600 dark:text-green-400" size={20} />
@@ -635,7 +626,7 @@ const Wallet = () => {
           </div>
 
           {/* Pending Withdrawals Card */}
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg sm:rounded-xl border border-amber-200 dark:border-amber-800 p-6 sm:p-8">
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg sm:rounded-xl border border-amber-200 dark:border-amber-800 p-2 sm:p-8">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-xs sm:text-sm font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-2">
@@ -644,9 +635,7 @@ const Wallet = () => {
                 <h2 className="text-2xl sm:text-3xl font-bold text-amber-900 dark:text-amber-100 mb-2">
                   {formatCurrency(stats.pendingWithdrawals, merchantCurrency)}
                 </h2>
-                <p className="text-xs text-amber-700 dark:text-amber-300">
-                  Awaiting processing
-                </p>
+                
               </div>
               <div className="p-2 sm:p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30">
                 <AlertCircle className="text-amber-600 dark:text-amber-400" size={20} />
@@ -655,82 +644,9 @@ const Wallet = () => {
           </div>
         </div>
 
-        {/* Revenue Sources Breakdown */}
-        {stats.breakdown && (
-          <div className="mb-6 sm:mb-8">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6">
-              Revenue by Source
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Digital Offerings */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="bg-emerald-100 dark:bg-emerald-900/30 p-3 rounded-lg">
-                    <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Digital Offerings</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatCurrency(stats.breakdown.digitalOfferings, merchantCurrency)}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Tithes, offerings & pledges
-                </p>
-              </div>
-
-              {/* Campaigns */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Campaigns</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatCurrency(stats.breakdown.campaigns, merchantCurrency)}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Fundraising campaigns
-                </p>
-              </div>
-
-              {/* Partnerships */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="bg-primary-100 dark:bg-primary-900/30 p-3 rounded-lg">
-                    <Building className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Partnerships</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatCurrency(stats.breakdown.partnerships, merchantCurrency)}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Partnership programmes
-                </p>
-              </div>
-
-              {/* Events */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg">
-                    <Download className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Events</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatCurrency(stats.breakdown.events, merchantCurrency)}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Event donations
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Payment Methods */}
-        <div className="mb-6 sm:mb-8">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg mb-6 sm:mb-8">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Linked Payment Methods</h2>
             <button
@@ -750,41 +666,6 @@ const Wallet = () => {
                 key={method._id}
                 className={`rounded-lg sm:rounded-xl border-2 p-4 sm:p-6 relative overflow-hidden group cursor-pointer transition-all ${styles.bg} ${styles.border}`}
               >
-                {/* Top Action Buttons */}
-                <div className="absolute top-3 sm:top-4 right-3 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                  {/* Set as Primary Button */}
-                  {!method.isDefault && (
-                    <button
-                      onClick={() => handleSetPrimaryMethod(method._id)}
-                      disabled={methodLoading}
-                      className={`p-2 rounded-lg transition-colors ${
-                        styles.text === 'text-black'
-                          ? 'bg-black/10 hover:bg-black/20 disabled:bg-black/5'
-                          : 'bg-white/20 hover:bg-white/30 disabled:bg-white/10'
-                      } disabled:cursor-not-allowed`}
-                      title="Set as Primary"
-                    >
-                      {methodLoading ? (
-                        <Loader size={16} className={`${styles.text} animate-spin`} />
-                      ) : (
-                        <Check size={16} className={styles.text} />
-                      )}
-                    </button>
-                  )}
-                  
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => handleDeleteMethod(method._id)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      styles.text === 'text-black'
-                        ? 'bg-black/10 hover:bg-black/20'
-                        : 'bg-white/20 hover:bg-white/30'
-                    }`}
-                    title="Delete"
-                  >
-                    <X size={16} className={styles.text} />
-                  </button>
-                </div>
 
                 {/* Icon */}
                 <div className="mb-4">
@@ -819,6 +700,44 @@ const Wallet = () => {
                     <span className={`text-xs font-bold ${method.isVerified ? `${styles.text}` : `${styles.text}`}`}>
                       {method.isVerified ? 'Verified' : 'Unverified'}
                     </span>
+                  </div>
+
+                  {/* Action Buttons - Visible on all devices */}
+                  <div className="flex gap-2 pt-2">
+                    {!method.isDefault && (
+                      <button
+                        onClick={() => handleSetPrimaryMethod(method._id)}
+                        disabled={methodLoading}
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded text-xs font-semibold transition-colors ${
+                          styles.text === 'text-black'
+                            ? 'bg-black/10 hover:bg-black/20 disabled:bg-black/5'
+                            : 'bg-white/20 hover:bg-white/30 disabled:bg-white/10'
+                        } disabled:cursor-not-allowed`}
+                        title="Set as Primary"
+                      >
+                        {methodLoading ? (
+                          <Loader size={14} className={`${styles.text} animate-spin`} />
+                        ) : (
+                          <>
+                            <Check size={14} className={styles.text} />
+                            <span className={styles.text}>Primary</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleDeleteMethod(method._id)}
+                      className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded text-xs font-semibold transition-colors ${
+                        styles.text === 'text-black'
+                          ? 'bg-black/10 hover:bg-black/20'
+                          : 'bg-white/20 hover:bg-white/30'
+                      }`}
+                      title="Delete"
+                    >
+                      <Trash2 size={14} className={styles.text} />
+                      <span className={styles.text}>Delete</span>
+                    </button>
                   </div>
                 </div>
               </div>

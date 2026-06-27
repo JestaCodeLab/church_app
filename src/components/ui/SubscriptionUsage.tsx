@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { settingsAPI } from '../../services/api';
-import { TrendingUp, Users, Church, Calendar, FileVolume } from 'lucide-react';
+import { settingsAPI, sermonAPI } from '../../services/api';
+import { TrendingUp, Users, Church, Calendar, HardDrive } from 'lucide-react';
 import UsageMeter from './UsageMeter';
 
 interface UsageData {
   members: { current: number; limit: number | null };
   branches: { current: number; limit: number | null };
   events: { current: number; limit: number | null };
-  sermons: { current: number; limit: number | null };
+  sermonStorage: { current: number; limit: number; percentage: number; formattedCurrent: string; formattedLimit: string } | null;
 }
 
 /**
@@ -46,11 +46,16 @@ const SubscriptionUsage: React.FC<{ className?: string }> = ({ className = '' })
           current: 0,
           limit: planDetails?.limits?.events ?? null
         },
-        sermons: {
-          current: 0,
-          limit: planDetails?.limits?.sermons ?? null
-        }
+        sermonStorage: null
       };
+
+      // Fetch vault usage separately
+      try {
+        const vaultRes = await sermonAPI.getVaultUsage();
+        usageData.sermonStorage = vaultRes.data.data;
+      } catch {
+        // sermon vault data is non-critical
+      }
 
       setUsage(usageData);
       setPlanName(planDetails?.name || subscription.plan);
@@ -143,19 +148,34 @@ const SubscriptionUsage: React.FC<{ className?: string }> = ({ className = '' })
           </div>
         </div>
 
-        {/* Sermons */}
-        <div className="flex items-start space-x-4">
-          <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex-shrink-0">
-            <FileVolume className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+        {/* Sermon Vault Storage */}
+        {usage.sermonStorage && (
+          <div className="flex items-start space-x-4">
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex-shrink-0">
+              <HardDrive className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sermon Vault</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {usage.sermonStorage.formattedCurrent} / {usage.sermonStorage.formattedLimit}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div
+                  className={`h-1.5 rounded-full transition-all ${
+                    usage.sermonStorage.percentage < 50 ? 'bg-green-500' :
+                    usage.sermonStorage.percentage < 80 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${Math.min(usage.sermonStorage.percentage, 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {usage.sermonStorage.percentage}% used · shared across audio &amp; video
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <UsageMeter
-              resourceName="Sermons"
-              current={usage.sermons.current}
-              limit={usage.sermons.limit}
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Footer with upgrade CTA */}

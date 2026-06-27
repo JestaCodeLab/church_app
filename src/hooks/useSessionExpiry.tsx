@@ -127,10 +127,15 @@ export const useSessionExpiry = (config: SessionExpiryConfig): SessionExpiryRetu
       );
 
       if (!response.ok) {
-        throw new Error('Token refresh failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.message || 'Token refresh failed');
       }
 
       const data = await response.json();
+      if (!data.success || !data.data) {
+        throw new Error(data?.message || 'Invalid refresh token response');
+      }
+
       const { accessToken, refreshToken: newRefreshToken } = data.data;
 
       // Update encrypted tokens in localStorage

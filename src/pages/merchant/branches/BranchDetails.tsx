@@ -537,12 +537,12 @@ const BranchDetails = () => {
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-3 bg-primary-100 dark:bg-gray-700 border-b border-primary-200 dark:border-primary-900 px-6 pt-2">
                   Departments ({departments.length})
                 </h2>
-                <div className="space-y-2 p-6 pt-0">
+                <div className={`space-y-2 p-6 pt-0 ${departments.length > 5 ? 'max-h-96 overflow-y-auto' : ''}`}>
                   {departments.map((dept: any) => (
                     <div
                       key={dept._id}
                       onClick={() => navigate(`/departments/${dept._id}`)}
-                      className="flex items-center justify-between p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg hover:shadow-md hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-all cursor-pointer"
+                      className="flex items-center justify-between p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg hover:shadow-md hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-all cursor-pointer flex-shrink-0"
                     >
                       <div className="flex-1">
                         <p className="font-semibold text-gray-900 dark:text-gray-100">{dept.name}</p>
@@ -561,17 +561,6 @@ const BranchDetails = () => {
               </div>
             )}
 
-            {/* Notes */}
-            {branch.notes && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 pb-3 bg-gray-50 dark:bg-gray-700 border-b border-primary-200 dark:border-primary-900 -mx-6 -mt-6 px-6 pt-6">
-                  Internal Notes
-                </h2>
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mt-4 p-6 pt-0">
-                  {branch.notes}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>

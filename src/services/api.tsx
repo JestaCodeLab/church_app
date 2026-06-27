@@ -48,12 +48,12 @@ api.interceptors.request.use(
       } catch (e) {
         // Silently fail if can't parse user
       }
+    }
 
-      // Add branch context header if a branch is selected
-      const selectedBranchId = localStorage.getItem('selectedBranchId');
-      if (selectedBranchId) {
-        config.headers['X-Branch-Id'] = selectedBranchId;
-      }
+    // Add branch context header if a branch is selected
+    const selectedBranchId = localStorage.getItem('selectedBranchId');
+    if (selectedBranchId) {
+      config.headers['X-Branch-Id'] = selectedBranchId;
     }
 
     // If FormData is being sent, remove the default Content-Type header
@@ -419,6 +419,14 @@ export const adminAPI = {
   rejectSenderId: (merchantId: string, reason: string) =>
     api.post(`/admin/sender-ids/${merchantId}/reject`, { reason }),
 
+  // Finance KYC Management
+  financeKyc: {
+    listPending: (params?: any) => api.get('/admin/finance-kyc', { params }),
+    approve: (merchantId: string, data?: any) => api.post(`/admin/finance-kyc/${merchantId}/approve`, data),
+    reject: (merchantId: string, data: any) => api.post(`/admin/finance-kyc/${merchantId}/reject`, data),
+    update: (merchantId: string, data: any, config?: any) => api.patch(`/admin/finance-kyc/${merchantId}`, data, config),
+  },
+
   // Merchant-specific resource creation
   getMerchantBranches: (merchantId: string, params?: any) =>
     api.get(`/admin/merchants/${merchantId}/branches`, { params }),
@@ -458,6 +466,7 @@ export const adminAPI = {
   createPermissionCategory: (data: any) => api.post('/admin/permission-categories', data),
   updatePermissionCategory: (categoryId: string, data: any) => api.put(`/admin/permission-categories/${categoryId}`, data),
   deletePermissionCategory: (categoryId: string) => api.delete(`/admin/permission-categories/${categoryId}`),
+  initializePermissionCategories: () => api.post('/admin/permission-categories/init', {}),
   reorderPermissionCategories: (data: any) => api.post('/admin/permission-categories/reorder', data),
 
   // Feature Announcements
@@ -659,6 +668,7 @@ export const eventAPI = {
   // Attendance
   checkInAttendance: (id: string, data: any) => api.post(`/events/${id}/attendance`, data),
   getAttendance: (id: string, params?: any) => api.get(`/events/${id}/attendance`, { params }),
+  getAttendanceGrid: (id: string, params?: any) => api.get(`/events/${id}/attendance/grid`, { params }),
   exportAttendance: (id: string, startDate?: string, endDate?: string) => api.get(`/events/${id}/attendance/export`, { responseType: 'blob', params: { ...(startDate ? { startDate } : {}), ...(endDate ? { endDate } : {}) } }),
 
   // Guest Management
@@ -671,10 +681,6 @@ export const eventAPI = {
     axios.get(`${API_BASE_URL}/public/events/qr/${qrData}`),
   publicCheckIn: (qrData: string, data: any) =>
     axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, data),
-
-  //donations
-  getDonations: (eventId: string, params?: any) => api.get(`/events/${eventId}/donations`, { params }),
-  exportDonations: (eventId: string) => api.post(`/events/${eventId}/donations/export`, {}, { responseType: 'blob' }),
 
 };
 
@@ -752,6 +758,7 @@ export const messagingAPI = {
     getScheduled: (params?: any) => api.get('/sms/scheduled', { params }),
     cancelScheduled: (messageId: string) => api.delete(`/sms/scheduled/${messageId}`),
     getStatistics: (params?: any) => api.get('/sms/statistics', { params }),
+    getTimeSeriesAnalytics: (params?: any) => api.get('/sms/analytics/time-series', { params }),
   },
 
   // ✅ AI Message Generation
@@ -814,6 +821,14 @@ export const eventCodeAPI = {
 
 // Finance API
 export const financeAPI = {
+  // KYC Operations
+  getKycStatus: () => api.get('/finance/kyc'),
+  submitKyc: (data: FormData) => api.post('/finance/kyc', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getBanksList: () => api.get('/finance/kyc/banks'),
+  resolveAccountNumber: (data: any) => api.post('/finance/kyc/resolve-account', data),
+
   // Overview & Analytics
   getOverview: () => api.get('/finance/overview'),
   getTrends: (params?: { months?: number; startDate?: string; endDate?: string }) =>
@@ -822,6 +837,7 @@ export const financeAPI = {
   // Income Operations
   income: {
     getAll: (params?: any) => api.get('/finance/income', { params }),
+    getSummary: (params?: any) => api.get('/finance/income/summary', { params }),
     create: (data: any) => api.post('/finance/income', data),
     getOne: (id: string) => api.get(`/finance/income/${id}`),
     update: (id: string, data: any) => api.put(`/finance/income/${id}`, data),
@@ -831,11 +847,32 @@ export const financeAPI = {
   // Tithe Operations (uses Income with category='tithe')
   tithe: {
     getAll: (params?: any) => api.get('/finance/income', { params: { ...params, category: 'tithe' } }),
+    getSummary: (params?: any) => api.get('/finance/income/summary', { params: { ...params, category: 'tithe' } }),
     create: (data: any) => api.post('/finance/income', { ...data, category: 'tithe' }),
     getOne: (id: string) => api.get(`/finance/income/${id}`),
     update: (id: string, data: any) => api.put(`/finance/income/${id}`, { ...data, category: 'tithe' }),
     delete: (id: string) => api.delete(`/finance/income/${id}`),
     resendSms: (id: string) => api.post(`/finance/tithe/${id}/resend-sms`, {}),
+    verifyPaystack: (data: any) => api.post('/finance/income/paystack/verify', { ...data, category: 'tithe' }),
+  },
+
+  // Offering Type Operations
+  offeringTypes: {
+    getAll: () => api.get('/finance/offering-types'),
+    create: (data: any) => api.post('/finance/offering-types', data),
+    update: (id: string, data: any) => api.patch(`/finance/offering-types/${id}`, data),
+    delete: (id: string) => api.delete(`/finance/offering-types/${id}`),
+  },
+
+  // Offering Operations (uses Income with category='offering')
+  offering: {
+    getAll: (params?: any) => api.get('/finance/income', { params: { ...params, category: 'offering' } }),
+    getSummary: (params?: any) => api.get('/finance/income/summary', { params: { ...params, category: 'offering' } }),
+    create: (data: any) => api.post('/finance/income', { ...data, category: 'offering' }),
+    getOne: (id: string) => api.get(`/finance/income/${id}`),
+    update: (id: string, data: any) => api.put(`/finance/income/${id}`, { ...data, category: 'offering' }),
+    delete: (id: string) => api.delete(`/finance/income/${id}`),
+    verifyPaystack: (data: any) => api.post('/finance/income/paystack/verify', { ...data, category: 'offering' }),
   },
 
   // Expense Operations
@@ -854,7 +891,8 @@ export const financeAPI = {
 
 // Sermon API
 export const sermonAPI = {
-  getUploadToken: () => api.post('/sermons/upload-token'),
+  getPresignedUrl: (data: { fileName: string; contentType: string; sermonType: 'audio' | 'video'; fileSizeBytes: number }) =>
+    api.post('/sermons/presigned-url', data),
 
   getSermons: (params?: any) => api.get('/sermons', { params }),
 
@@ -868,8 +906,25 @@ export const sermonAPI = {
 
   deleteSermon: (id: string) => api.delete(`/sermons/${id}`),
 
-  getVaultUsage: () => api.get('/sermons/vault/usage')
+  getVaultUsage: () => api.get('/sermons/vault/usage'),
 
+  trackPlay: (id: string) => api.post(`/public/sermons/${id}/play`).catch(() => {}),
+
+  trackDownload: (id: string) => api.post(`/public/sermons/${id}/download`).catch(() => {})
+};
+
+export const preacherAPI = {
+  getPreachers: () => api.get('/preachers'),
+
+  getPreacher: (id: string) => api.get(`/preachers/${id}`),
+
+  createPreacher: (data: FormData) =>
+    api.post('/preachers', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  updatePreacher: (id: string, data: FormData) =>
+    api.put(`/preachers/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  deletePreacher: (id: string) => api.delete(`/preachers/${id}`)
 };
 
 // Partnership API
@@ -927,6 +982,63 @@ export const partnershipAPI = {
     api.post(`/partnerships/${id}/generate-qr`, { type, ...links }),
 };
 
+// Project API (clone of Partnership for Giving module)
+export const projectAPI = {
+  // Project Management
+  getAll: (params?: any) => api.get('/giving/projects', { params }),
+  getOne: (id: string) => api.get(`/giving/projects/${id}`),
+  create: (data: any) => api.post('/giving/projects', data),
+  update: (id: string, data: any) => api.put(`/giving/projects/${id}`, data),
+  delete: (id: string) => api.delete(`/giving/projects/${id}`),
+
+  // Transactions
+  getTransactions: (id: string, params?: any) =>
+    api.get(`/giving/projects/${id}/transactions`, { params }),
+  exportTransactions: (id: string, params?: any) =>
+    api.get(`/giving/projects/${id}/transactions/export`, { params, responseType: 'blob' }),
+
+  createManualTransaction: (id: string, data: any) =>
+    api.post(`/giving/projects/${id}/transactions`, data),
+  deleteTransaction: (id: string, transactionId: string) =>
+    api.delete(`/giving/projects/${id}/transactions/${transactionId}`),
+
+  // Partners/Contributors
+  getPartners: (id: string, params?: any) =>
+    api.get(`/giving/projects/${id}/partners`, { params }),
+  exportPartners: (id: string) =>
+    api.get(`/giving/projects/${id}/partners/export`, { responseType: 'blob' }),
+  registerPartner: (id: string, data: any) =>
+    api.post(`/giving/projects/${id}/register`, data),
+
+  editPartner: (id: string, partnerId: string, data: any) =>
+    api.put(`/giving/projects/${id}/partners/${partnerId}`, data),
+  deletePartner: (id: string, partnerId: string) =>
+    api.delete(`/giving/projects/${id}/partners/${partnerId}`),
+
+  // Public Routes (no auth required)
+  getPublicProject: (merchantId: string, projectId: string) =>
+    api.get(`/giving/projects/public/${merchantId}/${projectId}`),
+  registerPublicPartner: (merchantId: string, projectId: string, data: any) =>
+    api.post(`/giving/projects/public/${merchantId}/${projectId}/register`, data),
+
+  initiateProjectPayment: (merchantId: string, projectId: string, data: any) =>
+    api.post(`/giving/projects/public/${merchantId}/${projectId}/payment/initiate`, data),
+  verifyProjectPayment: (merchantId: string, projectId: string, reference: string) =>
+    api.get(`/giving/projects/public/${merchantId}/${projectId}/payment/verify/${reference}`),
+
+  // Statistics
+  refreshStats: (id: string) => api.post(`/giving/projects/${id}/refresh`),
+  getTierBreakdown: (id: string, params?: any) => api.get(`/giving/projects/${id}/tier-breakdown`, { params }),
+
+  // QR Code Generation
+  generateQRCode: (id: string, type: 'registration' | 'payment', links: { registrationLink: string; paymentLink: string }) =>
+    api.post(`/giving/projects/${id}/generate-qr`, { type, ...links }),
+
+  // Reminders
+  getReminderStatus: (id: string) => api.get(`/giving/projects/${id}/reminders/status`),
+  triggerReminders: (id: string) => api.post(`/giving/projects/${id}/reminders/trigger`),
+};
+
 // Transaction API (for admin finance overview)
 export const transactionAPI = {
   getAll: (params?: any) => api.get('/transactions', { params }),
@@ -977,6 +1089,47 @@ export const socialMediaAPI = {
   suggestContent: (data: any) => api.post('/social-media/ai/suggest-content', data),
   suggestHashtags: (data: any) => api.post('/social-media/ai/suggest-hashtags', data),
   getOptimalTimes: () => api.get('/social-media/ai/optimal-times'),
+};
+
+// Calendar API
+export const calendarAPI = {
+  getEvents: (params?: any) => api.get('/calendar', { params }),
+  getEvent: (id: string) => api.get(`/calendar/${id}`),
+  createEvent: (data: any) => api.post('/calendar', data),
+  updateEvent: (id: string, data: any) => api.put(`/calendar/${id}`, data),
+  deleteEvent: (id: string) => api.delete(`/calendar/${id}`),
+};
+
+// Support Ticket API (merchant portal)
+export const supportAPI = {
+  createTicket: (data: FormData) =>
+    api.post('/support/tickets', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getTickets: (params?: any) => api.get('/support/tickets', { params }),
+  getTicket: (id: string) => api.get(`/support/tickets/${id}`),
+  replyToTicket: (id: string, data: FormData) =>
+    api.post(`/support/tickets/${id}/messages`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  cancelTicket: (id: string) => api.patch(`/support/tickets/${id}/cancel`)
+};
+
+// Admin Support API (super admin portal)
+export const adminSupportAPI = {
+  getStats: () => api.get('/admin/support/stats'),
+  getTickets: (params?: any) => api.get('/admin/support', { params }),
+  getTicket: (id: string) => api.get(`/admin/support/${id}`),
+  replyToTicket: (id: string, data: FormData) =>
+    api.post(`/admin/support/${id}/messages`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateStatus: (id: string, data: { status?: string; priority?: string }) =>
+    api.patch(`/admin/support/${id}/status`, data),
+  cancelTicket: (id: string) => api.patch(`/admin/support/${id}/cancel`)
+};
+
+// Audio Platform API (sermon distribution)
+export const audioPlatformAPI = {
+  getAccounts: () => api.get('/audio-platforms/accounts'),
+  createAccount: (data: any) => api.post('/audio-platforms/accounts', data),
+  updateAccount: (id: string, data: any) => api.put(`/audio-platforms/accounts/${id}`, data),
+  deleteAccount: (id: string) => api.delete(`/audio-platforms/accounts/${id}`),
+  initAudiomackOAuth: () => api.post('/audio-platforms/auth/audiomack/init')
 };
 
 export default api;

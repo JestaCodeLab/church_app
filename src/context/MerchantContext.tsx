@@ -14,6 +14,7 @@ interface Merchant {
   name: string;
   subdomain: string;
   branding: MerchantBranding;
+  paystackPublicKey?: string;
 }
 
 interface MerchantContextType {
@@ -26,6 +27,7 @@ interface MerchantContextType {
   selectedMerchantSubdomain: string | null;
   setSelectedMerchantSubdomain: (subdomain: string | null) => void;
   refreshSubscription: () => Promise<void>;
+  paystackPublicKey: string | null;
 }
 
 const MerchantContext = createContext<MerchantContextType | null>(null);
@@ -156,6 +158,7 @@ export const MerchantProvider: React.FC<{ children: ReactNode }> = ({ children }
     selectedMerchantSubdomain,
     setSelectedMerchantSubdomain,
     refreshSubscription,
+    paystackPublicKey: merchant?.paystackPublicKey || null,
   };
 
   return (

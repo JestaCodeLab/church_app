@@ -265,19 +265,6 @@ const MemberDetails = () => {
                       )}
                     </div>
                   </div>
-                  {/* Tier Donations Badge */}
-                  {member?.tierDonations && member.tierDonations.length > 0 && (
-                    <div className={`absolute bottom-1 -right-1 text-white rounded-full p-2 shadow-lg ring-2 ring-white dark:ring-gray-800 ${member.tierDonations.length === 1
-                        ? 'bg-orange-500'
-                        : 'bg-primary-600'
-                      }`} title={`Donated to ${member.tierDonations.length} tier${member.tierDonations.length > 1 ? 's' : ''}`}>
-                      {member.tierDonations.length === 1 ? (
-                        <Award className="w-5 h-5" />
-                      ) : (
-                        <Diamond className="w-5 h-5" />
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 {/* Name and Status */}
@@ -296,17 +283,6 @@ const MemberDetails = () => {
                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                         {age} years old
                       </span>
-                    )}
-                    {member?.tierDonations && member.tierDonations.length > 0 && (
-                      member.tierDonations.map((tier, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex items-center gap-1"
-                        >
-                          <Gem className="w-3 h-3" />
-                          {tier.tierName}
-                        </span>
-                      ))
                     )}
                   </div>
                 </div>
@@ -576,11 +552,8 @@ const MemberDetails = () => {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm">
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
-                                  {transaction.transactionType === 'campaign_donation' && 'Campaign'}
-                                  {transaction.transactionType === 'tier_donation' && 'Tier'}
-                                  {transaction.transactionType === 'event_donation' && 'Event'}
                                   {transaction.transactionType === 'partnership_contribution' && 'Partnership'}
-                                  {!['campaign_donation', 'tier_donation', 'event_donation', 'partnership_contribution'].includes(transaction.transactionType) &&
+                                  {transaction.transactionType !== 'partnership_contribution' &&
                                     transaction.transactionType?.replace(/_/g, ' ').toUpperCase()}
                                 </span>
                               </td>
@@ -589,16 +562,13 @@ const MemberDetails = () => {
                                   {transaction.event?.title && (
                                     <p className="font-medium">{transaction.event.title}</p>
                                   )}
-                                  {transaction.campaign?.name && (
-                                    <p className="font-medium">{transaction.campaign.name}</p>
-                                  )}
                                   {transaction.programme?.name && (
                                     <p className="font-medium">{transaction.programme.name}</p>
                                   )}
                                   {transaction.tier?.name && (
                                     <p className="text-xs text-gray-500 dark:text-gray-400">Tier: {transaction.tier.name}</p>
                                   )}
-                                  {!transaction.event?.title && !transaction.campaign?.name && !transaction.programme?.name && (
+                                  {!transaction.event?.title && !transaction.programme?.name && (
                                     <p className="text-gray-500 dark:text-gray-400">-</p>
                                   )}
                                 </div>

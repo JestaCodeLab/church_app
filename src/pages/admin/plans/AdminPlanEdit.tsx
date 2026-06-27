@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader, AlertCircle, Plus, X } from 'lucide-react';
-import { planAPI, adminAPI } from '../../../services/api';
+import api, { planAPI, adminAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
+
+interface Category {
+  _id: string;
+  slug: string;
+  name: string;
+}
 
 interface FeatureDoc {
   _id: string;
   key: string;
   name: string;
-  category: string;
+  category: string | Category;
+  categoryName?: string;
   description?: string;
   beta?: boolean;
 }
@@ -49,8 +56,10 @@ const AdminPlanEdit = () => {
   const [limitDefinitions, setLimitDefinitions] = useState<LimitDefinition[]>([]);
   const [limitValues, setLimitValues] = useState<Record<string, any>>({});
 
-  // Feature category ordering
-  const CATEGORY_ORDER = ['Core', 'Financial', 'Communication', 'Reporting', 'Attendance', 'Integration', 'Support', 'Customization', 'Advanced'];
+
+  // Feature category ordering - derived from actual categories, not hardcoded
+  // Since categories are now dynamic, we'll determine order from the data itself
+  const CATEGORY_ORDER: string[] = [];
 
   useEffect(() => {
     if (id) {
@@ -63,7 +72,7 @@ const AdminPlanEdit = () => {
       setLoading(true);
       const [planRes, featuresRes, limitsRes] = await Promise.all([
         planAPI.getPlan(id!),
-        adminAPI.getFeatures(),
+        api.get('/admin/features?includePlans=false'),
         adminAPI.getLimitDefinitions().catch(() => ({ data: { data: { limits: [] } } }))
       ]);
 
@@ -75,9 +84,19 @@ const AdminPlanEdit = () => {
       setBillingCycle(planData.billingCycle);
       setHighlights(planData.highlights || []);
 
-      // Features
-      const features = featuresRes.data?.data?.features || [];
-      setAllFeatures(features);
+      // Features - extract from flat array response
+      const featuresArray = featuresRes.data?.data?.features || [];
+      const flattenedFeatures: FeatureDoc[] = [];
+
+      if (Array.isArray(featuresArray)) {
+        // API returns flat array of features
+        flattenedFeatures.push(...featuresArray.map((feature: any) => ({
+          ...feature,
+          categoryName: feature.category?.name || (typeof feature.category === 'object' && feature.category?.name) ? feature.category.name : 'Other'
+        })));
+      }
+
+      setAllFeatures(flattenedFeatures);
       setSelectedFeatureKeys(planData.featureKeys || []);
 
       // Limits
@@ -207,24 +226,22 @@ const AdminPlanEdit = () => {
     setHighlights(newHighlights);
   };
 
-  // Group features by category
+  // Group features by category name (dynamic - no hardcoded order)
   const featuresByCategory = () => {
     const grouped: Record<string, FeatureDoc[]> = {};
+    const categoryOrder: string[] = []; // Track order of first appearance
+
     allFeatures.forEach(f => {
-      const cat = f.category || 'Other';
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(f);
+      const categoryName = f.categoryName || 'Other';
+      if (!grouped[categoryName]) {
+        grouped[categoryName] = [];
+        categoryOrder.push(categoryName);
+      }
+      grouped[categoryName].push(f);
     });
 
-    return CATEGORY_ORDER
-      .filter(cat => grouped[cat]?.length > 0)
-      .map(cat => ({ name: cat, features: grouped[cat] }))
-      .concat(
-        // Add any categories not in the predefined order
-        Object.keys(grouped)
-          .filter(cat => !CATEGORY_ORDER.includes(cat))
-          .map(cat => ({ name: cat, features: grouped[cat] }))
-      );
+    // Return features grouped by category, maintaining order of first appearance
+    return categoryOrder.map(cat => ({ name: cat, features: grouped[cat] }));
   };
 
   // Group limits by category
@@ -257,6 +274,8 @@ const AdminPlanEdit = () => {
   if (!plan) {
     return null;
   }
+
+  console.log('All Features ==>', allFeatures)
 
   return (
     <div className="space-y-6">
@@ -565,61 +584,64 @@ const AdminPlanEdit = () => {
                 </button>
               </div>
             ) : (
-              featuresByCategory().map((category) => (
-                <div key={category.name}>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                    {category.name}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {category.features.map((feature) => (
-                      <div
-                        key={feature.key}
-                        className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
-                          selectedFeatureKeys.includes(feature.key)
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0 mr-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                              {feature.name}
-                            </span>
-                            {feature.beta && (
-                              <span className="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-semibold bg-yellow-100 text-yellow-800 rounded">
-                                BETA
+              <div className="space-y-8">
+                {featuresByCategory().map((category) => (
+                  <div key={category.name} className="border-t border-gray-200 dark:border-gray-700 pt-6 first:border-t-0 first:pt-0">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-4">
+                      {category.name}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {category.features.map((feature) => (
+                        <div
+                          key={feature.key}
+                          className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                            selectedFeatureKeys.includes(feature.key)
+                              ? 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-800'
+                              : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50'
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0 mr-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                                {feature.name}
                               </span>
+                              {feature.beta && (
+                                <span className="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                                  BETA
+                                </span>
+                              )}
+                            </div>
+                            {feature.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                {feature.description}
+                              </p>
                             )}
                           </div>
-                          {feature.description && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                              {feature.description}
-                            </p>
-                          )}
-                        </div>
 
-                        <button
-                          onClick={() => handleFeatureToggle(feature.key)}
-                          className={`
-                            relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0
-                            ${selectedFeatureKeys.includes(feature.key)
-                              ? 'bg-primary-600'
-                              : 'bg-gray-300 dark:bg-gray-600'
-                            }
-                          `}
-                        >
-                          <span
+                          <button
+                            onClick={() => handleFeatureToggle(feature.key)}
                             className={`
-                              inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                              ${selectedFeatureKeys.includes(feature.key) ? 'translate-x-6' : 'translate-x-1'}
+                              relative inline-flex h-5 w-9 items-center rounded-full transition-all flex-shrink-0
+                              ${selectedFeatureKeys.includes(feature.key)
+                                ? 'bg-gray-800 dark:bg-gray-200'
+                                : 'bg-gray-300 dark:bg-gray-600'
+                              }
                             `}
-                          />
-                        </button>
-                      </div>
-                    ))}
+                            aria-label={`Toggle ${feature.name}`}
+                          >
+                            <span
+                              className={`
+                                inline-block h-3 w-3 transform rounded-full bg-white dark:bg-gray-900 transition-transform
+                                ${selectedFeatureKeys.includes(feature.key) ? 'translate-x-5' : 'translate-x-1'}
+                              `}
+                            />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
 
             {allFeatures.length > 0 && (

@@ -1,0 +1,281 @@
+/* Dark mode overrides for react-big-calendar */
+.dark .rbc-calendar {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+.dark .rbc-header {
+  background-color: #111827;
+  color: #f3f4f6;
+  border-color: #374151;
+  padding: 10px 3px;
+  font-weight: 600;
+}
+
+.dark .rbc-today {
+  background-color: rgba(79, 70, 229, 0.1);
+}
+
+.dark .rbc-off-range {
+  background-color: #0f172a;
+}
+
+.dark .rbc-date-cell {
+  padding: 2px 4px;
+}
+
+.dark .rbc-date-cell a,
+.dark .rbc-date-cell span {
+  color: #e5e7eb;
+}
+
+.dark .rbc-toolbar {
+  display: none;
+}
+
+.dark .rbc-toolbar-label {
+  color: #f3f4f6;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dark .rbc-toolbar button {
+  color: #9ca3af;
+  background-color: transparent;
+  border: none;
+  font-size: 14px;
+  padding: 4px 8px;
+}
+
+.dark .rbc-toolbar button.rbc-active {
+  background-color: #4f46e5;
+  color: white;
+  border-radius: 4px;
+}
+
+.dark .rbc-toolbar button:hover {
+  background-color: #374151;
+  border-radius: 4px;
+}
+
+.dark .rbc-toolbar button:hover.rbc-active {
+  background-color: #4f46e5;
+}
+
+.dark .rbc-month-view,
+.dark .rbc-time-view {
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+.dark .rbc-month-row {
+  border-color: #374151;
+  min-height: 100px;
+}
+
+.dark .rbc-date-cell {
+  padding: 4px 2px;
+}
+
+.dark .rbc-date-cell > a {
+  color: #e5e7eb;
+}
+
+.dark .rbc-day-bg {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.dark .rbc-day-bg + .rbc-day-bg {
+  border-left-color: #374151;
+}
+
+.dark .rbc-time-slot {
+  background-color: #1f2937;
+}
+
+.dark .rbc-time-content {
+  border-color: #374151;
+}
+
+.dark .rbc-timeslot-group {
+  border-bottom-color: #374151;
+  min-height: 60px;
+}
+
+.dark .rbc-timeslot-group + .rbc-timeslot-group {
+  border-top-color: #374151;
+}
+
+.dark .rbc-time-header-content {
+  border-color: #374151;
+}
+
+.dark .rbc-time-header-gutter {
+  background-color: #111827;
+  color: #9ca3af;
+}
+
+.dark .rbc-current-time-indicator {
+  background-color: #4f46e5;
+}
+
+.dark .rbc-event {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+}
+
+.dark .rbc-event-content {
+  color: white;
+  font-size: 12px;
+  padding: 2px 5px;
+}
+
+.dark .rbc-event:hover {
+  opacity: 0.8;
+}
+
+.dark .rbc-event.rbc-event-continues-prior:before {
+  display: none;
+}
+
+.dark .rbc-event.rbc-event-continues-after:after {
+  display: none;
+}
+
+.dark .rbc-show-more {
+  background-color: transparent;
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dark .rbc-show-more:hover {
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
+.dark .rbc-overlay {
+  background-color: #1f2937;
+  border-color: #374151;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+.dark .rbc-overlay-header {
+  background-color: #111827;
+  color: #f3f4f6;
+  border-bottom-color: #374151;
+  padding: 10px;
+  font-weight: 600;
+}
+
+.dark .rbc-overlay > div + div {
+  padding: 10px;
+  border-top-color: #374151;
+}
+
+.dark .rbc-slot-selection {
+  background-color: rgba(79, 70, 229, 0.1);
+}
+
+.dark .rbc-agenda-view {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+.dark .rbc-agenda-view table {
+  border-color: #374151;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  padding: 12px 3px;
+  vertical-align: top;
+  border-color: #374151;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td {
+  border-left-color: #374151;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr + tr {
+  border-top-color: #374151;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr.rbc-off-range td {
+  color: #9ca3af;
+}
+
+.dark .rbc-agenda-date-cell,
+.dark .rbc-agenda-time-cell {
+  white-space: nowrap;
+}
+
+.dark .rbc-agenda-event-cell {
+  width: 100%;
+}
+
+/* Day cell hover effects - Light mode */
+.rbc-month-view .rbc-day-bg {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.rbc-month-view .rbc-day-bg:hover {
+  background-color: #f0f9ff !important;
+}
+
+.rbc-month-view .rbc-day-bg:hover::before {
+  content: "+";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  font-size: 32px;
+  font-weight: 300;
+  color: #0ea5e9;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.rbc-month-view .rbc-day-bg:hover::after {
+  content: "add event";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 20%);
+  font-size: 11px;
+  font-weight: 500;
+  color: #0ea5e9;
+  z-index: 10;
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+/* Fade out existing content on hover */
+.rbc-month-view .rbc-day-bg:hover .rbc-date-cell,
+.rbc-month-view .rbc-day-bg:hover .rbc-event,
+.rbc-month-view .rbc-day-bg:hover .rbc-show-more {
+  opacity: 0.2;
+  transition: opacity 0.2s ease;
+}
+
+/* Day cell hover effects - Dark mode */
+.dark .rbc-month-view .rbc-day-bg {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dark .rbc-month-view .rbc-day-bg:hover {
+  background-color: #1e3a8a !important;
+}
+
+.dark .rbc-month-view .rbc-day-bg:hover::before {
+  color: #60a5fa;
+}
+
+.dark .rbc-month-view .rbc-day-bg:hover::after {
+  color: #60a5fa;
+}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
@@ -23,7 +24,6 @@ import {
   TrendingUp,
   Wallet,
   Receipt,
-  PieChart,
   CheckCircle2,
   Lock,
   Send,
@@ -32,10 +32,19 @@ import {
   Coins,
   Activity,
   Music,
+  Headphones,
+  Video,
+  Mic2,
   Share2,
   Link2,
   CalendarDays,
   GitBranch,
+  Clock,
+  Headset,
+  HeartHandshake,
+  FolderHeart,
+  WalletCards,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -299,7 +308,7 @@ const MerchantLayout = () => {
             name: 'Birthdays',
             href: '/members/birthdays',
             icon: Cake,
-            requiresFeature: 'memberManagement',
+            requiresFeature: 'memberBirthdays',
             requiredPermissions: ['members.viewBirthdays']
           },
           {
@@ -312,104 +321,125 @@ const MerchantLayout = () => {
         ]
       },
       {
-        name: 'Events',
+        name: 'Services & Events',
         icon: Calendar,
-        requiresFeature: 'eventManagement',
+        requiresFeature: null,
         requiredPermissions: ['events.view'],
         children: [
           {
-            name: 'All Events',
+            name: 'Services',
+            href: '/services',
+            icon: Clock,
+            requiresFeature: 'eventServices',
+            requiredPermissions: ['events.viewServices', 'events.view']
+          },
+          {
+            name: 'Events',
             href: '/events',
             icon: Calendar,
             requiresFeature: 'eventManagement',
-            requiredPermissions: ['events.view']
+            requiredPermissions: ['events.viewEvents', 'events.view']
           },
           {
             name: 'Attendance',
-            href: '/events/attendance',
+            href: '/attendance',
             icon: CheckCircle2,
-            requiresFeature: 'eventManagement',
-            requiredPermissions: ['events.viewAttendance'],
-            lockedFeature: 'attendanceTracking'
+            requiresFeature: 'eventAttendance',
+            requiredPermissions: ['events.viewAttendance', 'events.view'],
+          },
+          {
+            name: 'Calendar',
+            href: '/calendar',
+            icon: CalendarDays,
+            requiresFeature: 'eventCalendar',
+            requiredPermissions: ['events.viewCalendar', 'events.view']
           },
         ]
       },
       {
         name: 'Sermons',
-        href: '/sermons',
         icon: Music,
-        requiresFeature: 'sermonManagement',
-        requiredPermissions: ['sermons.view']
+        requiresFeature: null,
+        requiredPermissions: ['sermons.view'],
+        children: [
+          {
+            name: 'Audio',
+            href: '/sermons/audio',
+            icon: Headphones,
+            requiresFeature: 'audioSermons',
+            requiredPermissions: ['sermons.viewAudio']
+          },
+          {
+            name: 'Video',
+            href: '/sermons/video',
+            icon: Video,
+            requiresFeature: 'videoSermons',
+            requiredPermissions: ['sermons.viewVideo']
+          },
+          {
+            name: 'Preachers',
+            href: '/sermons/preachers',
+            icon: Mic2,
+            requiresFeature: 'sermonPreachers',
+            requiredPermissions: ['sermons.viewPreachers']
+          },
+          {
+            name: 'Distribution',
+            href: '/sermons/distribution',
+            icon: Music,
+            requiresFeature: 'sermonDistribution',
+            requiredPermissions: ['sermons.viewDistribution']
+          }
+        ]
+      },
+      {
+        name: 'Givings',
+        icon: HandCoins,
+        requiresFeature: null,
+        requiredPermissions: ['giving.view'],
+        children: [
+          {
+            name: 'Offerings',
+            href: '/giving/offerings',
+            icon: HeartHandshake,
+            requiresFeature: 'givingOfferings',
+            requiredPermissions: ['giving.viewOfferings','giving.view'],
+          },
+          {
+            name: 'Tithes',
+            href: '/giving/tithes',
+            icon: Coins,
+            requiresFeature: 'givingTithes',
+            requiredPermissions: ['giving.viewTithes', 'giving.view'],
+          },
+          {
+            name: 'Projects',
+            href: '/giving/projects',
+            icon: FolderHeart,
+            requiresFeature: 'givingProjects',
+            requiredPermissions: ['giving.viewProjects', 'giving.view'],
+          }
+        ]
       },
       {
         name: 'Finance',
-        icon: HandCoins,
-        requiresFeature: 'financialManagement',
+        icon: WalletCards,
+        requiresFeature: null,
         requiredPermissions: ['finance.view'],
         children: [
-          // {
-          //   name: 'Overview',
-          //   href: '/finance/overview',
-          //   icon: PieChart,
-          //   requiresFeature: 'financialManagement',
-          //   requiredPermissions: ['finance.overview'],
-          //   lockedFeature: null
-          // },
           {
-            name: 'Income',
-            href: '/finance/income',
-            icon: TrendingUp,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewIncome'],
-            lockedFeature: 'incomeTracking'
-          },
-          {
-            name: 'Expenses',
-            href: '/finance/expenses',
-            icon: Receipt,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewExpenses'],
-            lockedFeature: 'expenseTracking'
-          },
-          {
-            name: 'Tithing',
-            href: '/finance/tithing',
-            icon: Coins,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewTithing'],
-            lockedFeature: 'tithingManagement'
-          },
-          {
-            name: 'Reports',
-            href: '/finance/reports',
-            icon: FileChartColumn,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewReports'],
-            lockedFeature: 'financialReports'
-          },
-          // {
-          //   name: 'Donations',
-          //   href: '/finance/donations',
-          //   icon: HandHeart,
-          //   requiresFeature: 'financialManagement',
-          //   requiredPermissions: ['finance.viewDonations'],
-          //   lockedFeature: 'financeDonations'
-          // },
-          {
-            name: 'My Wallet',
+            name: 'Wallet',
             href: '/finance/wallet',
-            icon: Wallet,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewWallet'],
-            lockedFeature: 'financeWallet'
+            icon: CreditCard,
+            requiresFeature: 'financeWallet',
+            requiredPermissions: ['finance.viewWallet','finance.view'],
           },
           {
-            name: 'All Transactions',
+            name: 'Transactions',
             href: '/finance/transactions',
-            icon: Receipt,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewTransactions'],
-            lockedFeature: null
+            icon: ArrowRightLeft,
+            requiresFeature: 'financeTransactions',
+            requiredPermissions: ['finance.viewTransactions', 'finance.view'],
           }
         ]
       },
@@ -435,14 +465,7 @@ const MerchantLayout = () => {
             requiredPermissions: ['communications.sendSMS'],
             lockedFeature: 'smsSend'
           },
-          {
-            name: 'History',
-            href: '/messaging/history',
-            icon: History,
-            requiresFeature: 'smsHistory',
-            requiredPermissions: ['communications.history'],
-            lockedFeature: 'smsHistory'
-          },
+          
           {
             name: 'Templates',
             href: '/messaging/templates',
@@ -466,6 +489,14 @@ const MerchantLayout = () => {
             requiresFeature: 'smsSenderId',
             requiredPermissions: ['communications.smsSenderID'],
             lockedFeature: 'smsSenderId'
+          },
+          {
+            name: 'History',
+            href: '/messaging/history',
+            icon: History,
+            requiresFeature: 'smsHistory',
+            requiredPermissions: ['communications.history'],
+            lockedFeature: 'smsHistory'
           }
         ]
       },
@@ -552,12 +583,9 @@ const MerchantLayout = () => {
   useEffect(() => {
     const menusToExpand = navigation
       .filter(item => item.children && isParentActive(item))
-      .map(item => item.name)
-      .filter(name => !expandedMenus.includes(name));
+      .map(item => item.name);
 
-    if (menusToExpand.length > 0) {
-      setExpandedMenus(prev => Array.from(new Set([...prev, ...menusToExpand])));
-    }
+    setExpandedMenus(menusToExpand);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
@@ -574,8 +602,8 @@ const MerchantLayout = () => {
   const toggleMenu = (menuName: string) => {
     setExpandedMenus(prev =>
       prev.includes(menuName)
-        ? prev.filter(name => name !== menuName)
-        : [...prev, menuName]
+        ? [] // Close the menu if it's already open
+        : [menuName] // Close all others and open only this one (accordion behavior)
     );
   };
 
@@ -678,7 +706,10 @@ const MerchantLayout = () => {
       <Link
         key={item.name}
         to={item.href || '#'}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => {
+          setSidebarOpen(false);
+          setExpandedMenus([]);
+        }}
         className={`
           flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
           transition-all duration-200
@@ -736,6 +767,21 @@ const MerchantLayout = () => {
 
         {/* Bottom Links - Fixed at bottom */}
         <div className="p-3 border-t border-gray-800 dark:border-gray-900 space-y-1 flex-shrink-0">
+          <Link
+            to="/support"
+            onClick={() => setSidebarOpen(false)}
+            className={`
+              flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
+              transition-all duration-200
+              ${isActive('/support')
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }
+            `}
+          >
+            <Headset className="w-5 h-5 mr-3" />
+            Support
+          </Link>
           {
             (activityLogPermission.hasPermission || activityLogPermission.isSuperAdmin) && (
               <Link
@@ -812,7 +858,9 @@ const MerchantLayout = () => {
 
               {/* Branch Selector for church_admin and branch_admin */}
               {hasFeature('branchManagement' as any) && user?.role?.slug !== 'super_admin' && (
-                <BranchSelector className="hidden sm:inline-flex" />
+                <div data-tour="dashboard-branch-filter">
+                  <BranchSelector className="hidden sm:inline-flex" />
+                </div>
               )}
 
               {/* Search Bar */}
@@ -838,7 +886,7 @@ const MerchantLayout = () => {
               <NotificationCenter />
 
               {/* User Menu */}
-              <div className="pl-3 border-l border-gray-200 dark:border-gray-700">
+              <div className="pl-2 border-l border-gray-200 dark:border-gray-700">
                 <UserMenu />
               </div>
             </div>
@@ -890,7 +938,17 @@ const MerchantLayout = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">Switching branch context...</p>
               </div>
             ) : (
-              <Outlet key={selectedBranch?._id || 'all'} />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${location.pathname}-${selectedBranch?._id || 'all'}`}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                >
+                  <Outlet />
+                </motion.div>
+              </AnimatePresence>
             )}
           </div>
         </main>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api, { messagingAPI } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { checkFeatureAccess } from '../../../utils/featureAccess';

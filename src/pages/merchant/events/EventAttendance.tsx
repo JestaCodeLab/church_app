@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -19,20 +19,17 @@ import { eventAPI, branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { format } from 'date-fns';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
 
 const EventAttendance = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const menuRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  
-  const [loading, setLoading] = useState(true);
+
   const [event, setEvent] = useState<any>(null);
-  const [attendance, setAttendance] = useState<any[]>([]);
   const [filteredAttendance, setFilteredAttendance] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'members' | 'guests' | 'absentees'>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   // Recurring event support
   const [isRecurring, setIsRecurring] = useState(false);
@@ -67,12 +64,40 @@ const EventAttendance = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Attendance fetcher for SWR
+  const attendanceFetcher = async (params: any) => {
+    const response = await eventAPI.getAttendance(id!, {
+      ...params,
+      ...(startDate ? { startDate } : {}),
+      ...(endDate ? { endDate } : {})
+    });
+
+    return {
+      items: response.data.data.attendance || [],
+      pagination: {
+        currentPage: response.data.data.pagination?.currentPage || 1,
+        pages: response.data.data.pagination?.pages || 1,
+        totalItems: response.data.data.pagination?.total || response.data.data.attendance?.length || 0,
+      },
+    };
+  };
+
+  const {
+    data: attendance,
+    loading,
+    currentPage,
+    totalPages,
+    setPage,
+    refetch: refetchAttendance
+  } = usePaginatedQuery<any>('attendance', attendanceFetcher, {
+    limit: 20
+  });
+
   useEffect(() => {
     if (id) {
       fetchEventDetails();
-      fetchAttendance();
     }
-  }, [id, activeTab, currentPage, startDate, endDate]);
+  }, [id]);
 
   useEffect(() => {
     if (event && id) {
@@ -128,37 +153,6 @@ const EventAttendance = () => {
       }
     } catch (error: any) {
       showToast.error('Failed to load event details');
-    }
-  };
-
-  const fetchAttendance = async () => {
-    try {
-      setLoading(true);
-      let response;
-      if (isRecurring && selectedInstanceId) {
-        // Fetch attendance for selected instance of recurring event
-        response = await eventAPI.getAttendance(id!, {
-          page: currentPage,
-          limit: 20,
-          ...(startDate ? { startDate } : {}),
-          ...(endDate ? { endDate } : {})
-        });
-      } else {
-        // One-time event or all instances
-        response = await eventAPI.getAttendance(id!, {
-          page: currentPage,
-          limit: 20,
-          ...(startDate ? { startDate } : {}),
-          ...(endDate ? { endDate } : {})
-        });
-      }
-      setAttendance(response.data.data.attendance);
-      setFilteredAttendance(response.data.data.attendance);
-      setTotalPages(response.data.data.pagination?.pages || 1);
-    } catch (error: any) {
-      showToast.error('Failed to fetch attendance');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -275,7 +269,7 @@ const EventAttendance = () => {
       setSelectedBranch('');
       setSelectedAttendance(null);
       setOpenMenuId(null);
-      await fetchAttendance();
+      await refetchAttendance();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to convert guest');
     } finally {
@@ -302,7 +296,7 @@ const EventAttendance = () => {
       setShowCheckInModal(false);
       setPendingCheckInAbsentee(null);
       // Refresh attendance and absentees
-      await fetchAttendance();
+      await refetchAttendance();
       await fetchAbsentees();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to check in member');
@@ -384,7 +378,7 @@ const EventAttendance = () => {
       }
       setShowManualCheckInModal(false);
       resetCheckInModal();
-      await fetchAttendance();
+      await refetchAttendance();
       await fetchAbsentees();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Check-in failed');
@@ -412,7 +406,7 @@ const EventAttendance = () => {
               value={selectedInstanceId || ''}
               onChange={e => {
                 setSelectedInstanceId(e.target.value);
-                setCurrentPage(1);
+                setPage(1);
               }}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
@@ -449,7 +443,7 @@ const EventAttendance = () => {
 
             <div className="flex items-center space-x-2">
               <button
-                onClick={fetchAttendance}
+                onClick={refetchAttendance}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Refresh"
               >
@@ -545,7 +539,7 @@ const EventAttendance = () => {
                 type="date"
                 value={startDate}
                 max={endDate || undefined}
-                onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+                onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
                 className="px-3 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 title="From date"
               />
@@ -554,13 +548,13 @@ const EventAttendance = () => {
                 type="date"
                 value={endDate}
                 min={startDate || undefined}
-                onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+                onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
                 className="px-3 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 title="To date"
               />
               {(startDate || endDate) && (
                 <button
-                  onClick={() => { setStartDate(''); setEndDate(''); setCurrentPage(1); }}
+                  onClick={() => { setStartDate(''); setEndDate(''); setPage(1); }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   title="Clear date filter"
                 >
@@ -587,7 +581,7 @@ const EventAttendance = () => {
                   key={tab.key}
                   onClick={() => {
                     setActiveTab(tab.key as any);
-                    setCurrentPage(1);
+                    setPage(1);
                   }}
                   className={`flex items-center space-x-2 px-6 py-4 font-medium text-sm border-b-2 transition-all whitespace-nowrap ${
                     isActive
@@ -808,14 +802,14 @@ const EventAttendance = () => {
                   </p>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      onClick={() => currentPage > 1 && setPage(currentPage - 1)}
                       disabled={currentPage === 1}
                       className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Previous
                     </button>
                     <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      onClick={() => currentPage < totalPages && setPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
                       className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >

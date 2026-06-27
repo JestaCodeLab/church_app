@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import {  
-  Calendar, 
-  Send, 
-  Settings, 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Calendar,
+  Send,
+  Settings,
   Users,
   TrendingUp,
   Clock,
@@ -10,7 +10,6 @@ import {
   Bell,
   CheckCircle,
   XCircle,
-  Loader,
   Search,
   Download,
   Zap,
@@ -22,6 +21,8 @@ import api from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import Loader from '../../../components/ui/Loader';
 
 interface Birthday {
   _id: string;
@@ -69,15 +70,14 @@ interface AutomationSettings {
 const Birthdays: React.FC = () => {
   const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [birthdays, setBirthdays] = useState<Birthday[]>([]);
   const [todaysBirthdays, setTodaysBirthdays] = useState<Birthday[]>([]);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<Birthday[]>([]);
   const [stats, setStats] = useState<BirthdayStats | null>(null);
   const [automationSettings, setAutomationSettings] = useState<AutomationSettings | null>(null);
   const [smsCredits, setSmsCredits] = useState<number>(0);
   const [hasSmsAutomationAccess, setHasSmsAutomationAccess] = useState<boolean>(false);
-  
-  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBranch, setFilterBranch] = useState('');
@@ -87,22 +87,41 @@ const Birthdays: React.FC = () => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  // Birthdays fetcher for SWR
+  const birthdaysFetcher = async (params: any) => {
+    const response = await api.get(`/birthdays/month/${selectedMonth}`);
+    return {
+      items: response.data.data.birthdays || [],
+      pagination: {
+        currentPage: 1,
+        pages: 1,
+        totalItems: response.data.data.birthdays?.length || 0,
+      },
+    };
+  };
+
+  const {
+    data: birthdays,
+    loading,
+    refetch: refetchBirthdays
+  } = usePaginatedQuery<Birthday>('birthdays', birthdaysFetcher, {
+    limit: 100
+  });
+
   useEffect(() => {
-    fetchData();
+    fetchOtherData();
     checkSmsAutomationAccess();
-  }, [selectedMonth]);
+  }, []);
 
   const checkSmsAutomationAccess = async () => {
     const hasAccess = await checkFeatureAccess('smsAutomation', {showErrorToast: false});
     setHasSmsAutomationAccess(hasAccess);
   };
 
-  const fetchData = async () => {
+  const fetchOtherData = async () => {
+    setStatsLoading(true);
     try {
-      setLoading(true);
-      
-      const [birthdaysRes, todayRes, upcomingRes, statsRes, settingsRes, creditsRes] = await Promise.all([
-        api.get(`/birthdays/month/${selectedMonth}`),
+      const [todayRes, upcomingRes, statsRes, settingsRes, creditsRes] = await Promise.all([
         api.get('/birthdays/today'),
         api.get('/birthdays/upcoming'),
         api.get('/birthdays/stats'),
@@ -110,7 +129,6 @@ const Birthdays: React.FC = () => {
         api.get('/sms/credits')
       ]);
 
-      setBirthdays(birthdaysRes.data.data.birthdays || []);
       setTodaysBirthdays(todayRes.data.data.birthdays || []);
       setUpcomingBirthdays(upcomingRes.data.data.birthdays || []);
       setStats(statsRes.data.data || null);
@@ -118,10 +136,10 @@ const Birthdays: React.FC = () => {
       setSmsCredits(creditsRes.data.data.credits.balance || 0);
 
     } catch (error: any) {
-      showToast.error('Failed to load birthdays');
+      showToast.error('Failed to load birthday data');
       console.error(error);
     } finally {
-      setLoading(false);
+      setStatsLoading(false);
     }
   };
 
@@ -130,15 +148,10 @@ const Birthdays: React.FC = () => {
       setSendingTo(memberId);
       await api.post(`/birthdays/send-sms/${memberId}`);
       showToast.success('Birthday SMS sent successfully!');
-      
-      // Update birthday status
-      setBirthdays(prev => prev.map(b => 
-        b._id === memberId ? { ...b, smsSent: true, smsStatus: 'sent' as const } : b
-      ));
-      setTodaysBirthdays(prev => prev.map(b => 
-        b._id === memberId ? { ...b, smsSent: true, smsStatus: 'sent' as const } : b
-      ));
-      
+
+      // Refresh birthdays data
+      refetchBirthdays();
+
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to send SMS');
     } finally {
@@ -148,14 +161,11 @@ const Birthdays: React.FC = () => {
 
   const handleSendBulkSMS = async (memberIds: string[]) => {
     try {
-      setLoading(true);
       await api.post('/birthdays/send-bulk-sms', { memberIds });
       showToast.success(`Birthday SMS sent to ${memberIds.length} member(s)!`);
-      fetchData(); // Refresh data
+      refetchBirthdays();
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to send bulk SMS');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -187,11 +197,7 @@ const Birthdays: React.FC = () => {
   });
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader className="w-8 h-8 animate-spin text-primary-600" />
-      </div>
-    );
+    return <Loader variant="skeleton-list" count={6} />;
   }
 
   return (
@@ -222,75 +228,93 @@ const Birthdays: React.FC = () => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-primary-100 text-sm font-medium">This Week</p>
-              <p className="text-3xl font-bold mt-1">{stats?.thisWeek || 0}</p>
-            </div>
-            <Calendar className="w-12 h-12 text-primary-200" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-primary-100 text-sm font-medium">This Month</p>
-              <p className="text-3xl font-bold mt-1">{stats?.thisMonth || 0}</p>
-            </div>
-            <TrendingUp className="w-12 h-12 text-purple-200" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-teal-100 text-sm font-medium">SMS Credits</p>
-              <p className="text-3xl font-bold mt-1">{smsCredits}</p>
-            </div>
-            <MessageSquare className="w-12 h-12 text-teal-200" />
-          </div>
-        </div>
-
-        {hasSmsAutomationAccess ? (
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-medium">Automation</p>
-                <p className="text-lg font-semibold mt-1">
-                  {automationSettings?.enabled ? 'Enabled' : 'Disabled'}
-                </p>
-              </div>
-              <Bell className={`w-12 h-12 ${automationSettings?.enabled ? 'text-green-200' : 'text-green-300/50'}`} />
-            </div>
-            <button
-              onClick={() => navigate('/members/birthdays/settings')}
-              className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
-            >
-              {automationSettings?.enabled ? 'Disable' : 'Enable'} Automation
-            </button>
-          </div>
-        ) : (
-          <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 rounded-xl p-6 text-white relative overflow-hidden group">
-            {/* Background shimmer effect */}
-            <div className="inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            
-            <div className="flex flex-row items-start justify-between py-0">
-              <div className='text-left'>
-                <p className="text-lg font-bold text-white">Premium Feature</p>
-                <p className="text-sm text-white/90 mb-2">
-                  Birthday Automation & Settings
-                </p>
-                  <div onClick={() => navigate('/settings?tab=billing')} className="cursor-pointer bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-sm w-fit hover:bg-white/30 transition">
-                    <p className="font-semibold">Unlock Feature</p>
+        {statsLoading ? (
+          <>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-400 dark:bg-gray-500 rounded w-24 mb-3"></div>
+                    <div className="h-9 bg-gray-400 dark:bg-gray-500 rounded w-16"></div>
                   </div>
+                  <div className="w-12 h-12 bg-gray-400 dark:bg-gray-500 rounded"></div>
+                </div>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 group-hover:scale-110 transition-transform">
-                <Zap className="w-8 h-8 text-yellow-300" />
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-primary-100 text-sm font-medium">This Week</p>
+                  <p className="text-3xl font-bold mt-1">{stats?.thisWeek || 0}</p>
+                </div>
+                <Calendar className="w-12 h-12 text-primary-200" />
               </div>
-              
             </div>
-          </div>
+
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-primary-100 text-sm font-medium">This Month</p>
+                  <p className="text-3xl font-bold mt-1">{stats?.thisMonth || 0}</p>
+                </div>
+                <TrendingUp className="w-12 h-12 text-purple-200" />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-teal-100 text-sm font-medium">SMS Credits</p>
+                  <p className="text-3xl font-bold mt-1">{smsCredits}</p>
+                </div>
+                <MessageSquare className="w-12 h-12 text-teal-200" />
+              </div>
+            </div>
+
+            {hasSmsAutomationAccess ? (
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-sm font-medium">Automation</p>
+                    <p className="text-lg font-semibold mt-1">
+                      {automationSettings?.enabled ? 'Enabled' : 'Disabled'}
+                    </p>
+                  </div>
+                  <Bell className={`w-12 h-12 ${automationSettings?.enabled ? 'text-green-200' : 'text-green-300/50'}`} />
+                </div>
+                <button
+                  onClick={() => navigate('/members/birthdays/settings')}
+                  className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                >
+                  {automationSettings?.enabled ? 'Disable' : 'Enable'} Automation
+                </button>
+              </div>
+            ) : (
+              <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 rounded-xl p-6 text-white relative overflow-hidden group">
+                {/* Background shimmer effect */}
+                <div className="inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                <div className="flex flex-row items-start justify-between py-0">
+                  <div className='text-left'>
+                    <p className="text-lg font-bold text-white">Premium Feature</p>
+                    <p className="text-sm text-white/90 mb-2">
+                      Birthday Automation & Settings
+                    </p>
+                      <div onClick={() => navigate('/settings?tab=billing')} className="cursor-pointer bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-sm w-fit hover:bg-white/30 transition">
+                        <p className="font-semibold">Unlock Feature</p>
+                      </div>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 group-hover:scale-110 transition-transform">
+                    <Zap className="w-8 h-8 text-yellow-300" />
+                  </div>
+
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -33,7 +33,6 @@ interface Transaction {
   paymentMethod: string;
   paymentReference: string;
   transactionId: string;
-  campaign?: string;
   event?: string;
   programme?: string;
   tier?: string;
@@ -348,8 +347,6 @@ const TransactionManagement: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
               >
                 <option value="">All Types</option>
-                <option value="campaign_donation">Campaign Donation</option>
-                <option value="event_donation">Event Donation</option>
                 <option value="partnership_payment">Partnership Payment</option>
                 <option value="subscription">Subscription</option>
                 <option value="sms_credit">SMS Credit</option>
@@ -468,11 +465,6 @@ const TransactionManagement: React.FC = () => {
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {transaction.paymentMethod.toUpperCase()}
                           </p>
-                          {transaction.campaign && (
-                            <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
-                              {transaction.campaign}
-                            </p>
-                          )}
                           {transaction.event && (
                             <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                               {transaction.event}

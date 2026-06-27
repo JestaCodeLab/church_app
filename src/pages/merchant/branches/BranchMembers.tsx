@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Search, 
-  UserPlus, 
+import {
+  ArrowLeft,
+  Search,
+  UserPlus,
   UserMinus,
   Mail,
   Phone,
@@ -17,6 +17,7 @@ import { branchAPI, memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import FeatureGate from '../../../components/access/FeatureGate';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
 
 interface Member {
   _id: string;
@@ -38,16 +39,28 @@ const BranchMembers = () => {
   const { id } = useParams(); // Branch ID
 
   const [branch, setBranch] = useState<any>(null);
-  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [membersLoading, setMembersLoading] = useState(false);
-  
-  // Search & Pagination
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalMembers, setTotalMembers] = useState(0);
   const searchTimeoutRef = useRef<NodeJS.Timeout>(null);
+
+  // Paginated members fetcher
+  const membersFetcher = async (params: any) => {
+    const response = await memberAPI.getMembers({
+      ...params,
+      branchId: id,
+      status: 'active'
+    });
+    return {
+      items: response.data.data.members,
+      pagination: {
+        currentPage: response.data.data.pagination.currentPage,
+        pages: response.data.data.pagination.totalPages,
+        totalItems: response.data.data.pagination.totalItems,
+      },
+    };
+  };
+
+  const { data: members, loading: membersLoading, currentPage, totalPages, totalItems, setPage, setSearch, refetch: refetchMembers } =
+    usePaginatedQuery<Member>('branchMembers', membersFetcher, { limit: 20 });
 
   // Add Members Modal
   const [showAddMembersModal, setShowAddMembersModal] = useState(false);
@@ -67,31 +80,25 @@ const BranchMembers = () => {
     window.scrollTo({top: 0, behavior: 'smooth' });
   }, [id]);
 
-  useEffect(() => {
-    fetchBranchMembers();
-  }, [id, currentPage]);
+  const [searchTerm, setSearchTermState] = useState('');
+  const searchTimeoutRef2 = useRef<NodeJS.Timeout>(null);
 
   // Debounced search for member list
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
+    if (searchTimeoutRef2.current) {
+      clearTimeout(searchTimeoutRef2.current);
     }
 
-    if (searchTerm) {
-      searchTimeoutRef.current = setTimeout(() => {
-        setCurrentPage(1);
-        fetchBranchMembers();
-      }, 300);
-    } else {
-      fetchBranchMembers();
-    }
+    searchTimeoutRef2.current = setTimeout(() => {
+      setSearch(searchTerm);
+    }, 300);
 
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
+      if (searchTimeoutRef2.current) {
+        clearTimeout(searchTimeoutRef2.current);
       }
     };
-  }, [searchTerm]);
+  }, [searchTerm, setSearch]);
 
   // Debounced search for modal
   useEffect(() => {
@@ -122,30 +129,6 @@ const BranchMembers = () => {
       navigate('/branches');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchBranchMembers = async () => {
-    try {
-      setMembersLoading(true);
-      
-      const response = await memberAPI.getMembers({
-        page: currentPage,
-        limit: 20,
-        branchId: id,
-        search: searchTerm || undefined,
-        status: 'active'
-      });
-
-      if (response.data.success) {
-        setMembers(response.data.data.members);
-        setTotalPages(response.data.data.pagination.totalPages);
-        setTotalMembers(response.data.data.pagination.totalItems);
-      }
-    } catch (error: any) {
-      showToast.error('Failed to load members');
-    } finally {
-      setMembersLoading(false);
     }
   };
 
@@ -196,7 +179,7 @@ const BranchMembers = () => {
       setShowAddMembersModal(false);
       setSelectedMemberIds([]);
       setMemberSearchTerm('');
-      fetchBranchMembers(); // Refresh the members list
+      refetchMembers(); // Refresh the members list
 
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to add members');
@@ -218,7 +201,7 @@ const BranchMembers = () => {
 
       showToast.success('Member removed from branch');
       setMemberToRemove(null);
-      fetchBranchMembers(); // Refresh the members list
+      refetchMembers(); // Refresh the members list
 
     } catch (error: any) {
       showToast.error(error.response?.data?.message || 'Failed to remove member');
@@ -289,7 +272,7 @@ const BranchMembers = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-8xl mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <button
@@ -303,7 +286,7 @@ const BranchMembers = () => {
                     {branch.name} - Members
                   </h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {totalMembers} member(s) in this branch
+                    {totalItems} member(s) in this branch
                   </p>
                 </div>
               </div>
@@ -340,7 +323,7 @@ const BranchMembers = () => {
         </div>
 
         {/* Content */}
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-8xl mx-auto px-4 py-4">
           {/* Search Bar */}
           <div className="mb-6">
             <div className="relative">
@@ -349,7 +332,7 @@ const BranchMembers = () => {
                 type="text"
                 placeholder="Search members..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTermState(e.target.value)}
                 className="w-full pl-10 pr-10 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
               />
               {membersLoading && (
@@ -469,23 +452,23 @@ const BranchMembers = () => {
                 {totalPages > 1 && (
                   <div className="p-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {(currentPage - 1) * 20 + 1} to {Math.min(currentPage * 20, totalMembers)} of {totalMembers} members
+                      Showing {(currentPage - 1) * 20 + 1} to {Math.min(currentPage * 20, totalItems)} of {totalItems} members
                     </p>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        onClick={() => setPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
                         className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Previous
                       </button>
-                      
+
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         Page {currentPage} of {totalPages}
                       </span>
 
                       <button
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
                         className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >

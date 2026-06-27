@@ -104,12 +104,10 @@ const ActivityLogs = () => {
 
   const getActionBadgeColor = (action: string) => {
     const baseAction = action.split('.')[0].toLowerCase();
-    
+
     switch (baseAction) {
       case 'withdrawal':
         return 'bg-purple-100 text-primary-700 dark:bg-purple-900/30 dark:text-primary-400';
-      case 'donation':
-        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
       case 'member':
         return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400';
       case 'event':
@@ -127,8 +125,6 @@ const ActivityLogs = () => {
     switch (resourceType.toLowerCase()) {
       case 'withdrawal':
         return 'bg-purple-50 text-primary-700 dark:bg-purple-900/20 dark:text-primary-300 border border-purple-200 dark:border-purple-800';
-      case 'donation':
-        return 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 border border-green-200 dark:border-green-800';
       case 'member':
         return 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-blue-300 border border-primary-200 dark:border-primary-800';
       case 'event':

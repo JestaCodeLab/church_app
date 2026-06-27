@@ -573,7 +573,7 @@ const AdminRolesPage = () => {
                       >
                         <ChevronDown className="w-5 h-5" />
                       </button>
-                      {role.type === 'custom' && (
+                      {(role.type === 'custom' || (role.type === 'system' && user?.role?.slug === 'super_admin')) && (
                         <>
                           <button
                             onClick={() => {
@@ -585,14 +585,22 @@ const AdminRolesPage = () => {
                           >
                             <Edit2 className="w-5 h-5" />
                           </button>
-                          <button
-                            onClick={() => handleDeleteRole(role._id)}
-                            className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded transition-colors"
-                            title="Delete role"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                          {role.type === 'custom' && (
+                            <button
+                              onClick={() => handleDeleteRole(role._id)}
+                              className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded transition-colors"
+                              title="Delete role"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
                         </>
+                      )}
+                      {role.type === 'system' && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 rounded text-blue-700 dark:text-blue-400 text-xs font-medium">
+                          <Lock className="w-3 h-3" />
+                          System
+                        </div>
                       )}
                     </div>
                   </div>
@@ -885,6 +893,10 @@ const AdminRolesPage = () => {
           onClose={() => {
             setShowCreateModal(false);
             setSelectedRole(null);
+            // Refresh roles list after editing a role
+            if (selectedRole) {
+              fetchRoles();
+            }
           }}
           onSave={handleCreateRole}
         />

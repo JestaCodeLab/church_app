@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, Clock, XCircle, AlertCircle, Loader, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { CheckCircle, Clock, XCircle, AlertCircle, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import api, { messagingAPI } from '../../../services/api';
 import FeatureGate from '../../../components/access/FeatureGate';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { usePageTour } from '../../../hooks/usePageTour';
+import Loader from '../../../components/ui/Loader';
 
 interface Recipient {
   phoneNumber: string;
@@ -46,6 +49,7 @@ interface ScheduledMessage {
 }
 
 const SMSHistory = () => {
+  usePageTour('messaging_send');
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [scheduledMessages, setScheduledMessages] = useState<ScheduledMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -304,11 +308,7 @@ const SMSHistory = () => {
   const paginatedData = currentData;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader className="w-8 h-8 animate-spin text-primary-600" />
-      </div>
-    );
+    return <Loader variant="skeleton-list" count={8} />;
   }
 
   return (

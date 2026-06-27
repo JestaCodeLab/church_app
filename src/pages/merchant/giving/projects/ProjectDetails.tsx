@@ -1,0 +1,3539 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Edit2,
+  RefreshCw,
+  Download,
+  Users,
+  TrendingUp,
+  Target,
+  Search,
+  Link2,
+  Copy,
+  Loader2,
+  CreditCard,
+  Plus,
+  Trash2,
+  X,
+  Settings,
+  QrCode,
+  Settings2,
+  AlertCircle,
+  Coins,
+  Check,
+  Send,
+} from 'lucide-react';
+import { projectAPI, memberAPI } from '../../../../services/api';
+import { showToast } from '../../../../utils/toasts';
+import { formatCurrency, getMerchantCurrency } from '../../../../utils/currency';
+import { getDateRange, DateFilterType } from '../../../../utils/dateRangeFilter';
+import { format } from 'date-fns';
+import PermissionGuard from '../../../../components/guards/PermissionGuard';
+import { useAuth } from '../../../../context/AuthContext';
+import TransactionBarChart from '../../../../components/charts/TransactionBarChart';
+import EditProjectPartnerModal from './EditProjectPartnerModal';
+import QRCodeModal from '../../../../components/modals/QRCodeModal';
+import DatePicker from '../../../../components/ui/DatePicker';
+import TimePicker from '../../../../components/ui/TimePicker';
+
+interface Tier {
+  _id?: string;
+  name: string;
+  minimumAmount: number;
+  description?: string;
+  benefits?: string[];
+  badgeColor?: string;
+}
+
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  tiers: Tier[];
+  goal: {
+    targetAmount: number;
+    raisedAmount: number;
+    currency: string;
+  };
+  stats: {
+    totalPartners: number;
+    activePartners: number;
+    totalTransactions: number;
+    memberPartners: number;
+    guestPartners: number;
+  };
+  status: 'draft' | 'active' | 'paused' | 'completed';
+  smsMessages?: {
+    welcomeMessage?: string;
+    thankYouMessage?: string;
+  };
+  reminders?: {
+    enabled: boolean;
+    frequency: 'weekly' | 'monthly';
+    dayOfWeek?: string;
+    dayOfMonth?: number;
+    time?: string;
+    customMessage?: string;
+  };
+  registrationForm?: any;
+  period?: any;
+  isPublic?: boolean;
+  publicSettings?: any;
+  dates?: {
+    startDate?: string;
+    endDate?: string;
+    createdAt: string;
+  };
+}
+
+interface Partner {
+  _id: string;
+  partnerType: 'member' | 'guest';
+  member?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+  };
+  partner: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+    address?: string;
+  };
+  guestInfo?: {
+    fullName: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+  };
+  tier: Tier;
+  commitment: {
+    amount: number;
+    frequency: string;
+  };
+  status: string;
+  paymentStats?: {
+    totalAmount: number;
+    totalCount: number;
+    lastPaymentDate?: string;
+  };
+  registeredAt: string;
+}
+
+interface Transaction {
+  _id: string;
+  registration: {
+    _id: string;
+    partnerType: 'member' | 'guest';
+    member?: {
+      _id: string;
+      firstName: string;
+      lastName: string;
+      email?: string;
+      phone?: string;
+    };
+    partner?: {
+      firstName: string;
+      lastName: string;
+      email?: string;
+      phone?: string;
+    };
+  };
+  tier?: Tier;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  status: 'completed' | 'pending' | 'failed';
+  transactionReference?: string;
+  transactionCode?: string;
+  createdAt: string;
+}
+
+const ProjectDetails = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const merchantCurrency = getMerchantCurrency();
+  const { user } = useAuth();
+  const merchantId = user?.merchant?.id;
+
+  const frontendUrl = process.env.REACT_APP_FRONTEND_URL || window.location.origin;
+  const publicRegistrationLink = `${frontendUrl}/projects/register/${merchantId}/${id}`;
+  const publicPaymentLink = `${frontendUrl}/projects/payment/${merchantId}/${id}`;
+
+  const [project, setProject] = useState<Project | null>(null);
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingPartners, setLoadingPartners] = useState(false);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'partners' | 'transactions' | 'messages'>('overview');
+  const [showPublicLinks, setShowPublicLinks] = useState(false);
+
+  // QR Code state
+  const [qrModal, setQrModal] = useState<{
+    isOpen: boolean;
+    type: 'registration' | 'payment' | null;
+    data: any;
+    loading: boolean;
+  }>({
+    isOpen: false,
+    type: null,
+    data: null,
+    loading: false,
+  });
+
+  // Messages state
+  const [smsMessages, setSmsMessages] = useState({
+    welcomeMessage: '',
+    thankYouMessage: '',
+  });
+  const [messageSaving, setMessageSaving] = useState(false);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
+
+  // Reminder automation state
+  const [reminders, setReminders] = useState({
+    enabled: false,
+    frequency: 'weekly', // 'weekly' or 'monthly'
+    dayOfWeek: 'monday', // for weekly
+    dayOfMonth: 1, // for monthly
+    time: '08:00', // reminder send time (24-hour format)
+    customMessage: '',
+  });
+  const [reminderSaving, setReminderSaving] = useState(false);
+  const [reminderTesting, setReminderTesting] = useState(false);
+
+  // Filters
+  const [partnerSearch, setPartnerSearch] = useState('');
+  const [partnerTypeFilter, setPartnerTypeFilter] = useState('all');
+  const [transactionSearch, setTransactionSearch] = useState('');
+  const [transactionSearchType, setTransactionSearchType] = useState('name');
+  const [transactionStatusFilter, setTransactionStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState<DateFilterType>('thisMonth');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [transactionStartDate, setTransactionStartDate] = useState('');
+  const [transactionEndDate, setTransactionEndDate] = useState('');
+  const [transactionPaymentMethod, setTransactionPaymentMethod] = useState('all');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Temporary filter state for the advanced filter modal
+  const [tempStatusFilter, setTempStatusFilter] = useState('all');
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
+  const [tempPaymentMethod, setTempPaymentMethod] = useState('all');
+  const [isExporting, setIsExporting] = useState(false);
+  const [isExportingPartners, setIsExportingPartners] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportDateRange, setExportDateRange] = useState('today'); // 'today', 'yesterday', 'custom'
+  const [exportCustomStartDate, setExportCustomStartDate] = useState('');
+  const [exportCustomEndDate, setExportCustomEndDate] = useState('');
+  
+  // Pagination
+  const [partnersCurrentPage, setPartnersCurrentPage] = useState(1);
+  const partnersPerPage = 20;
+  const transactionsPerPage = 50;
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [transactionsTotalCount, setTransactionsTotalCount] = useState(0);
+  const [transactionsTotalPages, setTransactionsTotalPages] = useState(1);
+
+  // Modals
+  const [showAddPartnerModal, setShowAddPartnerModal] = useState(false);
+  const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showEditProjectPartnerModal, setShowEditProjectPartnerModal] = useState(false);
+  const [selectedPartnerForEdit, setSelectedPartnerForEdit] = useState<Partner | null>(null);
+
+  // Form states
+  const [partnerTab, setPartnerTab] = useState<'member' | 'guest'>('member');
+  const [addPartnerData, setAddPartnerData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    tierId: project?.tiers[0]?._id || '',
+  });
+
+  // Member search state for partner modal
+  const [partnerMemberSearchQuery, setPartnerMemberSearchQuery] = useState('');
+  const [partnerMemberSearchResults, setPartnerMemberSearchResults] = useState<any[]>([]);
+  const [showPartnerMemberSearchResults, setShowPartnerMemberSearchResults] = useState(false);
+  const [searchingPartnerMembers, setSearchingPartnerMembers] = useState(false);
+  const [selectedPartnerMember, setSelectedPartnerMember] = useState<any>(null);
+  const [partnerGuestData, setPartnerGuestData] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+  });
+
+  const [addTransactionData, setAddTransactionData] = useState({
+    registrationId: '',
+    amount: '',
+    currency: merchantCurrency,
+    paymentMethod: 'cash',
+    notes: '',
+    transactionDate: new Date().toISOString().split('T')[0],
+  });
+
+  // Member search state for transaction modal
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [memberSearchResults, setMemberSearchResults] = useState<any[]>([]);
+  const [showMemberSearchResults, setShowMemberSearchResults] = useState(false);
+  const [searchingMembers, setSearchingMembers] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [selectedPartnerForTransaction, setSelectedPartnerForTransaction] = useState<any>(null);
+  const [transactionTab, setTransactionTab] = useState<'member' | 'guest'>('member');
+  const [guestData, setGuestData] = useState({
+    fullName: '',
+    phone: '',
+    email: '',
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tierBreakdown, setTierBreakdown] = useState<any[]>([]);
+  const [loadingTierBreakdown, setLoadingTierBreakdown] = useState(false);
+
+  useEffect(() => {
+    const initializeData = async () => {
+      // First, refresh stats to recalculate raised amount from transactions
+      try {
+        await projectAPI.refreshStats(id!);
+      } catch (error) {
+        console.error('Failed to refresh stats on load:', error);
+      }
+      // Then load the updated project details
+      await loadProjectDetails();
+      // Load filtered stats for overview tab (which is active by default)
+      await loadFilteredStats();
+      await loadTierBreakdown();
+      // Load transactions count for current month (for tab display)
+      await loadTransactionsCount();
+    };
+
+    initializeData();
+  }, [id]);
+
+  useEffect(() => {
+    if (activeTab === 'partners') {
+      loadPartners();
+    } else if (activeTab === 'transactions') {
+      // Load transactions with current month filter
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startDate = monthStart.toISOString().split('T')[0];
+      const endDate = now.toISOString().split('T')[0];
+      
+      loadTransactions(1, {
+        startDate,
+        endDate,
+      });
+    } else if (activeTab === 'messages') {
+      loadMessages();
+    }
+  }, [activeTab]);
+
+  // Reload stats when date filter changes in overview tab
+  useEffect(() => {
+    if (activeTab === 'overview') {
+      const timer = setTimeout(() => {
+        loadFilteredStats();
+        loadTierBreakdown();
+      }, 300); // Debounce filter by 300ms
+
+      return () => clearTimeout(timer);
+    }
+  }, [dateFilter, customStartDate, customEndDate, activeTab]);
+
+  // Debounce partner member search
+  useEffect(() => {
+    if (!showAddPartnerModal || partnerTab !== 'member') {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (partnerMemberSearchQuery && partnerMemberSearchQuery.trim().length >= 2) {
+        searchPartnerMembers(partnerMemberSearchQuery);
+        setShowPartnerMemberSearchResults(true);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [partnerMemberSearchQuery, showAddPartnerModal, partnerTab]);
+
+  // Debounce member search
+  useEffect(() => {
+    if (!showAddTransactionModal || transactionTab !== 'member') {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (memberSearchQuery && memberSearchQuery.trim().length >= 2) {
+        searchMembers(memberSearchQuery);
+        setShowMemberSearchResults(true);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [memberSearchQuery, showAddTransactionModal, transactionTab]);
+
+  const handleDeletePartner = async (partnerId: string) => {
+    try {
+      setIsSubmitting(true);
+      await projectAPI.deletePartner(id!, partnerId);
+      showToast.success('Partner deleted successfully');
+      setShowDeleteConfirm(null);
+      await loadPartners();
+      await loadProjectDetails();
+    } catch (error: any) {
+      showToast.error('Failed to delete partner');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditPartner = (partner: Partner) => {
+    setSelectedPartnerForEdit(partner);
+    setShowEditProjectPartnerModal(true);
+  };
+
+  const handleAddPartner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+
+      if (partnerTab === 'member') {
+        if (!selectedPartnerMember || !selectedPartnerMember._id) {
+          showToast.error('Please select a member');
+          return;
+        }
+        if (!addPartnerData.tierId) {
+          showToast.error('Please select a tier');
+          return;
+        }
+
+        await projectAPI.registerPartner(id!, {
+          memberId: selectedPartnerMember._id,
+          tierId: addPartnerData.tierId,
+        });
+      } else {
+        // Guest registration
+        if (!partnerGuestData.firstName || !partnerGuestData.lastName || !partnerGuestData.phone) {
+          showToast.error('Please fill in first name, last name, and phone');
+          return;
+        }
+        if (!addPartnerData.tierId) {
+          showToast.error('Please select a tier');
+          return;
+        }
+
+        await projectAPI.registerPartner(id!, {
+          firstName: partnerGuestData.firstName,
+          lastName: partnerGuestData.lastName,
+          email: partnerGuestData.email,
+          phone: partnerGuestData.phone,
+          tierId: addPartnerData.tierId,
+        });
+      }
+
+      showToast.success('Partner added successfully');
+      setShowAddPartnerModal(false);
+      setPartnerTab('member');
+      setSelectedPartnerMember(null);
+      setPartnerMemberSearchQuery('');
+      setPartnerGuestData({
+        firstName: '',
+        lastName: '',
+        phone: '',
+        email: '',
+      });
+      setAddPartnerData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        tierId: project?.tiers[0]?._id || '',
+      });
+      await loadPartners();
+      await loadProjectDetails();
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to add partner');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+
+      const defaultTier = project?.tiers[0];
+      if (!defaultTier) {
+        showToast.error('No tier available');
+        return;
+      }
+
+      // Prepare transaction data
+      const transactionData: any = {
+        amount: parseFloat(addTransactionData.amount),
+        currency: addTransactionData.currency,
+        paymentMethod: addTransactionData.paymentMethod,
+        notes: addTransactionData.notes,
+        transactionDate: addTransactionData.transactionDate,
+      };
+
+      if (transactionTab === 'guest') {
+        // Guest transaction - send guest details for auto-registration
+        if (!guestData.fullName || !guestData.phone) {
+          showToast.error('Please fill in fullname and phone for guest');
+          return;
+        }
+
+        const nameParts = guestData.fullName.trim().split(' ');
+        const firstName = nameParts[0] || guestData.fullName;
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        transactionData.phone = guestData.phone;
+        transactionData.firstName = firstName;
+        transactionData.lastName = lastName;
+        transactionData.email = guestData.email;
+        transactionData.tierId = defaultTier._id;
+      } else {
+        // Member transaction
+        if (!selectedMember) {
+          showToast.error('Please select a member');
+          return;
+        }
+
+        // Send member details for auto-registration if not registered
+        transactionData.memberId = selectedMember._id;
+        transactionData.phone = selectedMember.phone;
+        transactionData.firstName = selectedMember.firstName;
+        transactionData.lastName = selectedMember.lastName;
+        transactionData.email = selectedMember.email;
+        transactionData.tierId = defaultTier._id;
+
+        // If we already have a registrationId, include it (backend will use it)
+        const existingPartner = partners.find(p => p.member?._id === selectedMember._id);
+        if (existingPartner) {
+          transactionData.registrationId = existingPartner._id;
+        }
+      }
+
+      // Create transaction - backend will auto-register if needed
+      const response = await projectAPI.createManualTransaction(id!, transactionData);
+
+      const successMessage = response.data.message || 'Transaction created successfully';
+      showToast.success(successMessage);
+
+      setShowAddTransactionModal(false);
+      setAddTransactionData({
+        registrationId: '',
+        amount: '',
+        currency: merchantCurrency,
+        paymentMethod: 'cash',
+        notes: '',
+        transactionDate: new Date().toISOString().split('T')[0],
+      });
+      setMemberSearchQuery('');
+      setSelectedMember(null);
+      setGuestData({ fullName: '', phone: '', email: '' });
+      setTransactionTab('member');
+      
+      // Load transactions with current month filter (default behavior)
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startDate = monthStart.toISOString().split('T')[0];
+      const endDate = now.toISOString().split('T')[0];
+      
+      await loadTransactions(1, {
+        startDate,
+        endDate,
+      });
+      await loadProjectDetails();
+      
+      // Refresh partners if new registration was created
+      if (response.data.data?.registration) {
+        await loadPartners();
+      }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Failed to create transaction';
+      showToast.error(errorMsg);
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const loadProjectDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await projectAPI.getOne(id!);
+      setProject(response.data.data.project);
+    } catch (error: any) {
+      showToast.error('Failed to load project');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPartners = async () => {
+    try {
+      setLoadingPartners(true);
+      const response = await projectAPI.getPartners(id!, { limit: 1000 });
+      setPartners(response.data.data.partners || []);
+    } catch (error: any) {
+      showToast.error('Failed to load partners');
+      console.error(error);
+    } finally {
+      setLoadingPartners(false);
+    }
+  };
+
+  const loadTransactionsCount = async () => {
+    try {
+      // Get current month date range
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startDate = monthStart.toISOString().split('T')[0];
+      const endDate = now.toISOString().split('T')[0];
+
+      const params: any = {
+        page: 1,
+        limit: 1, // We only need the count, not the data
+        startDate,
+        endDate,
+      };
+
+      const response = await projectAPI.getTransactions(id!, params);
+      setTransactionsTotalCount(response.data.data.pagination?.total || 0);
+    } catch (error: any) {
+      console.error('Failed to load transactions count:', error);
+    }
+  };
+
+  const loadTransactions = async (
+    pageNumber: number = 1,
+    overrideFilters?: {
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      paymentMethod?: string;
+    }
+  ) => {
+    try {
+      setLoadingTransactions(true);
+      const params: any = {
+        page: pageNumber,
+        limit: transactionsPerPage,
+      };
+
+      // Add search filter if present
+      if (transactionSearch.trim()) {
+        params.search = transactionSearch.trim();
+        if (transactionSearchType !== 'all') {
+          params.searchType = transactionSearchType;
+        }
+      }
+
+      // Use override filters if provided, otherwise use state
+      const statusFilter = overrideFilters?.status ?? transactionStatusFilter;
+      const startDate = overrideFilters?.startDate ?? transactionStartDate;
+      const endDate = overrideFilters?.endDate ?? transactionEndDate;
+      const paymentMethod = overrideFilters?.paymentMethod ?? transactionPaymentMethod;
+
+      // Add status filter if not 'all'
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+
+      // Add date range filters
+      if (startDate) {
+        params.startDate = startDate;
+      }
+      if (endDate) {
+        params.endDate = endDate;
+      }
+
+      // Add payment method filter
+      if (paymentMethod !== 'all') {
+        params.paymentMethod = paymentMethod;
+      }
+
+      const response = await projectAPI.getTransactions(id!, params);
+      setTransactions(response.data.data.transactions || []);
+      setTransactionsTotalCount(response.data.data.pagination?.total || 0);
+      setTransactionsTotalPages(response.data.data.pagination?.pages || 1);
+      setTransactionsPage(pageNumber);
+    } catch (error: any) {
+      showToast.error('Failed to load transactions');
+      console.error(error);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+
+
+  const loadFilteredStats = async () => {
+    try {
+      setLoadingTransactions(true);
+      const { startDate, endDate } = getDateRange(dateFilter, customStartDate, customEndDate);
+
+      const params: any = { limit: 10000 };
+      if (startDate) {
+        params.startDate = startDate.toISOString().split('T')[0];
+      }
+      if (endDate) {
+        params.endDate = endDate.toISOString().split('T')[0];
+      }
+
+      const response = await projectAPI.getTransactions(id!, params);
+      setAllTransactions(response.data.data.transactions || []);
+    } catch (error: any) {
+      console.error('Failed to load filtered transactions:', error);
+      showToast.error('Failed to load filtered data');
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+
+  const loadTierBreakdown = async () => {
+    try {
+      setLoadingTierBreakdown(true);
+      const { startDate, endDate } = getDateRange(dateFilter, customStartDate, customEndDate);
+
+      const params: any = {};
+      if (startDate) {
+        params.startDate = startDate.toISOString().split('T')[0];
+      }
+      if (endDate) {
+        params.endDate = endDate.toISOString().split('T')[0];
+      }
+
+      const response = await projectAPI.getTierBreakdown(id!, params);
+      setTierBreakdown(response.data.data?.tierBreakdown || []);
+    } catch (error: any) {
+      console.error('Failed to load tier breakdown:', error);
+      // Fail silently, will fall back to local calculation
+    } finally {
+      setLoadingTierBreakdown(false);
+    }
+  }; const loadMessages = async () => {
+    try {
+      if (project?.smsMessages) {
+        setSmsMessages({
+          welcomeMessage: project.smsMessages.welcomeMessage || '',
+          thankYouMessage: project.smsMessages.thankYouMessage || '',
+        });
+      }
+      if (project?.reminders) {
+        setReminders({
+          enabled: project.reminders.enabled || false,
+          frequency: project.reminders.frequency || 'weekly',
+          dayOfWeek: project.reminders.dayOfWeek || 'monday',
+          dayOfMonth: project.reminders.dayOfMonth || 1,
+          time: project.reminders.time || '08:00',
+          customMessage: project.reminders.customMessage || '',
+        });
+      }
+      setMessagesLoaded(true);
+    } catch (error: any) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  const handleSaveMessages = async () => {
+    try {
+      setMessageSaving(true);
+      setReminderSaving(true);
+
+      // Validate all reminder fields if enabled
+      if (reminders.enabled) {
+        if (!reminders.frequency) {
+          showToast.error('Please select a reminder frequency');
+          setMessageSaving(false);
+          setReminderSaving(false);
+          return;
+        }
+        if (reminders.frequency === 'weekly' && !reminders.dayOfWeek) {
+          showToast.error('Please select a day of week');
+          setMessageSaving(false);
+          setReminderSaving(false);
+          return;
+        }
+        if (reminders.frequency === 'monthly' && !reminders.dayOfMonth) {
+          showToast.error('Please select a date of month');
+          setMessageSaving(false);
+          setReminderSaving(false);
+          return;
+        }
+        if (!reminders.time) {
+          showToast.error('Please select a reminder time');
+          setMessageSaving(false);
+          setReminderSaving(false);
+          return;
+        }
+        if (!reminders.customMessage.trim()) {
+          showToast.error('Please enter a custom reminder message');
+          setMessageSaving(false);
+          setReminderSaving(false);
+          return;
+        }
+      }
+
+      // Create FormData and append messages and reminders as JSON strings
+      const formData = new FormData();
+      formData.append('smsMessages', JSON.stringify(smsMessages));
+      formData.append('reminders', JSON.stringify(reminders));
+
+      const response = await projectAPI.update(id!, formData);
+
+      if (response.data.data) {
+        setProject(response.data.data.project || response.data.data);
+      }
+
+      showToast.success('Messages and reminders updated successfully');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Failed to update settings';
+      showToast.error(errorMsg);
+      console.error('Error saving messages:', error);
+    } finally {
+      setMessageSaving(false);
+      setReminderSaving(false);
+    }
+  };
+
+  const handleTriggerReminders = async () => {
+    try {
+      setReminderTesting(true);
+      const response = await projectAPI.triggerReminders(id!);
+
+      if (response.data.data) {
+        const result = response.data.data;
+        if (result.failed > 0) {
+          showToast.error(`Sent to ${result.sent} partner(s), failed for ${result.failed}`);
+        } else {
+          showToast.success(`Reminders sent to ${result.sent} partner(s)`);
+        }
+      }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Failed to trigger reminders';
+      showToast.error(errorMsg);
+      console.error('Error triggering reminders:', error);
+    } finally {
+      setReminderTesting(false);
+    }
+  };
+
+  // Search members by phone or name
+  const searchMembers = async (query: string) => {
+    if (!query || query.trim().length < 2) {
+      setMemberSearchResults([]);
+      return;
+    }
+
+    try {
+      setSearchingMembers(true);
+      console.log('Searching members and partners with query:', query);
+
+      const response = await memberAPI.getMembers({
+        search: query,
+        limit: 10,
+        status: 'active'
+      });
+
+      console.log('Member search response:', response);
+
+      // Handle the response structure from memberAPI
+      const members = response.data?.data?.members || response.data?.data || [];
+
+      console.log('Members found:', members);
+
+      // Search existing partners in this project
+      const matchingPartners = partners.filter(p => {
+        if (!p.partner) return false;
+        const partnerName = `${p.partner.firstName} ${p.partner.lastName}`;
+        return partnerName.toLowerCase().includes(query.toLowerCase()) ||
+          (p.partner.phone && p.partner.phone.includes(query));
+      });
+
+      console.log('Partners found:', matchingPartners);
+
+      // Combine members (with type: 'member') and partners (with type: 'partner')
+      const combined = [
+        ...(Array.isArray(members) ? members.map(m => ({ ...m, type: 'member' })) : []),
+        ...matchingPartners.map(p => ({ ...p, type: 'partner' }))
+      ];
+
+      console.log('Combined search results:', combined);
+      console.log('Combined length:', combined.length);
+
+      setMemberSearchResults(combined);
+      console.log('State updated with', combined.length, 'results');
+    } catch (error: any) {
+      console.error('Error searching members and partners:', error);
+      setMemberSearchResults([]);
+    } finally {
+      setSearchingMembers(false);
+    }
+  };
+
+  const searchPartnerMembers = async (query: string) => {
+    if (!query || query.trim().length < 2) {
+      setPartnerMemberSearchResults([]);
+      return;
+    }
+
+    try {
+      setSearchingPartnerMembers(true);
+
+      const response = await memberAPI.getMembers({
+        search: query,
+        limit: 20,
+        status: 'active'
+      });
+
+      const members = response.data?.data?.members || response.data?.data || [];
+      const filteredMembers = Array.isArray(members) ? members : [];
+
+      setPartnerMemberSearchResults(filteredMembers);
+    } catch (error: any) {
+      console.error('Error searching partner members:', error);
+      setPartnerMemberSearchResults([]);
+    } finally {
+      setSearchingPartnerMembers(false);
+    }
+  };
+
+  // Handle member selection from search results
+  const handleSelectMember = (item: any) => {
+    // Check if it's a partner or a member
+    if (item.type === 'partner') {
+      // It's an existing partner from ProjectRegistration
+      setSelectedPartnerForTransaction(item);
+      setSelectedMember(null);
+      // Use the partner registration ID
+      setAddTransactionData(prev => ({
+        ...prev,
+        registrationId: item._id,
+      }));
+      showToast.success(`Partner ${item.partner.firstName} ${item.partner.lastName} selected`);
+    } else {
+      // It's a member (not yet a partner)
+      setSelectedMember(item);
+      setSelectedPartnerForTransaction(null);
+      // Don't set registrationId - backend will auto-register using memberId/phone
+      setAddTransactionData(prev => ({
+        ...prev,
+        registrationId: '', // Clear registrationId so backend uses memberId/phone
+      }));
+      showToast.success(`${item.firstName} ${item.lastName} selected`);
+    }
+    // Close the dropdown and clear search results
+    setShowMemberSearchResults(false);
+    setMemberSearchResults([]);
+  };
+
+  // Helper function to get date range based on filter
+
+  // Get filtered stats based on date range
+  const getFilteredStats = () => {
+    if (!project) return project?.stats;
+
+    // Since allTransactions is now loaded with the date filter applied from the API,
+    // we can directly calculate stats from it
+    if (!allTransactions || allTransactions.length === 0) {
+      return project.stats;
+    }
+
+    // Calculate stats from filtered transactions (already filtered by API based on date range)
+    const totalRaised = allTransactions
+      .filter(t => t.status === 'completed')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalTransactions = allTransactions.length;
+    
+    // Count unique partners from filtered transactions
+    const uniquePartnerIds = new Set(
+      allTransactions.map(t => t.registration._id)
+    );
+    const totalPartners = uniquePartnerIds.size;
+    
+    // Count member vs guest partners
+    const memberPartnerIds = new Set(
+      allTransactions
+        .filter(t => t.registration.partnerType === 'member')
+        .map(t => t.registration._id)
+    );
+    const guestPartnerIds = new Set(
+      allTransactions
+        .filter(t => t.registration.partnerType === 'guest')
+        .map(t => t.registration._id)
+    );
+
+    return {
+      ...project.stats,
+      totalPartners,
+      totalTransactions,
+      memberPartners: memberPartnerIds.size,
+      guestPartners: guestPartnerIds.size,
+      // Note: raisedAmount is calculated from filtered transactions
+      // but we keep the structure the same
+    };
+  };
+
+  const handleRefreshStats = async () => {
+    try {
+      setIsRefreshing(true);
+      await projectAPI.refreshStats(id!);
+      showToast.success('Statistics refreshed successfully');
+      await loadProjectDetails();
+      if (activeTab === 'partners') await loadPartners();
+      if (activeTab === 'transactions') await loadTransactions();
+    } catch (error: any) {
+      showToast.error('Failed to refresh statistics');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    try {
+      setIsSubmitting(true);
+      await projectAPI.deleteTransaction(id!, transactionId);
+      showToast.success('Transaction deleted successfully');
+      setShowDeleteConfirm(null);
+      await loadTransactions();
+      await loadProjectDetails();
+    } catch (error: any) {
+      showToast.error('Failed to delete transaction');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleExportTransactions = async () => {
+    try {
+      setShowExportModal(true);
+    } catch (error: any) {
+      showToast.error('Failed to open export dialog');
+    }
+  };
+
+  // Execute the actual export with selected date range
+  const executeExport = async () => {
+    try {
+      setIsExporting(true);
+      
+      let startDate = '';
+      let endDate = '';
+
+      if (exportDateRange === 'today') {
+        const today = new Date();
+        startDate = today.toISOString().split('T')[0];
+        endDate = today.toISOString().split('T')[0];
+      } else if (exportDateRange === 'yesterday') {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        startDate = yesterday.toISOString().split('T')[0];
+        endDate = yesterday.toISOString().split('T')[0];
+      } else if (exportDateRange === 'custom') {
+        if (!exportCustomStartDate || !exportCustomEndDate) {
+          showToast.error('Please select both start and end dates');
+          setIsExporting(false);
+          return;
+        }
+        startDate = exportCustomStartDate;
+        endDate = exportCustomEndDate;
+      }
+
+      const response = await projectAPI.exportTransactions(id!, {
+        startDate,
+        endDate
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const dateLabel = exportDateRange === 'today' ? 'today' : exportDateRange === 'yesterday' ? 'yesterday' : `${exportCustomStartDate}_to_${exportCustomEndDate}`;
+      link.setAttribute('download', `partnership_transactions_${dateLabel}_${new Date().getTime()}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      showToast.success('Transactions exported successfully');
+      setShowExportModal(false);
+      // Reset export modal state
+      setExportDateRange('today');
+      setExportCustomStartDate('');
+      setExportCustomEndDate('');
+    } catch (error: any) {
+      showToast.error('Failed to export transactions');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Count active transaction filters
+  const activeTransactionFilters = [
+    transactionStatusFilter !== 'all',
+    transactionStartDate !== '',
+    transactionEndDate !== '',
+    transactionPaymentMethod !== 'all'
+  ].filter(Boolean).length;
+
+  // Apply advanced filters - this is called when user clicks the Apply button
+  const applyAdvancedFilters = () => {
+    // Update state with temp values
+    setTransactionStatusFilter(tempStatusFilter);
+    setTransactionStartDate(tempStartDate);
+    setTransactionEndDate(tempEndDate);
+    setTransactionPaymentMethod(tempPaymentMethod);
+    setShowAdvancedFilters(false);
+    
+    // Load transactions immediately with the temp filter values (no state delay)
+    loadTransactions(1, {
+      status: tempStatusFilter,
+      startDate: tempStartDate,
+      endDate: tempEndDate,
+      paymentMethod: tempPaymentMethod,
+    });
+  };
+
+  // Handle transaction search button click
+  const handleTransactionSearch = () => {
+    loadTransactions(1); // Reset to first page when searching
+  };
+
+  const handleClearTransactionSearch = () => {
+    setTransactionSearch('');
+    setTransactionSearchType('name');
+    // Load current month transactions without search parameters
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startDate = monthStart.toISOString().split('T')[0];
+    const endDate = now.toISOString().split('T')[0];
+    
+    // Call API directly without search params
+    loadTransactionsWithoutSearch(1, startDate, endDate);
+  };
+
+  const loadTransactionsWithoutSearch = async (
+    pageNumber: number = 1,
+    startDate: string = '',
+    endDate: string = ''
+  ) => {
+    try {
+      setLoadingTransactions(true);
+      const params: any = {
+        page: pageNumber,
+        limit: transactionsPerPage,
+      };
+
+      // Add date range filters only (no search)
+      if (startDate) {
+        params.startDate = startDate;
+      }
+      if (endDate) {
+        params.endDate = endDate;
+      }
+
+      const response = await projectAPI.getTransactions(id!, params);
+      setTransactions(response.data.data.transactions || []);
+      setTransactionsTotalCount(response.data.data.pagination?.total || 0);
+      setTransactionsTotalPages(response.data.data.pagination?.pages || 1);
+      setTransactionsPage(pageNumber);
+    } catch (error: any) {
+      showToast.error('Failed to load transactions');
+      console.error(error);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+
+  // Open advanced filters modal and populate temp state with current filters
+  const openAdvancedFilters = () => {
+    setTempStatusFilter(transactionStatusFilter);
+    setTempStartDate(transactionStartDate);
+    setTempEndDate(transactionEndDate);
+    setTempPaymentMethod(transactionPaymentMethod);
+    setShowAdvancedFilters(true);
+  };
+
+  // Clear all transaction filters
+  const clearTransactionFilters = () => {
+    setTransactionStatusFilter('all');
+    setTransactionStartDate('');
+    setTransactionEndDate('');
+    setTransactionPaymentMethod('all');
+    setTempStatusFilter('all');
+    setTempStartDate('');
+    setTempEndDate('');
+    setTempPaymentMethod('all');
+    
+    // Load transactions with current month filter (default behavior)
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startDate = monthStart.toISOString().split('T')[0];
+    const endDate = now.toISOString().split('T')[0];
+    
+    loadTransactions(1, {
+      status: 'all',
+      startDate,
+      endDate,
+      paymentMethod: 'all',
+    });
+  };
+
+  const handleExportPartners = async () => {
+    try {
+      setIsExportingPartners(true);
+      const response = await projectAPI.exportPartners(id!);
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `partnership_partners_${id}_${new Date().getTime()}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      showToast.success('Partners exported successfully');
+    } catch (error: any) {
+      showToast.error('Failed to export partners');
+    } finally {
+      setIsExportingPartners(false);
+    }
+  };
+
+  const handleGenerateQR = async (type: 'registration' | 'payment') => {
+    try {
+      setQrModal({
+        isOpen: true,
+        type,
+        data: null,
+        loading: true,
+      });
+
+      const link = type === 'registration' ? publicRegistrationLink : publicPaymentLink;
+      const title = type === 'registration' ? 'Public Registration Link' : 'Public Payment Link';
+
+      // Call backend to generate QR code
+      const response = await projectAPI.generateQRCode(id!, type, {
+        registrationLink: publicRegistrationLink,
+        paymentLink: publicPaymentLink,
+      });
+
+      if (response.data.success) {
+        setQrModal({
+          isOpen: true,
+          type,
+          data: {
+            title,
+            qrImage: response.data.data.qrCodeDataUrl, // Base64 image
+            link,
+          },
+          loading: false,
+        });
+        showToast.success('QR code generated successfully!');
+      } else {
+        showToast.error('Failed to generate QR code');
+        setQrModal({ isOpen: false, type: null, data: null, loading: false });
+      }
+    } catch (error: any) {
+      showToast.error(error.response?.data?.message || 'Failed to generate QR code');
+      setQrModal({ isOpen: false, type: null, data: null, loading: false });
+    }
+  };
+
+  const calculateProgress = (raised: number, target: number) => {
+    return Math.min((raised / target) * 100, 100);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+      case 'draft':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      case 'paused':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'completed':
+        return 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    }
+  };
+
+  const filteredPartners = partners.filter(partner => {
+    const name = partner.partner
+      ? `${partner.partner.firstName} ${partner.partner.lastName}`
+      : '';
+
+    const matchesSearch = partnerSearch === '' || name.toLowerCase().includes(partnerSearch.toLowerCase());
+    const matchesType = partnerTypeFilter === 'all' || partner.partnerType === partnerTypeFilter;
+
+    return matchesSearch && matchesType;
+  });
+
+  // Calculate filtered stats and raised amount using useMemo
+  const { filteredStats, filteredRaisedAmount, filteredProgress } = useMemo(() => {
+    const stats = getFilteredStats();
+    
+    // Calculate filtered raised amount from the filtered transactions
+    // (already filtered by API based on date range)
+    let raisedAmount = 0;
+    if (allTransactions && allTransactions.length > 0) {
+      raisedAmount = allTransactions
+        .filter(t => t.status === 'completed')
+        .reduce((sum, t) => sum + t.amount, 0);
+    }
+    
+    const progress = calculateProgress(
+      raisedAmount,
+      project?.goal?.targetAmount || 0
+    );
+    
+    return {
+      filteredStats: stats,
+      filteredRaisedAmount: raisedAmount,
+      filteredProgress: progress
+    };
+  }, [dateFilter, customStartDate, customEndDate, allTransactions, project]);
+
+  // Pagination for partners
+  const paginatedPartners = filteredPartners.slice(
+    (partnersCurrentPage - 1) * partnersPerPage,
+    partnersCurrentPage * partnersPerPage
+  );
+  const partnersTotalPages = Math.ceil(filteredPartners.length / partnersPerPage);
+
+  if (loading || !project) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            {!loading && !project ? 'Project not found' : 'Loading project details...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const progress = calculateProgress(
+    project.goal?.raisedAmount || 0,
+    project.goal?.targetAmount || 0
+  );
+
+  return (
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-4 py-3">
+      {/* Header */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/giving/projects')}
+          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back to Projects
+        </button>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1">
+            <div className='flex gap-2 items-center'>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{project.name}</h1>
+              <span className={`capitalize inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                {project.status}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{project.description}</p>
+          </div>
+
+          <div className="mt-4 sm:mt-0 flex gap-2">
+            <button
+              onClick={handleRefreshStats}
+              disabled={isRefreshing}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <PermissionGuard permission="members.editProject">
+              <button
+                onClick={() => navigate(`/giving/projects/${id}/edit`)}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              >
+                <Edit2 className="w-4 h-4 mr-2" />
+                Edit
+              </button>
+            </PermissionGuard>
+            <button
+              onClick={() => setShowPublicLinks(!showPublicLinks)}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              title={showPublicLinks ? 'Hide public links' : 'Show public links'}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              {showPublicLinks ? 'Hide' : 'Show'} Links
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Public Links Section */}
+      {project.status === 'active' && showPublicLinks && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
+          {/* Public Registration Link */}
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:space-x-3">
+              <div className="flex-shrink-0 mt-0 sm:mt-1">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <Link2 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Public Registration Link
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Share this link for people to register as partners in this project
+                </p>
+                <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 mt-4">
+                  <div className="flex-1 flex items-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 min-w-0">
+                    <input
+                      type="text"
+                      value={publicRegistrationLink}
+                      readOnly
+                      className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none truncate"
+                    />
+                  </div>
+                  <div className="flex gap-2 w-full lg:w-auto lg:flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(publicRegistrationLink);
+                        showToast.success('Link copied to clipboard!');
+                      }}
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span className="hidden lg:inline">Copy</span>
+                    </button>
+                    <button
+                      onClick={() => handleGenerateQR('registration')}
+                      disabled={qrModal.loading}
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-purple-100 dark:bg-purple-900/30 text-primary-700 dark:text-primary-400 border border-purple-200 dark:border-purple-800 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {qrModal.loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <QrCode className="h-4 w-4" />
+                      )}
+                      <span className="hidden lg:inline">{qrModal.loading ? 'Generating...' : 'Generate QR'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Public Payment Link */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:space-x-3">
+              <div className="flex-shrink-0 mt-0 sm:mt-1">
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <CreditCard className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Public Payment Link
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Share this link for people to make partnership contributions
+                </p>
+                <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 mt-4">
+                  <div className="flex-1 flex items-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 min-w-0">
+                    <input
+                      type="text"
+                      value={publicPaymentLink}
+                      readOnly
+                      className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none truncate"
+                    />
+                  </div>
+                  <div className="flex gap-2 w-full lg:w-auto lg:flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(publicPaymentLink);
+                        showToast.success('Link copied to clipboard!');
+                      }}
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span className="hidden lg:inline">Copy</span>
+                    </button>
+                    <button
+                      onClick={() => handleGenerateQR('payment')}
+                      disabled={qrModal.loading}
+                      className="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {qrModal.loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <QrCode className="h-4 w-4" />
+                      )}
+                      <span className="hidden lg:inline">{qrModal.loading ? 'Generating...' : 'Generate QR'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-min">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`${activeTab === 'overview'
+              ? 'border-purple-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('partners')}
+            className={`${activeTab === 'partners'
+              ? 'border-purple-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Partners ({project.stats.totalPartners})
+          </button>
+          <button
+            onClick={() => setActiveTab('transactions')}
+            className={`${activeTab === 'transactions'
+              ? 'border-purple-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Transactions ({transactionsTotalCount ?? project.stats.totalTransactions})
+          </button>
+          <button
+            onClick={() => setActiveTab('messages')}
+            className={`${activeTab === 'messages'
+              ? 'border-purple-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Messages
+          </button>
+        </nav>
+      </div>
+
+      {/* Overview Tab */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Date Filter */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filter by Date
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value as DateFilterType)}
+                    disabled={loadingTransactions}
+                    className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="thisWeek">This Week</option>
+                    <option value="lastWeek">Last Week</option>
+                    <option value="thisMonth">This Month</option>
+                    <option value="lastMonth">Last Month</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                  {loadingTransactions && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-white">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
+                      <span>Loading...</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {dateFilter === 'custom' && (
+                <>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Start Date
+                    </label>
+                    <DatePicker
+                      value={customStartDate}
+                      onChange={(value) => setCustomStartDate(value)}
+                      placeholder="Select start date"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      End Date
+                    </label>
+                    <DatePicker
+                      value={customEndDate}
+                      onChange={(value) => setCustomEndDate(value)}
+                      placeholder="Select end date"
+                      min={customStartDate || undefined}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Target Amount Card */}
+            <div className="relative overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-purple-200 dark:bg-purple-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Target Amount</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      {formatCurrency(project.goal?.targetAmount || 0, project.goal?.currency || merchantCurrency)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-primary-600/10 dark:bg-purple-500/10 rounded-lg">
+                    <Target className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Amount Raised Card */}
+            <div className="relative overflow-hidden rounded-xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-green-200 dark:bg-green-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Amount Raised</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      {formatCurrency(filteredRaisedAmount, project.goal?.currency || merchantCurrency)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-600/10 dark:bg-green-500/10 rounded-lg">
+                    <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Partners Card */}
+            <div className="relative overflow-hidden rounded-xl border border-primary-200 dark:border-primary-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-primary-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Partners</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{filteredStats?.totalPartners || 0}</p>
+                  </div>
+                  <div className="p-3 bg-primary-600/10 dark:bg-primary-500/10 rounded-lg">
+                    <Users className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Transactions Card */}
+            <div className="relative overflow-hidden rounded-xl border border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50 to-pink-100/50 dark:from-pink-900/20 dark:to-pink-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-pink-200 dark:bg-pink-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Transactions</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{filteredStats?.totalTransactions || 0}</p>
+                  </div>
+                  <div className="p-3 bg-pink-600/10 dark:bg-pink-500/10 rounded-lg">
+                    <TrendingUp className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Transaction Bar Chart */}
+          <div className="relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-all">
+            {/* <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-purple-600 to-purple-400" /> */}
+            <TransactionBarChart
+              transactions={allTransactions}
+              currency={project.goal?.currency || merchantCurrency}
+              groupBy="day"
+              title="Monthly Transaction Progress"
+              height={400}
+              showLegend={true}
+              colors={{
+                completed: '#10b981',
+                pending: '#f59e0b',
+                failed: '#ef4444',
+              }}
+            />
+          </div>
+
+          {/* Tier Totals Breakdown */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-all">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tier Totals Breakdown</h3>
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 min-w-min">
+                {loadingTierBreakdown ? (
+                  <div className="flex items-center justify-center w-full py-8">
+                    <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+                  </div>
+                ) : tierBreakdown.length > 0 ? (
+                  tierBreakdown.map((tier) => (
+                    <div
+                      key={tier._id}
+                      className="flex-1 border rounded-lg p-4 transition-all hover:shadow-md"
+                      style={{
+                        borderColor: tier.badgeColor || '#9333EA',
+                        backgroundColor: `${tier.badgeColor || '#9333EA'}08`
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded-full shadow-sm"
+                            style={{ backgroundColor: tier.badgeColor || '#9333EA' }}
+                          />
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{tier.name}</h4>
+                        </div>
+                      </div>
+                      <div className="gap-4">
+                        <div className="flex flex-row justify-between min-w-max">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Total Raised</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {formatCurrency(tier.totalRaised, tier.currency)}
+                          </p>
+                        </div>
+                        <div className="flex flex-row justify-between min-w-max">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Partners</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{tier.partnerCount}</p>
+                        </div>
+                        <div className="flex flex-row justify-between min-w-max">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Transactions</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{tier.transactionCount}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400">No tier data available</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Tiers */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-all">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Project Tiers</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {project.tiers.map((tier, index) => (
+                <div
+                  key={index}
+                  className="border-2 rounded-lg p-4 transition-all hover:shadow-md relative overflow-hidden"
+                  style={{
+                    borderColor: tier.badgeColor || '#9333EA',
+                    backgroundColor: `${tier.badgeColor || '#9333EA'}08`
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div
+                      className="w-5 h-5 rounded-full shadow-sm"
+                      style={{ backgroundColor: tier.badgeColor || '#9333EA' }}
+                    />
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">{tier.name}</h4>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Minimum: {formatCurrency(tier.minimumAmount, merchantCurrency)}
+                  </p>
+                  {tier.description && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{tier.description}</p>
+                  )}
+                  {tier.benefits && tier.benefits.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Benefits:</p>
+                      <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                        {tier.benefits.map((benefit, bIndex) => (
+                          <li key={bIndex}>• {benefit}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Partner Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {project.dates && (
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Timeline</h3>
+                <div className="space-y-3">
+                  {project.dates.startDate && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Start Date</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {new Date(project.dates.startDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  {project.dates.endDate && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">End Date</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {new Date(project.dates.endDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Created</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {new Date(project.dates.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Partners Tab */}
+      {activeTab === 'partners' && (
+        <div className="space-y-4">
+          {/* Filters */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search partners..."
+                  value={partnerSearch}
+                  onChange={(e) => setPartnerSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex gap-3 flex-shrink-0">
+                <select
+                  value={partnerTypeFilter}
+                  onChange={(e) => setPartnerTypeFilter(e.target.value)}
+                  className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                >
+                  <option value="all">All Types</option>
+                  <option value="member">Members</option>
+                  <option value="guest">Guests</option>
+                </select>
+                <button
+                  onClick={handleExportPartners}
+                  disabled={isExportingPartners || partners.length === 0}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isExportingPartners ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      <span>Export</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowAddPartnerModal(true)}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Partner</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Partners Table */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Partner
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Tier
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Total Contributed
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Payments
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Registered
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-16">
+                      <div className="flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-3" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Loading partners...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : loadingPartners ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-16">
+                      <div className="flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-3" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Updating partners...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredPartners.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-16">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                          <Users className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No Partners Yet</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {partnerSearch || partnerTypeFilter !== 'all' ? 'No partners match your filters' : 'Partners will appear here once they register'}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedPartners.map((partner) => {
+                    // Get name and phone based on partner type
+                    let name = 'N/A';
+                    let phone = 'N/A';
+                    
+                    if (partner.partnerType === 'member' && partner.member) {
+                      name = `${partner.member.firstName} ${partner.member.lastName}`;
+                      phone = partner.member.phone || 'N/A';
+                    } else if (partner.partner) {
+                      name = `${partner.partner.firstName} ${partner.partner.lastName}`;
+                      phone = partner.partner.phone || 'N/A';
+                    }
+
+                    return (
+                      <tr key={partner._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                              {name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{name}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{phone}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs capitalize font-semibold rounded-full ${partner.partnerType === 'member'
+                            ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                            }`}>
+                            {partner.partnerType}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{partner.tier?.name}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                          {formatCurrency(partner.paymentStats?.totalAmount || 0, merchantCurrency)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                          {partner.paymentStats?.totalCount || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(partner.registeredAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditPartner(partner)}
+                              className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-blue-300 transition-colors"
+                              title="Edit partner"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm(partner._id)}
+                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                              title="Delete partner"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {filteredPartners.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-4 flex justify-between items-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Showing {((partnersCurrentPage - 1) * partnersPerPage) + 1} to{' '}
+                {Math.min(partnersCurrentPage * partnersPerPage, filteredPartners.length)} of{' '}
+                {filteredPartners.length} partners
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPartnersCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={partnersCurrentPage === 1}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPartnersCurrentPage(p => Math.min(partnersTotalPages, p + 1))}
+                  disabled={partnersCurrentPage === partnersTotalPages}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Transactions Tab */}
+      {activeTab === 'transactions' && (
+        <div className="space-y-4">
+          {/* Filters and Actions */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+            <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
+              <div className="flex-1 relative flex gap-2">
+                <div className="flex-1 relative flex items-center">
+                  <select
+                    value={transactionSearchType}
+                    onChange={(e) => setTransactionSearchType(e.target.value)}
+                    className="absolute left-0 top-0 h-full px-3 py-2 bg-transparent border-r border-gray-300 dark:border-gray-600 rounded-l-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm appearance-none cursor-pointer z-10"
+                    style={{ width: 'auto', minWidth: '100px' }}
+                  >
+                    {/* <option value="all">All Fields</option> */}
+                    <option value="name">Name</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="reference">Transaction ID</option>
+                  </select>
+                  <input
+                    type="text"
+                    placeholder={
+                      transactionSearchType === 'name'
+                        ? 'Search by name...'
+                        : transactionSearchType === 'email'
+                        ? 'Search by email...'
+                        : transactionSearchType === 'phone'
+                        ? 'Search by phone...'
+                        : 'Search by transaction ID...'
+                    }
+                    value={transactionSearch}
+                    onChange={(e) => setTransactionSearch(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleTransactionSearch()}
+                    className="w-full pl-32 pr-10 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  {transactionSearch && (
+                    <button
+                      onClick={handleClearTransactionSearch}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      title="Clear search"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={handleTransactionSearch}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  Search
+                </button>
+              </div>
+              <div className="flex gap-3 flex-shrink-0">
+               
+                <button
+                  onClick={() => setShowAddTransactionModal(true)}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Transaction
+                </button>
+                 <button
+                  onClick={openAdvancedFilters}
+                  className="relative inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Settings2 className="w-4 h-4 mr-2" />
+                  Filters
+                  {activeTransactionFilters > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-primary-600 rounded-full"></span>
+                  )}
+                </button>
+                <button
+                  onClick={handleExportTransactions}
+                  disabled={isExporting}
+                  className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 whitespace-nowrap"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {isExporting ? 'Exporting...' : 'Export'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Filters Modal */}
+          {showAdvancedFilters && (
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Status Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={tempStatusFilter}
+                    onChange={(e) => setTempStatusFilter(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+
+                {/* Start Date Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Start Date
+                  </label>
+                  <DatePicker
+                    value={tempStartDate}
+                    onChange={(value) => setTempStartDate(value)}
+                    placeholder="Select start date"
+                  />
+                </div>
+
+                {/* End Date Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    End Date
+                  </label>
+                  <DatePicker
+                    value={tempEndDate}
+                    onChange={(value) => setTempEndDate(value)}
+                    placeholder="Select end date"
+                    min={tempStartDate || undefined}
+                  />
+                </div>
+
+                {/* Payment Method Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Payment Method
+                  </label>
+                  <select
+                    value={tempPaymentMethod}
+                    onChange={(e) => setTempPaymentMethod(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
+                  >
+                    <option value="all">All Methods</option>
+                    <option value="paystack">Paystack</option>
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="mobile_money">Mobile Money</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Filter Actions */}
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                  {activeTransactionFilters > 0 && (
+                    <button
+                      onClick={clearTransactionFilters}
+                      className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Clear All Filters
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowAdvancedFilters(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={applyAdvancedFilters}
+                    className="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Transactions Summary */}
+          {transactions.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              {/* Total Transactions Card */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Transactions</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{transactionsTotalCount}</p>
+                  </div>
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                    <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Amount Card */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Amount</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      {formatCurrency(
+                        transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0),
+                        transactions[0]?.currency || project.goal?.currency || merchantCurrency
+                      )}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                    <Coins className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Completed Card */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Completed</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {transactions.filter(tx => tx.status === 'completed').length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                    <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pending Card */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Pending/Failed</p>
+                    <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                      {transactions.filter(tx => tx.status !== 'completed').length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                    <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Transactions Table */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700 ">
+                <tr className='dark:text-white'>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Transaction ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Partner
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Method
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {loadingTransactions ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-16">
+                      <div className="flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-3" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Updating transactions...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-16">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                          <TrendingUp className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No Transactions Yet</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {transactionStatusFilter !== 'all' ? 'No transactions match this status filter' : 'Project transactions will appear here'}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  transactions.map((transaction: any) => {
+                    // Extract partner details from nested structure
+                    const isGuest = transaction.registration?.partnerType === 'guest';
+                    const partnerData = isGuest 
+                      ? transaction.registration?.partner 
+                      : transaction.registration?.member;
+                    
+                    const payerName = partnerData 
+                      ? `${partnerData.firstName} ${partnerData.lastName}` 
+                      : (transaction.payerName || 'Unknown');
+                    const payerEmail = partnerData?.email || transaction.payerEmail;
+                    const payerPhone = partnerData?.phone || transaction.payerPhone;
+                    
+                    return (
+                      <tr key={transaction._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-mono font-medium dark:text-white px-0 py-1 rounded">
+                            {transaction.paymentReference || transaction.transactionCode || transaction._id?.substring(0, 8)}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {transaction.paymentMethod?.toUpperCase()} | {transaction.registration.partnerType === 'member' ? 'Member' : 'Guest'}
+                          </div>
+                          {/* {transaction.registration?.partnerType && (
+                            <div className="text-xs text-primary-600 dark:text-primary-400 mt-1">
+                              {transaction.registration.partnerType === 'member' ? 'Member' : 'Guest'}
+                            </div>
+                          )} */}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{payerName}</div>
+                          {transaction.memberId && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">ID: {transaction.memberId}</div>
+                          )}
+                          {(transaction.registration?.tier || transaction.tier) && (
+                            <div className="text-xs text-primary-600 dark:text-primary-400">
+                              {typeof (transaction.registration?.tier || transaction.tier) === 'object' 
+                                ? (transaction.registration?.tier?.name || transaction.tier?.name)
+                                : (transaction.registration?.tier || transaction.tier)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-600 dark:text-gray-300">
+                            {payerEmail && <div>{payerEmail}</div>}
+                            {payerPhone && <div>{payerPhone}</div>}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {formatCurrency(transaction.amount, transaction.currency)}
+                        </td>
+                        <td className="capitalize px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                          {transaction.paymentMethod?.replace(/_/g, ' ')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${transaction.status === 'completed'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : transaction.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                            }`}>
+                            {transaction.status?.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900 dark:text-white">
+                            {format(new Date(transaction.transactionDate), 'MMM dd, yyyy')}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {format(new Date(transaction.transactionDate), 'HH:mm')}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button
+                            onClick={() => setShowDeleteConfirm(transaction._id)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                            title="Delete transaction"
+                            disabled={isSubmitting}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          {transactionsTotalPages > 1 && (
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Page {transactionsPage} of {transactionsTotalPages} • Showing {transactions.length} of {transactionsTotalCount} transactions
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => loadTransactions(Math.max(1, transactionsPage - 1))}
+                  disabled={transactionsPage === 1}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: transactionsTotalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => loadTransactions(page)}
+                      className={`px-3 py-1.5 rounded text-sm font-medium ${
+                        transactionsPage === page
+                          ? 'bg-primary-600 text-white'
+                          : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => loadTransactions(Math.min(transactionsTotalPages, transactionsPage + 1))}
+                  disabled={transactionsPage === transactionsTotalPages}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Messages Tab */}
+      {activeTab === 'messages' && (
+        <div className="space-y-8 w-full">
+          
+          {/* Available Variables Section - Full Width */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Message Variables</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Use these placeholders in your messages to personalize content automatically</p>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {[
+                  { code: '[name]', desc: 'Partner name' },
+                  { code: '[amount]', desc: 'Transaction amount' },
+                  { code: '[currency]', desc: 'Currency code' },
+                  { code: '[project]', desc: 'Project name' },
+                  { code: '[church]', desc: 'Church name' },
+                  { code: '[tier]', desc: 'Tier name' },
+                ].map(v => (
+                  <div key={v.code} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary-300 dark:hover:border-primary-600 transition-colors bg-gray-50 dark:bg-gray-700/50">
+                    <code className="block font-mono font-bold text-primary-700 dark:text-primary-400 mb-2 text-sm">{v.code}</code>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{v.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Messages Section */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <div className="w-1 h-6 bg-primary-600 rounded-full"></div>
+              Partner Messages
+            </h3>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Welcome Message Card */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Welcome Message</h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Sent when a partner registers</p>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  <textarea
+                    id="welcomeMessage"
+                    value={smsMessages.welcomeMessage}
+                    onChange={(e) => setSmsMessages(prev => ({ ...prev, welcomeMessage: e.target.value }))}
+                    placeholder="Leave empty to use default..."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  />
+
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Default:</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                      "Welcome to [project] at [church]! Thank you for joining us."
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{smsMessages.welcomeMessage.length} chars</span>
+                    {!smsMessages.welcomeMessage && <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">Using default</span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Thank You Message Card */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Thank You Message</h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Sent after a payment or contribution</p>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  <textarea
+                    id="thankYouMessage"
+                    value={smsMessages.thankYouMessage}
+                    onChange={(e) => setSmsMessages(prev => ({ ...prev, thankYouMessage: e.target.value }))}
+                    placeholder="Leave empty to use default..."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  />
+
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Default:</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                      "Thank you for your contribution of [currency] [amount]!"
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{smsMessages.thankYouMessage.length} chars</span>
+                    {!smsMessages.thankYouMessage && <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">Using default</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 dark:border-gray-700"></div>
+
+          {/* Reminders Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <div className="w-1 h-6 bg-orange-600 rounded-full"></div>
+                Automated Reminders
+              </h3>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <button
+                  onClick={() => setReminders(prev => ({ ...prev, enabled: !prev.enabled }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    reminders.enabled ? 'bg-orange-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      reminders.enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{reminders.enabled ? 'Enabled' : 'Disabled'}</span>
+              </label>
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Send automatic commitment reminders to partners based on their contribution schedule.
+            </p>
+
+            {reminders.enabled && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+                {/* Frequency Selection - Radio Buttons */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                    Reminder Frequency <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { value: 'weekly', label: 'Weekly', icon: '📅', desc: 'Every week on the same day' },
+                      { value: 'monthly', label: 'Monthly', icon: '📆', desc: 'Every month on the same date' },
+                    ].map(option => (
+                      <button
+                        key={option.value}
+                        onClick={() => setReminders(prev => ({
+                          ...prev,
+                          frequency: option.value as 'weekly' | 'monthly',
+                          dayOfWeek: 'monday',
+                          dayOfMonth: 1
+                        }))}
+                        className={`p-4 rounded-lg border-2 transition-all text-left relative ${
+                          reminders.frequency === option.value
+                            ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 hover:border-gray-300'
+                        }`}
+                      >
+                        {reminders.frequency === option.value && (
+                          <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center">
+                            <Check size={16} />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 mb-1">
+                          {/* <span className="text-lg">{option.icon}</span> */}
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{option.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Day Selection & Time */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      {reminders.frequency === 'weekly' ? 'Send on Day of Week' : 'Send on Date of Month'} <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={reminders.frequency === 'weekly' ? reminders.dayOfWeek : reminders.dayOfMonth}
+                      onChange={(e) => {
+                        if (reminders.frequency === 'weekly') {
+                          setReminders(prev => ({ ...prev, dayOfWeek: e.target.value }));
+                        } else {
+                          setReminders(prev => ({ ...prev, dayOfMonth: parseInt(e.target.value) }));
+                        }
+                      }}
+                      className="w-full h-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                      {reminders.frequency === 'weekly' ? (
+                        ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
+                          <option key={day} value={day}>
+                            {day.charAt(0).toUpperCase() + day.slice(1)}
+                          </option>
+                        ))
+                      ) : (
+                        Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
+                          <option key={day} value={day}>
+                            Day {day} of each month
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Send Time <span className="text-red-500">*</span>
+                    </label>
+                    <TimePicker
+                      value={reminders.time}
+                      onChange={(time) => setReminders(prev => ({ ...prev, time }))}
+                      placeholder="Select time"
+                      className="h-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Custom Message */}
+                <div>
+                  <label htmlFor="reminderMessage" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Reminder Message <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                    Use variables like [name], [amount], [frequency], [project], and [church] to personalize messages.
+                  </p>
+                  <textarea
+                    id="reminderMessage"
+                    value={reminders.customMessage}
+                    onChange={(e) => setReminders(prev => ({ ...prev, customMessage: e.target.value }))}
+                    placeholder="Hi [name], reminder: your [frequency] contribution of [amount] supports [project] at [church]. Thank you!"
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  />
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{reminders.customMessage.length} / 1000 characters</span>
+                    {reminders.customMessage.length < 160 && reminders.customMessage && (
+                      <span className="text-xs text-orange-600 dark:text-orange-400">⚠️ SMS split message</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Info Box */}
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                  <p className="text-sm text-orange-800 dark:text-orange-300">
+                    <strong>✓ Smart Targeting:</strong> Only partners with matching {reminders.frequency} commitments will receive reminders.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!reminders.enabled && (
+              <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center">
+                <p className="text-gray-600 dark:text-gray-400 mb-3">Automated reminders are currently disabled</p>
+                <button
+                  onClick={() => setReminders(prev => ({ ...prev, enabled: true }))}
+                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium text-sm"
+                >
+                  Enable reminders →
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Save Button */}
+          <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={handleSaveMessages}
+              disabled={messageSaving || reminderSaving}
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+            >
+              {messageSaving || reminderSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving Configuration...
+                </>
+              ) : (
+                <>
+                  <Settings className="w-4 h-4" />
+                  Save All Changes
+                </>
+              )}
+            </button>
+            {reminders.enabled && (
+              <button
+                onClick={handleTriggerReminders}
+                disabled={reminderTesting || messageSaving || reminderSaving}
+                className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+              >
+                {reminderTesting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Test Reminders
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+
+      {/* Edit Partner Modal */}
+      <EditProjectPartnerModal
+        isOpen={showEditProjectPartnerModal}
+        partner={selectedPartnerForEdit}
+        projectId={id || ''}
+        tiers={project?.tiers || []}
+        onClose={() => {
+          setShowEditProjectPartnerModal(false);
+          setSelectedPartnerForEdit(null);
+        }}
+        onSuccess={() => {
+          loadPartners();
+          loadProjectDetails();
+        }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Delete Partner?</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              This will permanently delete the partner and all their associated transactions. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeletePartner(showDeleteConfirm)}
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Partner Modal */}
+      {showAddPartnerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add Partner</h3>
+              <button
+                onClick={() => {
+                  setShowAddPartnerModal(false);
+                  setPartnerTab('member');
+                  setSelectedPartnerMember(null);
+                  setPartnerMemberSearchQuery('');
+                  setPartnerGuestData({
+                    firstName: '',
+                    lastName: '',
+                    phone: '',
+                    email: '',
+                  });
+                  setAddPartnerData({
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    phone: '',
+                    tierId: project?.tiers[0]?._id || '',
+                  });
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setPartnerTab('member')}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${partnerTab === 'member'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
+              >
+                Member
+              </button>
+              <button
+                onClick={() => setPartnerTab('guest')}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${partnerTab === 'guest'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
+              >
+                Guest
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPartner} className="space-y-4">
+              {/* Member Tab */}
+              {partnerTab === 'member' && (
+                <>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search member or partner by name or phone..."
+                      value={partnerMemberSearchQuery}
+                      onChange={(e) => setPartnerMemberSearchQuery(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                    />
+                    {searchingPartnerMembers && (
+                      <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-gray-400" />
+                    )}
+                  </div>
+
+                  {showPartnerMemberSearchResults && partnerMemberSearchResults.length > 0 && (
+                    <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                      {partnerMemberSearchResults.map((member) => (
+                        <button
+                          key={member._id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPartnerMember(member);
+                            setShowPartnerMemberSearchResults(false);
+                            setPartnerMemberSearchQuery('');
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-200 dark:hover:bg-gray-600 border-b border-gray-200 dark:border-gray-600 last:border-b-0 transition-colors"
+                        >
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
+                            {member.firstName} {member.lastName}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{member.phone}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedPartnerMember && (
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Selected: {selectedPartnerMember.firstName} {selectedPartnerMember.lastName}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{selectedPartnerMember.phone}</p>
+                    </div>
+                  )}
+
+                  <select
+                    value={addPartnerData.tierId}
+                    onChange={(e) => setAddPartnerData({ ...addPartnerData, tierId: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Select Tier</option>
+                    {project?.tiers.map((tier) => (
+                      <option key={tier._id} value={tier._id}>
+                        {tier.name} - {formatCurrency(tier.minimumAmount, merchantCurrency)} min
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
+              {/* Guest Tab */}
+              {partnerTab === 'guest' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      placeholder="First Name"
+                      value={partnerGuestData.firstName}
+                      onChange={(e) => setPartnerGuestData({ ...partnerGuestData, firstName: e.target.value })}
+                      required
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Last Name"
+                      value={partnerGuestData.lastName}
+                      onChange={(e) => setPartnerGuestData({ ...partnerGuestData, lastName: e.target.value })}
+                      required
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <input
+                    type="tel"
+                    placeholder="Phone"
+                    value={partnerGuestData.phone}
+                    onChange={(e) => setPartnerGuestData({ ...partnerGuestData, phone: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={partnerGuestData.email}
+                    onChange={(e) => setPartnerGuestData({ ...partnerGuestData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+
+                  <select
+                    value={addPartnerData.tierId}
+                    onChange={(e) => setAddPartnerData({ ...addPartnerData, tierId: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Select Tier</option>
+                    {project?.tiers.map((tier) => (
+                      <option key={tier._id} value={tier._id}>
+                        {tier.name} - {formatCurrency(tier.minimumAmount, merchantCurrency)} min
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddPartnerModal(false);
+                    setPartnerTab('member');
+                    setSelectedPartnerMember(null);
+                    setPartnerMemberSearchQuery('');
+                    setPartnerGuestData({
+                      firstName: '',
+                      lastName: '',
+                      phone: '',
+                      email: '',
+                    });
+                    setAddPartnerData({
+                      firstName: '',
+                      lastName: '',
+                      email: '',
+                      phone: '',
+                      tierId: project?.tiers[0]?._id || '',
+                    });
+                  }}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  Add Partner
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Transaction Modal */}
+      {showAddTransactionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add Transaction</h3>
+              <button
+                onClick={() => {
+                  setShowAddTransactionModal(false);
+                  setMemberSearchQuery('');
+                  setSelectedMember(null);
+                  setGuestData({ fullName: '', phone: '', email: '' });
+                  setTransactionTab('member');
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setTransactionTab('member')}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${transactionTab === 'member'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
+              >
+                Member/Partner
+              </button>
+              <button
+                onClick={() => setTransactionTab('guest')}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${transactionTab === 'guest'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
+              >
+                Guest
+              </button>
+            </div>
+
+            <form onSubmit={handleAddTransaction} className="space-y-4">
+              {/* Member Tab */}
+              {transactionTab === 'member' && (
+                <div className="space-y-4">
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Search Member or Partner
+                    </label>
+
+                    {selectedMember || selectedPartnerForTransaction ? (
+                      <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 flex items-center justify-between">
+                        <div>
+                          {selectedMember ? (
+                            <>
+                              <p className="font-medium text-primary-900 dark:text-primary-200">
+                                {selectedMember.firstName} {selectedMember.lastName}
+                              </p>
+                              <p className="text-sm text-primary-700 dark:text-blue-300">
+                                {selectedMember.phone}
+                              </p>
+                            </>
+                          ) : selectedPartnerForTransaction ? (
+                            <>
+                              <p className="font-medium text-primary-900 dark:text-primary-200">
+                                {selectedPartnerForTransaction.partner.firstName} {selectedPartnerForTransaction.partner.lastName}
+                              </p>
+                              <p className="text-sm text-primary-700 dark:text-blue-300">
+                                {selectedPartnerForTransaction.partner.phone}
+                              </p>
+                              {selectedPartnerForTransaction.tier?.name && (
+                                <p className="text-xs text-primary-600 dark:text-blue-300 mt-1">
+                                  {selectedPartnerForTransaction.tier.name}
+                                </p>
+                              )}
+                            </>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMember(null);
+                            setSelectedPartnerForTransaction(null);
+                            setAddTransactionData(prev => ({ ...prev, registrationId: '' }));
+                            setMemberSearchQuery('');
+                          }}
+                          className="text-primary-600 hover:text-primary-800 dark:text-blue-300 dark:hover:text-primary-100"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Member Search Input */}
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search by phone or name (min 2 chars)..."
+                            value={memberSearchQuery}
+                            onChange={(e) => {
+                              setMemberSearchQuery(e.target.value);
+                              if (!e.target.value.trim()) {
+                                setShowMemberSearchResults(false);
+                              }
+                            }}
+                            onFocus={() => memberSearchQuery.length >= 2 && setShowMemberSearchResults(true)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          {searchingMembers && (
+                            <Loader2 className="absolute right-3 top-2.5 w-5 h-5 animate-spin text-gray-500" />
+                          )}
+
+                          {/* Member/Partner Search Results Dropdown */}
+                          {showMemberSearchResults && memberSearchQuery.length >= 2 && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50">
+                              {(() => {
+                                console.log('Rendering dropdown. memberSearchResults:', memberSearchResults);
+                                console.log('memberSearchResults.length:', memberSearchResults.length);
+                                console.log('Is Array?:', Array.isArray(memberSearchResults));
+                                console.log('Condition check (length > 0):', memberSearchResults.length > 0);
+                                return null;
+                              })()}
+                              {memberSearchResults.length > 0 ? (
+                                <ul className="max-h-48 overflow-y-auto">
+                                  {(() => {
+                                    console.log('About to map over results. Count:', memberSearchResults.length);
+                                    console.log('First item:', memberSearchResults[0]);
+                                    return null;
+                                  })()}
+                                  {memberSearchResults.map((item: any) => {
+                                    console.log('Mapping item:', item);
+                                    console.log('Item type:', item.type);
+                                    console.log('Item _id:', item._id);
+                                    console.log('Item firstName:', item.firstName);
+                                    console.log('Item lastName:', item.lastName);
+                                    return (
+                                    <li key={item._id}>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          handleSelectMember(item);
+                                          setShowMemberSearchResults(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0 text-sm"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                                              {item.type === 'partner'
+                                                ? `${item.partner.firstName} ${item.partner.lastName}`
+                                                : `${item.firstName} ${item.lastName}`
+                                              }
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              {item.type === 'partner'
+                                                ? item.partner.phone
+                                                : item.phone
+                                              }
+                                              {item.type === 'partner' && item.tier?.name && ` • Tier: ${item.tier.name}`}
+                                            </div>
+                                          </div>
+                                          <span className="ml-2 px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded">
+                                            {item.type === 'partner' ? 'Partner' : 'Member'}
+                                          </span>
+                                        </div>
+                                      </button>
+                                    </li>
+                                  )})}
+                                </ul>
+                              ) : (
+                                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                                  No members or partners found
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Guest Tab */}
+              {transactionTab === 'guest' && (
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={guestData.fullName}
+                    onChange={(e) => setGuestData({ ...guestData, fullName: e.target.value })}
+                    required={transactionTab === 'guest'}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Phone"
+                    value={guestData.phone}
+                    onChange={(e) => setGuestData({ ...guestData, phone: e.target.value })}
+                    required={transactionTab === 'guest'}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email (optional)"
+                    value={guestData.email}
+                    onChange={(e) => setGuestData({ ...guestData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              )}
+
+              {/* Transaction Details */}
+              <input
+                type="number"
+                placeholder="Amount"
+                step="0.01"
+                min="0"
+                value={addTransactionData.amount}
+                onChange={(e) => setAddTransactionData({ ...addTransactionData, amount: e.target.value })}
+                required
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+              />
+
+              <select
+                value={addTransactionData.currency}
+                onChange={(e) => setAddTransactionData({ ...addTransactionData, currency: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="GHS">GHS</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="NGN">NGN</option>
+                <option value="KES">KES</option>
+              </select>
+
+              <select
+                value={addTransactionData.paymentMethod}
+                onChange={(e) => setAddTransactionData({ ...addTransactionData, paymentMethod: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="momo">Mobile Money</option>
+                <option value="paystack">Paystack</option>
+              </select>
+
+              <textarea
+                placeholder="Notes (optional)"
+                value={addTransactionData.notes}
+                onChange={(e) => setAddTransactionData({ ...addTransactionData, notes: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent resize-none h-20"
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Transaction Date
+                </label>
+                <DatePicker
+                  value={addTransactionData.transactionDate}
+                  onChange={(value) => setAddTransactionData({ ...addTransactionData, transactionDate: value })}
+                  placeholder="Select transaction date"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  The date when the payment was made (defaults to today)
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddTransactionModal(false);
+                    setMemberSearchQuery('');
+                    setSelectedMember(null);
+                    setGuestData({ fullName: '', phone: '', email: '' });
+                    setTransactionTab('member');
+                  }}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || (transactionTab === 'member' ? !selectedMember && !selectedPartnerForTransaction : !guestData.fullName || !guestData.phone) || !addTransactionData.amount}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  Add Transaction
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={qrModal.isOpen}
+        onClose={() => setQrModal({ isOpen: false, type: null, data: null, loading: false })}
+        qrCodeData={qrModal.data}
+        isLoading={qrModal.loading}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 text-center mb-2">
+                Delete Item?
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
+                This action cannot be undone. This will permanently delete the item and all associated data.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    // Check if it's a transaction or partner delete
+                    const isTransaction = transactions.some(t => t._id === showDeleteConfirm);
+                    const isPartner = partners.some(p => p._id === showDeleteConfirm);
+
+                    if (isTransaction) {
+                      handleDeleteTransaction(showDeleteConfirm);
+                    } else if (isPartner) {
+                      handleDeletePartner(showDeleteConfirm);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Transactions Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Export Transactions
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Date Range Options */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Select Date Range
+                  </label>
+                  
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="exportDateRange"
+                        value="today"
+                        checked={exportDateRange === 'today'}
+                        onChange={(e) => setExportDateRange(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Today</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="exportDateRange"
+                        value="yesterday"
+                        checked={exportDateRange === 'yesterday'}
+                        onChange={(e) => setExportDateRange(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Yesterday</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="exportDateRange"
+                        value="custom"
+                        checked={exportDateRange === 'custom'}
+                        onChange={(e) => setExportDateRange(e.target.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Custom Range</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Custom Date Range Inputs */}
+                {exportDateRange === 'custom' && (
+                  <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Start Date
+                      </label>
+                      <DatePicker
+                        value={exportCustomStartDate}
+                        onChange={(value) => setExportCustomStartDate(value)}
+                        placeholder="Select start date"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        End Date {!exportCustomStartDate && <span className="text-gray-500 text-xs">(Select start date first)</span>}
+                      </label>
+                      <DatePicker
+                        value={exportCustomEndDate}
+                        onChange={(value) => setExportCustomEndDate(value)}
+                        placeholder="Select end date"
+                        min={exportCustomStartDate || undefined}
+                      />
+                      {exportCustomStartDate && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Max: {new Date(new Date(exportCustomStartDate).setMonth(new Date(exportCustomStartDate).getMonth() + 3)).toISOString().split('T')[0]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Actions */}
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowExportModal(false);
+                    setExportDateRange('today');
+                    setExportCustomStartDate('');
+                    setExportCustomEndDate('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeExport}
+                  disabled={isExporting || (exportDateRange === 'custom' && (!exportCustomStartDate || !exportCustomEndDate))}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      Export
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProjectDetails;

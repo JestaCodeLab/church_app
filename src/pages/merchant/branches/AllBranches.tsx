@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Eye, Edit2, Trash2, MapPin, Users, Phone, Mail, Church } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MapPin, Users, Church } from 'lucide-react';
 import { branchAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import DeleteBranchModal from '../../../components/branch/DeleteBranchModal';
@@ -9,17 +9,13 @@ import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import { useAuth } from '../../../context/AuthContext';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { DataTable, Column } from '../../../components/ui/DataTable';
 
 const Branches = () => {
   const navigate = useNavigate();
   const { fetchAndUpdateSubscription, user } = useAuth();
   const plan = user?.merchant?.subscription?.plan;
-  const [branches, setBranches] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalBranches, setTotalBranches] = useState(0);
   const [activeTab, setActiveTab] = useState('all');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
@@ -28,47 +24,28 @@ const Branches = () => {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const branchLimit = useResourceLimit('branches');
 
-  const handleAddBranchClick = () => {
-    if (!branchLimit.canCreate) {
-      setShowLimitModal(true);
-      return;
-    }
-    navigate('/branches/new');
+  const branchFetcher = async (params: any) => {
+    const response = await branchAPI.getBranches(params);
+    return {
+      items: response.data.data.branches,
+      pagination: {
+        currentPage: response.data.data.pagination.currentPage,
+        pages: response.data.data.pagination.pages,
+        totalItems: response.data.data.pagination.totalItems,
+      },
+    };
   };
 
-  const [filters, setFilters] = useState({
-    status: '',
-    type: '',
-  });
+  const { data: branches, loading, currentPage, totalPages, totalItems, setPage, setSearch, setFilters, refetch } =
+    usePaginatedQuery<any>('branches', branchFetcher, { limit: 10 });
 
   useEffect(() => {
-    fetchBranches();
     fetchSummary();
-  }, [currentPage, searchTerm, filters, activeTab]);
+  }, [activeTab]);
 
-  const fetchBranches = async () => {
-    setLoading(true);
-    try {
-      const params: any = {
-        page: currentPage,
-        limit: 10,
-      };
-
-      if (searchTerm) params.search = searchTerm;
-      if (activeTab !== 'all') params.type = activeTab;
-      if (filters.status) params.status = filters.status;
-      if (filters.type) params.type = filters.type;
-
-      const response = await branchAPI.getBranches(params);
-      setBranches(response.data.data.branches);
-      setTotalPages(response.data.data.pagination.pages);
-      setTotalBranches(response.data.data.pagination.totalItems);
-    } catch (error: any) {
-      showToast.error('Failed to load branches');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    setFilters({ type: activeTab !== 'all' ? activeTab : '' });
+  }, [activeTab, setFilters]);
 
   const fetchSummary = async () => {
     try {
@@ -77,6 +54,14 @@ const Branches = () => {
     } catch (error) {
       console.error('Failed to load summary');
     }
+  };
+
+  const handleAddBranchClick = () => {
+    if (!branchLimit.canCreate) {
+      setShowLimitModal(true);
+      return;
+    }
+    navigate('/branches/new');
   };
 
   const handleView = (branchId: string) => {
@@ -106,8 +91,8 @@ const Branches = () => {
         setSelectedBranch(null);
         setIsDeleting(false);
         await fetchAndUpdateSubscription();
-        fetchBranches();
         fetchSummary();
+        refetch();
       }
     } catch (error: any) {
       setIsDeleting(false);
@@ -142,6 +127,93 @@ const Branches = () => {
     return colors[status] || colors.inactive;
   };
 
+  // DataTable columns for table view
+  const tableColumns: Column<any>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (row) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Church className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{row.name}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      render: (row) => (
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeBadgeColor(row.type)}`}>
+          {row.type.charAt(0).toUpperCase() + row.type.slice(1)}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => (
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(row.status)}`}>
+          {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+        </span>
+      ),
+    },
+    {
+      key: 'address',
+      header: 'Location',
+      render: (row) => (
+        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+          {row.address?.street && row.address?.city
+            ? `${row.address.street}, ${row.address.city}`
+            : 'Location not specified'}
+        </p>
+      ),
+    },
+    {
+      key: 'statistics',
+      header: 'Members',
+      render: (row: any) => (
+        <div className="flex items-center gap-1 text-sm text-gray-900 dark:text-gray-100 font-medium">
+          <Users className="w-4 h-4 text-green-600 dark:text-green-400" />
+          {row.statistics?.memberCount || 0}
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => (
+        <div className="flex items-center justify-end gap-1">
+          <PermissionGuard permission="branches.edit">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(row._id);
+              }}
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-primary-100 dark:hover:bg-blue-900/30 hover:text-primary-600 dark:hover:text-blue-400 transition-colors"
+              title="Edit"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+          </PermissionGuard>
+          <PermissionGuard permission="branches.delete">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(row);
+              }}
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </PermissionGuard>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <FeatureGate feature={'branchManagement'}>
       <div className="min-h-screen dark:bg-gray-900">
@@ -172,14 +244,13 @@ const Branches = () => {
                 </div>
               </PermissionGuard>
             </div>
-
           </div>
 
           {/* Filters & Search */}
           <div className="bg-white dark:bg-gray-800 dark:border-gray-700 px-4 sm:px-6 py-4">
-            <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3 overflow-x-auto pb-2 sm:pb-0">
               {/* Tabs */}
-              <div className="flex items-center space-x-1 overflow-x-auto pb-2 sm:pb-0">
+              <div className="flex items-center space-x-1">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -200,13 +271,12 @@ const Branches = () => {
               </div>
 
               {/* Search */}
-              <div className="w-full sm:max-w-md">
+              <div className="flex-1 min-w-0 sm:max-w-xs">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search branches..."
                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 text-sm"
                   />
@@ -216,141 +286,21 @@ const Branches = () => {
           </div>
         </div>
 
-        {/* Grid View */}
-        <div className="px-4 sm:px-6 py-6 sm:py-8">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            </div>
-          ) : branches.length === 0 ? (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-              <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">No branches found</p>
-              <button
-                onClick={() => navigate('/branches/new')}
-                className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-              >
-                Add Your First Branch
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {branches.map((branch) => (
-                  <div
-                    key={branch._id}
-                    onClick={() => handleView(branch._id)}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all cursor-pointer group"
-                  >
-                    {/* Header with Church Name and Icon */}
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Church className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                            {branch.name}
-                          </h3>
-                          <div className="mt-0 flex items-center space-x-2">
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getTypeBadgeColor(branch.type)}`}>
-                              {branch.type.charAt(0).toUpperCase() + branch.type.slice(1)}
-                            </span>
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadgeColor(branch.status)}`}>
-                              {branch.status.charAt(0).toUpperCase() + branch.status.slice(1)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-6">
-                      {/* Members Count Box */}
-                      <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-xl p-4 mb-6 flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
-                          <span className="text-sm text-green-700 dark:text-green-300 font-medium">Total Members</span>
-                        </div>
-                        <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                          {branch.statistics?.memberCount || 0}
-                        </p>
-                      </div>
-
-                      {/* Location */}
-                      <div className="mb-4">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase mb-2">Location</p>
-                        <div className="flex items-center space-x-2">
-                          <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
-                            {branch.address?.street && branch.address?.city
-                              ? `${branch.address.street}, ${branch.address.city}`
-                              : 'Location not specified'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Actions Footer */}
-                    <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2">
-                      <PermissionGuard permission="branches.edit">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(branch._id);
-                          }}
-                          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-primary-100 dark:hover:bg-blue-900/30 hover:text-primary-600 dark:hover:text-blue-400 transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      </PermissionGuard>
-                      <PermissionGuard permission="branches.delete">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(branch);
-                          }}
-                          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </PermissionGuard>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-800 px-4 sm:px-6 py-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left">
-                    Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalBranches)} of {totalBranches} branches
-                  </p>
-                  <div className="flex items-center justify-center space-x-2">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+        {/* Table View */}
+        <div className="px-0 sm:px-0 py-6 sm:py-8">
+          <DataTable
+            columns={tableColumns}
+            data={branches}
+            loading={loading}
+            emptyIcon={<MapPin className="w-12 h-12 text-gray-400" />}
+            emptyMessage="No branches found"
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={10}
+            onPageChange={setPage}
+            onRowClick={(row) => handleView(row._id)}
+          />
         </div>
 
         {/* Delete Modal */}

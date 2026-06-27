@@ -1,8 +1,11 @@
-import React, { useState, useEffect, use } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, use, useMemo } from 'react';
+import { Plus, Search, Filter, Edit2, Trash2, Eye, Download, Upload, Users, Link2, Copy, ExternalLink, Share2, MessageCircle, Mail, Settings, TriangleAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
+import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { useBranch } from '../../../context/BranchContext';
+import { usePageTour } from '../../../hooks/usePageTour';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
 import FeatureGate from '../../../components/access/FeatureGate';
 import ImportMembersModal from '../../../components/modals/ImportMembersModal';
@@ -11,9 +14,12 @@ import LimitReachedModal from '../../../components/modals/LimitReachedModal';
 import RegistrationSettingsPanel from '../../../components/modals/RegistrationSettingsPanel';
 import { useAuth } from '../../../context/AuthContext';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
+import Loader from '../../../components/ui/Loader';
 
 const AllMembers = () => {
   const { user, fetchAndUpdateSubscription } = useAuth();
+  const { selectedBranch } = useBranch();
+  usePageTour('members_all');
   const plan = user?.merchant?.subscription?.plan;
   const merchantId = user?.merchant?.id;
   const merchantName = user?.merchant?.name || 'Church';
@@ -21,8 +27,6 @@ const AllMembers = () => {
 
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [members, setMembers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -45,11 +49,59 @@ const AllMembers = () => {
     members: 0,
     firstTimersCount: 0,
   });
+  const [statsLoading, setStatsLoading] = useState(true);
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalMembers, setTotalMembers] = useState(0);
+  // Filters
+  const [filters, setFilterState] = useState({
+    status: '',
+    gender: '',
+    membershipType: '',
+    registrationType: '',
+  });
+
+  // Members fetcher for SWR
+  const membersFetcher = async (params: any) => {
+    const response = await memberAPI.getMembers(params);
+    return {
+      items: response.data.data.members,
+      pagination: {
+        currentPage: response.data.data.pagination?.currentPage || 1,
+        pages: response.data.data.pagination?.totalPages || 1,
+        totalItems: response.data.data.pagination?.totalItems || response.data.data.members.length,
+      },
+    };
+  };
+
+  const {
+    data: members,
+    loading,
+    currentPage,
+    totalPages,
+    totalItems: totalMembers,
+    setPage,
+    setSearch,
+    setFilters,
+    refetch: refetchMembers
+  } = usePaginatedQuery<any>(`members-${selectedBranch?._id || 'all'}`, membersFetcher, {
+    limit: 20
+  });
+
+  // Build and apply filters when activeTab or filters change
+  useEffect(() => {
+    const filterObj: any = {};
+    if (activeTab !== 'all') {
+      filterObj.membershipType = activeTab;
+    }
+    if (filters.status) filterObj.status = filters.status;
+    if (filters.gender) filterObj.gender = filters.gender;
+    if (filters.membershipType && activeTab === 'all') {
+      filterObj.membershipType = filters.membershipType;
+    }
+    if (filters.registrationType && activeTab === 'all') {
+      filterObj.registrationType = filters.registrationType;
+    }
+    setFilters(filterObj);
+  }, [activeTab, filters, setFilters]);
 
   // Delete Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -57,14 +109,6 @@ const AllMembers = () => {
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-
-  // Filters
-  const [filters, setFilters] = useState({
-    status: '',
-    gender: '',
-    membershipType: '',
-    registrationType: '',
-  });
 
   // Resource Limits
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -74,45 +118,11 @@ const AllMembers = () => {
   const registrationLink = `${frontendUrl}/register/${merchantId}`;
 
   useEffect(() => {
-    fetchMembers();
     fetchStats();
-  }, [currentPage, searchQuery, activeTab, filters]);
-
-  const fetchMembers = async () => {
-    setLoading(true);
-    try {
-      const params: any = {
-        page: currentPage,
-        limit: 20,
-        search: searchQuery,
-      };
-
-      if (activeTab !== 'all') {
-        params.membershipType = activeTab;
-      }
-
-      if (filters.status) params.status = filters.status;
-      if (filters.gender) params.gender = filters.gender;
-
-      if (filters.membershipType && activeTab === 'all') {
-        params.membershipType = filters.membershipType;
-      }
-      if (filters.registrationType && activeTab === 'all') {
-        params.registrationType = filters.registrationType;
-      }
-
-      const response = await memberAPI.getMembers(params);
-      setMembers(response.data.data.members);
-      setTotalPages(response.data.data.pagination.totalPages);
-      setTotalMembers(response.data.data.pagination.totalItems);
-    } catch (error: any) {
-      showToast.error('Failed to load members');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [selectedBranch?._id]);
 
   const fetchStats = async () => {
+    setStatsLoading(true);
     try {
       const response = await memberAPI.getStats();
       const data = response.data.data?.stats;
@@ -140,6 +150,8 @@ const AllMembers = () => {
       });
     } catch (error) {
       console.error('Failed to load stats');
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -214,7 +226,7 @@ const AllMembers = () => {
   };
 
   const handleImportComplete = () => {
-    fetchMembers();
+    refetchMembers();
     fetchStats();
   };
 
@@ -264,7 +276,7 @@ const AllMembers = () => {
       setSelectedMembers(new Set());
       setShowBulkDeleteModal(false);
       await fetchAndUpdateSubscription();
-      await fetchMembers();
+      await refetchMembers();
       await fetchStats();
     } catch (error: any) {
       showToast.error('Failed to delete some members');
@@ -279,7 +291,7 @@ const AllMembers = () => {
     setShowDeleteModal(false);
     setSelectedMember(null);
     await fetchAndUpdateSubscription();
-    await fetchMembers();
+    await refetchMembers();
     await fetchStats();
   };
 
@@ -342,9 +354,8 @@ const AllMembers = () => {
 
   const handleTabClick = (tab: any) => {
     setActiveTab(tab.id);
-    setCurrentPage(1);
-
-    setFilters(prev => ({
+    setPage(1);
+    setFilterState(prev => ({
       ...prev,
       registrationType: '',
       membershipType: ''
@@ -409,6 +420,7 @@ const AllMembers = () => {
             <PermissionGuard permission="members.import">
               <button
                 onClick={() => setShowImportModal(true)}
+                data-tour="members-import"
                 className="flex items-center px-4 py-2 text-sm font-medium text-primary-700 dark:text-blue-300 bg-primary-50 dark:bg-primary-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-primary-100 dark:hover:bg-blue-900/30 transition-colors"
               >
                 <Upload className="w-4 h-4 mr-2" />
@@ -432,6 +444,7 @@ const AllMembers = () => {
             <PermissionGuard permission="members.create">
               <button
                 onClick={handleAddMemberClick}
+                data-tour="members-add-btn"
                 className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${memberLimit.canCreate
                   ? 'text-white bg-primary-600 hover:bg-primary-700'
                   : 'text-gray-400 bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
@@ -590,61 +603,79 @@ const AllMembers = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Members</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.total}</p>
+          {statsLoading ? (
+            <>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24 mb-3"></div>
+                      <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
+                    </div>
+                    <div className="p-3 bg-gray-300 dark:bg-gray-600 rounded-lg w-12 h-12"></div>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Members</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.total}</p>
+                  </div>
+                  <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+                    <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.active}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.active}</p>
+                  </div>
+                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
-                <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{stats.male}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Male</p>
+                    <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{stats.male}</p>
+                  </div>
+                  <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+                    <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Female</p>
-                <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mt-1">{stats.female}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Female</p>
+                    <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mt-1">{stats.female}</p>
+                  </div>
+                  <div className="p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
+                    <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg">
-                <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Main Content Card */}
@@ -672,13 +703,16 @@ const AllMembers = () => {
               </div>
 
               {/* Search */}
-              <div className="relative flex items-center space-x-3">
+              <div className="relative flex items-center space-x-3" data-tour="members-search">
                 <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search members..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSearch(e.target.value);
+                  }}
                   className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
                 {selectedMembers.size > 0 && (
@@ -711,9 +745,7 @@ const AllMembers = () => {
 
           {/* Table */}
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
-            </div>
+            <Loader variant="skeleton-table" count={8} />
           ) : members.length === 0 ? (
             <div className="text-center py-12 flex flex-col items-center justify-center">
               <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -739,7 +771,7 @@ const AllMembers = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         <label className="inline-flex items-center cursor-pointer group">
                           <div className="relative">
                             <input
@@ -756,20 +788,20 @@ const AllMembers = () => {
                           </div>
                         </label>
                       </th>
-                      <th className="px-2 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Member
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Contact
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Branch
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Role
                       </th>
 
-                      <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Actions
                       </th>
                     </tr>
@@ -887,11 +919,11 @@ const AllMembers = () => {
                 <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalMembers)} of {totalMembers} members
+                      Showing {(currentPage - 1) * 20 + 1} to {Math.min(currentPage * 20, totalMembers)} of {totalMembers} members
                     </p>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        onClick={() => currentPage > 1 && setPage(currentPage - 1)}
                         disabled={currentPage === 1}
                         className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
@@ -901,7 +933,7 @@ const AllMembers = () => {
                         Page {currentPage} of {totalPages}
                       </span>
                       <button
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        onClick={() => currentPage < totalPages && setPage(currentPage + 1)}
                         disabled={currentPage === totalPages}
                         className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
@@ -1205,7 +1237,7 @@ const AllMembers = () => {
                   >
                     {isExporting ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader variant="inline" size="sm" />
                         Exporting...
                       </>
                     ) : (

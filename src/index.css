@@ -15,16 +15,18 @@ html.dark {
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+    sans-serif; */
+    font-family: 'Rethink Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  /* font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace; */
+    font-family: 'Rethink Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen';
 }
 
 :root {
@@ -204,6 +206,13 @@ select:focus-visible {
 
 .focus\:ring-2:focus {
   box-shadow: 0 0 0 2px rgb(79 70 229) !important;
+}
+
+/* Suppress focus ring for compound inputs (icon + input inside a styled container) */
+.no-focus-ring input:focus,
+.no-focus-ring input:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 .focus\:ring-primary-500:focus {

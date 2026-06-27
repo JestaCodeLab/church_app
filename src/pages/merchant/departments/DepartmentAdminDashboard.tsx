@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Send, 
-  TrendingUp, 
+import {
+  Users,
+  Send,
+  TrendingUp,
   Calendar,
   MessageSquare,
   Eye
@@ -11,10 +11,17 @@ import {
 import { departmentAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { useAuth } from '../../../context/AuthContext';
+import LucideIconRenderer from '../../../components/ui/LucideIconRenderer';
 
 const DepartmentAdminDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Convert text to sentence case (first letter uppercase, rest lowercase)
+  const toSentenceCase = (text: string) => {
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>({});
@@ -192,15 +199,15 @@ const DepartmentAdminDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div
-                      className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
+                      className="w-12 h-12 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: `${dept.color}20` }}
                     >
-                      {dept.icon}
+                      <LucideIconRenderer iconName={dept.icon} className="w-6 h-6" style={{ color: dept.color }} />
                     </div>
                     
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {dept.name}
+                        {toSentenceCase(dept.name)}
                       </h3>
                       {dept.description && (
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">

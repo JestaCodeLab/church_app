@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Calendar, Clock, MapPin, Users, Edit, Trash2,
   MoreVertical, UserCircle, Mic, Image as ImageIcon,
   ExternalLink, X, Repeat2, Copy, CheckCircle, Code,
-  Trash, RotateCw, MessageSquare, DollarSign, Save
+  Trash, RotateCw, MessageSquare, DollarSign, Save, Mail, Building2
 } from 'lucide-react';
 import api, { eventAPI, eventCodeAPI, merchantAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import QRCodeDisplay from '../../../components/events/QRCodeDisplay';
 import SmsAutomationSettings from '../../../components/events/SmsAutomationSettings';
-import DonationSettings from '../../../components/events/DonationSettings';
 import { format } from 'date-fns';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
 
 const EventDetails: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+  const { pathname } = useLocation();
+  const isServiceRoute = pathname.startsWith('/services/');
+
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -30,33 +31,17 @@ const EventDetails: React.FC = () => {
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
 
-  // SMS Automation & Donation Settings
+  // SMS Automation Settings
   const [smsAutomation, setSmsAutomation] = useState({
     enabled: false,
     notifications: [],
     externalRecipients: []
-  });
-  const [donations, setDonations] = useState<{
-    enabled: boolean;
-    goal?: { amount: number; currency: string };
-    allowAnonymous: boolean;
-    description: string;
-    publicUrl?: string;
-    thankYouSms?: string;
-  }>({
-    enabled: false,
-    allowAnonymous: true,
-    description: ''
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [smsAutomationStatus, setSmsAutomationStatus] = useState<{
     hasRunToday: boolean;
     lastRun?: string;
     nextScheduledRun?: string;
-  } | null>(null);
-  const [donationAutomationStatus, setDonationAutomationStatus] = useState<{
-    hasRunToday: boolean;
-    lastRun?: string;
   } | null>(null);
 
   // Feature Access State
@@ -109,25 +94,6 @@ const EventDetails: React.FC = () => {
         });
       }
 
-      // Load donation settings
-      if (eventData.donations) {
-        setDonations({
-          enabled: eventData.donations.enabled || false,
-          ...(eventData.donations.goal && eventData.donations.goal.amount > 0 && { goal: eventData.donations.goal }),
-          allowAnonymous: eventData.donations.allowAnonymous ?? true,
-          description: eventData.donations.description || '',
-          ...(eventData.donations.publicUrl && { publicUrl: eventData.donations.publicUrl }),
-          ...(eventData.donations.thankYouSms && { thankYouSms: eventData.donations.thankYouSms })
-        });
-      } else {
-        // Initialize with default values if no donation settings exist
-        setDonations({
-          enabled: false,
-          allowAnonymous: true,
-          description: ''
-        });
-      }
-
       // If recurring event, fetch today's event code
       if (eventData.isRecurring) {
         fetchAllEventCodes(eventData._id);
@@ -148,22 +114,9 @@ const EventDetails: React.FC = () => {
         });
       }
 
-      // Check Donation Thank You SMS Status
-      if (eventData.donations?.enabled && eventData.donations?.thankYouSms) {
-        // Determine if any donation thank you SMS was sent today
-        const today = new Date().toDateString();
-        const lastThankYouDate = eventData.donations.lastThankYouSmsSent
-          ? new Date(eventData.donations.lastThankYouSmsSent).toDateString()
-          : null;
-        
-        setDonationAutomationStatus({
-          hasRunToday: lastThankYouDate === today,
-          lastRun: eventData.donations.lastThankYouSmsSent
-        });
-      }
     } catch (error: any) {
       showToast.error('Failed to load event details');
-      navigate('/events');
+      navigate(isServiceRoute ? '/services' : '/events');
     } finally {
       setLoading(false);
     }
@@ -186,7 +139,7 @@ const EventDetails: React.FC = () => {
       setDeleting(true);
       await eventAPI.deleteEvent(id!);
       showToast.success('Event deleted successfully');
-      navigate('/events');
+      navigate(isServiceRoute ? '/services' : '/events');
     } catch (error: any) {
       showToast.error('Failed to delete event');
     } finally {
@@ -231,8 +184,7 @@ const EventDetails: React.FC = () => {
       setSavingSettings(true);
 
       await eventAPI.updateEvent(id!, {
-        smsAutomation,
-        donations
+        smsAutomation
       });
 
       showToast.success('Settings updated successfully');
@@ -258,21 +210,70 @@ const EventDetails: React.FC = () => {
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'draft':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'completed':
-        return 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
+
+  const scheduleText = (() => {
+    if (!event) return '';
+    const DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const ORD: Record<number, string> = { 1: '1st', 2: '2nd', 3: '3rd', 4: '4th', [-1]: 'Last' };
+    const fmtTime = (t: string) => {
+      if (!t) return '';
+      const [h, m] = t.split(':').map(Number);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hr = h % 12 || 12;
+      return m === 0 ? `${hr}:00 ${ampm}` : `${hr}:${String(m).padStart(2, '0')} ${ampm}`;
+    };
+
+    if (!event.isRecurring) {
+      return event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1);
+    }
+
+    const r = event.recurrence || {};
+    const time = r.baseTime ? ` - ${fmtTime(r.baseTime)}` : '';
+
+    if (r.frequency === 'daily') return `Daily${time}`;
+
+    if (r.frequency === 'weekly') {
+      const names = [...(r.daysOfWeek || [])].sort().map((d: number) => DAY[d]);
+      if (!names.length) return `Weekly${time}`;
+      if (names.length === 1) return `${names[0]}s${time}`;
+      const last = names.pop();
+      return `${names.join(', ')} & ${last}s${time}`;
+    }
+
+    if (r.frequency === 'monthly') {
+      if (r.monthlyType === 'relative' && r.monthlyOrdinal != null && r.monthlyWeekday != null) {
+        const ord = ORD[r.monthlyOrdinal] ?? `${r.monthlyOrdinal}th`;
+        return `${ord} ${DAY[r.monthlyWeekday]} of the month${time}`;
+      }
+      const day = r.daysOfWeek?.[0];
+      if (day) {
+        const sfx = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th';
+        return `${day}${sfx} of the month${time}`;
+      }
+      return `Monthly${time}`;
+    }
+
+    if (r.frequency === 'yearly') {
+      if (r.yearlyMonth && r.yearlyDay) {
+        return `${MONTH[r.yearlyMonth - 1]} ${r.yearlyDay}${time}`;
+      }
+      return `Yearly${time}`;
+    }
+
+    return event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1);
+  })();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading event...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading {isServiceRoute ? 'Service' : 'Event'}...</p>
         </div>
       </div>
     );
@@ -294,11 +295,11 @@ const EventDetails: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/events')}
+            onClick={() => navigate(isServiceRoute ? '/services' : '/events')}
             className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Back to Events</span>
+            <span>Back to {isServiceRoute ? 'Services' : 'Events'}</span>
           </button>
 
           <div className="flex items-start justify-between">
@@ -317,7 +318,7 @@ const EventDetails: React.FC = () => {
                 )}
               </div>
               <p className="text-gray-600 dark:text-gray-400">
-                {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)} • {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
+                {scheduleText}
               </p>
             </div>
 
@@ -325,7 +326,7 @@ const EventDetails: React.FC = () => {
             <div className="flex items-center space-x-2">
               <PermissionGuard permission="events.edit">
               <button
-                onClick={() => navigate(`/events/${id}/edit`)}
+                onClick={() => navigate(`/${event.eventType === 'service' ? 'services' : 'events'}/${id}/edit`)}
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
               >
                 <Edit className="w-4 h-4" />
@@ -334,23 +335,12 @@ const EventDetails: React.FC = () => {
               </PermissionGuard>
               <PermissionGuard permission="events.viewAttendance">
               <button
-                onClick={() => navigate(`/events/${id}/attendance`)}
+                onClick={() => navigate(isServiceRoute ? '/attendance' : `/events/${id}/attendance`)}
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
               >
                 <span>Attendance</span>
                 <p>({attendance})</p>
               </button>
-              </PermissionGuard>
-              <PermissionGuard permission="events.viewDonations">
-              {(features.eventDonations && event.donations?.enabled) && (
-                <button
-                  onClick={() => navigate(`/events/${id}/donations`)}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
-                >
-                  <DollarSign className="w-4 h-4" />
-                  <span>Donations</span>
-                </button>
-              )}
               </PermissionGuard>
               {event.registration?.enabled && (
                 <button
@@ -716,107 +706,6 @@ const EventDetails: React.FC = () => {
               />
             </div>
             )}
-
-            {/* Donation Settings */}
-            {!features.eventDonations ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 relative opacity-60">
-                <div className="inset-0 flex items-center justify-center bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 rounded-xl">
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-3">
-                      <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">Event Donations</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Upgrade your plan to access Event Donations</p>
-                  </div>
-                </div>
-                
-              </div>
-            ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              {/* Donation Thank You SMS Status Banner */}
-              {donations?.enabled && donations?.thankYouSms && donationAutomationStatus && (
-                <div className={`rounded-lg p-4 border mb-6 ${
-                  donationAutomationStatus.hasRunToday
-                    ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
-                    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                }`}>
-                  <div className="flex items-start space-x-3">
-                    <CheckCircle className={`w-5 h-5 mt-0.5 ${
-                      donationAutomationStatus.hasRunToday
-                        ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-green-600 dark:text-green-400'
-                    }`} />
-                    <div className="flex-1">
-                      <p className={`text-sm font-bold ${
-                        donationAutomationStatus.hasRunToday
-                          ? 'text-purple-900 dark:text-primary-100'
-                          : 'text-green-900 dark:text-green-100'
-                      }`}>
-                        {donationAutomationStatus.hasRunToday
-                          ? 'Thank You SMS Already Sent Today'
-                          : 'Thank You SMS Automation Active'}
-                      </p>
-                      <p className={`text-sm mt-1 ${
-                        donationAutomationStatus.hasRunToday
-                          ? 'text-primary-700 dark:text-primary-300'
-                          : 'text-green-700 dark:text-green-300'
-                      }`}>
-                        {donationAutomationStatus.hasRunToday ? (
-                          <>
-                            Thank you SMS was sent to donors at{' '}
-                            <span className="font-semibold uppercase">
-                              {donationAutomationStatus.lastRun 
-                                ? new Date(donationAutomationStatus.lastRun).toLocaleString([], { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    hour12: true
-                                  }) 
-                                : 'today'}
-                            </span>
-                            .
-                          </>
-                        ) : (
-                          <>
-                            Thank you SMS will be automatically sent to donors after they complete their donation payment.
-                          </>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  <span>Event Donations</span>
-                </h2>
-                <button
-                  onClick={handleSaveSettings}
-                  disabled={savingSettings}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  {savingSettings ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      <span>Save</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              <DonationSettings
-                value={donations}
-                onChange={setDonations}
-              />
-            </div>
-            )}
           </div>
 
           {/* Sidebar */}
@@ -852,13 +741,39 @@ const EventDetails: React.FC = () => {
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/events/register/${event._id}`);
+                      const registrationUrl = `${window.location.origin}/events/register/${event._id}`;
+                      navigator.clipboard.writeText(registrationUrl);
                       showToast.success('Registration link copied to clipboard');
                     }}
                     className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    title="Copy registration URL"
+                    title="Copy registration link"
                   >
                     <Copy className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const registrationUrl = `${window.location.origin}/events/register/${event._id}`;
+                      const message = encodeURIComponent(`Check out this event and register here: ${registrationUrl}`);
+                      window.open(`https://wa.me/?text=${message}`, '_blank');
+                    }}
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    title="Share via WhatsApp"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const registrationUrl = `${window.location.origin}/events/register/${event._id}`;
+                      const subject = encodeURIComponent(`You're invited: ${event.title}`);
+                      const body = encodeURIComponent(`You're invited to ${event.title}.\n\nRegister here: ${registrationUrl}`);
+                      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                    }}
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    title="Share via Email"
+                  >
+                    <Mail className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -994,38 +909,49 @@ const EventDetails: React.FC = () => {
               </div>
             )}
 
-            {/* Location */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
-                <MapPin className="w-5 h-5" />
-                <span>Location</span>
-              </h2>
-              <div className="space-y-2">
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {event.location?.venue}
-                </p>
-                {event.location?.address && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {[
-                      event.location.address.street,
-                      event.location.address.city,
-                      event.location.address.state,
-                      event.location.address.country
-                    ].filter(Boolean).join(', ')}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Branch */}
-            {event.branch && (
+            {/* Branch & Location */}
+            {(event.branch || event.location?.venue || event.location?.address) && (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Branch
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                  <MapPin className="w-5 h-5" />
+                  <span>Branch & Location</span>
                 </h2>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {event.branch.name}
-                </p>
+                <div className="space-y-4">
+                  {event.branch && (
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                        <Building2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Branch</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{event.branch.name}</p>
+                      </div>
+                    </div>
+                  )}
+                  {(event.location?.venue || event.location?.address) && (
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                        <MapPin className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Venue</p>
+                        {event.location?.venue && (
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{event.location.venue}</p>
+                        )}
+                        {event.location?.address && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                            {[
+                              event.location.address.street,
+                              event.location.address.city,
+                              event.location.address.state,
+                              event.location.address.country
+                            ].filter(Boolean).join(', ')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1058,8 +984,8 @@ const EventDetails: React.FC = () => {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
-        title="Delete Event"
-        message={`Are you sure you want to delete "${event.title}"? This action cannot be undone and will also delete all attendance records.`}
+        title={`Delete ${isServiceRoute ? 'Service' : 'Event'}`}
+        message={`Are you sure you want to delete "${event.title}"? This will permanently remove the ${isServiceRoute ? 'service' : 'event'} and all associated data including attendance records, check-ins, registrations, and SMS logs. This action cannot be undone.`}
         type="danger"
         isLoading={deleting}
       />
