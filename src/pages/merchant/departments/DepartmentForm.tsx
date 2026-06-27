@@ -173,12 +173,16 @@ const DepartmentForm = () => {
       return;
     }
 
+    if (!formData.branchId) {
+      showToast.error('Branch is required');
+      return;
+    }
+
     try {
       setLoading(true);
 
       const payload = {
         ...formData,
-        branchId: formData.branchId || null,
         leaderId: formData.leaderId || null
       };
 
@@ -280,8 +284,8 @@ const DepartmentForm = () => {
                   <BranchField
                     value={formData.branchId}
                     onChange={(branchId) => setFormData(prev => ({ ...prev, branchId }))}
-                    required={false}
-                    label="Branch (Optional)"
+                    required={true}
+                    label="Branch "
                     allBranches={branches.length > 0 ? branches : contextBranches}
                   />
                 </div>

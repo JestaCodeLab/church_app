@@ -5,6 +5,8 @@ interface DatePickerProps {
   value: string;
   onChange: (value: string) => void;
   min?: string;
+  max?: string;
+  disabled?: boolean;
   placeholder?: string;
   className?: string;
 }
@@ -35,7 +37,7 @@ function buildCalendar(year: number, month: number): Date[] {
   return days;
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, placeholder = 'dd/mm/yyyy', className = '' }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, max, disabled = false, placeholder = 'dd/mm/yyyy', className = '' }) => {
   const parsed = parseYMD(value);
   const today = new Date();
   const [viewYear, setViewYear] = useState(parsed?.y ?? today.getFullYear());
@@ -43,6 +45,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, placehold
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const minParsed = parseYMD(min || '');
+  const maxParsed = parseYMD(max || '');
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -66,10 +69,16 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, placehold
   };
 
   const isDisabled = (d: Date) => {
-    if (!minParsed) return false;
-    const minDate = new Date(minParsed.y, minParsed.m, minParsed.d);
     const cmp = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    return cmp < minDate;
+    if (minParsed) {
+      const minDate = new Date(minParsed.y, minParsed.m, minParsed.d);
+      if (cmp < minDate) return true;
+    }
+    if (maxParsed) {
+      const maxDate = new Date(maxParsed.y, maxParsed.m, maxParsed.d);
+      if (cmp > maxDate) return true;
+    }
+    return false;
   };
 
   const isSelected = (d: Date) =>
@@ -85,8 +94,9 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, placehold
     <div ref={ref} className={`relative ${className}`}>
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-left flex items-center justify-between focus:ring-1 focus:ring-primary-500 focus:border-transparent transition-colors"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(o => !o)}
+        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-left flex items-center justify-between focus:ring-1 focus:ring-primary-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className={`text-sm ${display ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
           {display || placeholder}

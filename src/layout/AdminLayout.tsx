@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { 
-  Shield, 
-  Building2, 
-  Users, 
-  BarChart3, 
+import {
+  Shield,
+  Building2,
+  Users,
+  BarChart3,
   Settings,
   Menu,
   X,
@@ -26,7 +26,8 @@ import {
   Megaphone,
   Mail,
   SlidersHorizontal,
-  LifeBuoy
+  LifeBuoy,
+  Tag
 } from 'lucide-react';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import UserMenu from '../components/ui/UserMenu';
@@ -35,7 +36,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [openMenu, setOpenMenu] = useState<'plans' | 'messaging' | 'finance' | 'announcements' | null>(null);
+  const [openMenu, setOpenMenu] = useState<'plans' | 'modules' | 'messaging' | 'finance' | 'announcements' | null>(null);
 
   // Main navigation (no submenus)
   const navigation = [
@@ -49,8 +50,12 @@ const AdminLayout = () => {
   const plansSubmenu = [
     { name: 'All Plans', href: '/admin/plans', icon: Crown },
     { name: 'Discounts', href: '/admin/discounts', icon: Percent },
+  ];
+
+  // Modules submenu items (Features & Modules)
+  const modulesSubmenu = [
+    { name: 'All Modules', href: '/admin/modules', icon: Tag },
     { name: 'Features', href: '/admin/features', icon: Sparkles },
-    { name: 'Limits', href: '/admin/limits', icon: SlidersHorizontal },
   ];
 
   // ✅ NEW: Messaging submenu items
@@ -68,6 +73,7 @@ const AdminLayout = () => {
   // Finance submenu items
   const financeSubmenu = [
     { name: 'Overview', href: '/admin/finance-overview', icon: BarChart3 },
+    { name: 'KYC Management', href: '/admin/finance-kyc', icon: Shield },
     { name: 'Transactions', href: '/admin/transactions', icon: FileText },
     { name: 'Withdrawals', href: '/admin/withdrawals', icon: DollarSign },
   ];
@@ -79,6 +85,8 @@ const AdminLayout = () => {
   React.useEffect(() => {
     if (isSubmenuActive(plansSubmenu)) {
       setOpenMenu('plans');
+    } else if (isSubmenuActive(modulesSubmenu)) {
+      setOpenMenu('modules');
     } else if (isSubmenuActive(messagingSubmenu)) {
       setOpenMenu('messaging');
     } else if (isSubmenuActive(financeSubmenu)) {
@@ -280,6 +288,61 @@ const AdminLayout = () => {
             {openMenu === 'finance' && (
               <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
                 {financeSubmenu.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => {
+                        setSidebarOpen(false);
+                        setOpenMenu(null);
+                      }}
+                      className={`
+                        flex items-center pl-6 pr-3 py-2 text-sm font-medium rounded-r-lg
+                        transition-all duration-200
+                        ${location.pathname.startsWith(item.href)
+                          ? 'bg-primary-600 text-white border-l-2 border-primary-400'
+                          : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200 border-l-2 border-transparent'
+                        }
+                      `}
+                    >
+                      <Icon className="w-4 h-4 mr-3" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Modules Menu with Submenu */}
+          <div>
+            <button
+              onClick={() => setOpenMenu(openMenu === 'modules' ? null : 'modules')}
+              className={`
+                w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg
+                transition-all duration-200
+                ${isSubmenuActive(modulesSubmenu) || openMenu === 'modules'
+                  ? 'bg-gray-800 text-white'
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }
+              `}
+            >
+              <div className="flex items-center">
+                <Zap className="w-5 h-5 mr-3" />
+                <span>Modules</span>
+              </div>
+              {openMenu === 'modules' ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+
+            {/* Modules Submenu Items */}
+            {openMenu === 'modules' && (
+              <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-800">
+                {modulesSubmenu.map((item) => {
                   const Icon = item.icon;
                   return (
                     <Link

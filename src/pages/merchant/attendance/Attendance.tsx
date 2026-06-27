@@ -89,6 +89,15 @@ const PaginationBar: React.FC<{
 const Attendance: React.FC = () => {
   const [tab, setTab] = useState<Tab>('services');
 
+  // Get today's date in YYYY-MM-DD format
+  const getTodayYMD = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Event selector
   const [eventOptions, setEventOptions] = useState<any[]>([]);
   const [eventSearch, setEventSearch] = useState('');
@@ -337,7 +346,7 @@ const Attendance: React.FC = () => {
           {/* Event selector */}
           <div className="flex-1 min-w-[200px]" ref={eventDropdownRef}>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {tab === 'services' ? 'Service' : 'Event'}
+              {tab === 'services' ? 'Service' : 'Event'} {tab === 'services' && <span className="text-red-500">*</span>}
             </label>
             <div className="relative">
               <div className="no-focus-ring flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 px-3 py-2 gap-2">
@@ -392,12 +401,16 @@ const Attendance: React.FC = () => {
           {isRecurring && (
             <>
               <div className="w-36">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  From <span className="text-red-600 dark:text-red-500 font-semibold">*</span>
+                </label>
                 <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Start date" />
               </div>
               <div className="w-36">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
-                <DatePicker value={dateTo} onChange={setDateTo} placeholder="End date" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  To <span className="text-red-600 dark:text-red-500 font-semibold">*</span>
+                </label>
+                <DatePicker value={dateTo} onChange={setDateTo} placeholder="End date" min={dateFrom} max={getTodayYMD()} disabled={!dateFrom} />
               </div>
             </>
           )}
@@ -449,7 +462,7 @@ const Attendance: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={() => fetchAttendance(1)}
-              disabled={!selectedEvent || loading}
+              disabled={!selectedEvent || loading || (isRecurring && (!dateFrom || !dateTo))}
               className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
             >
               {loading && <Loader className="w-4 h-4 animate-spin" />}

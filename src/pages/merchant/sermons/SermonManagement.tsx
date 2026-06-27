@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Loader, Music, CheckCircle, Play, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBranch } from '../../../context/BranchContext';
 import { sermonAPI } from '../../../services/api';
 import B2FileUploader from '../../../components/ui/B2FileUploader';
 import AudioPlayer from '../../../components/ui/AudioPlayer';
@@ -26,6 +27,7 @@ interface Sermon {
  */
 const SermonManagement: React.FC = () => {
   const navigate = useNavigate();
+  const { selectedBranch } = useBranch();
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,11 +52,11 @@ const SermonManagement: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [previewSermon, setPreviewSermon] = useState<Sermon | null>(null);
 
-  // Fetch sermons and vault usage on mount
+  // Fetch sermons and vault usage on mount and when branch changes
   useEffect(() => {
     fetchSermons();
     fetchVaultUsage();
-  }, []);
+  }, [selectedBranch?._id]);
 
   const fetchSermons = async () => {
     try {

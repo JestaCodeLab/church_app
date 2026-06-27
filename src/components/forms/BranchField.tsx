@@ -104,11 +104,11 @@ export const BranchField: React.FC<BranchFieldProps> = ({
             ))}
           </select>
 
-        {!compact && value && (
+        {/* {!compact && value && (
           <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
             <span>📍 Selected: <span className="font-medium">{branchOptions.find(b => b._id === value)?.name || 'Unknown'}</span></span>
           </div>
-        )}
+        )} */}
       </div>
 
       {error && (
@@ -118,11 +118,11 @@ export const BranchField: React.FC<BranchFieldProps> = ({
         </div>
       )}
 
-      {!compact && (
+      {/* {!compact && (
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
           📌 This entity will be created/updated in the selected branch only.
         </p>
-      )}
+      )} */}
     </div>
   );
 };

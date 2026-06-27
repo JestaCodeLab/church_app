@@ -24,7 +24,6 @@ import {
   TrendingUp,
   Wallet,
   Receipt,
-  PieChart,
   CheckCircle2,
   Lock,
   Send,
@@ -42,6 +41,10 @@ import {
   GitBranch,
   Clock,
   Headset,
+  HeartHandshake,
+  FolderHeart,
+  WalletCards,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -305,7 +308,7 @@ const MerchantLayout = () => {
             name: 'Birthdays',
             href: '/members/birthdays',
             icon: Cake,
-            requiresFeature: 'memberManagement',
+            requiresFeature: 'memberBirthdays',
             requiredPermissions: ['members.viewBirthdays']
           },
           {
@@ -320,145 +323,123 @@ const MerchantLayout = () => {
       {
         name: 'Services & Events',
         icon: Calendar,
-        requiresFeature: 'eventManagement',
+        requiresFeature: null,
         requiredPermissions: ['events.view'],
         children: [
           {
             name: 'Services',
             href: '/services',
             icon: Clock,
-            requiresFeature: 'eventManagement',
-            requiredPermissions: ['events.view']
+            requiresFeature: 'eventServices',
+            requiredPermissions: ['events.viewServices', 'events.view']
           },
           {
             name: 'Events',
             href: '/events',
             icon: Calendar,
             requiresFeature: 'eventManagement',
-            requiredPermissions: ['events.view']
+            requiredPermissions: ['events.viewEvents', 'events.view']
           },
           {
             name: 'Attendance',
             href: '/attendance',
             icon: CheckCircle2,
-            requiresFeature: 'eventManagement',
-            requiredPermissions: ['events.viewAttendance'],
-            // lockedFeature: 'attendanceTracking'
+            requiresFeature: 'eventAttendance',
+            requiredPermissions: ['events.viewAttendance', 'events.view'],
           },
           {
             name: 'Calendar',
             href: '/calendar',
             icon: CalendarDays,
-            requiresFeature: 'eventManagement',
-            requiredPermissions: ['events.view']
+            requiresFeature: 'eventCalendar',
+            requiredPermissions: ['events.viewCalendar', 'events.view']
           },
         ]
       },
       {
         name: 'Sermons',
         icon: Music,
-        requiresFeature: 'sermonManagement',
+        requiresFeature: null,
         requiredPermissions: ['sermons.view'],
         children: [
           {
             name: 'Audio',
             href: '/sermons/audio',
             icon: Headphones,
-            requiresFeature: 'sermonManagement',
+            requiresFeature: 'audioSermons',
             requiredPermissions: ['sermons.viewAudio']
           },
           {
             name: 'Video',
             href: '/sermons/video',
             icon: Video,
-            requiresFeature: 'sermonManagement',
+            requiresFeature: 'videoSermons',
             requiredPermissions: ['sermons.viewVideo']
           },
           {
             name: 'Preachers',
             href: '/sermons/preachers',
             icon: Mic2,
-            requiresFeature: 'sermonManagement',
+            requiresFeature: 'sermonPreachers',
             requiredPermissions: ['sermons.viewPreachers']
           },
           {
             name: 'Distribution',
             href: '/sermons/distribution',
             icon: Music,
-            requiresFeature: 'sermonManagement',
+            requiresFeature: 'sermonDistribution',
             requiredPermissions: ['sermons.viewDistribution']
           }
         ]
       },
       {
-        name: 'Finance',
+        name: 'Givings',
         icon: HandCoins,
-        requiresFeature: 'financialManagement',
+        requiresFeature: null,
+        requiredPermissions: ['giving.view'],
+        children: [
+          {
+            name: 'Offerings',
+            href: '/giving/offerings',
+            icon: HeartHandshake,
+            requiresFeature: 'givingOfferings',
+            requiredPermissions: ['giving.viewOfferings','giving.view'],
+          },
+          {
+            name: 'Tithes',
+            href: '/giving/tithes',
+            icon: Coins,
+            requiresFeature: 'givingTithes',
+            requiredPermissions: ['giving.viewTithes', 'giving.view'],
+          },
+          {
+            name: 'Projects',
+            href: '/giving/projects',
+            icon: FolderHeart,
+            requiresFeature: 'givingProjects',
+            requiredPermissions: ['giving.viewProjects', 'giving.view'],
+          }
+        ]
+      },
+      {
+        name: 'Finance',
+        icon: WalletCards,
+        requiresFeature: null,
         requiredPermissions: ['finance.view'],
         children: [
-          // {
-          //   name: 'Overview',
-          //   href: '/finance/overview',
-          //   icon: PieChart,
-          //   requiresFeature: 'financialManagement',
-          //   requiredPermissions: ['finance.overview'],
-          //   lockedFeature: null
-          // },
           {
-            name: 'Income',
-            href: '/finance/income',
-            icon: TrendingUp,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewIncome'],
-            lockedFeature: 'incomeTracking'
-          },
-          {
-            name: 'Expenses',
-            href: '/finance/expenses',
-            icon: Receipt,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewExpenses'],
-            lockedFeature: 'expenseTracking'
-          },
-          {
-            name: 'Tithing',
-            href: '/finance/tithing',
-            icon: Coins,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewTithing'],
-            lockedFeature: 'tithingManagement'
-          },
-          {
-            name: 'Reports',
-            href: '/finance/reports',
-            icon: FileChartColumn,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewReports'],
-            lockedFeature: 'financialReports'
-          },
-          // {
-          //   name: 'Donations',
-          //   href: '/finance/donations',
-          //   icon: HandHeart,
-          //   requiresFeature: 'financialManagement',
-          //   requiredPermissions: ['finance.viewDonations'],
-          //   lockedFeature: 'financeDonations'
-          // },
-          {
-            name: 'My Wallet',
+            name: 'Wallet',
             href: '/finance/wallet',
-            icon: Wallet,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewWallet'],
-            lockedFeature: 'financeWallet'
+            icon: CreditCard,
+            requiresFeature: 'financeWallet',
+            requiredPermissions: ['finance.viewWallet','finance.view'],
           },
           {
-            name: 'All Transactions',
+            name: 'Transactions',
             href: '/finance/transactions',
-            icon: Receipt,
-            requiresFeature: 'financialManagement',
-            requiredPermissions: ['finance.viewTransactions'],
-            lockedFeature: null
+            icon: ArrowRightLeft,
+            requiresFeature: 'financeTransactions',
+            requiredPermissions: ['finance.viewTransactions', 'finance.view'],
           }
         ]
       },

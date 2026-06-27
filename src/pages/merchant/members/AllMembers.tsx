@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { memberAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { useBranch } from '../../../context/BranchContext';
 import { usePageTour } from '../../../hooks/usePageTour';
 import DeleteMemberModal from '../../../components/member/DeleteMemberModal';
 import FeatureGate from '../../../components/access/FeatureGate';
@@ -17,6 +18,7 @@ import Loader from '../../../components/ui/Loader';
 
 const AllMembers = () => {
   const { user, fetchAndUpdateSubscription } = useAuth();
+  const { selectedBranch } = useBranch();
   usePageTour('members_all');
   const plan = user?.merchant?.subscription?.plan;
   const merchantId = user?.merchant?.id;
@@ -80,7 +82,7 @@ const AllMembers = () => {
     setSearch,
     setFilters,
     refetch: refetchMembers
-  } = usePaginatedQuery<any>('members', membersFetcher, {
+  } = usePaginatedQuery<any>(`members-${selectedBranch?._id || 'all'}`, membersFetcher, {
     limit: 20
   });
 
@@ -117,7 +119,7 @@ const AllMembers = () => {
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [selectedBranch?._id]);
 
   const fetchStats = async () => {
     setStatsLoading(true);
@@ -769,7 +771,7 @@ const AllMembers = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         <label className="inline-flex items-center cursor-pointer group">
                           <div className="relative">
                             <input
@@ -786,20 +788,20 @@ const AllMembers = () => {
                           </div>
                         </label>
                       </th>
-                      <th className="px-2 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Member
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Contact
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Branch
                       </th>
-                      <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Role
                       </th>
 
-                      <th className="px-6 py-3 text-right text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         Actions
                       </th>
                     </tr>

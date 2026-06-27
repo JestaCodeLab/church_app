@@ -24,6 +24,7 @@ import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
 import LucideIconRenderer from '../../../components/ui/LucideIconRenderer';
 import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { useBranch } from '../../../context/BranchContext';
 import Loader from '../../../components/ui/Loader';
 
 interface Department {
@@ -55,6 +56,7 @@ interface Department {
 const AllDepartments = () => {
   const navigate = useNavigate();
   const plan = useAuth()?.user?.merchant?.subscription?.plan;
+  const { selectedBranch } = useBranch();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -83,7 +85,7 @@ const AllDepartments = () => {
   };
 
   const { data: departments, loading, setFilters, refetch: refetchDepartments } =
-    usePaginatedQuery<Department>('departments', departmentsFetcher, { limit: 50 });
+    usePaginatedQuery<Department>(`departments-${selectedBranch?._id || 'all'}`, departmentsFetcher, { limit: 50 });
 
   // Update filters when filterActive changes
   useEffect(() => {

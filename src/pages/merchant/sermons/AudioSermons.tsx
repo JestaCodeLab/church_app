@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Edit2, Headphones, Play, Copy, Check, Share2, RefreshCw, Send, X } from 'lucide-react';
+import { useBranch } from '../../../context/BranchContext';
 import { sermonAPI, preacherAPI } from '../../../services/api';
 import B2FileUploader from '../../../components/ui/B2FileUploader';
 import AudioPlayer from '../../../components/ui/AudioPlayer';
@@ -35,6 +36,7 @@ interface Sermon {
 
 const AudioSermons: React.FC = () => {
   const navigate = useNavigate();
+  const { selectedBranch } = useBranch();
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [preachers, setPreachers] = useState<Preacher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ const AudioSermons: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedBranch?._id]);
 
   useEffect(() => {
     fetchSermons();

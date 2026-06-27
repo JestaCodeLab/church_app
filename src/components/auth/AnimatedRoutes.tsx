@@ -29,6 +29,7 @@ import NewBranch from '../../pages/merchant/branches/NewBranch';
 import BranchDetails from '../../pages/merchant/branches/BranchDetails';
 import EditBranch from '../../pages/merchant/branches/EditBranch';
 import AdminFeatures from '../../pages/admin/AdminFeatures';
+import AdminModules from '../../pages/admin/AdminModules';
 import AdminLimits from '../../pages/admin/AdminLimits';
 import AdminMerchantDetails from '../../pages/admin/AdminMerchantDetails';
 import AdminUserDetails from '../../pages/admin/AdminUserDetails';
@@ -54,7 +55,6 @@ import GuestManagement from '../../pages/merchant/events/GuestManagement';
 import EventCheckIn from '../../pages/public/EventCheckIn';
 import PublicRegistration from '../../pages/public/PublicRegistration';
 import EventRegistrationPage from '../../pages/public/EventRegistrationPage';
-import EventDonations from '../../pages/merchant/events/EventDonations';
 import AllDepartments from '../../pages/merchant/departments/AllDepartments';
 import DepartmentForm from '../../pages/merchant/departments/DepartmentForm';
 import DepartmentDetails from '../../pages/merchant/departments/DepartmentDetails';
@@ -74,29 +74,22 @@ import NewPartnership from '../../pages/merchant/members/partnership/NewPartners
 import PartnershipDetails from '../../pages/merchant/members/partnership/PartnershipDetails';
 import PublicPartnershipRegistration from '../../pages/public/PublicPartnershipRegistration';
 import PublicPartnershipPayment from '../../pages/public/PublicPartnershipPayment';
+import PublicProjectRegistration from '../../pages/public/PublicProjectRegistration';
+import PublicProjectPayment from '../../pages/public/PublicProjectPayment';
 import PartnershipPaymentStatus from '../../pages/public/PartnershipPaymentStatus';
 import AdminLogs from '../../pages/admin/logs/AdminLogs';
-import PublicEventDonation from '../../pages/public/PublicEventDonation';
-import PublicCampaignDonation from '../../pages/public/PublicCampaignDonation';
-import DonationStatus from '../../pages/public/DonationStatus';
-import CampaignDonationStatus from '../../pages/public/CampaignDonationStatus';
 import SMSSettings from '../../pages/merchant/messaging/SMSSettings';
 import AdminSenderIds from '../../pages/admin/sms/AdminSenderIds';
 import SelectChurch from '../../pages/admin/SelectChurch';
-import FinanceOverview from '../../pages/merchant/finance/FinanceOverview';
-import Income from '../../pages/merchant/finance/Income';
-import Expenses from '../../pages/merchant/finance/Expenses';
-import FinancialReports from '../../pages/merchant/finance/FinancialReports';
-import TithingTransactions from '../../pages/merchant/finance/Tithing';
 import AuthRedirect from '../../pages/auth/AuthRedirect';
 import AdminRolesPage from '../../pages/admin/AdminRolesPage';
 import AdminAnnouncements from '../../pages/admin/AdminAnnouncements';
 import AdminComms from '../../pages/admin/AdminComms';
-import Donations from '../../pages/merchant/finance/Donations';
-import CampaignDetails from '../../pages/merchant/finance/CampaignDetails';
 import Wallet from '../../pages/merchant/finance/Wallet';
 import ActivityLogs from '../../pages/merchant/ActivityLogs';
 import WithdrawalManagement from '../../pages/admin/WithdrawalManagement';
+
+import FinanceKYCManagement from '../../pages/admin/FinanceKYCManagement';
 // import SermonManagement from '../../pages/merchant/sermons/SermonManagement';
 import AudioSermons from '../../pages/merchant/sermons/AudioSermons';
 import VideoSermons from '../../pages/merchant/sermons/VideoSermons';
@@ -104,7 +97,7 @@ import Preachers from '../../pages/merchant/sermons/Preachers';
 import AudioDistribution from '../../pages/merchant/sermons/AudioDistribution';
 import TransactionManagement from '../../pages/admin/TransactionManagement';
 import AdminFinanceOverview from '../../pages/admin/FinanceOverview';
-import AllTransactions from '../../pages/merchant/AllTransactions';
+import AllTransactions from '../../pages/merchant/finance/AllTransactions';
 
 // Calendar
 import CalendarPage from '../../pages/merchant/calendar/CalendarPage';
@@ -127,6 +120,14 @@ import Support from '../../pages/merchant/support/Support';
 import SupportTicketDetail from '../../pages/merchant/support/SupportTicketDetail';
 import AdminSupport from '../../pages/admin/support/AdminSupport';
 import AdminSupportTicketDetail from '../../pages/admin/support/AdminSupportTicketDetail';
+
+// Giving Module
+import Projects from '../../pages/merchant/giving/projects/Projects';
+import ProjectDetails from '../../pages/merchant/giving/projects/ProjectDetails';
+import NewProject from '../../pages/merchant/giving/projects/NewProject';
+import Tithes from '../../pages/merchant/giving/Tithes';
+import Offerings from '../../pages/merchant/giving/Offerings';
+import GivingBranchGate from '../../components/giving/GivingBranchGate';
 
 // Add this wrapper component
 const RegisterGuard = ({ children }: { children: React.ReactNode }) => {
@@ -199,12 +200,10 @@ const AnimatedRoutes = () => {
           <Route path="/events/attend/:eventId" element={<EventCheckIn />} />
           <Route path="/events/register/:eventId" element={<EventRegistrationPage />} />
           <Route path="/register/:merchantId" element={<PublicRegistration />} />
-          <Route path="/donate/:uniqueId" element={<PublicEventDonation />} />
-          <Route path="/donate/:uniqueId/status" element={<DonationStatus />} />
-          <Route path="/campaign/:campaignId" element={<PublicCampaignDonation />} />
-          <Route path="/campaign-status/:campaignId" element={<CampaignDonationStatus />} />
           <Route path="/partnership/register/:merchantId/:programmeId" element={<PublicPartnershipRegistration />} />
           <Route path="/partnership/payment/:merchantId/:programmeId" element={<PublicPartnershipPayment />} />
+          <Route path="/projects/register/:merchantId/:id" element={<PublicProjectRegistration />} />
+          <Route path="/projects/payment/:merchantId/:id" element={<PublicProjectPayment />} />
           <Route path="/partnership/payment/:merchantId/:programmeId/status" element={<PartnershipPaymentStatus />} />
         </Route>
 
@@ -251,7 +250,6 @@ const AnimatedRoutes = () => {
             <Route path="/events/:id/edit" element={<NewEvent fixedType="event" />} />
             <Route path="/events/:id/attendance" element={<EventAttendance />} />
             <Route path="/events/:id/registrations" element={<EventRegistrations />} />
-            <Route path="/events/:id/donations" element={<EventDonations />} />
             <Route path="/events/guests" element={<GuestManagement />} />
 
 
@@ -276,15 +274,16 @@ const AnimatedRoutes = () => {
             <Route path="/messaging/sender-id" element={<SMSSettings />} />
 
             {/* Finance Routes */}
-            <Route path="/finance/overview" element={<FinanceOverview />} />
-            <Route path="/finance/income" element={<Income />} />
-            <Route path="/finance/expenses" element={<Expenses />} />
             <Route path="/finance/wallet" element={<Wallet />} />
-            <Route path="/finance/reports" element={<FinancialReports />} />
-            <Route path="/finance/tithing" element={<TithingTransactions />} />
-            <Route path="/finance/donations" element={<Donations />} />
-            <Route path="/finance/donations/:campaignId" element={<CampaignDetails />} />
             <Route path="/finance/transactions" element={<AllTransactions />} />
+
+            {/* Giving Module Routes */}
+            <Route path="/giving/tithes" element={<GivingBranchGate><Tithes /></GivingBranchGate>} />
+            <Route path="/giving/offerings" element={<GivingBranchGate><Offerings /></GivingBranchGate>} />
+            <Route path="/giving/projects" element={<GivingBranchGate><Projects /></GivingBranchGate>} />
+            <Route path="/giving/projects/new" element={<GivingBranchGate><NewProject /></GivingBranchGate>} />
+            <Route path="/giving/projects/:id" element={<GivingBranchGate><ProjectDetails /></GivingBranchGate>} />
+            <Route path="/giving/projects/:id/edit" element={<GivingBranchGate><NewProject /></GivingBranchGate>} />
 
             {/* Sermon Routes */}
             {/* <Route path="/sermons" element={<SermonManagement />} /> */}
@@ -326,6 +325,7 @@ const AnimatedRoutes = () => {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/users/:id" element={<AdminUserDetails />} />
             <Route path="/admin/features" element={<AdminFeatures />} />
+            <Route path="/admin/modules" element={<AdminModules />} />
             <Route path="/admin/limits" element={<AdminLimits />} />
 
             {/* Plans */}
@@ -349,6 +349,7 @@ const AnimatedRoutes = () => {
 
             {/* Finance Management */}
             <Route path="/admin/finance-overview" element={<AdminFinanceOverview />} />
+            <Route path="/admin/finance-kyc" element={<FinanceKYCManagement />} />
             <Route path="/admin/transactions" element={<TransactionManagement />} />
             <Route path="/admin/withdrawals" element={<WithdrawalManagement />} />
 

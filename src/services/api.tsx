@@ -48,12 +48,12 @@ api.interceptors.request.use(
       } catch (e) {
         // Silently fail if can't parse user
       }
+    }
 
-      // Add branch context header if a branch is selected
-      const selectedBranchId = localStorage.getItem('selectedBranchId');
-      if (selectedBranchId) {
-        config.headers['X-Branch-Id'] = selectedBranchId;
-      }
+    // Add branch context header if a branch is selected
+    const selectedBranchId = localStorage.getItem('selectedBranchId');
+    if (selectedBranchId) {
+      config.headers['X-Branch-Id'] = selectedBranchId;
     }
 
     // If FormData is being sent, remove the default Content-Type header
@@ -419,6 +419,14 @@ export const adminAPI = {
   rejectSenderId: (merchantId: string, reason: string) =>
     api.post(`/admin/sender-ids/${merchantId}/reject`, { reason }),
 
+  // Finance KYC Management
+  financeKyc: {
+    listPending: (params?: any) => api.get('/admin/finance-kyc', { params }),
+    approve: (merchantId: string, data?: any) => api.post(`/admin/finance-kyc/${merchantId}/approve`, data),
+    reject: (merchantId: string, data: any) => api.post(`/admin/finance-kyc/${merchantId}/reject`, data),
+    update: (merchantId: string, data: any, config?: any) => api.patch(`/admin/finance-kyc/${merchantId}`, data, config),
+  },
+
   // Merchant-specific resource creation
   getMerchantBranches: (merchantId: string, params?: any) =>
     api.get(`/admin/merchants/${merchantId}/branches`, { params }),
@@ -458,6 +466,7 @@ export const adminAPI = {
   createPermissionCategory: (data: any) => api.post('/admin/permission-categories', data),
   updatePermissionCategory: (categoryId: string, data: any) => api.put(`/admin/permission-categories/${categoryId}`, data),
   deletePermissionCategory: (categoryId: string) => api.delete(`/admin/permission-categories/${categoryId}`),
+  initializePermissionCategories: () => api.post('/admin/permission-categories/init', {}),
   reorderPermissionCategories: (data: any) => api.post('/admin/permission-categories/reorder', data),
 
   // Feature Announcements
@@ -673,10 +682,6 @@ export const eventAPI = {
   publicCheckIn: (qrData: string, data: any) =>
     axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, data),
 
-  //donations
-  getDonations: (eventId: string, params?: any) => api.get(`/events/${eventId}/donations`, { params }),
-  exportDonations: (eventId: string) => api.post(`/events/${eventId}/donations/export`, {}, { responseType: 'blob' }),
-
 };
 
 // Department API
@@ -816,6 +821,14 @@ export const eventCodeAPI = {
 
 // Finance API
 export const financeAPI = {
+  // KYC Operations
+  getKycStatus: () => api.get('/finance/kyc'),
+  submitKyc: (data: FormData) => api.post('/finance/kyc', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getBanksList: () => api.get('/finance/kyc/banks'),
+  resolveAccountNumber: (data: any) => api.post('/finance/kyc/resolve-account', data),
+
   // Overview & Analytics
   getOverview: () => api.get('/finance/overview'),
   getTrends: (params?: { months?: number; startDate?: string; endDate?: string }) =>
@@ -824,6 +837,7 @@ export const financeAPI = {
   // Income Operations
   income: {
     getAll: (params?: any) => api.get('/finance/income', { params }),
+    getSummary: (params?: any) => api.get('/finance/income/summary', { params }),
     create: (data: any) => api.post('/finance/income', data),
     getOne: (id: string) => api.get(`/finance/income/${id}`),
     update: (id: string, data: any) => api.put(`/finance/income/${id}`, data),
@@ -833,11 +847,32 @@ export const financeAPI = {
   // Tithe Operations (uses Income with category='tithe')
   tithe: {
     getAll: (params?: any) => api.get('/finance/income', { params: { ...params, category: 'tithe' } }),
+    getSummary: (params?: any) => api.get('/finance/income/summary', { params: { ...params, category: 'tithe' } }),
     create: (data: any) => api.post('/finance/income', { ...data, category: 'tithe' }),
     getOne: (id: string) => api.get(`/finance/income/${id}`),
     update: (id: string, data: any) => api.put(`/finance/income/${id}`, { ...data, category: 'tithe' }),
     delete: (id: string) => api.delete(`/finance/income/${id}`),
     resendSms: (id: string) => api.post(`/finance/tithe/${id}/resend-sms`, {}),
+    verifyPaystack: (data: any) => api.post('/finance/income/paystack/verify', { ...data, category: 'tithe' }),
+  },
+
+  // Offering Type Operations
+  offeringTypes: {
+    getAll: () => api.get('/finance/offering-types'),
+    create: (data: any) => api.post('/finance/offering-types', data),
+    update: (id: string, data: any) => api.patch(`/finance/offering-types/${id}`, data),
+    delete: (id: string) => api.delete(`/finance/offering-types/${id}`),
+  },
+
+  // Offering Operations (uses Income with category='offering')
+  offering: {
+    getAll: (params?: any) => api.get('/finance/income', { params: { ...params, category: 'offering' } }),
+    getSummary: (params?: any) => api.get('/finance/income/summary', { params: { ...params, category: 'offering' } }),
+    create: (data: any) => api.post('/finance/income', { ...data, category: 'offering' }),
+    getOne: (id: string) => api.get(`/finance/income/${id}`),
+    update: (id: string, data: any) => api.put(`/finance/income/${id}`, { ...data, category: 'offering' }),
+    delete: (id: string) => api.delete(`/finance/income/${id}`),
+    verifyPaystack: (data: any) => api.post('/finance/income/paystack/verify', { ...data, category: 'offering' }),
   },
 
   // Expense Operations
@@ -945,6 +980,63 @@ export const partnershipAPI = {
   // QR Code Generation
   generateQRCode: (id: string, type: 'registration' | 'payment', links: { registrationLink: string; paymentLink: string }) =>
     api.post(`/partnerships/${id}/generate-qr`, { type, ...links }),
+};
+
+// Project API (clone of Partnership for Giving module)
+export const projectAPI = {
+  // Project Management
+  getAll: (params?: any) => api.get('/giving/projects', { params }),
+  getOne: (id: string) => api.get(`/giving/projects/${id}`),
+  create: (data: any) => api.post('/giving/projects', data),
+  update: (id: string, data: any) => api.put(`/giving/projects/${id}`, data),
+  delete: (id: string) => api.delete(`/giving/projects/${id}`),
+
+  // Transactions
+  getTransactions: (id: string, params?: any) =>
+    api.get(`/giving/projects/${id}/transactions`, { params }),
+  exportTransactions: (id: string, params?: any) =>
+    api.get(`/giving/projects/${id}/transactions/export`, { params, responseType: 'blob' }),
+
+  createManualTransaction: (id: string, data: any) =>
+    api.post(`/giving/projects/${id}/transactions`, data),
+  deleteTransaction: (id: string, transactionId: string) =>
+    api.delete(`/giving/projects/${id}/transactions/${transactionId}`),
+
+  // Partners/Contributors
+  getPartners: (id: string, params?: any) =>
+    api.get(`/giving/projects/${id}/partners`, { params }),
+  exportPartners: (id: string) =>
+    api.get(`/giving/projects/${id}/partners/export`, { responseType: 'blob' }),
+  registerPartner: (id: string, data: any) =>
+    api.post(`/giving/projects/${id}/register`, data),
+
+  editPartner: (id: string, partnerId: string, data: any) =>
+    api.put(`/giving/projects/${id}/partners/${partnerId}`, data),
+  deletePartner: (id: string, partnerId: string) =>
+    api.delete(`/giving/projects/${id}/partners/${partnerId}`),
+
+  // Public Routes (no auth required)
+  getPublicProject: (merchantId: string, projectId: string) =>
+    api.get(`/giving/projects/public/${merchantId}/${projectId}`),
+  registerPublicPartner: (merchantId: string, projectId: string, data: any) =>
+    api.post(`/giving/projects/public/${merchantId}/${projectId}/register`, data),
+
+  initiateProjectPayment: (merchantId: string, projectId: string, data: any) =>
+    api.post(`/giving/projects/public/${merchantId}/${projectId}/payment/initiate`, data),
+  verifyProjectPayment: (merchantId: string, projectId: string, reference: string) =>
+    api.get(`/giving/projects/public/${merchantId}/${projectId}/payment/verify/${reference}`),
+
+  // Statistics
+  refreshStats: (id: string) => api.post(`/giving/projects/${id}/refresh`),
+  getTierBreakdown: (id: string, params?: any) => api.get(`/giving/projects/${id}/tier-breakdown`, { params }),
+
+  // QR Code Generation
+  generateQRCode: (id: string, type: 'registration' | 'payment', links: { registrationLink: string; paymentLink: string }) =>
+    api.post(`/giving/projects/${id}/generate-qr`, { type, ...links }),
+
+  // Reminders
+  getReminderStatus: (id: string) => api.get(`/giving/projects/${id}/reminders/status`),
+  triggerReminders: (id: string) => api.post(`/giving/projects/${id}/reminders/trigger`),
 };
 
 // Transaction API (for admin finance overview)

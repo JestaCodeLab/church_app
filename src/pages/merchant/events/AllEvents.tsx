@@ -27,6 +27,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useResourceLimit } from '../../../hooks/useResourceLimit';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
 import { usePaginatedQuery } from '../../../hooks/usePaginatedQuery';
+import { useBranch } from '../../../context/BranchContext';
 import { usePageTour } from '../../../hooks/usePageTour';
 import Loader from '../../../components/ui/Loader';
 
@@ -40,6 +41,7 @@ const AllEvents = ({ mode }: AllEventsProps) => {
   const navigate = useNavigate();
   usePageTour('events');
   const { user, fetchAndUpdateSubscription } = useAuth();
+  const { selectedBranch } = useBranch();
   const plan = user?.merchant?.subscription?.plan;
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,9 +84,11 @@ const AllEvents = ({ mode }: AllEventsProps) => {
     totalItems: totalEvents,
     setPage,
     refetch: refetchEvents
-  } = usePaginatedQuery<any>(isServices ? 'services' : 'events', eventsFetcher, {
-    limit: 10
-  });
+  } = usePaginatedQuery<any>(
+    `${isServices ? 'services' : 'events'}-${selectedBranch?._id || 'all'}`,
+    eventsFetcher,
+    { limit: 10 }
+  );
 
   useEffect(() => {
     fetchUsageData();
@@ -244,22 +248,22 @@ const AllEvents = ({ mode }: AllEventsProps) => {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                       {label}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                       Date & Time
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                       Location
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                       Attendance
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                       Status
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">

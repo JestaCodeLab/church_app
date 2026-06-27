@@ -12,8 +12,8 @@ import {
   FileText,
   DollarSign
 } from 'lucide-react';
-import api from '../../services/api';
-import { showToast } from '../../utils/toasts';
+import api from '../../../services/api';
+import { showToast } from '../../../utils/toasts';
 import { format } from 'date-fns';
 
 interface Transaction {
@@ -46,7 +46,6 @@ interface Transaction {
   channel?: string;
   invoiceNumber?: string;
   paymentReference?: string;
-  campaign?: string;
   event?: string;
 }
 
@@ -196,8 +195,6 @@ const AllTransactions = () => {
       sms_credit: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-primary-400',
       sms_credit_purchase: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-primary-400',
       donation: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
-      campaign_donation: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
-      event_donation: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
       tithe: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
       offering: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
       withdrawal: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
@@ -265,8 +262,6 @@ const AllTransactions = () => {
             <option value="subscription">Subscription</option>
             <option value="sms_credit">SMS Credit</option>
             <option value="donation">Donation</option>
-            <option value="campaign_donation">Campaign Donation</option>
-            <option value="event_donation">Event Donation</option>
             <option value="tithe">Tithe</option>
             <option value="offering">Offering</option>
             <option value="withdrawal">Withdrawal</option>

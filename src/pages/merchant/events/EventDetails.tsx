@@ -11,7 +11,6 @@ import { showToast } from '../../../utils/toasts';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import QRCodeDisplay from '../../../components/events/QRCodeDisplay';
 import SmsAutomationSettings from '../../../components/events/SmsAutomationSettings';
-import DonationSettings from '../../../components/events/DonationSettings';
 import { format } from 'date-fns';
 import PermissionGuard from '../../../components/guards/PermissionGuard';
 
@@ -32,33 +31,17 @@ const EventDetails: React.FC = () => {
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
 
-  // SMS Automation & Donation Settings
+  // SMS Automation Settings
   const [smsAutomation, setSmsAutomation] = useState({
     enabled: false,
     notifications: [],
     externalRecipients: []
-  });
-  const [donations, setDonations] = useState<{
-    enabled: boolean;
-    goal?: { amount: number; currency: string };
-    allowAnonymous: boolean;
-    description: string;
-    publicUrl?: string;
-    thankYouSms?: string;
-  }>({
-    enabled: false,
-    allowAnonymous: true,
-    description: ''
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [smsAutomationStatus, setSmsAutomationStatus] = useState<{
     hasRunToday: boolean;
     lastRun?: string;
     nextScheduledRun?: string;
-  } | null>(null);
-  const [donationAutomationStatus, setDonationAutomationStatus] = useState<{
-    hasRunToday: boolean;
-    lastRun?: string;
   } | null>(null);
 
   // Feature Access State
@@ -111,25 +94,6 @@ const EventDetails: React.FC = () => {
         });
       }
 
-      // Load donation settings
-      if (eventData.donations) {
-        setDonations({
-          enabled: eventData.donations.enabled || false,
-          ...(eventData.donations.goal && eventData.donations.goal.amount > 0 && { goal: eventData.donations.goal }),
-          allowAnonymous: eventData.donations.allowAnonymous ?? true,
-          description: eventData.donations.description || '',
-          ...(eventData.donations.publicUrl && { publicUrl: eventData.donations.publicUrl }),
-          ...(eventData.donations.thankYouSms && { thankYouSms: eventData.donations.thankYouSms })
-        });
-      } else {
-        // Initialize with default values if no donation settings exist
-        setDonations({
-          enabled: false,
-          allowAnonymous: true,
-          description: ''
-        });
-      }
-
       // If recurring event, fetch today's event code
       if (eventData.isRecurring) {
         fetchAllEventCodes(eventData._id);
@@ -150,19 +114,6 @@ const EventDetails: React.FC = () => {
         });
       }
 
-      // Check Donation Thank You SMS Status
-      if (eventData.donations?.enabled && eventData.donations?.thankYouSms) {
-        // Determine if any donation thank you SMS was sent today
-        const today = new Date().toDateString();
-        const lastThankYouDate = eventData.donations.lastThankYouSmsSent
-          ? new Date(eventData.donations.lastThankYouSmsSent).toDateString()
-          : null;
-        
-        setDonationAutomationStatus({
-          hasRunToday: lastThankYouDate === today,
-          lastRun: eventData.donations.lastThankYouSmsSent
-        });
-      }
     } catch (error: any) {
       showToast.error('Failed to load event details');
       navigate(isServiceRoute ? '/services' : '/events');
@@ -233,8 +184,7 @@ const EventDetails: React.FC = () => {
       setSavingSettings(true);
 
       await eventAPI.updateEvent(id!, {
-        smsAutomation,
-        donations
+        smsAutomation
       });
 
       showToast.success('Settings updated successfully');
@@ -391,17 +341,6 @@ const EventDetails: React.FC = () => {
                 <span>Attendance</span>
                 <p>({attendance})</p>
               </button>
-              </PermissionGuard>
-              <PermissionGuard permission="events.viewDonations">
-              {(features.eventDonations && event.donations?.enabled) && (
-                <button
-                  onClick={() => navigate(`/events/${id}/donations`)}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
-                >
-                  <DollarSign className="w-4 h-4" />
-                  <span>Donations</span>
-                </button>
-              )}
               </PermissionGuard>
               {event.registration?.enabled && (
                 <button
@@ -767,107 +706,6 @@ const EventDetails: React.FC = () => {
               />
             </div>
             )}
-
-            {/* Donation Settings */}
-            {!isServiceRoute && (!features.eventDonations ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 relative opacity-60">
-                <div className="inset-0 flex items-center justify-center bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 rounded-xl">
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-3">
-                      <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">Event Donations</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Upgrade your plan to access Event Donations</p>
-                  </div>
-                </div>
-                
-              </div>
-            ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              {/* Donation Thank You SMS Status Banner */}
-              {donations?.enabled && donations?.thankYouSms && donationAutomationStatus && (
-                <div className={`rounded-lg p-4 border mb-6 ${
-                  donationAutomationStatus.hasRunToday
-                    ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
-                    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                }`}>
-                  <div className="flex items-start space-x-3">
-                    <CheckCircle className={`w-5 h-5 mt-0.5 ${
-                      donationAutomationStatus.hasRunToday
-                        ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-green-600 dark:text-green-400'
-                    }`} />
-                    <div className="flex-1">
-                      <p className={`text-sm font-bold ${
-                        donationAutomationStatus.hasRunToday
-                          ? 'text-purple-900 dark:text-primary-100'
-                          : 'text-green-900 dark:text-green-100'
-                      }`}>
-                        {donationAutomationStatus.hasRunToday
-                          ? 'Thank You SMS Already Sent Today'
-                          : 'Thank You SMS Automation Active'}
-                      </p>
-                      <p className={`text-sm mt-1 ${
-                        donationAutomationStatus.hasRunToday
-                          ? 'text-primary-700 dark:text-primary-300'
-                          : 'text-green-700 dark:text-green-300'
-                      }`}>
-                        {donationAutomationStatus.hasRunToday ? (
-                          <>
-                            Thank you SMS was sent to donors at{' '}
-                            <span className="font-semibold uppercase">
-                              {donationAutomationStatus.lastRun 
-                                ? new Date(donationAutomationStatus.lastRun).toLocaleString([], { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    hour12: true
-                                  }) 
-                                : 'today'}
-                            </span>
-                            .
-                          </>
-                        ) : (
-                          <>
-                            Thank you SMS will be automatically sent to donors after they complete their donation payment.
-                          </>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  <span>Event Donations</span>
-                </h2>
-                <button
-                  onClick={handleSaveSettings}
-                  disabled={savingSettings}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  {savingSettings ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      <span>Save</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              <DonationSettings
-                value={donations}
-                onChange={setDonations}
-              />
-            </div>
-            ))}
           </div>
 
           {/* Sidebar */}

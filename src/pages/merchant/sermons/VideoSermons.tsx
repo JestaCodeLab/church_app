@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Video, Play, Share2, RefreshCw, Edit2, Send } from 'lucide-react';
+import { useBranch } from '../../../context/BranchContext';
 import { sermonAPI, preacherAPI } from '../../../services/api';
 import B2FileUploader from '../../../components/ui/B2FileUploader';
 import VideoPlayer from '../../../components/ui/VideoPlayer';
@@ -30,6 +31,7 @@ interface Sermon {
 }
 
 const VideoSermons: React.FC = () => {
+  const { selectedBranch } = useBranch();
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [preachers, setPreachers] = useState<Preacher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ const VideoSermons: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedBranch?._id]);
 
   const refreshVault = () =>
     sermonAPI.getVaultUsage().then(r => setVaultUsage(r.data.data)).catch(() => {});
