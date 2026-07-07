@@ -26,6 +26,7 @@ import { memberAPI, departmentAPI, branchAPI, messagingAPI } from '../../../serv
 import { Link } from 'react-router-dom';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import FeatureGate from '../../../components/access/FeatureGate';
+import { useBranch } from '../../../context/BranchContext';
 
 interface Member {
   _id: string;
@@ -95,6 +96,8 @@ interface SenderIdStatus {
 type SendType = 'single' | 'bulk' | 'members' | 'department' | 'branch' | 'all' | 'partnership';
 
 const SendSMS = () => {
+  const { selectedBranch: activeBranch } = useBranch();
+
   // Send type and recipients
   const [sendType, setSendType] = useState<SendType>('single');
   const [phone, setPhone] = useState('');
@@ -418,7 +421,8 @@ const SendSMS = () => {
             message,
             category,
             templateId: selectedTemplate || undefined,
-            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined,
+            branchId: activeBranch?._id
           });
           break;
 
@@ -433,7 +437,8 @@ const SendSMS = () => {
             message,
             category,
             templateId: selectedTemplate || undefined,
-            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined,
+            branchId: activeBranch?._id
           });
           break;
 
@@ -447,7 +452,8 @@ const SendSMS = () => {
             message,
             category,
             templateId: selectedTemplate || undefined,
-            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined,
+            branchId: activeBranch?._id
           });
           break;
 
@@ -461,7 +467,8 @@ const SendSMS = () => {
             message,
             category,
             templateId: selectedTemplate || undefined,
-            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined,
+            branchId: activeBranch?._id
           });
           break;
 
@@ -523,6 +530,7 @@ const SendSMS = () => {
             category,
             templateId: selectedTemplate || undefined,
             scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined,
+            branchId: activeBranch?._id,
             metadata: {
               partnershipProgrammeId: selectedPartnership,
               recipientNames: partnershipNames,
@@ -537,7 +545,8 @@ const SendSMS = () => {
             message,
             category,
             templateId: selectedTemplate || undefined,
-            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined
+            scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : undefined,
+            branchId: activeBranch?._id
           });
           break;
 
@@ -654,6 +663,18 @@ const SendSMS = () => {
                   </p>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* No Branch Selected Warning */}
+        {!activeBranch && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <p className="text-sm text-amber-900 dark:text-amber-100">
+                SMS credits are tracked per branch. Select a branch from the branch switcher before sending — otherwise sending will fail.
+              </p>
             </div>
           </div>
         )}
