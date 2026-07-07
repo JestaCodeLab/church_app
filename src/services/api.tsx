@@ -425,6 +425,9 @@ export const adminAPI = {
     approve: (merchantId: string, data?: any) => api.post(`/admin/finance-kyc/${merchantId}/approve`, data),
     reject: (merchantId: string, data: any) => api.post(`/admin/finance-kyc/${merchantId}/reject`, data),
     update: (merchantId: string, data: any, config?: any) => api.patch(`/admin/finance-kyc/${merchantId}`, data, config),
+    updatePaystackKeys: (merchantId: string, data: { paystackPublicKey: string; paystackSecretKey: string; paystackMode?: 'test' | 'live' }) =>
+      api.patch(`/admin/finance-kyc/${merchantId}/paystack-keys`, data),
+    deleteKyc: (merchantId: string) => api.delete(`/admin/finance-kyc/${merchantId}`),
   },
 
   // Merchant-specific resource creation
@@ -512,6 +515,22 @@ export const branchAPI = {
   deleteBranch: (id: any, permanent = false) => api.delete(`/branches/${id}`, { params: { permanent } }),
   getStats: (id: any) => api.get(`/branches/${id}/stats`),
   getSummary: () => api.get('/branches/summary'),
+};
+
+export const branchPayoutAPI = {
+  listPayouts: () => api.get('/branches/payouts'),
+  getPayoutStatus: (branchId: string) => api.get(`/branches/${branchId}/payout`),
+  createSubaccount: (branchId: string, data: {
+    settlementBankCode: string;
+    accountNumber: string;
+    businessName?: string;
+  }) => api.post(`/branches/${branchId}/payout`, data),
+  updateSubaccount: (branchId: string, data: {
+    settlementBankCode?: string;
+    accountNumber?: string;
+    businessName?: string;
+  }) => api.put(`/branches/${branchId}/payout`, data),
+  deactivateSubaccount: (branchId: string) => api.delete(`/branches/${branchId}/payout`),
 };
 
 
@@ -682,6 +701,15 @@ export const eventAPI = {
   publicCheckIn: (qrData: string, data: any) =>
     axios.post(`${API_BASE_URL}/public/events/qr/${qrData}/checkin`, data),
 
+  // Public giving endpoints (no auth)
+  getPublicGivingEvent: (uniqueId: string) =>
+    axios.get(`${API_BASE_URL}/public/events/give/${uniqueId}`),
+  initiateGiving: (uniqueId: string, data: {
+    firstName: string; lastName?: string; phone: string;
+    amount: number; category: 'tithe' | 'offering'; offeringTypeId?: string;
+  }) => axios.post(`${API_BASE_URL}/public/events/give/${uniqueId}/initiate`, data),
+  verifyGiving: (uniqueId: string, reference: string) =>
+    axios.get(`${API_BASE_URL}/public/events/give/${uniqueId}/verify/${reference}`),
 };
 
 // Department API
@@ -1044,6 +1072,8 @@ export const transactionAPI = {
   getAll: (params?: any) => api.get('/transactions', { params }),
   getStats: (params?: any) => api.get('/transactions/stats', { params }),
   getRevenueTrend: (params?: any) => api.get('/transactions/revenue-trend', { params }),
+  getInvoice: (id: string) => api.get(`/transactions/${id}/invoice`, { responseType: 'blob' }),
+  exportCsv: (params?: any) => api.get('/transactions/export', { params, responseType: 'blob' }),
 };
 
 // Social Media API

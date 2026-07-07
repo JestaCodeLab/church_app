@@ -47,6 +47,8 @@ interface Event {
 interface SummaryStats {
   total: number;
   count: number;
+  average?: number;
+  verified?: number;
   cashCount?: number;
   digitalCount?: number;
 }
@@ -417,7 +419,7 @@ const Offerings: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Offerings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Offerings</h1>
           <p className="text-gray-600 dark:text-gray-400">Track and manage congregation offerings</p>
         </div>
         <div className="flex gap-2">

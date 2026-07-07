@@ -19,6 +19,7 @@ import NewMember from '../../pages/merchant/members/NewMember';
 import EditMember from '../../pages/merchant/members/EditMember';
 import Settings from '../../pages/merchant/Settings';
 import MemberDetails from '../../pages/merchant/members/MemberDetails';
+import MemberTransactions from '../../pages/merchant/members/MemberTransactions';
 import AdminDashboard from '../../pages/admin/AdminDashboard';
 import AdminMerchants from '../../pages/admin/AdminMerchants';
 import AdminUsers from '../../pages/admin/AdminUsers';
@@ -66,6 +67,7 @@ import SMSTemplates from '../../pages/merchant/messaging/SMSTemplates';
 import SMSHistory from '../../pages/merchant/messaging/SMSHistory';
 import SMSCredits from '../../pages/merchant/messaging/SMSCredits';
 import SMSPackages from '../../pages/admin/sms/AdminSMSPackages';
+import SmsBranchGate from '../../components/messaging/SmsBranchGate';
 import Birthdays from '../../pages/merchant/members/Birthdays';
 import BranchMembers from '../../pages/merchant/branches/BranchMembers';
 import BirthdaySettings from '../../pages/merchant/members/BirthdaySettings';
@@ -76,6 +78,7 @@ import PublicPartnershipRegistration from '../../pages/public/PublicPartnershipR
 import PublicPartnershipPayment from '../../pages/public/PublicPartnershipPayment';
 import PublicProjectRegistration from '../../pages/public/PublicProjectRegistration';
 import PublicProjectPayment from '../../pages/public/PublicProjectPayment';
+import PublicEventGiving from '../../pages/public/PublicEventGiving';
 import PartnershipPaymentStatus from '../../pages/public/PartnershipPaymentStatus';
 import AdminLogs from '../../pages/admin/logs/AdminLogs';
 import SMSSettings from '../../pages/merchant/messaging/SMSSettings';
@@ -205,6 +208,8 @@ const AnimatedRoutes = () => {
           <Route path="/projects/register/:merchantId/:id" element={<PublicProjectRegistration />} />
           <Route path="/projects/payment/:merchantId/:id" element={<PublicProjectPayment />} />
           <Route path="/partnership/payment/:merchantId/:programmeId/status" element={<PartnershipPaymentStatus />} />
+          <Route path="/give/:uniqueId" element={<PublicEventGiving />} />
+          <Route path="/give/:uniqueId/status" element={<PublicEventGiving />} />
         </Route>
 
         {/* Onboarding Route - Requires auth but not completed onboarding */}
@@ -231,6 +236,7 @@ const AnimatedRoutes = () => {
             <Route path="/members/new" element={<NewMember />} />
             <Route path="/members/:id" element={<MemberDetails />} />
             <Route path="/members/:id/edit" element={<EditMember />} />
+            <Route path="/members/:id/transactions" element={<MemberTransactions />} />
             <Route path="/members/birthdays" element={<Birthdays />} />
             <Route path="/members/birthdays/settings" element={<BirthdaySettings />} />
             <Route path="/members/partnership" element={<PartnershipProgrammes />} />
@@ -265,13 +271,13 @@ const AnimatedRoutes = () => {
             <Route path="/departments/:id" element={<DepartmentDetails />} />
             <Route path="/departments/:id/edit" element={<DepartmentForm />} />
 
-            {/* SMS Routes */}
-            <Route path="/messaging/analytics" element={<SMSDashboard />} />
-            <Route path="/messaging/send" element={<SendSMS />} />
-            <Route path="/messaging/templates" element={<SMSTemplates />} />
-            <Route path="/messaging/history" element={<SMSHistory />} />
-            <Route path="/messaging/credits" element={<SMSCredits />} />
-            <Route path="/messaging/sender-id" element={<SMSSettings />} />
+            {/* SMS Routes — all require branch selection (credits are branch-scoped) */}
+            <Route path="/messaging/analytics" element={<SmsBranchGate><SMSDashboard /></SmsBranchGate>} />
+            <Route path="/messaging/send" element={<SmsBranchGate><SendSMS /></SmsBranchGate>} />
+            <Route path="/messaging/templates" element={<SmsBranchGate><SMSTemplates /></SmsBranchGate>} />
+            <Route path="/messaging/history" element={<SmsBranchGate><SMSHistory /></SmsBranchGate>} />
+            <Route path="/messaging/credits" element={<SmsBranchGate><SMSCredits /></SmsBranchGate>} />
+            <Route path="/messaging/sender-id" element={<SmsBranchGate><SMSSettings /></SmsBranchGate>} />
 
             {/* Finance Routes */}
             <Route path="/finance/wallet" element={<Wallet />} />

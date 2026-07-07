@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../../services/api';
+import { useBranch } from '../../../context/BranchContext';
 import { usePaystackSMS } from '../../../hooks/usePaystackSMS';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import { 
@@ -76,7 +77,8 @@ interface Purchase {
 const MessagingCredits: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { initializePayment } =   usePaystackSMS();
+  const { selectedBranch } = useBranch();
+  const { initializePayment } = usePaystackSMS();
   const [credits, setCredits] = useState<Credits | null>(null);
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -93,13 +95,13 @@ const MessagingCredits: React.FC = () => {
   useEffect(() => {
     checkSMSAccess();
     fetchData();
-    
+
     // Check for payment verification (fallback for redirect method)
     const reference = searchParams.get('reference');
     if (reference) {
       verifyPayment(reference);
     }
-  }, [searchParams]);
+  }, [searchParams, selectedBranch]); // re-fetch when branch changes
 
   const checkSMSAccess = async () => {
     const hasAccess = await checkFeatureAccess('smsCredits', {
@@ -335,9 +337,14 @@ const handlePurchase = async (pkg: CreditPackage) => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             SMS Credits
+            {selectedBranch && (
+              <span className="ml-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-2.5 py-1 rounded-full">
+                {(selectedBranch as any).name}
+              </span>
+            )}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Purchase and manage your messaging credits
+            Purchase and manage messaging credits for this branch
           </p>
         </div>
         <div className="flex items-center space-x-2">
