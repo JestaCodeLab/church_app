@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
-  ArrowLeft, Calendar, Clock, MapPin, Users, Edit, Trash2,
-  MoreVertical, UserCircle, Mic, Image as ImageIcon,
+  ArrowLeft, Calendar, Clock, MapPin, Users, Edit,
+  UserCircle, Mic, Image as ImageIcon,
   ExternalLink, X, Repeat2, Copy, CheckCircle, Code,
-  Trash, RotateCw, MessageSquare, DollarSign, Save, Mail, Building2
+  Trash, RotateCw, MessageSquare, Save, Mail, Building2,
+  HandCoins
 } from 'lucide-react';
-import api, { eventAPI, eventCodeAPI, merchantAPI } from '../../../services/api';
+import { eventAPI, eventCodeAPI, merchantAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import QRCodeDisplay from '../../../components/events/QRCodeDisplay';
@@ -38,6 +39,10 @@ const EventDetails: React.FC = () => {
     externalRecipients: []
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [givingEnabled, setGivingEnabled] = useState(false);
+  const [togglingGiving, setTogglingGiving] = useState(false);
+  const [showGivingQR, setShowGivingQR] = useState(false);
+  const [givingErrorModal, setGivingErrorModal] = useState(false);
   const [smsAutomationStatus, setSmsAutomationStatus] = useState<{
     hasRunToday: boolean;
     lastRun?: string;
@@ -84,6 +89,7 @@ const EventDetails: React.FC = () => {
       const attendanceData = response.data.data?.stats?.attendance;
       setEvent(eventData);
       setAttendance(attendanceData?.totalAttended || 0);
+      setGivingEnabled(eventData.giving?.enabled || false);
 
       // Load SMS automation settings
       if (eventData.smsAutomation) {
@@ -195,6 +201,30 @@ const EventDetails: React.FC = () => {
       setSavingSettings(false);
     }
   };
+
+  const handleGivingToggle = async () => {
+    const next = !givingEnabled;
+    setTogglingGiving(true);
+    try {
+      await eventAPI.updateEvent(id!, { givingEnabled: next });
+      setGivingEnabled(next);
+      await fetchEvent();
+      showToast.success(next ? 'Public giving link enabled' : 'Public giving link disabled');
+    } catch (err: any) {
+      if (err?.response?.data?.error === 'BRANCH_PAYOUT_REQUIRED') {
+        setGivingErrorModal(true);
+      } else {
+        showToast.error(err?.response?.data?.message || 'Failed to update giving settings');
+      }
+    } finally {
+      setTogglingGiving(false);
+    }
+  };
+
+  const getGivingUrl = () =>
+    event?.giving?.uniqueId
+      ? `${window.location.origin}/give/${event.giving.uniqueId}`
+      : null;
 
   const getCheckInUrl = () => {
     if (event.isRecurring) {
@@ -333,7 +363,6 @@ const EventDetails: React.FC = () => {
                 <span>Edit</span>
               </button>
               </PermissionGuard>
-              <PermissionGuard permission="events.viewAttendance">
               <button
                 onClick={() => navigate(isServiceRoute ? '/attendance' : `/events/${id}/attendance`)}
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
@@ -341,7 +370,6 @@ const EventDetails: React.FC = () => {
                 <span>Attendance</span>
                 <p>({attendance})</p>
               </button>
-              </PermissionGuard>
               {event.registration?.enabled && (
                 <button
                   onClick={() => navigate(`/events/${id}/registrations`)}
@@ -706,6 +734,119 @@ const EventDetails: React.FC = () => {
               />
             </div>
             )}
+
+            {/* ── Public Giving ──────────────────────────────────────── */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
+                    <HandCoins className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Public Giving</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Shareable offering link for this event</p>
+                  </div>
+                </div>
+
+                {/* Toggle */}
+                {togglingGiving ? (
+                  <span className="text-sm text-gray-400">Saving…</span>
+                ) : (
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={givingEnabled}
+                      onChange={handleGivingToggle}
+                      className="sr-only peer"
+                    />
+                    <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600" />
+                  </label>
+                )}
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5">
+                {!givingEnabled ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Enable to generate a shareable link and QR code that members can use to give their offerings for this event.
+                  </p>
+                ) : getGivingUrl() ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Share this link with your congregation so they can give their tithe or offering for <strong className="text-gray-800 dark:text-gray-200">{event.title}</strong>.
+                    </p>
+
+                    {/* URL row */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={getGivingUrl()!}
+                        className="flex-1 min-w-0 px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300"
+                      />
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(getGivingUrl()!); showToast.success('Link copied!'); }}
+                        className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                        title="Copy link"
+                      >
+                        <Copy className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {/* QR Code */}
+                      <button
+                        onClick={() => setShowGivingQR(true)}
+                        className="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <Code className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">QR Code</span>
+                      </button>
+                      {/* WhatsApp */}
+                      <button
+                        onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Give your tithe or offering for ${event.title}: ${getGivingUrl()}`)}`, '_blank')}
+                        className="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                      >
+                        <svg className="w-5 h-5 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                        </svg>
+                        <span className="text-xs font-medium text-green-700 dark:text-green-400">WhatsApp</span>
+                      </button>
+                      {/* Preview */}
+                      <button
+                        onClick={() => window.open(getGivingUrl()!, '_blank')}
+                        className="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                      >
+                        <ExternalLink className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                        <span className="text-xs font-medium text-primary-700 dark:text-primary-400">Preview</span>
+                      </button>
+                    </div>
+
+                    {/* Stats */}
+                    {(event.giving?.totalRaised > 0 || event.giving?.givingCount > 0) && (
+                      <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <div className="text-center py-2 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                            GHS {(event.giving?.totalRaised || 0).toLocaleString('en-GH', { minimumFractionDigits: 2 })}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Total raised</p>
+                        </div>
+                        <div className="text-center py-2 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                            {event.giving?.givingCount || 0}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Payments</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 animate-pulse">Generating link…</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -1000,6 +1141,105 @@ const EventDetails: React.FC = () => {
         type="warning"
         isLoading={regeneratingCodes}
       />
+
+      {/* Branch Payout Required Modal */}
+      {givingErrorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-5">
+                <div className="w-11 h-11 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                  <HandCoins className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                    Branch Payout Account Required
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    This event's branch doesn't have a payout account configured. You need to set up a
+                    bank or Mobile Money account for this branch before enabling Public Giving.
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+                    Once configured, all giving payments for this event will settle directly into that branch's account.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setGivingErrorModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Close
+                </button>
+                <a
+                  href="/settings?tab=branch-payouts"
+                  onClick={() => setGivingErrorModal(false)}
+                  className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-semibold text-center hover:bg-primary-700 transition-colors"
+                >
+                  Set Up Branch Payout
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Giving QR Code Modal */}
+      {showGivingQR && getGivingUrl() && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2">
+                <Code className="w-5 h-5 text-primary-500" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">Giving QR Code</h3>
+              </div>
+              <button
+                onClick={() => setShowGivingQR(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* QR image */}
+            <div className="flex flex-col items-center px-6 py-6 gap-4">
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(getGivingUrl()!)}&margin=8`}
+                  alt="Giving QR Code"
+                  className="w-64 h-64"
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{event.title}</p>
+                <p className="text-xs text-gray-400 mt-0.5">Scan to give tithe or offering</p>
+              </div>
+
+              {/* Download + Copy URL */}
+              <div className="w-full flex gap-3">
+                <a
+                  href={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(getGivingUrl()!)}&margin=10`}
+                  download={`giving-qr-${event.giving?.uniqueId}.png`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Download
+                </a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(getGivingUrl()!); showToast.success('Link copied!'); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-primary-700 dark:text-primary-400 border border-primary-200 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy Link
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -153,10 +153,14 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, max, disa
                   onClick={() => { onChange(toYMD(d.getFullYear(), d.getMonth(), d.getDate())); setOpen(false); }}
                   className={[
                     'h-8 w-full flex items-center justify-center text-sm rounded-lg transition-colors',
-                    selected ? 'bg-primary-600 text-white font-semibold' : '',
-                    !selected && todayMark ? 'border border-primary-400 text-primary-600 dark:text-primary-400 font-medium' : '',
-                    !selected && !disabled && inMonth ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700' : '',
-                    !selected && !inMonth ? 'text-gray-300 dark:text-gray-600' : '',
+                    selected
+                      ? 'bg-primary-600 text-white font-semibold'
+                      : todayMark
+                        ? 'border border-primary-400 text-primary-600 dark:text-primary-400 font-medium'
+                        : inMonth
+                          ? 'text-gray-900 dark:text-gray-100'
+                          : 'text-gray-300 dark:text-gray-500',
+                    !selected && !disabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : '',
                     disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
                   ].filter(Boolean).join(' ')}
                 >

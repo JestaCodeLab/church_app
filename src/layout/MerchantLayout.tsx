@@ -21,13 +21,10 @@ import {
   CreditCard,
   BarChart3,
   Cake,
-  TrendingUp,
-  Wallet,
   Receipt,
   CheckCircle2,
   Lock,
   Send,
-  FileChartColumn,
   HandHeart,
   Coins,
   Activity,
@@ -302,14 +299,14 @@ const MerchantLayout = () => {
             href: '/members/all',
             icon: Users,
             requiresFeature: 'memberManagement',
-            requiredPermissions: ['members.view']
+            requiredPermissions: ['members.viewMembers', 'members.view']
           },
           {
             name: 'Birthdays',
             href: '/members/birthdays',
             icon: Cake,
             requiresFeature: 'memberBirthdays',
-            requiredPermissions: ['members.viewBirthdays']
+            requiredPermissions: ['members.viewBirthdays', 'members.view']
           },
           {
             name: 'Partnership',
@@ -367,28 +364,28 @@ const MerchantLayout = () => {
             href: '/sermons/audio',
             icon: Headphones,
             requiresFeature: 'audioSermons',
-            requiredPermissions: ['sermons.viewAudio']
+            requiredPermissions: ['sermons.viewAudio', 'sermons.view']
           },
           {
             name: 'Video',
             href: '/sermons/video',
             icon: Video,
             requiresFeature: 'videoSermons',
-            requiredPermissions: ['sermons.viewVideo']
+            requiredPermissions: ['sermons.viewVideo', 'sermons.view']
           },
           {
             name: 'Preachers',
             href: '/sermons/preachers',
             icon: Mic2,
             requiresFeature: 'sermonPreachers',
-            requiredPermissions: ['sermons.viewPreachers']
+            requiredPermissions: ['sermons.viewPreachers', 'sermons.view']
           },
           {
             name: 'Distribution',
             href: '/sermons/distribution',
             icon: Music,
             requiresFeature: 'sermonDistribution',
-            requiredPermissions: ['sermons.viewDistribution']
+            requiredPermissions: ['sermons.viewDistribution', 'sermons.view']
           }
         ]
       },
@@ -428,11 +425,11 @@ const MerchantLayout = () => {
         requiredPermissions: ['finance.view'],
         children: [
           {
-            name: 'Wallet',
-            href: '/finance/wallet',
-            icon: CreditCard,
-            requiresFeature: 'financeWallet',
-            requiredPermissions: ['finance.viewWallet','finance.view'],
+            name: 'Expenses',
+            href: '/finance/expenses',
+            icon: Receipt,
+            requiresFeature: 'financeExpenses',
+            requiredPermissions: ['finance.viewExpenses', 'finance.view'],
           },
           {
             name: 'Transactions',
@@ -440,7 +437,14 @@ const MerchantLayout = () => {
             icon: ArrowRightLeft,
             requiresFeature: 'financeTransactions',
             requiredPermissions: ['finance.viewTransactions', 'finance.view'],
-          }
+          },
+          {
+            name: 'Reports',
+            href: '/finance/reports',
+            icon: BarChart3,
+            requiresFeature: 'financeReports',
+            requiredPermissions: ['finance.viewReports', 'finance.view'],
+          },
         ]
       },
       {
@@ -454,7 +458,7 @@ const MerchantLayout = () => {
             href: '/messaging/analytics',
             icon: BarChart3,
             requiresFeature: 'smsAnalytics',
-            requiredPermissions: ['communications.analytics'],
+            requiredPermissions: ['communications.analytics', 'communications.view'],
             lockedFeature: 'smsAnalytics'
           },
           {
@@ -462,7 +466,7 @@ const MerchantLayout = () => {
             href: '/messaging/send',
             icon: Mail,
             requiresFeature: 'smsSend',
-            requiredPermissions: ['communications.sendSMS'],
+            requiredPermissions: ['communications.sendSMS', 'communications.view'],
             lockedFeature: 'smsSend'
           },
           
@@ -471,7 +475,7 @@ const MerchantLayout = () => {
             href: '/messaging/templates',
             icon: FileText,
             requiresFeature: 'smsTemplates',
-            requiredPermissions: ['communications.templates'],
+            requiredPermissions: ['communications.templates', 'communications.view'],
             lockedFeature: 'smsTemplates'
           },
           {
@@ -479,7 +483,7 @@ const MerchantLayout = () => {
             href: '/messaging/credits',
             icon: CreditCard,
             requiresFeature: 'smsCredits',
-            requiredPermissions: ['communications.smsCredits'],
+            requiredPermissions: ['communications.smsCredits', 'communications.view'],
             lockedFeature: 'smsCredits'
           },
           {
@@ -487,7 +491,7 @@ const MerchantLayout = () => {
             href: '/messaging/sender-id',
             icon: Send,
             requiresFeature: 'smsSenderId',
-            requiredPermissions: ['communications.smsSenderID'],
+            requiredPermissions: ['communications.smsSenderID', 'communications.view'],
             lockedFeature: 'smsSenderId'
           },
           {
@@ -495,7 +499,7 @@ const MerchantLayout = () => {
             href: '/messaging/history',
             icon: History,
             requiresFeature: 'smsHistory',
-            requiredPermissions: ['communications.history'],
+            requiredPermissions: ['communications.history', 'communications.view'],
             lockedFeature: 'smsHistory'
           }
         ]

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { User, CreditCard, Lock, Settings as SettingsIcon, Users2, Palette, MessageSquare } from 'lucide-react';
+import { User, CreditCard, Lock, Settings as SettingsIcon, Users2, Palette, GitBranch } from 'lucide-react';
 import ProfileSettings from '../../components/settings/ProfileSettings';
 import BillingSettings from '../../components/settings/BillingSettings';
 import SecuritySettings from '../../components/settings/SecuritySettings';
 import PreferencesSettings from '../../components/settings/PreferencesSettings';
 import AppearanceSettings from '../../components/settings/AppearanceSettings';
 import TeamManagement from '../../components/settings/TeamManagement';
+import BranchPayoutSettings from '../../components/settings/BranchPayoutSettings';
 import { usePermission } from '../../hooks/usePermission';
 
 const Settings = () => {
@@ -61,14 +62,23 @@ const Settings = () => {
       description: 'View your current plan, upgrade, and manage billing.',
       permission: 'settings.manageBilling'
     },
-    { 
-      id: 'security', 
-      label: 'Security', 
-      icon: Lock, 
-      component: <SecuritySettings />, 
+    {
+      id: 'branch-payouts',
+      label: 'Branch Payouts',
+      icon: GitBranch,
+      component: <BranchPayoutSettings />,
+      description: 'Configure bank/Momo payout accounts for your branches',
+      permission: 'settings.manageBranchPayouts'
+    },
+    {
+      id: 'security',
+      label: 'Security',
+      icon: Lock,
+      component: <SecuritySettings />,
       description: 'Change your password and manage account security.',
       permission: 'settings.manageSecurity'
-    },
+    }
+    
     // { id: 'reports', label: 'Reports & Analytics', icon: BarChart2, component: <div>Reports & Analytics Coming Soon</div>, description: 'View and export your data.' },
   ];
 
@@ -79,6 +89,7 @@ const Settings = () => {
   const preferencesPermission = usePermission('settings.managePreferences');
   const billingPermission = usePermission('settings.manageBilling');
   const securityPermission = usePermission('settings.manageSecurity');
+  const branchPayoutsPermission = usePermission('settings.manageBranchPayouts');
 
   // Map permissions to tabs
   const tabPermissions: Record<string, boolean> = {
@@ -88,6 +99,7 @@ const Settings = () => {
     preferences: preferencesPermission.hasPermission || preferencesPermission.isSuperAdmin,
     billing: billingPermission.hasPermission || billingPermission.isSuperAdmin,
     security: securityPermission.hasPermission || securityPermission.isSuperAdmin,
+    'branch-payouts': branchPayoutsPermission.hasPermission || branchPayoutsPermission.isSuperAdmin,
   };
 
   // Filter tabs based on permissions

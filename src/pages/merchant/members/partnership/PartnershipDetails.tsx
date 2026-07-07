@@ -1350,6 +1350,7 @@ const PartnershipDetails = () => {
                 <Edit2 className="w-4 h-4 mr-2" />
                 Edit
               </button>
+              </PermissionGuard>
               <button
                 onClick={() => setShowPublicLinks(!showPublicLinks)}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
@@ -1358,7 +1359,7 @@ const PartnershipDetails = () => {
                 <Settings className="w-4 h-4 mr-2" />
                 {showPublicLinks ? 'Hide' : 'Show'} Links
               </button>
-            </PermissionGuard>
+            
           </div>
         </div>
       </div>
