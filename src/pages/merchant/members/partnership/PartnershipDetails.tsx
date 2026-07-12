@@ -565,7 +565,7 @@ const PartnershipDetails = () => {
   const loadPartners = async () => {
     try {
       setLoadingPartners(true);
-      const response = await partnershipAPI.getPartners(id!, {limit: 20});
+      const response = await partnershipAPI.getPartners(id!, {limit: 10000});
       setPartners(response.data.data.partners || []);
     } catch (error: any) {
       showToast.error('Failed to load partners');
