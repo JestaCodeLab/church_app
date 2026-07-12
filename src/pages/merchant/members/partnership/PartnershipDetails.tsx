@@ -1280,11 +1280,12 @@ const PartnershipDetails = () => {
   }, [dateFilter, customStartDate, customEndDate, allTransactions, programme]);
 
   // Pagination for partners
+  const partnersTotalPages = Math.max(1, Math.ceil(filteredPartners.length / partnersPerPage));
+  const safePartnersCurrentPage = Math.min(partnersCurrentPage, partnersTotalPages);
   const paginatedPartners = filteredPartners.slice(
-    (partnersCurrentPage - 1) * partnersPerPage,
-    partnersCurrentPage * partnersPerPage
+    (safePartnersCurrentPage - 1) * partnersPerPage,
+    safePartnersCurrentPage * partnersPerPage
   );
-  const partnersTotalPages = Math.ceil(filteredPartners.length / partnersPerPage);
 
   if (loading) {
     return (
@@ -1808,14 +1809,20 @@ const PartnershipDetails = () => {
                   type="text"
                   placeholder="Search partners..."
                   value={partnerSearch}
-                  onChange={(e) => setPartnerSearch(e.target.value)}
+                  onChange={(e) => {
+                    setPartnerSearch(e.target.value);
+                    setPartnersCurrentPage(1);
+                  }}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
               <div className="flex gap-3 flex-shrink-0">
                 <select
                   value={partnerTypeFilter}
-                  onChange={(e) => setPartnerTypeFilter(e.target.value)}
+                  onChange={(e) => {
+                    setPartnerTypeFilter(e.target.value);
+                    setPartnersCurrentPage(1);
+                  }}
                   className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent text-sm"
                 >
                   <option value="all">All Types</option>
@@ -1988,21 +1995,21 @@ const PartnershipDetails = () => {
           {filteredPartners.length > 0 && (
             <div className="bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-4 flex justify-between items-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Showing {((partnersCurrentPage - 1) * partnersPerPage) + 1} to{' '}
-                {Math.min(partnersCurrentPage * partnersPerPage, filteredPartners.length)} of{' '}
+                Showing {((safePartnersCurrentPage - 1) * partnersPerPage) + 1} to{' '}
+                {Math.min(safePartnersCurrentPage * partnersPerPage, filteredPartners.length)} of{' '}
                 {filteredPartners.length} partners
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPartnersCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={partnersCurrentPage === 1}
+                  disabled={safePartnersCurrentPage === 1}
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPartnersCurrentPage(p => Math.min(partnersTotalPages, p + 1))}
-                  disabled={partnersCurrentPage === partnersTotalPages}
+                  disabled={safePartnersCurrentPage === partnersTotalPages}
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
