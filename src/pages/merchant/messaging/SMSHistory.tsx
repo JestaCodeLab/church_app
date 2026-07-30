@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CheckCircle, Clock, XCircle, AlertCircle, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, AlertCircle, ChevronLeft, ChevronRight, Trash2, Loader as LoaderIcon } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import api, { messagingAPI } from '../../../services/api';
@@ -332,7 +332,7 @@ const SMSHistory = () => {
         >
           {refreshing ? (
             <>
-              <Loader className="w-4 h-4 animate-spin" />
+              <LoaderIcon className="w-4 h-4 animate-spin" />
               Refreshing...
             </>
           ) : (
@@ -430,7 +430,7 @@ const SMSHistory = () => {
                 <tr>
                   <td colSpan={messageType === 'scheduled' ? 7 : 8} className="px-6 py-8 text-center">
                     <div className="flex items-center justify-center space-x-2">
-                      <Loader className="w-5 h-5 animate-spin text-primary-600" />
+                      <LoaderIcon className="w-5 h-5 animate-spin text-primary-600" />
                       <span className="text-gray-600 dark:text-gray-400">Loading messages...</span>
                     </div>
                   </td>
@@ -811,7 +811,7 @@ const SMSHistory = () => {
                 >
                   {cancelling ? (
                     <>
-                      <Loader className="w-4 h-4 animate-spin mr-2" />
+                      <LoaderIcon className="w-4 h-4 animate-spin mr-2" />
                       Cancelling...
                     </>
                   ) : (

@@ -87,9 +87,11 @@ const Birthdays: React.FC = () => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  // Birthdays fetcher for SWR
+  // Birthdays fetcher for SWR. The month comes from the query params (not the
+  // closure) so it is part of the SWR cache key and switching months refetches.
   const birthdaysFetcher = async (params: any) => {
-    const response = await api.get(`/birthdays/month/${selectedMonth}`);
+    const month = params.month ?? selectedMonth;
+    const response = await api.get(`/birthdays/month/${month}`);
     return {
       items: response.data.data.birthdays || [],
       pagination: {
@@ -103,10 +105,16 @@ const Birthdays: React.FC = () => {
   const {
     data: birthdays,
     loading,
-    refetch: refetchBirthdays
+    refetch: refetchBirthdays,
+    setFilters: setBirthdayFilters
   } = usePaginatedQuery<Birthday>('birthdays', birthdaysFetcher, {
-    limit: 100
+    limit: 100,
+    initialFilters: { month: selectedMonth }
   });
+
+  useEffect(() => {
+    setBirthdayFilters({ month: selectedMonth });
+  }, [selectedMonth, setBirthdayFilters]);
 
   useEffect(() => {
     fetchOtherData();
@@ -121,7 +129,10 @@ const Birthdays: React.FC = () => {
   const fetchOtherData = async () => {
     setStatsLoading(true);
     try {
-      const [todayRes, upcomingRes, statsRes, settingsRes, creditsRes] = await Promise.all([
+      // Settled, not all: /sms/credits rejects whenever no branch is selected,
+      // the role can't read credits, or the plan has no SMS feature — none of
+      // which should blank out the birthday data.
+      const [todayRes, upcomingRes, statsRes, settingsRes, creditsRes] = await Promise.allSettled([
         api.get('/birthdays/today'),
         api.get('/birthdays/upcoming'),
         api.get('/birthdays/stats'),
@@ -129,15 +140,31 @@ const Birthdays: React.FC = () => {
         api.get('/sms/credits')
       ]);
 
-      setTodaysBirthdays(todayRes.data.data.birthdays || []);
-      setUpcomingBirthdays(upcomingRes.data.data.birthdays || []);
-      setStats(statsRes.data.data || null);
-      setAutomationSettings(settingsRes.data.data || null);
-      setSmsCredits(creditsRes.data.data.credits.balance || 0);
+      if (todayRes.status === 'fulfilled') {
+        setTodaysBirthdays(todayRes.value.data.data.birthdays || []);
+      }
+      if (upcomingRes.status === 'fulfilled') {
+        setUpcomingBirthdays(upcomingRes.value.data.data.birthdays || []);
+      }
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value.data.data || null);
+      }
+      if (settingsRes.status === 'fulfilled') {
+        setAutomationSettings(settingsRes.value.data.data || null);
+      }
+      if (creditsRes.status === 'fulfilled') {
+        setSmsCredits(creditsRes.value.data.data?.credits?.balance || 0);
+      }
 
-    } catch (error: any) {
-      showToast.error('Failed to load birthday data');
-      console.error(error);
+      const birthdayFailures = [todayRes, upcomingRes, statsRes, settingsRes]
+        .filter((result) => result.status === 'rejected');
+
+      if (birthdayFailures.length > 0) {
+        showToast.error('Failed to load some birthday data');
+        birthdayFailures.forEach((result) =>
+          console.error((result as PromiseRejectedResult).reason)
+        );
+      }
     } finally {
       setStatsLoading(false);
     }

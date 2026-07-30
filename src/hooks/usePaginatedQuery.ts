@@ -15,6 +15,12 @@ export interface PaginatedResponse<T> {
 interface UsePaginatedQueryOptions {
   initialPage?: number;
   limit?: number;
+  /**
+   * Filters applied to the first fetch. Use this (rather than a setFilters call
+   * in an effect) when a filter is known at mount, so the initial request already
+   * carries it instead of firing a second request once the effect runs.
+   */
+  initialFilters?: Record<string, any>;
 }
 
 /**
@@ -38,11 +44,11 @@ export const usePaginatedQuery = <T,>(
   fetcher: (params: any) => Promise<PaginatedResponse<T>>,
   options: UsePaginatedQueryOptions = {}
 ) => {
-  const { initialPage = 1, limit = 10 } = options;
+  const { initialPage = 1, limit = 10, initialFilters = {} } = options;
 
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<Record<string, any>>(initialFilters);
 
   // Build SWR cache key with all parameters
   const swrKey = [key, currentPage, searchTerm, JSON.stringify(filters)];
