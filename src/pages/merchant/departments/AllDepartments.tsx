@@ -64,6 +64,20 @@ const AllDepartments = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRefs = React.useRef<Map<string, HTMLDivElement>>(new Map());
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!openMenuId) return;
+      const menuEl = menuRefs.current.get(openMenuId);
+      if (menuEl && !menuEl.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuId]);
   const departmentLimit = useResourceLimit('departments');
 
   // Convert text to sentence case (first letter uppercase, rest lowercase)
@@ -146,7 +160,7 @@ const AllDepartments = () => {
             Manage church departments and ministries
           </p>
         </div>
-        <div className="flex flex-col items-end space-y-2">
+        <div className="hidden md:flex flex-col items-end space-y-2">
           <PermissionGuard permission="departments.create">
           <button
             onClick={handleAddDepartmentClick}
@@ -182,7 +196,7 @@ const AllDepartments = () => {
           {/* View Toggle & Filter Tabs */}
           <div className="flex items-center space-x-4">
             {/* View Toggle */}
-            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
+            <div className="hidden md:flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 transition-colors ${
@@ -266,9 +280,97 @@ const AllDepartments = () => {
             </PermissionGuard>
           )}
         </div>
-      ) : viewMode === 'grid' ? (
+      ) : (
+        <>
+        {/* Mobile: compact data list (shown regardless of the desktop grid/list toggle) */}
+        <div className="md:hidden bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700 overflow-hidden">
+          {filteredDepartments.map((dept) => (
+            <div
+              key={dept._id}
+              onClick={() => navigate(`/departments/${dept._id}`)}
+              className="flex items-center gap-3 p-4 active:bg-gray-50 dark:active:bg-gray-700 transition-colors cursor-pointer"
+            >
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${dept.color}15`, border: `2px solid ${dept.color}40` }}
+              >
+                <LucideIconRenderer iconName={dept.icon} className="w-5 h-5" style={{ color: dept.color }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {toSentenceCase(dept.name)}
+                  </p>
+                  <span className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    dept.isActive
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+                  }`}>
+                    {dept.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <span className="inline-flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5" />
+                    {dept.memberCount || 0} members
+                  </span>
+                  {dept.meetingSchedule && dept.meetingSchedule.day !== 'None' && (
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {dept.meetingSchedule.day}s {formatTime(dept.meetingSchedule.time)}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div
+                className="relative flex-shrink-0"
+                onClick={(e) => e.stopPropagation()}
+                ref={(el) => {
+                  if (el) menuRefs.current.set(dept._id, el);
+                  else menuRefs.current.delete(dept._id);
+                }}
+              >
+                <button
+                  onClick={() => setOpenMenuId(openMenuId === dept._id ? null : dept._id)}
+                  className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+                {openMenuId === dept._id && (
+                  <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                    <PermissionGuard permission="departments.edit">
+                      <button
+                        onClick={() => { setOpenMenuId(null); navigate(`/departments/${dept._id}/edit`); }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <Edit className="w-4 h-4" />
+                        Edit
+                      </button>
+                    </PermissionGuard>
+                    <PermissionGuard permission="departments.delete">
+                      <button
+                        onClick={() => {
+                          setOpenMenuId(null);
+                          setDepartmentToDelete(dept);
+                          setShowDeleteModal(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    </PermissionGuard>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {viewMode === 'grid' ? (
         /* Grid View */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDepartments.map((dept) => (
             <div
               key={dept._id}
@@ -394,8 +496,7 @@ const AllDepartments = () => {
           ))}
         </div>
       ) : (
-        /* List View */
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-900">
@@ -492,7 +593,9 @@ const AllDepartments = () => {
               </tbody>
             </table>
           </div>
-        </div>
+          </div>
+        )}
+        </>
       )}
 
       {/* Delete Confirmation Modal */}
@@ -533,6 +636,18 @@ const AllDepartments = () => {
           </div>
         </div>
       )}
+
+      {/* Mobile: Floating Add Department Button */}
+      <PermissionGuard permission="departments.create">
+        <button
+          onClick={handleAddDepartmentClick}
+          className="md:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+          title="Add Department"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      </PermissionGuard>
 
       {/* Limit Modal */}
       <LimitReachedModal

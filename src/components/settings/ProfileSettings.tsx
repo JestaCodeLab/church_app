@@ -85,26 +85,26 @@ const ProfileSettings = () => {
       <div className="space-y-6">
         {/* Profile Picture Card */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile Picture</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Update your photo for a more personal experience.
             </p>
-            <div className="flex items-center space-x-6 mt-6">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center overflow-hidden">
+            <div className="flex items-center gap-4 sm:gap-6 mt-6">
+              <div className="relative flex-shrink-0">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center overflow-hidden">
                   {photoPreview ? (
                     <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <User className="w-10 h-10 text-primary-600 dark:text-primary-400" />
+                    <User className="w-8 h-8 sm:w-10 sm:h-10 text-primary-600 dark:text-primary-400" />
                   )}
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
+                  className="px-3 py-2 sm:px-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
                   {photoPreview ? 'Change' : 'Upload'}
                 </button>
@@ -119,7 +119,7 @@ const ProfileSettings = () => {
                   <button
                     type="button"
                     onClick={removePhoto}
-                    className="px-4 py-2 bg-transparent border border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    className="px-3 py-2 sm:px-4 bg-transparent border border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   >
                     Remove
                   </button>
@@ -131,7 +131,7 @@ const ProfileSettings = () => {
 
         {/* Personal Information Card */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
@@ -190,7 +190,7 @@ const ProfileSettings = () => {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg disabled:opacity-50"
           >
             {loading ? 'Saving...' : 'Save Changes'}
           </button>

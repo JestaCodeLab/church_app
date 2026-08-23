@@ -126,8 +126,8 @@ const SMSSettings = () => {
           </p>
         </div>
 
-        {/* Benefits Banner */}
-        <div className="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 flex items-start gap-3">
+        {/* Benefits Banner - desktop/tablet only */}
+        <div className="hidden sm:flex bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 items-start gap-3">
           <Zap className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-medium text-primary-900 dark:text-primary-100">Benefits of Custom Sender ID</h3>
@@ -138,52 +138,78 @@ const SMSSettings = () => {
         </div>
 
         {/* Current Status Card */}
-        <div className={`bg-gradient-to-br ${getStatusColor(status?.status || 'none')} border-2 rounded-xl p-6`}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Current Sender ID Status</h2>
-            {getStatusIcon(status?.status || 'none')}
-          </div>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Using</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 font-mono tracking-wider">
-                {status?.effectiveSenderId || '—'}
-              </p>
+        <div className={`bg-gradient-to-br ${getStatusColor(status?.status || 'none')} border-2 rounded-xl p-4 sm:p-6`}>
+          {/* Mobile layout */}
+          <div className="sm:hidden text-center space-y-1.5">
+            <div className="flex justify-center">
+              {React.cloneElement(getStatusIcon(status?.status || 'none'), { className: 'w-8 h-8' })}
             </div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Your Sender ID</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-mono tracking-wider break-all">
+              {status?.effectiveSenderId || '—'}
+            </p>
             {status?.status === 'none' && (
-              <p className="text-sm text-primary-700 dark:text-primary-300">
-                Currently using default platform sender ID. Register a custom one to personalize your SMS.
-              </p>
+              <p className="text-xs text-primary-700 dark:text-primary-300">Using default platform ID. Register a custom one below.</p>
             )}
             {status?.status === 'pending' && (
-              <div>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">Pending approval</p>
-                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                  Requested: {new Date(status.registeredAt || '').toLocaleDateString()}
-                </p>
-              </div>
+              <p className="text-xs text-yellow-700 dark:text-yellow-300 font-medium">Pending approval</p>
             )}
             {status?.status === 'approved' && (
-              <div>
-                <p className="text-sm text-green-700 dark:text-green-300 font-medium">Active and Ready</p>
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                  Members see "{status.customSenderId}" on all SMS messages
-                </p>
-              </div>
+              <p className="text-xs text-green-700 dark:text-green-300 font-medium">Active and ready</p>
             )}
             {status?.status === 'rejected' && (
-              <p className="text-sm text-red-700 dark:text-red-300">Request was rejected. Try a different sender ID.</p>
+              <p className="text-xs text-red-700 dark:text-red-300">Request rejected — try another ID</p>
             )}
+          </div>
+
+          {/* Desktop layout */}
+          <div className="hidden sm:block">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Current Sender ID Status</h2>
+              {getStatusIcon(status?.status || 'none')}
+            </div>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Using</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 font-mono tracking-wider break-all">
+                  {status?.effectiveSenderId || '—'}
+                </p>
+              </div>
+              {status?.status === 'none' && (
+                <p className="text-sm text-primary-700 dark:text-primary-300">
+                  Currently using default platform sender ID. Register a custom one to personalize your SMS.
+                </p>
+              )}
+              {status?.status === 'pending' && (
+                <div>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 font-medium">Pending approval</p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    Requested: {new Date(status.registeredAt || '').toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+              {status?.status === 'approved' && (
+                <div>
+                  <p className="text-sm text-green-700 dark:text-green-300 font-medium">Active and Ready</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    Members see "{status.customSenderId}" on all SMS messages
+                  </p>
+                </div>
+              )}
+              {status?.status === 'rejected' && (
+                <p className="text-sm text-red-700 dark:text-red-300">Request was rejected. Try a different sender ID.</p>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Status: None - Registration Form */}
         {status?.status === 'none' && (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+            <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">Register Your Custom Sender ID</h3>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   Enter Sender ID
@@ -260,13 +286,13 @@ const SMSSettings = () => {
         {/* Status: Pending */}
         {status?.status === 'pending' && (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-yellow-50 dark:bg-yellow-900/20">
+            <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-200 dark:border-gray-700 bg-yellow-50 dark:bg-yellow-900/20">
               <h3 className="font-semibold text-yellow-900 dark:text-yellow-100 flex items-center gap-2">
                 <Clock className="w-5 h-5" />
                 Pending Approval
               </h3>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                 <p className="text-yellow-900 dark:text-yellow-100">
                   Your sender ID <span className="font-mono font-bold text-lg">"{status.customSenderId}"</span> is under review.
@@ -309,13 +335,13 @@ const SMSSettings = () => {
           <div className="space-y-6">
             
             {/* <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-              <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/20">
+              <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/20">
                 <h3 className="font-semibold text-green-900 dark:text-green-100 flex items-center gap-2">
                   <CheckCircle className="w-5 h-5" />
                   Sender ID Active
                 </h3>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                   <p className="text-green-900 dark:text-green-100">
                     ✅ Members now see <span className="font-mono font-bold text-lg">"{status.customSenderId}"</span> when receiving SMS from your church.
@@ -343,10 +369,10 @@ const SMSSettings = () => {
 
             {/* Change Sender ID Section */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-              <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+              <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100">Change Sender ID</h3>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Want to update your sender ID? Enter a new one below.</p>
                 <input
                   type="text"
@@ -368,7 +394,7 @@ const SMSSettings = () => {
                 <button
                   onClick={handleRegisterSenderId}
                   disabled={submitting || senderId.length < 3}
-                  className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>
@@ -392,13 +418,13 @@ const SMSSettings = () => {
         {status?.status === 'rejected' && (
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-              <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
+              <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
                 <h3 className="font-semibold text-red-900 dark:text-red-100 flex items-center gap-2">
                   <XCircle className="w-5 h-5" />
                   Sender ID Rejected
                 </h3>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                   <p className="text-red-900 dark:text-red-100">
                     The sender ID <span className="font-mono font-bold">"{status.customSenderId}"</span> could not be approved.
@@ -420,10 +446,10 @@ const SMSSettings = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-              <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+              <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100">Try Another Sender ID</h3>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <input
                   type="text"
                   value={senderId}

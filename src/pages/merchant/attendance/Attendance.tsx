@@ -303,22 +303,32 @@ const Attendance: React.FC = () => {
   return (
     <div className="p-2 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Attendance</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs sm:text-base text-gray-600 dark:text-gray-400 mt-1">
             View and track attendance across services and events
           </p>
         </div>
         {hasSearched && attendanceRecords.length > 0 && (
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            {exporting ? 'Exporting…' : 'Export CSV'}
-          </button>
+          <>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex-shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              {exporting ? 'Exporting…' : 'Export CSV'}
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="sm:hidden p-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+              title="Export CSV"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          </>
         )}
       </div>
 
@@ -341,10 +351,10 @@ const Attendance: React.FC = () => {
 
       {/* Selection card — single row */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-        <div className="flex flex-wrap gap-4 items-end">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:items-end">
 
           {/* Event selector */}
-          <div className="flex-1 min-w-[200px]" ref={eventDropdownRef}>
+          <div className="w-full sm:flex-1 sm:min-w-[200px]" ref={eventDropdownRef}>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {tab === 'services' ? 'Service' : 'Event'} {tab === 'services' && <span className="text-red-500">*</span>}
             </label>
@@ -399,25 +409,25 @@ const Attendance: React.FC = () => {
 
           {/* Date range — recurring only */}
           {isRecurring && (
-            <>
-              <div className="w-36">
+            <div className="grid grid-cols-2 gap-3 w-full sm:contents">
+              <div className="sm:w-36">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   From <span className="text-red-600 dark:text-red-500 font-semibold">*</span>
                 </label>
                 <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Start date" />
               </div>
-              <div className="w-36">
+              <div className="sm:w-36">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   To <span className="text-red-600 dark:text-red-500 font-semibold">*</span>
                 </label>
                 <DatePicker value={dateTo} onChange={setDateTo} placeholder="End date" min={dateFrom} max={getTodayYMD()} disabled={!dateFrom} />
               </div>
-            </>
+            </div>
           )}
 
           {/* Member filter — recurring only */}
           {isRecurring && (
-            <div className="w-48" ref={memberDropdownRef}>
+            <div className="w-full sm:w-48" ref={memberDropdownRef}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Member <span className="text-gray-400 font-normal">(optional)</span>
               </label>
@@ -459,11 +469,11 @@ const Attendance: React.FC = () => {
           )}
 
           {/* View button */}
-          <div className="flex items-end">
+          <div className="w-full sm:w-auto sm:flex sm:items-end">
             <button
               onClick={() => fetchAttendance(1)}
               disabled={!selectedEvent || loading || (isRecurring && (!dateFrom || !dateTo))}
-              className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+              className="w-full sm:w-auto px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
             >
               {loading && <Loader className="w-4 h-4 animate-spin" />}
               View Attendance
@@ -612,30 +622,56 @@ const Attendance: React.FC = () => {
                     ? format(new Date(record.checkIn.timestamp), 'h:mm a')
                     : '—';
                   const isMember = record.attendeeType === 'member';
+                  const avatar = (
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                      isMember
+                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    }`}>
+                      {(name[0] || '?').toUpperCase()}
+                    </div>
+                  );
+                  const badge = (
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
+                      isMember
+                        ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}>
+                      {isMember ? 'Member' : 'Guest'}
+                    </span>
+                  );
                   return (
-                    <div key={record._id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                        isMember
-                          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                      }`}>
-                        {(name[0] || '?').toUpperCase()}
+                    <div key={record._id}>
+                      {/* Mobile: compact 2-line row */}
+                      <div className="sm:hidden flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        {avatar}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{name}</p>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{time}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {badge}
+                            {record.checkIn?.method && (
+                              <span className="text-xs text-gray-400 capitalize">{record.checkIn.method}</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{person?.phone || person?.email || ''}</p>
+
+                      {/* Desktop: single row */}
+                      <div className="hidden sm:flex items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        {avatar}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{person?.phone || person?.email || ''}</p>
+                        </div>
+                        {badge}
+                        <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0 w-16 text-right">{time}</span>
+                        <span className="text-xs text-gray-400 capitalize flex-shrink-0 w-20 text-right">
+                          {record.checkIn?.method || ''}
+                        </span>
                       </div>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
-                        isMember
-                          ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                      }`}>
-                        {isMember ? 'Member' : 'Guest'}
-                      </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0 w-16 text-right">{time}</span>
-                      <span className="text-xs text-gray-400 capitalize flex-shrink-0 w-20 text-right">
-                        {record.checkIn?.method || ''}
-                      </span>
                     </div>
                   );
                 })}

@@ -334,7 +334,7 @@ const DepartmentDetails = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="hidden md:flex items-center space-x-3">
           <PermissionGuard permission="departments.canAddMembers">
           <button
             onClick={() => {
@@ -362,62 +362,62 @@ const DepartmentDetails = () => {
 
       {/* Statistics Cards */}
       {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800/30 p-6 hover:shadow-md transition-shadow">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800/30 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">Total Members</p>
-                <p className="text-4xl font-bold text-blue-900 dark:text-blue-200">
+                <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">Total Members</p>
+                <p className="text-2xl sm:text-4xl font-bold text-blue-900 dark:text-blue-200">
                   {statistics.totalMembers}
                 </p>
               </div>
-              <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
-                <Users className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 sm:w-7 sm:h-7 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10 rounded-xl border border-green-200 dark:border-green-800/30 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10 rounded-xl border border-green-200 dark:border-green-800/30 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-green-600 dark:text-green-400 mb-2">Active Members</p>
-                <p className="text-4xl font-bold text-green-900 dark:text-green-200">
+                <p className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400 mb-2">Active Members</p>
+                <p className="text-2xl sm:text-4xl font-bold text-green-900 dark:text-green-200">
                   {statistics.activeMembers}
                 </p>
               </div>
-              <div className="w-14 h-14 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center">
-                <UserCheck className="w-7 h-7 text-green-600 dark:text-green-400" />
+              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-5 h-5 sm:w-7 sm:h-7 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-900/10 rounded-xl border border-purple-200 dark:border-purple-800/30 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-900/10 rounded-xl border border-purple-200 dark:border-purple-800/30 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-2">Gender Distribution</p>
-                <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
-                  <span className="text-3xl">{statistics.maleMembers}</span>
+                <p className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400 mb-2">Gender Distribution</p>
+                <p className="text-lg sm:text-2xl font-bold text-purple-900 dark:text-purple-200">
+                  <span className="text-xl sm:text-3xl">{statistics.maleMembers}</span>
                   <span className="text-gray-500 dark:text-gray-400 mx-2">/</span>
-                  <span className="text-3xl">{statistics.femaleMembers}</span>
+                  <span className="text-xl sm:text-3xl">{statistics.femaleMembers}</span>
                 </p>
               </div>
-              <div className="w-14 h-14 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-900/10 rounded-xl border border-orange-200 dark:border-orange-800/30 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-900/10 rounded-xl border border-orange-200 dark:border-orange-800/30 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-2">Recent Joins</p>
-                <p className="text-4xl font-bold text-orange-900 dark:text-orange-200">
+                <p className="text-xs sm:text-sm font-medium text-orange-600 dark:text-orange-400 mb-2">Recent Joins</p>
+                <p className="text-2xl sm:text-4xl font-bold text-orange-900 dark:text-orange-200">
                   {statistics.recentJoins}
                 </p>
                 <p className="text-xs text-orange-600 dark:text-orange-400 mt-2 font-medium">Last 30 days</p>
               </div>
-              <div className="w-14 h-14 bg-orange-100 dark:bg-orange-900/40 rounded-xl flex items-center justify-center">
-                <Calendar className="w-7 h-7 text-orange-600 dark:text-orange-400" />
+              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-orange-100 dark:bg-orange-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Calendar className="w-5 h-5 sm:w-7 sm:h-7 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </div>
@@ -466,7 +466,63 @@ const DepartmentDetails = () => {
               </p>
             </div>
           ) : (
-            <table className="w-full">
+            <>
+              {/* Mobile Card List */}
+              <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                {members.map((member) => (
+                  <div key={member._id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div onClick={() => navigate(`/members/${member._id}`)} className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
+                        {member.photo ? (
+                          <img
+                            src={member.photo}
+                            alt={`${member.firstName} ${member.lastName}`}
+                            className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-11 h-11 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm">
+                              {member.firstName[0]}{member.lastName[0]}
+                            </span>
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                              {member.firstName} {member.lastName}
+                            </p>
+                            <span className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                              member.membershipStatus === 'active'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                : member.membershipStatus === 'inactive'
+                                ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                            }`}>
+                              {member.membershipStatus}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{member.email}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {member.phone || '—'} · {member.branch?.name || '—'}
+                          </p>
+                        </div>
+                      </div>
+                      <PermissionGuard permission="departments.canRemoveMembers">
+                        <button
+                          onClick={() => setMemberToRemove(member)}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
+                          title="Remove from department"
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      </PermissionGuard>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table */}
+              <table className="w-full hidden md:table">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Name</th>
@@ -552,6 +608,7 @@ const DepartmentDetails = () => {
                 ))}
               </tbody>
             </table>
+            </>
           )}
         </div>
 
@@ -580,6 +637,22 @@ const DepartmentDetails = () => {
           </div>
         )}
       </div>
+
+      {/* Mobile: Floating Add Members Button */}
+      <PermissionGuard permission="departments.canAddMembers">
+        <button
+          onClick={() => {
+            setMemberSearchTerm('');
+            setShowAddMembersModal(true);
+            fetchAvailableMembers();
+          }}
+          className="md:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+          title="Add Members"
+        >
+          <UserPlus className="w-6 h-6" />
+        </button>
+      </PermissionGuard>
 
       {/* ✅ Add Members Modal with API Search */}
       {showAddMembersModal && (

@@ -470,50 +470,50 @@ const EventAttendance = () => {
 
       <div className="max-w-8xl mx-auto py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Total Attendees</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.total}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.total}</p>
               </div>
-              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
+              <div className="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg hidden sm:block">
                 <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Members</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.members}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.members}</p>
               </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+              <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg hidden sm:block">
                 <UserCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Guests</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.guests}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.guests}</p>
               </div>
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg hidden sm:block">
                 <UserX className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Absentees</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.absentees}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.absentees}</p>
               </div>
-              <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
+              <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg hidden sm:block">
                 <UserX className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
             </div>
@@ -623,8 +623,130 @@ const EventAttendance = () => {
             </div>
           ) : (
             <>
-              {/* Attendance Table */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              {/* Mobile Card List */}
+              <div className="md:hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredAttendance.map((record) => {
+                  const isAbsentee = record.attendeeType === 'absentee';
+                  const isGuest = record.attendeeType === 'guest';
+                  const name = isAbsentee
+                    ? `${record.firstName} ${record.lastName}`
+                    : isGuest
+                      ? `${record.guest?.firstName} ${record.guest?.lastName}`
+                      : `${record.member?.firstName} ${record.member?.lastName}`;
+                  const phone = isAbsentee ? record.phone : (isGuest ? record.guest?.phone : record.member?.phone);
+                  const email = isAbsentee ? record.email : (isGuest ? record.guest?.email : record.member?.email);
+                  const recordKey = record._id || record.email;
+
+                  return (
+                    <div key={recordKey} className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAbsentee ? 'bg-red-500' : isGuest ? 'bg-purple-500' : 'bg-green-500'}`}></div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{name}</p>
+                        </div>
+                        <div
+                          className="relative flex-shrink-0"
+                          ref={(el) => {
+                            if (el) {
+                              menuRefs.current.set(recordKey, el);
+                            } else {
+                              menuRefs.current.delete(recordKey);
+                            }
+                          }}
+                        >
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === recordKey ? null : recordKey)}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                          >
+                            <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                          </button>
+
+                          {openMenuId === recordKey && (
+                            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 min-w-max">
+                              {isAbsentee ? (
+                                <button
+                                  onClick={() => handleCheckInAbsentee(record)}
+                                  disabled={checkingInAbsentee === record._id}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 first:rounded-t-lg disabled:opacity-50"
+                                >
+                                  {checkingInAbsentee === record._id ? (
+                                    <>
+                                      <Loader className="w-4 h-4 animate-spin" />
+                                      Checking in...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="w-4 h-4" />
+                                      Check In Now
+                                    </>
+                                  )}
+                                </button>
+                              ) : (
+                                <>
+                                  {isGuest && !record.guest?.convertedToMember && (
+                                    <button
+                                      onClick={() => handleConvertGuest(record)}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 first:rounded-t-lg"
+                                    >
+                                      <ArrowUpCircle className="w-4 h-4" />
+                                      Convert to Member
+                                    </button>
+                                  )}
+                                  {isGuest && record.guest?.convertedToMember && (
+                                    <div className="px-4 py-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                                      <UserCheck className="w-4 h-4" />
+                                      Already Converted
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
+                        {phone && <p>{phone}</p>}
+                        {email && <p className="truncate">{email}</p>}
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          isAbsentee
+                            ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                            : isGuest
+                              ? 'bg-purple-100 dark:bg-purple-900/20 text-primary-700 dark:text-primary-300'
+                              : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                        }`}>
+                          {isAbsentee ? 'Absent' : isGuest ? 'Guest' : 'Member'}
+                        </span>
+                        {!isAbsentee && (
+                          <>
+                            <span className="text-xs text-gray-500 dark:text-gray-500">
+                              {format(new Date(record.checkIn?.timestamp || record.createdAt), 'MMM dd, yyyy · hh:mm a')}
+                            </span>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              record.checkIn?.method === 'qr'
+                                ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            }`}>
+                              {record.checkIn?.method ? record.checkIn.method.toUpperCase() : 'UNKNOWN'}
+                            </span>
+                          </>
+                        )}
+                        {isAbsentee && (
+                          <span className="px-2.5 py-1 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-xs rounded-full font-medium">
+                            Not Checked In
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden md:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>

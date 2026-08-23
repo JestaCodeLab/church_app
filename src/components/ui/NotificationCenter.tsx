@@ -127,13 +127,13 @@ const NotificationCenter: React.FC = () => {
       {/* Bell trigger */}
       <button
         onClick={openDrawer}
-        className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="relative p-1.5 sm:p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         aria-label="Open notifications"
         style={{ marginRight: '10px' }}
       >
-        <Bell className="w-6 h-6" />
+        <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
         {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800">
+          <span className="absolute top-0.5 right-0 flex items-center justify-center min-w-[14px] h-[14px] sm:min-w-[18px] sm:h-[18px] px-0.5 sm:px-1 text-[8px] sm:text-[10px] font-bold text-white bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

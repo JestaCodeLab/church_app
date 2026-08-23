@@ -46,6 +46,14 @@ const SMSDashboard: React.FC = () => {
   const [recentSMS, setRecentSMS] = useState<any[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
 
+  // Responsive chart sizing
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth < 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     checkSMSAccess();
     fetchDashboardData();
@@ -251,7 +259,7 @@ const SMSDashboard: React.FC = () => {
 
   return (
     <FeatureGate feature={"smsAnalytics"} showUpgrade={!hasSMSAccess}>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -264,26 +272,26 @@ const SMSDashboard: React.FC = () => {
 
        {/* Credits Card */}
       {credits && (
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl shadow-lg p-6 text-white">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-primary-100 text-sm mb-1">Available Credits</p>
-              <p className="text-4xl font-bold">{credits.balance.toLocaleString()}</p>
+              <p className="text-3xl sm:text-4xl font-bold">{credits.balance.toLocaleString()}</p>
               <p className="text-primary-100 text-sm mt-2">
                 Plan: {credits.planCredits} | Purchased: {credits.purchasedCredits}
               </p>
             </div>
-            <div className="text-right space-y-2">
-              <div className="flex gap-2 justify-end">
+            <div className="sm:text-right space-y-2">
+              <div className="flex gap-2 sm:justify-end">
                 <Link
                   to="/messaging/send"
-                  className="px-4 py-2 bg-white text-primary-600 rounded-lg hover:bg-primary-50 font-medium inline-block"
+                  className="flex-1 sm:flex-none text-center px-4 py-2 bg-white text-primary-600 rounded-lg hover:bg-primary-50 font-medium inline-block"
                 >
                   Send SMS
                 </Link>
                 <Link
                   to="/messaging/credits"
-                  className="px-4 py-2 bg-white text-primary-600 rounded-lg hover:bg-primary-50 font-medium inline-block"
+                  className="flex-1 sm:flex-none text-center px-4 py-2 bg-white text-primary-600 rounded-lg hover:bg-primary-50 font-medium inline-block"
                 >
                   Buy Credits
                 </Link>
@@ -297,10 +305,25 @@ const SMSDashboard: React.FC = () => {
       )}
 
       {/* Global Date Filter */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by:</span>
-          <div className="flex flex-wrap gap-2">
+
+          {/* Mobile: dropdown */}
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value as any)}
+            className="sm:hidden w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+          >
+            <option value="this-week">This Week</option>
+            <option value="last-week">Last Week</option>
+            <option value="this-month">This Month</option>
+            <option value="last-month">Last Month</option>
+            <option value="custom">Custom</option>
+          </select>
+
+          {/* Desktop: button chips */}
+          <div className="hidden sm:flex flex-wrap gap-2">
             {[
               { value: 'this-week', label: 'This Week' },
               { value: 'last-week', label: 'Last Week' },
@@ -325,12 +348,12 @@ const SMSDashboard: React.FC = () => {
 
         {/* Custom Date Inputs */}
         {dateFilter === 'custom' && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="date"
               value={tempStartDate}
               onChange={(e) => setTempStartDate(e.target.value)}
-              className="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white"
+              className="flex-1 min-w-0 sm:flex-none px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white"
               placeholder="Start Date"
             />
             <span className="text-gray-500">to</span>
@@ -338,12 +361,12 @@ const SMSDashboard: React.FC = () => {
               type="date"
               value={tempEndDate}
               onChange={(e) => setTempEndDate(e.target.value)}
-              className="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white"
+              className="flex-1 min-w-0 sm:flex-none px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white"
               placeholder="End Date"
             />
             <button
               onClick={handleCustomDateSearch}
-              className="px-4 py-1.5 bg-primary-600 text-white rounded text-sm font-medium hover:bg-primary-700 transition-colors whitespace-nowrap"
+              className="w-full sm:w-auto px-4 py-1.5 bg-primary-600 text-white rounded text-sm font-medium hover:bg-primary-700 transition-colors whitespace-nowrap"
             >
               Search
             </button>
@@ -355,62 +378,62 @@ const SMSDashboard: React.FC = () => {
 
       {/* Quick Stats */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Messages Sent</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Messages Sent</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {stats.totalSent.toLocaleString()}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl"><CheckCircle className='text-green-600' /></span>
+              <div className="w-9 h-9 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CheckCircle className='w-5 h-5 sm:w-6 sm:h-6 text-green-600' />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Recipients</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Recipients</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {stats.totalRecipients.toLocaleString()}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl"><Users className='text-primary-600' /></span>
+              <div className="w-9 h-9 sm:w-12 sm:h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className='w-5 h-5 sm:w-6 sm:h-6 text-primary-600' />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Success Rate</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Success Rate</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {stats.successRate}%
                 </p>
               </div>
-              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl"><ChartArea className='text-primary-600'/></span>
+              <div className="w-9 h-9 sm:w-12 sm:h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <ChartArea className='w-5 h-5 sm:w-6 sm:h-6 text-primary-600' />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Credits Used (Period)</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Credits Used (Period)</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {stats?.totalCreditsUsed.toLocaleString() || '0'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   All-time total: {credits?.totalUsed.toLocaleString() || '0'}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl"><CreditCard className='text-orange-600' /></span>
+              <div className="w-9 h-9 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CreditCard className='w-5 h-5 sm:w-6 sm:h-6 text-orange-600' />
               </div>
             </div>
           </div>
@@ -418,7 +441,7 @@ const SMSDashboard: React.FC = () => {
       )}
 
       {/* Time-Series Analytics Charts */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-6">
         <div className="mb-6">
           <div className="flex items-center space-x-2 mb-4">
             <TrendingUp className="w-5 h-5 text-primary-600" />
@@ -433,7 +456,7 @@ const SMSDashboard: React.FC = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
             </div>
           ) : chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={isMobileView ? 260 : 400}>
               {(() => {
                 const period = getChartPeriod();
                 const dataKey = period === 'daily' ? 'date' : period === 'weekly' ? 'week' : 'month';
@@ -461,7 +484,7 @@ const SMSDashboard: React.FC = () => {
                       }}
                       labelStyle={{ color: '#fff' }}
                     />
-                    <Legend />
+                    {!isMobileView && <Legend />}
                     <Area
                       type="monotone"
                       dataKey="sent"
@@ -491,9 +514,9 @@ const SMSDashboard: React.FC = () => {
       </div>
 
       {/* Recent Successful SMS Delivered */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4 gap-2">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             Recent Successful SMS Delivered
           </h2>
           <Link

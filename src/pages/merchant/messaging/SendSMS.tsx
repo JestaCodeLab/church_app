@@ -610,7 +610,7 @@ const SendSMS = () => {
     <FeatureGate feature="smsSend">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               Send SMS
@@ -620,14 +620,27 @@ const SendSMS = () => {
             </p>
           </div>
 
-          {/* Credits Display */}
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-base text-gray-600 dark:text-gray-400">Available Credits: {credits?.balance || 0}</p>
+          {/* Credits Display — mobile: clearer card */}
+          <div className="sm:hidden flex items-center justify-between gap-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg px-4 py-3">
+            <div>
+              <p className="text-xs font-medium text-primary-700 dark:text-primary-400">Available Credits</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{credits?.balance || 0}</p>
             </div>
             <Link
               to="/messaging/credits"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center space-x-2"
+              className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-1.5 text-sm font-medium flex-shrink-0"
+            >
+              <CreditCard className="w-4 h-4" />
+              Buy Credits
+            </Link>
+          </div>
+
+          {/* Credits Display — desktop */}
+          <div className="hidden sm:flex items-center justify-end gap-4">
+            <p className="text-base text-gray-600 dark:text-gray-400">Available Credits: {credits?.balance || 0}</p>
+            <Link
+              to="/messaging/credits"
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center space-x-2 flex-shrink-0"
             >
               <CreditCard className="w-4 h-4" />
               <span>Buy Credits</span>
@@ -681,7 +694,7 @@ const SendSMS = () => {
 
         {/* Main Form */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <form onSubmit={handleSendSMS} className="p-6 space-y-6">
+          <form onSubmit={handleSendSMS} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             {/* Send Type Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

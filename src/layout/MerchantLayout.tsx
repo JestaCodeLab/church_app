@@ -8,7 +8,6 @@ import {
   MessageSquare,
   Settings,
   Search,
-  Menu,
   X,
   Church,
   HandCoins,
@@ -54,6 +53,7 @@ import ChurchSelector from '../components/selectors/ChurchSelector';
 import BranchSelector from '../components/selectors/BranchSelector';
 import { useBranch } from '../context/BranchContext';
 import NotificationCenter from '../components/ui/NotificationCenter';
+import MobileBottomNav from '../components/ui/MobileBottomNav';
 import {usePermission} from '../hooks/usePermission';
 import { announcementAPI } from '../services/api';
 import { Announcement } from '../types/announcement';
@@ -840,16 +840,8 @@ const MerchantLayout = () => {
         {/* Header - White with search & user */}
         <header className="h-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 transition-colors">
           <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-            {/* Left: Mobile menu + Search + Church Selector */}
-            <div className="flex items-center flex-1 space-x-4">
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-
+            {/* Left: Branch Switcher (mobile) + Search + Church Selector */}
+            <div className="flex items-center flex-1 min-w-0 space-x-4">
               {/* Church Selector for Super Admin */}
               {user?.role?.slug === 'super_admin' && (
                 <ChurchSelector
@@ -862,8 +854,8 @@ const MerchantLayout = () => {
 
               {/* Branch Selector for church_admin and branch_admin */}
               {hasFeature('branchManagement' as any) && user?.role?.slug !== 'super_admin' && (
-                <div data-tour="dashboard-branch-filter">
-                  <BranchSelector className="hidden sm:inline-flex" />
+                <div data-tour="dashboard-branch-filter" className="min-w-0">
+                  <BranchSelector className="inline-flex min-w-0" />
                 </div>
               )}
 
@@ -883,7 +875,7 @@ const MerchantLayout = () => {
             </div>
 
             {/* Right: Theme + Notification + User */}
-            <div className="flex items-center space-x-1 sm:space-x-0">
+            <div className="flex items-center space-x-0">
               <ThemeToggle />
 
               {/* Notification Bell */}
@@ -898,11 +890,11 @@ const MerchantLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 bg-gray-100 min-h-screen dark:bg-gray-900 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 bg-gray-100 min-h-screen dark:bg-gray-900 overflow-y-auto p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8">
           <div className="max-w-full mx-auto">
             {/* Branch Context Banner */}
             {selectedBranch && (
-              <div className="mb-4 flex items-center justify-between px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="hidden sm:flex mb-4 items-center justify-between px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <GitBranch className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
@@ -957,6 +949,9 @@ const MerchantLayout = () => {
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav onOpenMore={() => setSidebarOpen(true)} />
 
       {/* Feature Announcement Modal */}
       {showAnnouncementModal && activeAnnouncement && (

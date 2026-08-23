@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CheckCircle, Clock, XCircle, AlertCircle, ChevronLeft, ChevronRight, Trash2, Loader as LoaderIcon } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, AlertCircle, ChevronLeft, ChevronRight, Trash2, RefreshCw, Loader as LoaderIcon } from 'lucide-react';
 import { showToast } from '../../../utils/toasts';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import api, { messagingAPI } from '../../../services/api';
@@ -57,7 +57,7 @@ const SMSHistory = () => {
   const [selectedLog, setSelectedLog] = useState<SmsLog | ScheduledMessage | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [hasSMSAccess, setHasSMSAccess] = useState<boolean | null>(null);
-  const [messageType, setMessageType] = useState<'regular' | 'scheduled' | 'failed'>('regular');
+  const [messageType, setMessageType] = useState<'all' | 'regular' | 'scheduled' | 'failed'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [cancelling, setCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
@@ -65,38 +65,43 @@ const SMSHistory = () => {
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [regularTotalPages, setRegularTotalPages] = useState(1);
   const [scheduledTotalPages, setScheduledTotalPages] = useState(1);
+  const [allTotalPages, setAllTotalPages] = useState(1);
   const [regularTotalItems, setRegularTotalItems] = useState(0);
   const [scheduledTotalItems, setScheduledTotalItems] = useState(0);
   const [failedTotalItems, setFailedTotalItems] = useState(0);
+  const [allTotalItems, setAllTotalItems] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const PAGE_SIZE = 20;
-  const prevMessageTypeRef = useRef<'regular' | 'scheduled' | 'failed' | null>(null);
+  const prevMessageTypeRef = useRef<'all' | 'regular' | 'scheduled' | 'failed' | null>(null);
 
   useEffect(() => {
     checkSMSAccess();
     // Initial load on mount - fetch counts for all tabs
     fetchAllTabCounts();
-    handleTabChange('regular');
+    handleTabChange('all');
   }, []);
 
   const fetchAllTabCounts = async () => {
     try {
       // Fetch counts for all tabs simultaneously
-      const [regularRes, scheduledRes, failedRes] = await Promise.all([
+      const [allRes, regularRes, scheduledRes, failedRes] = await Promise.all([
+        messagingAPI.sms.getLogs({ page: 1, limit: 1 }),
         messagingAPI.sms.getLogs({ page: 1, limit: 1, status: 'completed' }),
         messagingAPI.sms.getScheduled({ page: 1, limit: 1 }),
         messagingAPI.sms.getLogs({ page: 1, limit: 1, status: 'failed' })
       ]);
 
+      const allCount = allRes.data?.data?.pagination?.totalItems || 0;
       const regularCount = regularRes.data?.data?.pagination?.totalItems || 0;
       const scheduledCount = scheduledRes.data?.data?.pagination?.totalItems || 0;
       const failedCount = failedRes.data?.data?.pagination?.totalItems || 0;
 
+      setAllTotalItems(allCount);
       setRegularTotalItems(regularCount);
       setScheduledTotalItems(scheduledCount);
       setFailedTotalItems(failedCount);
 
-      console.log('Tab counts fetched:', { regularCount, scheduledCount, failedCount });
+      console.log('Tab counts fetched:', { allCount, regularCount, scheduledCount, failedCount });
     } catch (error) {
       console.error('Failed to fetch tab counts:', error);
     }
@@ -124,7 +129,7 @@ const SMSHistory = () => {
     setHasSMSAccess(hasAccess);
   };
 
-  const handleTabChange = (tab: 'regular' | 'scheduled' | 'failed') => {
+  const handleTabChange = (tab: 'all' | 'regular' | 'scheduled' | 'failed') => {
     setMessageType(tab);
     setCurrentPage(1);
   };
@@ -133,7 +138,15 @@ const SMSHistory = () => {
     try {
       // Show tab loading spinner for tab changes
       setTabLoading(true);
-      if (messageType === 'regular') {
+      if (messageType === 'all') {
+        const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE });
+        const responseData = res.data?.data || {};
+        setLogs(responseData.logs || []);
+        const totalPagesValue = responseData.pagination?.totalPages || 1;
+        const totalItemsValue = responseData.pagination?.totalItems || 0;
+        setAllTotalPages(totalPagesValue);
+        setAllTotalItems(totalItemsValue);
+      } else if (messageType === 'regular') {
         const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE, status: 'completed' });
         const responseData = res.data?.data || {};
         setLogs(responseData.logs || []);
@@ -171,7 +184,16 @@ const SMSHistory = () => {
   const fetchLogs = async () => {
     try {
       setRefreshing(true);
-      if (messageType === 'regular') {
+      if (messageType === 'all') {
+        const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE });
+        console.log('All SMS Response:', res);
+        const responseData = res.data?.data || {};
+        setLogs(responseData.logs || []);
+        const totalPagesValue = responseData.pagination?.totalPages || 1;
+        const totalItemsValue = responseData.pagination?.totalItems || 0;
+        setAllTotalPages(totalPagesValue);
+        setAllTotalItems(totalItemsValue);
+      } else if (messageType === 'regular') {
         const res = await messagingAPI.sms.getLogs({ page: currentPage, limit: PAGE_SIZE, status: 'completed' });
         console.log('Regular SMS Response:', res);
         const responseData = res.data?.data || {};
@@ -215,6 +237,7 @@ const SMSHistory = () => {
       delivered: { icon: CheckCircle, color: 'text-green-600 bg-green-100', label: 'Delivered' },
       completed: { icon: CheckCircle, color: 'text-green-600 bg-green-100', label: 'Delivered' },
       submitted: { icon: Clock, color: 'text-yellow-600 bg-yellow-100', label: 'Submitted' },
+      processing: { icon: Clock, color: 'text-yellow-600 bg-yellow-100', label: 'Processing' },
       sent: { icon: Clock, color: 'text-primary-600 bg-primary-100', label: 'Sent' },
       failed: { icon: XCircle, color: 'text-red-600 bg-red-100', label: 'Failed' },
       pending: { icon: Clock, color: 'text-gray-600 bg-gray-100', label: 'Pending' },
@@ -301,8 +324,8 @@ const SMSHistory = () => {
   };
 
   // Get current data based on type
-  const currentData = (messageType === 'regular' || messageType === 'failed') ? logs : scheduledMessages;
-  const totalPages = (messageType === 'regular' || messageType === 'failed') ? regularTotalPages : scheduledTotalPages;
+  const currentData = messageType === 'scheduled' ? scheduledMessages : logs;
+  const totalPages = messageType === 'scheduled' ? scheduledTotalPages : (messageType === 'all' ? allTotalPages : regularTotalPages);
   const startIdx = (currentPage - 1) * PAGE_SIZE;
   const endIdx = startIdx + PAGE_SIZE;
   const paginatedData = currentData;
@@ -314,38 +337,51 @@ const SMSHistory = () => {
   return (
     <FeatureGate feature="smsHistory" showUpgrade={!hasSMSAccess}>
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          SMS History
-        </h2>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            SMS History
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Track delivery status for every sent, scheduled, and failed SMS message
+          </p>
+        </div>
         <button
           onClick={() => {
             fetchLogs();
             fetchAllTabCounts();
           }}
           disabled={refreshing}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+          className={`flex-shrink-0 px-3 py-2 sm:px-4 rounded-lg flex items-center gap-2 transition-colors ${
             refreshing
               ? 'bg-gray-400 text-white cursor-not-allowed'
               : 'bg-primary-600 text-white hover:bg-primary-700'
           }`}
         >
           {refreshing ? (
-            <>
-              <LoaderIcon className="w-4 h-4 animate-spin" />
-              Refreshing...
-            </>
+            <LoaderIcon className="w-4 h-4 animate-spin" />
           ) : (
-            'Refresh'
+            <RefreshCw className="w-4 h-4" />
           )}
+          <span className="hidden sm:inline">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
         </button>
       </div>
 
       {/* Message Type Tabs */}
-      <div className="flex space-x-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex space-x-3 sm:space-x-4 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
+        <button
+          onClick={() => handleTabChange('all')}
+          className={`px-3 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap flex-shrink-0 font-medium border-b-2 transition-colors ${
+            messageType === 'all'
+              ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          All ({allTotalItems})
+        </button>
         <button
           onClick={() => handleTabChange('regular')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${
+          className={`px-3 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap flex-shrink-0 font-medium border-b-2 transition-colors ${
             messageType === 'regular'
               ? 'border-primary-600 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -355,7 +391,7 @@ const SMSHistory = () => {
         </button>
         <button
           onClick={() => handleTabChange('scheduled')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${
+          className={`px-3 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap flex-shrink-0 font-medium border-b-2 transition-colors ${
             messageType === 'scheduled'
               ? 'border-primary-600 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -365,7 +401,7 @@ const SMSHistory = () => {
         </button>
         <button
           onClick={() => handleTabChange('failed')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${
+          className={`px-3 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap flex-shrink-0 font-medium border-b-2 transition-colors ${
             messageType === 'failed'
               ? 'border-red-600 text-red-600 dark:text-red-400'
               : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -377,14 +413,94 @@ const SMSHistory = () => {
 
       {/* SMS Logs Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="sm:hidden divide-y divide-gray-200 dark:divide-gray-700">
+          {tabLoading ? (
+            <div className="p-8 flex items-center justify-center gap-2">
+              <LoaderIcon className="w-5 h-5 animate-spin text-primary-600" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">Loading messages...</span>
+            </div>
+          ) : paginatedData.length === 0 ? (
+            <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              No {messageType === 'all' ? '' : `${messageType} `}messages found
+            </div>
+          ) : (
+            paginatedData.map((item) => {
+              const isScheduled = messageType === 'scheduled';
+              const log = item as SmsLog;
+              const scheduled = item as ScheduledMessage;
+
+              return (
+                <div key={item._id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {isScheduled
+                          ? new Date(scheduled.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                          : new Date(log.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {!isScheduled ? (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
+                          {log.messageType} · <span className="text-primary-600 dark:text-primary-400">{log.senderID}</span>
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Scheduled: {new Date(scheduled.scheduledAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(isScheduled ? scheduled.status : log.overallStatus)}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                    <span>{isScheduled ? scheduled.recipientCount : log.totalRecipients} recipients</span>
+                    {!isScheduled && <span>{log.successfulDeliveries}/{log.totalRecipients} delivered</span>}
+                    <span>{isScheduled ? scheduled.estimatedCreditsNeeded : log.creditsUsed} credits</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => viewDetails(item)}
+                      className="px-2 py-1 text-xs border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded font-medium transition-colors"
+                    >
+                      View
+                    </button>
+                    {isScheduled && (scheduled as ScheduledMessage).status === 'pending' && (
+                      <button
+                        onClick={() => setShowCancelConfirm(item._id)}
+                        className="px-2 py-1 text-xs border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded font-medium flex items-center gap-1 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Cancel</span>
+                      </button>
+                    )}
+                    {(messageType === 'failed' || (messageType === 'all' && log.overallStatus === 'failed')) && (
+                      <button
+                        onClick={() => handleResendMessage(item._id)}
+                        disabled={resending && resendingId === item._id}
+                        className="px-2 py-1 text-xs border border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {resending && resendingId === item._id ? 'Resending...' : 'Resend'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Date
                 </th>
-                {(messageType === 'regular' || messageType === 'failed') && (
+                {(messageType === 'all' || messageType === 'regular' || messageType === 'failed') && (
                   <>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Type
@@ -405,7 +521,7 @@ const SMSHistory = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Status
                 </th>
-                {(messageType === 'regular' || messageType === 'failed') && (
+                {(messageType === 'all' || messageType === 'regular' || messageType === 'failed') && (
                   <>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Delivered
@@ -438,7 +554,7 @@ const SMSHistory = () => {
               ) : paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan={messageType === 'scheduled' ? 7 : 8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    No {messageType} messages found
+                    No {messageType === 'all' ? '' : `${messageType} `}messages found
                   </td>
                 </tr>
               ) : (
@@ -454,7 +570,7 @@ const SMSHistory = () => {
                           ? new Date(scheduled.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                           : new Date(log.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      {(messageType === 'regular' || messageType === 'failed') && (
+                      {(messageType === 'all' || messageType === 'regular' || messageType === 'failed') && (
                         <>
                           <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 capitalize">
                             {log.messageType}
@@ -475,7 +591,7 @@ const SMSHistory = () => {
                       <td className="px-6 py-4 text-sm">
                         {getStatusBadge(isScheduled ? scheduled.status : log.overallStatus)}
                       </td>
-                      {(messageType === 'regular' || messageType === 'failed') && (
+                      {(messageType === 'all' || messageType === 'regular' || messageType === 'failed') && (
                         <>
                           <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                             {log.successfulDeliveries} / {log.totalRecipients}
@@ -507,7 +623,7 @@ const SMSHistory = () => {
                               <span>Cancel</span>
                             </button>
                           )}
-                          {messageType === 'failed' && (
+                          {(messageType === 'failed' || (messageType === 'all' && log.overallStatus === 'failed')) && (
                             <button
                               onClick={() => handleResendMessage(item._id)}
                               disabled={resending && resendingId === item._id}
@@ -528,11 +644,11 @@ const SMSHistory = () => {
 
         {/* Pagination Controls */}
         {totalPages > 0 && (
-          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="px-4 py-3 sm:px-6 sm:py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between">
             {tabLoading ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 italic">Loading page data...</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic">Loading page data...</p>
             ) : (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 Page {currentPage} of {totalPages} • Showing {paginatedData.length} records
               </p>
             )}
@@ -544,7 +660,7 @@ const SMSHistory = () => {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <div className="flex items-center space-x-1">
+              <div className="hidden sm:flex items-center space-x-1">
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   // Show page numbers smartly: always show first page, last page, and pages around current page
                   if (i === 0) return 1;
@@ -582,9 +698,9 @@ const SMSHistory = () => {
       {showDetails && selectedLog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
                   {messageType === 'scheduled' ? 'Scheduled SMS' : 'SMS'} Details
                 </h3>
                 <button
@@ -596,34 +712,34 @@ const SMSHistory = () => {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Message Info */}
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Message</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 p-3 sm:p-4 rounded-lg">
                   {(selectedLog as SmsLog | ScheduledMessage).message}
                 </p>
               </div>
 
-              {messageType === 'regular' && (
+              {(messageType === 'regular' || messageType === 'all') && (
                 <>
                   {/* Overall Stats - Regular */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-green-600 dark:text-green-400">Delivered</p>
-                      <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="bg-green-50 dark:bg-green-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-green-600 dark:text-green-400">Delivered</p>
+                      <p className="text-lg sm:text-2xl font-bold text-green-900 dark:text-green-100">
                         {(selectedLog as SmsLog).successfulDeliveries}
                       </p>
                     </div>
-                    <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-red-600 dark:text-red-400">Failed</p>
-                      <p className="text-2xl font-bold text-red-900 dark:text-red-100">
+                    <div className="bg-red-50 dark:bg-red-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">Failed</p>
+                      <p className="text-lg sm:text-2xl font-bold text-red-900 dark:text-red-100">
                         {(selectedLog as SmsLog).failedDeliveries}
                       </p>
                     </div>
-                    <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-primary-600 dark:text-primary-400">Credits Used</p>
-                      <p className="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-primary-600 dark:text-primary-400">Credits Used</p>
+                      <p className="text-lg sm:text-2xl font-bold text-primary-900 dark:text-primary-100">
                         {(selectedLog as SmsLog).creditsUsed}
                       </p>
                     </div>
@@ -666,22 +782,22 @@ const SMSHistory = () => {
               {messageType === 'failed' && (
                 <>
                   {/* Overall Stats - Failed */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-red-600 dark:text-red-400">Failed</p>
-                      <p className="text-2xl font-bold text-red-900 dark:text-red-100">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="bg-red-50 dark:bg-red-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">Failed</p>
+                      <p className="text-lg sm:text-2xl font-bold text-red-900 dark:text-red-100">
                         {(selectedLog as SmsLog).failedDeliveries}
                       </p>
                     </div>
-                    <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-primary-600 dark:text-primary-400">Credits Used</p>
-                      <p className="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-primary-600 dark:text-primary-400">Credits Used</p>
+                      <p className="text-lg sm:text-2xl font-bold text-primary-900 dark:text-primary-100">
                         {(selectedLog as SmsLog).creditsUsed}
                       </p>
                     </div>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-blue-600 dark:text-blue-400">Sent Date</p>
-                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400">Sent Date</p>
+                      <p className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100">
                         {(selectedLog as SmsLog).createdAt ? formatDateTime((selectedLog as SmsLog).createdAt) : 'N/A'}
                       </p>
                     </div>
@@ -724,45 +840,45 @@ const SMSHistory = () => {
               {messageType === 'scheduled' && (
                 <>
                   {/* Scheduled Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-primary-600 dark:text-primary-400">Scheduled For</p>
-                      <p className="text-base font-semibold text-primary-900 dark:text-primary-100">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-primary-600 dark:text-primary-400">Scheduled For</p>
+                      <p className="text-sm sm:text-base font-semibold text-primary-900 dark:text-primary-100">
                         {formatDateTime((selectedLog as ScheduledMessage).scheduledAt)}
                       </p>
                     </div>
-                    <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-primary-600 dark:text-primary-400">Status</p>
-                      <p className="text-base font-semibold text-purple-900 dark:text-primary-100">
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-primary-600 dark:text-primary-400">Status</p>
+                      <p className="text-sm sm:text-base font-semibold text-purple-900 dark:text-primary-100">
                         {(selectedLog as ScheduledMessage).status}
                       </p>
                     </div>
                   </div>
 
                   {/* Stats - Scheduled */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-yellow-600 dark:text-yellow-400">Recipients</p>
-                      <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-yellow-600 dark:text-yellow-400">Recipients</p>
+                      <p className="text-lg sm:text-2xl font-bold text-yellow-900 dark:text-yellow-100">
                         {(selectedLog as ScheduledMessage).recipientCount}
                       </p>
                     </div>
-                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-green-600 dark:text-green-400">Est. Credits</p>
-                      <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                    <div className="bg-green-50 dark:bg-green-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-green-600 dark:text-green-400">Est. Credits</p>
+                      <p className="text-lg sm:text-2xl font-bold text-green-900 dark:text-green-100">
                         {(selectedLog as ScheduledMessage).estimatedCreditsNeeded}
                       </p>
                     </div>
-                    <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
-                      <p className="text-sm text-primary-600 dark:text-primary-400">Category</p>
-                      <p className="text-base font-semibold text-primary-900 dark:text-primary-100 capitalize">
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-3 sm:p-4 rounded-lg">
+                      <p className="text-xs sm:text-sm text-primary-600 dark:text-primary-400">Category</p>
+                      <p className="text-sm sm:text-base font-semibold text-primary-900 dark:text-primary-100 capitalize">
                         {(selectedLog as ScheduledMessage).category || 'General'}
                       </p>
                     </div>
                   </div>
 
                   {(selectedLog as ScheduledMessage).executionError && (
-                    <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                    <div className="bg-red-50 dark:bg-red-900/20 p-3 sm:p-4 rounded-lg border border-red-200 dark:border-red-800">
                       <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Execution Error</p>
                       <p className="text-sm text-red-900 dark:text-red-100">
                         {(selectedLog as ScheduledMessage).executionError}
@@ -771,7 +887,7 @@ const SMSHistory = () => {
                   )}
 
                   {(selectedLog as ScheduledMessage).sentAt && (
-                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                    <div className="bg-green-50 dark:bg-green-900/20 p-3 sm:p-4 rounded-lg">
                       <p className="text-sm text-green-600 dark:text-green-400 mb-2">Sent At</p>
                       <p className="text-sm text-green-900 dark:text-green-100">
                         {formatDateTime((selectedLog as ScheduledMessage).sentAt!)}
@@ -789,7 +905,7 @@ const SMSHistory = () => {
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full">
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
                 Cancel Scheduled Message?
               </h3>

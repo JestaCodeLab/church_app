@@ -168,8 +168,8 @@ const Dashboard = () => {
 
         {/* Quick Actions Banner */}
         <div className="mb-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6" data-tour="dashboard-quick-actions">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
-            <div className="w-full md:w-auto text-center md:text-left">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
+            <div className="w-full md:w-auto text-left">
               <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
                 Ready to grow your church?
               </h2>
@@ -177,26 +177,26 @@ const Dashboard = () => {
                 Add members, create events, and manage your church effectively.
               </p>
             </div>
-            <div className="w-full md:w-auto flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div className="w-full md:w-auto flex flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => navigate('/members/new')}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-white text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors shadow-sm text-sm"
+                className="flex-1 md:flex-none min-w-0 inline-flex items-center justify-center px-2 sm:px-4 py-2 bg-white text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors shadow-sm text-xs sm:text-sm"
               >
-                <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
+                <UserPlus className="w-4 h-4 mr-1 sm:mr-2 flex-shrink-0" />
                 <span className="truncate">Add Member</span>
               </button>
               <button
                 onClick={() => navigate('/events/new')}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30 text-sm"
+                className="flex-1 md:flex-none min-w-0 inline-flex items-center justify-center px-2 sm:px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30 text-xs sm:text-sm"
               >
-                <CalendarDays className="w-4 h-4 mr-1 sm:mr-2" />
+                <CalendarDays className="w-4 h-4 mr-1 sm:mr-2 flex-shrink-0" />
                 <span className="truncate">New Event</span>
               </button>
               <button
                 onClick={() => navigate('/messaging/send')}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30 text-sm"
+                className="flex-1 md:flex-none min-w-0 inline-flex items-center justify-center px-2 sm:px-4 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors border border-white/30 text-xs sm:text-sm"
               >
-                <Send className="w-4 h-4 mr-1 sm:mr-2" />
+                <Send className="w-4 h-4 mr-1 sm:mr-2 flex-shrink-0" />
                 <span className="truncate">Send SMS</span>
               </button>
             </div>
@@ -204,13 +204,13 @@ const Dashboard = () => {
         </div>
 
         {/* Main Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-tour="dashboard-stats">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8" data-tour="dashboard-stats">
           {/* Total Members */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Members</p>
-                <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                   {stats.totalMembers}
                 </h3>
                 <div className="flex items-center mt-2">
@@ -220,18 +220,18 @@ const Dashboard = () => {
                   </span>
                 </div>
               </div>
-              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center shrink-0">
                 <Users className="w-6 h-6 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
           </div>
 
           {/* Branches */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Branches</p>
-                <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                   {stats.totalBranches}
                 </h3>
                 <div className="flex items-center mt-2">
@@ -240,18 +240,18 @@ const Dashboard = () => {
                   </span>
                 </div>
               </div>
-              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center shrink-0">
                 <MapPin className="w-6 h-6 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
           </div>
 
           {/* Departments */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Departments</p>
-                <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                   {stats.totalDepartments}
                 </h3>
                 <div className="flex items-center mt-2">
@@ -260,18 +260,18 @@ const Dashboard = () => {
                   </span>
                 </div>
               </div>
-              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center shrink-0">
                 <Layers className="w-6 h-6 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
           </div>
 
           {/* Events */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Events</p>
-                <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                   {stats.totalEvents}
                 </h3>
                 <div className="flex items-center mt-2">
@@ -280,7 +280,7 @@ const Dashboard = () => {
                   </span>
                 </div>
               </div>
-              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center shrink-0">
                 <Calendar className="w-6 h-6 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
@@ -306,7 +306,7 @@ const Dashboard = () => {
           </div>
 
           {stats.departmentStats.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {stats.departmentStats.slice(0, 8).map((dept: any, index: number) => {
                 const { icon, color } = getDepartmentIconAndColor(dept.name, index);
 

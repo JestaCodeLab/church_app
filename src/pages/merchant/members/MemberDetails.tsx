@@ -132,51 +132,70 @@ const MemberDetails = () => {
     <FeatureGate feature={'memberManagement'}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 sm:px-6 sm:py-6">
           <div className="max-w-8xl mx-auto">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
                 <button
                   onClick={() => navigate('/members/all')}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
                   title="Back to Members"
                 >
                   <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
-                <div>
-                  <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                <div className="min-w-0">
+                  <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 truncate">
                     Member Details
                   </h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mt-1">
                     View and manage member information
                   </p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+                {/* View Transactions */}
                 <button
-                    onClick={() => navigate(`/members/${id}/transactions`)}
-                    className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
-                  >
-                    View Transactions
-                  </button>
+                  onClick={() => navigate(`/members/${id}/transactions`)}
+                  className="hidden sm:flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  View Transactions
+                </button>
+                <button
+                  onClick={() => navigate(`/members/${id}/transactions`)}
+                  className="sm:hidden p-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                  title="View Transactions"
+                >
+                  <DollarSign className="w-5 h-5" />
+                </button>
+
+                {/* Edit — desktop only, mobile uses the floating button */}
                 <PermissionGuard permission="members.edit">
                   <button
                     onClick={() => navigate(`/members/${id}/edit`)}
-                    className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+                    className="hidden sm:flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                   </button>
                 </PermissionGuard>
+
+                {/* Delete */}
                 <PermissionGuard permission="members.delete">
                   <button
                     onClick={() => setShowDeleteModal(true)}
-                    className="flex items-center px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded-lg transition-colors"
+                    className="hidden sm:flex items-center px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="sm:hidden p-2.5 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-lg transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </PermissionGuard>
               </div>
@@ -184,16 +203,28 @@ const MemberDetails = () => {
           </div>
         </div>
 
+        {/* Mobile: Floating Edit Button */}
+        <PermissionGuard permission="members.edit">
+          <button
+            onClick={() => navigate(`/members/${id}/edit`)}
+            className="sm:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+            style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+            title="Edit Member"
+          >
+            <Edit className="w-6 h-6" />
+          </button>
+        </PermissionGuard>
+
         {/* Content */}
-        <div className="max-w-8xl mx-auto px-6 py-8">
+        <div className="max-w-8xl mx-auto px-4 py-4 sm:px-6 sm:py-8">
           {/* Profile Header Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden">
-            <div className="h-32 bg-gradient-to-r from-primary-500 to-primary-600"></div>
-            <div className="px-6 pb-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6 -mt-16">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-4 sm:mb-6 overflow-hidden">
+            <div className="h-16 sm:h-32 bg-gradient-to-r from-primary-500 to-primary-600"></div>
+            <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6 -mt-8 sm:-mt-16">
                 {/* Profile Photo */}
-                <div className="relative w-32 h-32">
-                  <div className="w-32 h-32 rounded-full bg-white dark:bg-gray-800 p-2 shadow-lg">
+                <div className="relative w-20 h-20 sm:w-32 sm:h-32">
+                  <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-full bg-white dark:bg-gray-800 p-1.5 sm:p-2 shadow-lg">
                     <div className="w-full h-full rounded-full bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center overflow-hidden">
                       {member?.photo ? (
                         <img
@@ -202,7 +233,7 @@ const MemberDetails = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-4xl font-semibold text-primary-600 dark:text-primary-400">
+                        <span className="text-xl sm:text-4xl font-semibold text-primary-600 dark:text-primary-400">
                           {member?.firstName[0]}{member?.lastName[0]}
                         </span>
                       )}
@@ -212,7 +243,7 @@ const MemberDetails = () => {
 
                 {/* Name and Status */}
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {member.firstName} {member.middleName} {member.lastName}
                   </h2>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -233,17 +264,17 @@ const MemberDetails = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Left Column */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Contact Information */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Contact Information
                   </h3>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4">
                   {member.email && (
                     <div className="flex items-start space-x-3">
                       <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
@@ -282,13 +313,13 @@ const MemberDetails = () => {
 
               {/* Personal Details */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Personal Details
                   </h3>
                 </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-2 gap-6">
+                <div className="p-4 sm:p-6">
+                  <div className="grid grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Date of Birth</p>
                       <p className="text-gray-900 dark:text-gray-100 flex items-center">
@@ -324,13 +355,13 @@ const MemberDetails = () => {
               {/* Emergency Contact */}
               {member.emergencyContact?.name && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                       <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
                       Emergency Contact
                     </h3>
                   </div>
-                  <div className="p-6 space-y-4">
+                  <div className="p-4 sm:p-6 space-y-4">
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Name</p>
                       <p className="text-gray-900 dark:text-gray-100">{member.emergencyContact.name}</p>
@@ -350,17 +381,17 @@ const MemberDetails = () => {
             </div>
 
             {/* Right Column */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Branch Information */}
               {member.branch && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                       <Building2 className="w-5 h-5 mr-2" />
                       Branch Information
                     </h3>
                   </div>
-                  <div className="p-6 space-y-4">
+                  <div className="p-4 sm:p-6 space-y-4">
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch Name</p>
                       <button
@@ -396,13 +427,13 @@ const MemberDetails = () => {
               {/* Departments - ADD THIS SECTION */}
               {member.departments && member.departments.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                       <Users className="w-5 h-5 mr-2" />
                       Departments
                     </h3>
                   </div>
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <div className="space-y-3">
                       {member.departments.map((department: any) => (
                         <div
@@ -436,13 +467,13 @@ const MemberDetails = () => {
               {/* Notes */}
               {member.notes && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                       <FileText className="w-5 h-5 mr-2" />
                       Notes
                     </h3>
                   </div>
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{member.notes}</p>
                   </div>
                 </div>

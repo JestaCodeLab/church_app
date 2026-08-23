@@ -46,8 +46,8 @@ const SecuritySettings = () => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+      <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
           Password
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -56,7 +56,7 @@ const SecuritySettings = () => {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Current Password
@@ -98,11 +98,11 @@ const SecuritySettings = () => {
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-end">
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg disabled:opacity-50"
           >
             {loading ? 'Saving...' : 'Save Changes'}
           </button>

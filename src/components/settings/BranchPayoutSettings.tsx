@@ -134,7 +134,7 @@ const PayoutForm = ({ branch, banks, onClose, onSuccess }: {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-4 border-b border-gray-100 dark:border-gray-700">
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white">
               {isEdit ? 'Update' : 'Set Up'} Payout Account
@@ -146,7 +146,7 @@ const PayoutForm = ({ branch, banks, onClose, onSuccess }: {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit} className="px-4 sm:px-6 py-5 space-y-4">
 
           {/* Bank / Mobile Money tab */}
           <div className="flex rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">
@@ -441,7 +441,7 @@ const BranchPayoutSettings = () => {
 
   // ── KYC not approved ───────────────────────────────────────────────────────
   if (kycStatus !== 'approved') return (
-    <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-6">
+    <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4 sm:p-6">
       <div className="flex items-start gap-4">
         <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
           <AlertCircle size={18} className="text-amber-600 dark:text-amber-400" />
@@ -472,10 +472,10 @@ const BranchPayoutSettings = () => {
     <div className="space-y-6">
       {/* Summary bar */}
       {total > 0 && (
-        <div className="flex items-center justify-between px-5 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6">
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{configured}<span className="text-gray-400 font-normal text-lg">/{total}</span></p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{configured}<span className="text-gray-400 font-normal text-base sm:text-lg">/{total}</span></p>
               <p className="text-xs text-gray-400 mt-0.5">Branches configured</p>
             </div>
             {configured < total && (

@@ -143,28 +143,28 @@ const Support: React.FC = () => {
   return (
     <div className="p-4 sm:p-4 lg:p-4 max-w-8xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex-shrink-0">
             <LifeBuoy className="w-6 h-6 text-primary-600" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Raise and track your support tickets</p>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Raise and track your support tickets</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => fetchTickets(true)}
             disabled={refreshing}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            <span className="hidden sm:inline">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
           >
             <Plus className="w-4 h-4" />
             New Ticket
@@ -172,8 +172,17 @@ const Support: React.FC = () => {
         </div>
       </div>
 
+      {/* New Ticket FAB - mobile only */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="sm:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+        style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 mb-4 flex flex-col sm:flex-row gap-3">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4 mb-4 flex flex-col sm:flex-row gap-3">
         <form onSubmit={handleSearch} className="flex-1 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -214,69 +223,98 @@ const Support: React.FC = () => {
             <p className="text-sm mt-1">Create a new ticket to get started</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Ticket #</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Subject</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">Category</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">Priority</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden lg:table-cell">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                {tickets.map(ticket => (
-                  <tr
-                    key={ticket._id}
-                    onClick={() => navigate(`/support/${ticket._id}`)}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                      {ticket.ticketNumber}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white max-w-xs truncate">
-                      {ticket.subject}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 capitalize hidden sm:table-cell">
-                      {ticket.category}
-                    </td>
-                    <td className={`px-4 py-3 capitalize hidden md:table-cell ${PRIORITY_COLORS[ticket.priority]}`}>
-                      {ticket.priority}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[ticket.status]}`}>
-                        {STATUS_LABELS[ticket.status] || ticket.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap hidden lg:table-cell">
-                      {new Date(ticket.createdAt).toLocaleDateString()}
-                    </td>
+          <>
+            {/* Mobile card list */}
+            <div className="sm:hidden divide-y divide-gray-50 dark:divide-gray-700">
+              {tickets.map(ticket => (
+                <div
+                  key={ticket._id}
+                  onClick={() => navigate(`/support/${ticket._id}`)}
+                  className="p-4 active:bg-gray-50 dark:active:bg-gray-700/50 cursor-pointer transition-colors space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">{ticket.subject}</p>
+                      <p className="font-mono text-xs text-gray-500 dark:text-gray-400 mt-0.5">{ticket.ticketNumber}</p>
+                    </div>
+                    <span className={`flex-shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[ticket.status]}`}>
+                      {STATUS_LABELS[ticket.status] || ticket.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="capitalize">{ticket.category}</span>
+                    <span className={`capitalize ${PRIORITY_COLORS[ticket.priority]}`}>{ticket.priority} priority</span>
+                    <span className="ml-auto text-gray-400">{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Ticket #</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Subject</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">Category</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">Priority</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Status</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden lg:table-cell">Created</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                  {tickets.map(ticket => (
+                    <tr
+                      key={ticket._id}
+                      onClick={() => navigate(`/support/${ticket._id}`)}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                    >
+                      <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {ticket.ticketNumber}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white max-w-xs truncate">
+                        {ticket.subject}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 capitalize hidden sm:table-cell">
+                        {ticket.category}
+                      </td>
+                      <td className={`px-4 py-3 capitalize hidden md:table-cell ${PRIORITY_COLORS[ticket.priority]}`}>
+                        {ticket.priority}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[ticket.status]}`}>
+                          {STATUS_LABELS[ticket.status] || ticket.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap hidden lg:table-cell">
+                        {new Date(ticket.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Pagination */}
         {!loading && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700">
             <span className="text-xs text-gray-400 dark:text-gray-500">{total} ticket{total !== 1 ? 's' : ''}</span>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 disabled={page === 1}
                 onClick={() => setPage(p => p - 1)}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" /> Prev
               </button>
-              <span className="text-sm text-gray-500 dark:text-gray-400">Page {page} of {totalPages || 1}</span>
+              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Page {page} of {totalPages || 1}</span>
               <button
                 disabled={page === totalPages || totalPages === 0}
                 onClick={() => setPage(p => p + 1)}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Next <ChevronRight className="w-4 h-4" />
               </button>
@@ -289,13 +327,13 @@ const Support: React.FC = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Create Support Ticket</h2>
               <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            <form onSubmit={handleCreate} className="p-5 space-y-4">
+            <form onSubmit={handleCreate} className="p-4 sm:p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject *</label>
                 <input

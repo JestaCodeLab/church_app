@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { checkFeatureAccess } from '../../../utils/featureAccess';
 import FeatureGate from '../../../components/access/FeatureGate';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface Template {
   _id: string;
@@ -206,9 +207,9 @@ const SMSTemplates: React.FC = () => {
 
   return (
     <FeatureGate feature="smsTemplates" showUpgrade={!hasSMSAccess}>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             SMS Templates
@@ -219,7 +220,7 @@ const SMSTemplates: React.FC = () => {
         </div>
         <button
           onClick={openCreateModal}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
+          className="hidden sm:block px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium flex-shrink-0"
         >
           + New Template
         </button>
@@ -247,13 +248,13 @@ const SMSTemplates: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {templates.map((template) => (
             <div
               key={template._id}
               className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow"
             >
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -323,9 +324,16 @@ const SMSTemplates: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleDeleteClick(template._id, template.name)}
-                    className="px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700"
+                    className="hidden sm:block px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700"
                   >
                     Delete
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(template._id, template.name)}
+                    className="sm:hidden p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex-shrink-0"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -338,12 +346,12 @@ const SMSTemplates: React.FC = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            <div className="p-4 sm:p-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
                 {editingTemplate ? 'Edit Template' : 'Create Template'}
               </h2>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Name */}
                   <div>
@@ -498,6 +506,16 @@ const SMSTemplates: React.FC = () => {
         type="danger"
         isLoading={deleting}
       />
+
+      {/* Mobile: Floating New Template Button */}
+      <button
+        onClick={openCreateModal}
+        className="sm:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+        style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+        title="New Template"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
       </div>
     </FeatureGate>
 

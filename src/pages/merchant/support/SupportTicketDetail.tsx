@@ -191,8 +191,8 @@ const SupportTicketDetail: React.FC = () => {
       </div>
 
       {/* Ticket metadata bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4 mb-4">
+        <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-3">
 
           {/* Status */}
           <div className="flex items-center gap-2">
@@ -420,7 +420,7 @@ const SupportTicketDetail: React.FC = () => {
       {/* Cancel confirm modal */}
       {showCancelConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
