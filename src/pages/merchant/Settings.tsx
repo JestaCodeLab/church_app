@@ -136,14 +136,14 @@ const Settings = () => {
       <div className="flex flex-col">
         {/* Horizontal Navigation */}
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-6 overflow-x-auto">
+          <nav className="-mb-px flex space-x-4 sm:space-x-6 overflow-x-auto">
             {visibleTabs.map(tab => {
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  className={`whitespace-nowrap flex-shrink-0 pb-3 sm:pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     isActive
                       ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                       : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
@@ -157,13 +157,13 @@ const Settings = () => {
         </div>
 
         {/* Content */}
-        <main className="mt-8">
+        <main className="mt-6 sm:mt-8">
           {activeTabDetails && (
             <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
                   {activeTabDetails.label}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1 mb-6">
+                <p className="text-xs sm:text-base text-gray-600 dark:text-gray-400 mt-1 mb-4 sm:mb-6">
                   {activeTabDetails.description}
                 </p>
                 {activeTabDetails.component}

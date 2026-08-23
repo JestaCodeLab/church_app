@@ -87,9 +87,11 @@ const Birthdays: React.FC = () => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  // Birthdays fetcher for SWR
+  // Birthdays fetcher for SWR. The month comes from the query params (not the
+  // closure) so it is part of the SWR cache key and switching months refetches.
   const birthdaysFetcher = async (params: any) => {
-    const response = await api.get(`/birthdays/month/${selectedMonth}`);
+    const month = params.month ?? selectedMonth;
+    const response = await api.get(`/birthdays/month/${month}`);
     return {
       items: response.data.data.birthdays || [],
       pagination: {
@@ -103,10 +105,16 @@ const Birthdays: React.FC = () => {
   const {
     data: birthdays,
     loading,
-    refetch: refetchBirthdays
+    refetch: refetchBirthdays,
+    setFilters: setBirthdayFilters
   } = usePaginatedQuery<Birthday>('birthdays', birthdaysFetcher, {
-    limit: 100
+    limit: 100,
+    initialFilters: { month: selectedMonth }
   });
+
+  useEffect(() => {
+    setBirthdayFilters({ month: selectedMonth });
+  }, [selectedMonth, setBirthdayFilters]);
 
   useEffect(() => {
     fetchOtherData();
@@ -121,7 +129,10 @@ const Birthdays: React.FC = () => {
   const fetchOtherData = async () => {
     setStatsLoading(true);
     try {
-      const [todayRes, upcomingRes, statsRes, settingsRes, creditsRes] = await Promise.all([
+      // Settled, not all: /sms/credits rejects whenever no branch is selected,
+      // the role can't read credits, or the plan has no SMS feature — none of
+      // which should blank out the birthday data.
+      const [todayRes, upcomingRes, statsRes, settingsRes, creditsRes] = await Promise.allSettled([
         api.get('/birthdays/today'),
         api.get('/birthdays/upcoming'),
         api.get('/birthdays/stats'),
@@ -129,15 +140,31 @@ const Birthdays: React.FC = () => {
         api.get('/sms/credits')
       ]);
 
-      setTodaysBirthdays(todayRes.data.data.birthdays || []);
-      setUpcomingBirthdays(upcomingRes.data.data.birthdays || []);
-      setStats(statsRes.data.data || null);
-      setAutomationSettings(settingsRes.data.data || null);
-      setSmsCredits(creditsRes.data.data.credits.balance || 0);
+      if (todayRes.status === 'fulfilled') {
+        setTodaysBirthdays(todayRes.value.data.data.birthdays || []);
+      }
+      if (upcomingRes.status === 'fulfilled') {
+        setUpcomingBirthdays(upcomingRes.value.data.data.birthdays || []);
+      }
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value.data.data || null);
+      }
+      if (settingsRes.status === 'fulfilled') {
+        setAutomationSettings(settingsRes.value.data.data || null);
+      }
+      if (creditsRes.status === 'fulfilled') {
+        setSmsCredits(creditsRes.value.data.data?.credits?.balance || 0);
+      }
 
-    } catch (error: any) {
-      showToast.error('Failed to load birthday data');
-      console.error(error);
+      const birthdayFailures = [todayRes, upcomingRes, statsRes, settingsRes]
+        .filter((result) => result.status === 'rejected');
+
+      if (birthdayFailures.length > 0) {
+        showToast.error('Failed to load some birthday data');
+        birthdayFailures.forEach((result) =>
+          console.error((result as PromiseRejectedResult).reason)
+        );
+      }
     } finally {
       setStatsLoading(false);
     }
@@ -217,98 +244,105 @@ const Birthdays: React.FC = () => {
           <PermissionGuard permission="members.exportBirthdays">
           <button
             onClick={exportBirthdays}
-            className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="hidden sm:flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <Download className="w-4 h-4 mr-2" />
             Export
+          </button>
+          <button
+            onClick={exportBirthdays}
+            className="sm:hidden p-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            title="Export"
+          >
+            <Download className="w-5 h-5" />
           </button>
           </PermissionGuard>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {statsLoading ? (
           <>
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 animate-pulse">
+              <div key={i} className="bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-600 rounded-xl p-4 sm:p-6 animate-pulse">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="h-4 bg-gray-400 dark:bg-gray-500 rounded w-24 mb-3"></div>
                     <div className="h-9 bg-gray-400 dark:bg-gray-500 rounded w-16"></div>
                   </div>
-                  <div className="w-12 h-12 bg-gray-400 dark:bg-gray-500 rounded"></div>
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-400 dark:bg-gray-500 rounded"></div>
                 </div>
               </div>
             ))}
           </>
         ) : (
           <>
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-primary-100 text-sm font-medium">This Week</p>
-                  <p className="text-3xl font-bold mt-1">{stats?.thisWeek || 0}</p>
+                  <p className="text-primary-100 text-xs sm:text-sm font-medium">This Week</p>
+                  <p className="text-xl sm:text-3xl font-bold mt-1">{stats?.thisWeek || 0}</p>
                 </div>
-                <Calendar className="w-12 h-12 text-primary-200" />
+                <Calendar className="w-7 h-7 sm:w-12 sm:h-12 text-primary-200 flex-shrink-0" />
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-primary-100 text-sm font-medium">This Month</p>
-                  <p className="text-3xl font-bold mt-1">{stats?.thisMonth || 0}</p>
+                  <p className="text-primary-100 text-xs sm:text-sm font-medium">This Month</p>
+                  <p className="text-xl sm:text-3xl font-bold mt-1">{stats?.thisMonth || 0}</p>
                 </div>
-                <TrendingUp className="w-12 h-12 text-purple-200" />
+                <TrendingUp className="w-7 h-7 sm:w-12 sm:h-12 text-purple-200 flex-shrink-0" />
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-teal-100 text-sm font-medium">SMS Credits</p>
-                  <p className="text-3xl font-bold mt-1">{smsCredits}</p>
+                  <p className="text-teal-100 text-xs sm:text-sm font-medium">SMS Credits</p>
+                  <p className="text-xl sm:text-3xl font-bold mt-1">{smsCredits}</p>
                 </div>
-                <MessageSquare className="w-12 h-12 text-teal-200" />
+                <MessageSquare className="w-7 h-7 sm:w-12 sm:h-12 text-teal-200 flex-shrink-0" />
               </div>
             </div>
 
             {hasSmsAutomationAccess ? (
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 sm:p-6 text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-100 text-sm font-medium">Automation</p>
-                    <p className="text-lg font-semibold mt-1">
+                    <p className="text-green-100 text-xs sm:text-sm font-medium">Automation</p>
+                    <p className="text-base sm:text-lg font-semibold mt-1">
                       {automationSettings?.enabled ? 'Enabled' : 'Disabled'}
                     </p>
                   </div>
-                  <Bell className={`w-12 h-12 ${automationSettings?.enabled ? 'text-green-200' : 'text-green-300/50'}`} />
+                  <Bell className={`w-7 h-7 sm:w-12 sm:h-12 flex-shrink-0 ${automationSettings?.enabled ? 'text-green-200' : 'text-green-300/50'}`} />
                 </div>
                 <button
                   onClick={() => navigate('/members/birthdays/settings')}
-                  className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                  className="hidden sm:block mt-3 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
                 >
                   {automationSettings?.enabled ? 'Disable' : 'Enable'} Automation
                 </button>
               </div>
             ) : (
-              <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 rounded-xl p-6 text-white relative overflow-hidden group">
+              <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 rounded-xl p-4 sm:p-6 text-white relative overflow-hidden group">
                 {/* Background shimmer effect */}
                 <div className="inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                 <div className="flex flex-row items-start justify-between py-0">
                   <div className='text-left'>
-                    <p className="text-lg font-bold text-white">Premium Feature</p>
-                    <p className="text-sm text-white/90 mb-2">
+                    <p className="text-sm sm:text-lg font-bold text-white">Premium</p>
+                    <p className="hidden sm:block text-sm text-white/90 mb-2">
                       Birthday Automation & Settings
                     </p>
-                      <div onClick={() => navigate('/settings?tab=billing')} className="cursor-pointer bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-sm w-fit hover:bg-white/30 transition">
-                        <p className="font-semibold">Unlock Feature</p>
+                      <div onClick={() => navigate('/settings?tab=billing')} className="cursor-pointer bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm w-fit hover:bg-white/30 transition">
+                        <p className="font-semibold">Unlock</p>
                       </div>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 group-hover:scale-110 transition-transform">
-                    <Zap className="w-8 h-8 text-yellow-300" />
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <Zap className="w-5 h-5 sm:w-8 sm:h-8 text-yellow-300" />
                   </div>
 
                 </div>
@@ -540,30 +574,41 @@ const Birthdays: React.FC = () => {
 
       {/* Birthday List */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-2">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
             {months[selectedMonth - 1]} Birthdays ({filteredBirthdays.length})
           </h2>
-          
+
           {filteredBirthdays.some(b => !b.smsSent) && (
-            <button
-              onClick={() => handleSendBulkSMS(
-                filteredBirthdays.filter(b => !b.smsSent).map(b => b._id)
-              )}
-              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              <Send className="w-4 h-4 mr-2" />
-              Send to All ({filteredBirthdays.filter(b => !b.smsSent).length})
-            </button>
+            <>
+              <button
+                onClick={() => handleSendBulkSMS(
+                  filteredBirthdays.filter(b => !b.smsSent).map(b => b._id)
+                )}
+                className="hidden sm:flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex-shrink-0"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Send to All ({filteredBirthdays.filter(b => !b.smsSent).length})
+              </button>
+              <button
+                onClick={() => handleSendBulkSMS(
+                  filteredBirthdays.filter(b => !b.smsSent).map(b => b._id)
+                )}
+                className="sm:hidden flex items-center gap-1 px-2.5 py-1.5 bg-primary-600 text-white text-xs rounded-lg hover:bg-primary-700 flex-shrink-0"
+              >
+                <Send className="w-3.5 h-3.5" />
+                {filteredBirthdays.filter(b => !b.smsSent).length}
+              </button>
+            </>
           )}
         </div>
-        
+
         {filteredBirthdays.length === 0 ? (
           <div className="p-12 text-center">
             <Cake className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
-              {searchTerm 
-                ? 'No birthdays found matching your search' 
+              {searchTerm
+                ? 'No birthdays found matching your search'
                 : `No birthdays in ${months[selectedMonth - 1]}`
               }
             </p>
@@ -571,42 +616,43 @@ const Birthdays: React.FC = () => {
         ) : (
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {filteredBirthdays.map((member) => (
-              <div key={member._id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <div className="flex items-center space-x-4">
+              <div key={member._id} className="px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
                   {member.photo ? (
                     <img
                       src={member.photo}
                       alt={member.fullName}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xl">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">
                       🎂
                     </div>
                   )}
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{member.fullName}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">{member.fullName}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
                       {months[selectedMonth - 1]} {member.birthDay} • Turning {member.age + 1}
+                      {member.branch && ` • ${member.branch.name}`}
                     </p>
-                    {member.branch && (
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{member.branch.name}</p>
-                    )}
                   </div>
                 </div>
-                
-                <div className="flex items-center space-x-3">
+
+                <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
                   {member.smsSent && (
-                    <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
+                    <div className="hidden sm:flex items-center space-x-2 text-green-600 dark:text-green-400">
                       <CheckCircle className="w-4 h-4" />
                       <span className="text-sm">Sent</span>
                     </div>
                   )}
-                  
+                  {member.smsSent && (
+                    <CheckCircle className="sm:hidden w-5 h-5 text-green-600 dark:text-green-400" />
+                  )}
+
                   <button
                     onClick={() => handleSendBirthdaySMS(member._id)}
                     disabled={sendingTo === member._id || member.smsSent}
-                    className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${
+                    className={`hidden sm:flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${
                       member.smsSent
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                         : 'bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50'
@@ -624,6 +670,20 @@ const Birthdays: React.FC = () => {
                       </>
                     )}
                   </button>
+                  {!member.smsSent && (
+                    <button
+                      onClick={() => handleSendBirthdaySMS(member._id)}
+                      disabled={sendingTo === member._id}
+                      className="sm:hidden p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                      title="Send SMS"
+                    >
+                      {sendingTo === member._id ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

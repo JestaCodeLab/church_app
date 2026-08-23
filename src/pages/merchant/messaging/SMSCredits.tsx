@@ -331,7 +331,7 @@ const handlePurchase = async (pkg: CreditPackage) => {
 
   return (
     <FeatureGate feature="smsCredits" showUpgrade={!hasSMSAccess}>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -360,16 +360,16 @@ const handlePurchase = async (pkg: CreditPackage) => {
 
       {/* Balance Cards */}
       {credits && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
           {/* Total Balance */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
+          <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                <CreditCard className="w-6 h-6" />
+              <div className="w-9 h-9 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
+                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="text-right">
                 <p className="text-sm text-primary-100">Total Balance</p>
-                <p className="text-3xl font-bold">{credits.balance.toLocaleString()}</p>
+                <p className="text-2xl sm:text-3xl font-bold">{credits.balance.toLocaleString()}</p>
                 <p className="text-xs text-primary-100 mt-1">SMS Credits</p>
               </div>
             </div>
@@ -386,14 +386,14 @@ const handlePurchase = async (pkg: CreditPackage) => {
           </div>
 
           {/* Total Added */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <div className="w-9 h-9 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Added</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Added</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {credits.totalAdded.toLocaleString()}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All time</p>
@@ -402,14 +402,14 @@ const handlePurchase = async (pkg: CreditPackage) => {
           </div>
 
           {/* Total Used */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              <div className="w-9 h-9 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Used</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Used</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {credits.totalUsed.toLocaleString()}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All time</p>
@@ -465,16 +465,16 @@ const handlePurchase = async (pkg: CreditPackage) => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {packages.map((pkg, index) => (
                   <div
                     key={pkg._id}
                     className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 ${
-                      pkg.isPrimary ? 'ring-2 ring-blue-500 scale-105' : ''
+                      pkg.isPrimary ? 'ring-2 ring-blue-500 sm:scale-105' : ''
                     }`}
                   >
                     {/* Header with Gradient */}
-                    <div className={`bg-gradient-to-r ${getPackageGradient(index)} p-6 text-white`}>
+                    <div className={`bg-gradient-to-r ${getPackageGradient(index)} p-4 sm:p-6 text-white`}>
                       {/* Badges Row */}
                       <div className="flex items-center justify-between mb-4">
                         {pkg.isPrimary && (
@@ -492,19 +492,19 @@ const handlePurchase = async (pkg: CreditPackage) => {
                       </div>
 
                       {/* Package Name */}
-                      <h3 className="text-2xl font-bold mb-2">{pkg.name}</h3>
-                      
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2">{pkg.name}</h3>
+
                       {/* Credits */}
                       <div className="flex items-baseline">
-                        <span className="text-4xl font-bold">{pkg.credits.toLocaleString()}</span>
+                        <span className="text-3xl sm:text-4xl font-bold">{pkg.credits.toLocaleString()}</span>
                         <span className="ml-2 text-lg opacity-90">credits</span>
                       </div>
                     </div>
 
                     {/* Body */}
-                    <div className="p-6">
+                    <div className="p-4 sm:p-6">
                       {/* Price Section */}
-                      <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                      <div className="mb-4 pb-4 sm:mb-6 sm:pb-6 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex items-end justify-between">
                           <div>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Price</p>
@@ -576,12 +576,12 @@ const handlePurchase = async (pkg: CreditPackage) => {
           </div>
 
           {/* Payment Info */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-6">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
               <CreditCard className="w-5 h-5 mr-2 text-primary-600 dark:text-primary-400" />
               Secure Payment Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white mb-3">Payment Methods</p>
                 <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
@@ -662,7 +662,53 @@ const handlePurchase = async (pkg: CreditPackage) => {
               </div>
             ) : (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Mobile Card List */}
+                <div className="sm:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                  {purchases.map((purchase) => (
+                    <div key={purchase._id} className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {purchase.package.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(purchase.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}{' '}
+                            {new Date(purchase.createdAt).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">
+                          {purchase.package.price.currency} {purchase.package.price.amount}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          <span className="font-semibold text-gray-900 dark:text-white">{purchase.package.credits.toLocaleString()}</span> credits · {purchase.purchasedBy.firstName} {purchase.purchasedBy.lastName}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-2">
+                        {getStatusBadge(purchase.status)}
+                        {purchase.creditsAdded && (
+                          <span className="text-xs text-green-600 dark:text-green-400 flex items-center">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Credits added
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
@@ -746,7 +792,7 @@ const handlePurchase = async (pkg: CreditPackage) => {
               setPendingPackage(null);
             }}
           />
-          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Choose Payment Method

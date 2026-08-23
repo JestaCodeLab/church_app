@@ -220,6 +220,7 @@ const VideoSermons: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
               <tr>
@@ -270,6 +271,7 @@ const VideoSermons: React.FC = () => {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

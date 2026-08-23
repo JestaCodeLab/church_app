@@ -136,22 +136,22 @@ const MemberTransactions = () => {
     <FeatureGate feature={'memberManagement'}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-6">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 sm:px-6 sm:py-6">
           <div className="max-w-8xl mx-auto">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
                 <button
                   onClick={() => navigate(`/members/${id}`)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
                   title="Back to Member Details"
                 >
                   <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
-                <div>
-                  <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                <div className="min-w-0">
+                  <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 truncate">
                     {member.firstName} {member.lastName} - Transactions
                   </h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mt-1">
                     View all member transactions including offerings, tithes, and project funding
                   </p>
                 </div>
@@ -159,62 +159,72 @@ const MemberTransactions = () => {
 
               {/* Action Buttons */}
               {filteredTransactions.length > 0 && (
-                <button
-                  onClick={handleExportTransactions}
-                  disabled={isExporting}
-                  className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {isExporting ? 'Exporting...' : 'Export'}
-                </button>
+                <>
+                  <button
+                    onClick={handleExportTransactions}
+                    disabled={isExporting}
+                    className="hidden sm:flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors flex-shrink-0"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {isExporting ? 'Exporting...' : 'Export'}
+                  </button>
+                  <button
+                    onClick={handleExportTransactions}
+                    disabled={isExporting}
+                    className="sm:hidden p-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white rounded-lg transition-colors flex-shrink-0"
+                    title="Export"
+                  >
+                    <Download className="w-5 h-5" />
+                  </button>
+                </>
               )}
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="max-w-8xl mx-auto px-6 py-8">
+        <div className="max-w-8xl mx-auto px-4 py-4 sm:px-6 sm:py-8">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Transactions</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Transactions</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                     {transactions.length}
                   </p>
                 </div>
-                <Coins className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                <Coins className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Completed</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Completed</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
                     {transactions.filter(tx => tx.status === 'completed').length}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Pending</p>
+                  <p className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">
                     {transactions.filter(tx => tx.status === 'pending').length}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Amount</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Amount</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: 'GHS'
@@ -228,12 +238,27 @@ const MemberTransactions = () => {
           </div>
 
           {/* Filter Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-4 sm:mb-6">
             <div className="flex items-center space-x-2 mb-4">
               <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filter by Type</h3>
             </div>
-            <div className="flex flex-wrap gap-2">
+            {/* Mobile: dropdown */}
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="sm:hidden w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="all">All Transactions</option>
+              {transactionTypes.map(type => (
+                <option key={type} value={type}>
+                  {type?.replace(/_/g, ' ').toUpperCase()}
+                </option>
+              ))}
+            </select>
+
+            {/* Desktop: button chips */}
+            <div className="hidden sm:flex flex-wrap gap-2">
               <button
                 onClick={() => setFilterType('all')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -262,7 +287,7 @@ const MemberTransactions = () => {
 
           {/* Transactions Table */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Transactions ({filteredTransactions.length})
               </h3>
@@ -274,7 +299,65 @@ const MemberTransactions = () => {
                 <p className="text-gray-500 dark:text-gray-400">Loading transactions...</p>
               </div>
             ) : filteredTransactions.length > 0 ? (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile Card List */}
+                <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredTransactions.map((transaction: any) => {
+                    const reference =
+                      transaction.event?.title ||
+                      transaction.programme?.name ||
+                      (transaction.transactionType === 'partnership_contribution' ? 'Partnership' : null);
+                    return (
+                      <div key={transaction._id} className="p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {formatDate(transaction.transactionDate)}
+                            </p>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400 mt-1">
+                              {transaction.transactionType === 'partnership_contribution' && 'Partnership'}
+                              {transaction.transactionType !== 'partnership_contribution' &&
+                                transaction.transactionType?.replace(/_/g, ' ').toUpperCase()}
+                            </span>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex-shrink-0">
+                            {new Intl.NumberFormat('en-US', {
+                              style: 'currency',
+                              currency: transaction.currency || 'GHS'
+                            }).format(transaction.amount || 0)}
+                          </p>
+                        </div>
+
+                        {reference && (
+                          <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 truncate">{reference}</p>
+                        )}
+                        {transaction.tier?.name && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Tier: {transaction.tier.name}</p>
+                        )}
+
+                        <div className="flex items-center justify-between mt-2">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            transaction.status === 'completed'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                              : transaction.status === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                : transaction.status === 'failed'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          }`}>
+                            {transaction.status?.charAt(0).toUpperCase() + transaction.status?.slice(1)}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {transaction.paymentMethod || '-'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
@@ -341,7 +424,8 @@ const MemberTransactions = () => {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             ) : (
               <div className="p-12 text-center">
                 <Coins className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-3" />

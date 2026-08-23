@@ -5,7 +5,7 @@ import {
   UserCircle, Mic, Image as ImageIcon,
   ExternalLink, X, Repeat2, Copy, CheckCircle, Code,
   Trash, RotateCw, MessageSquare, Save, Mail, Building2,
-  HandCoins
+  HandCoins, UserCheck
 } from 'lucide-react';
 import { eventAPI, eventCodeAPI, merchantAPI } from '../../../services/api';
 import { showToast } from '../../../utils/toasts';
@@ -320,52 +320,75 @@ const EventDetails: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-8xl mx-auto sm:px-6 ">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 ">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <button
             onClick={() => navigate(isServiceRoute ? '/services' : '/events')}
-            className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-4"
+            className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-3 sm:mb-4"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Back to {isServiceRoute ? 'Services' : 'Events'}</span>
           </button>
 
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              {/* Mobile: title, then status/public/date on one row below */}
+              <div className="sm:hidden">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {event.title}
                 </h1>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
-                  {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                </span>
-                {event.isPublic && (
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-                    Public
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
+                    {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                   </span>
-                )}
+                  {event.isPublic && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                      Public
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                    {scheduleText}
+                  </span>
+                </div>
               </div>
-              <p className="text-gray-600 dark:text-gray-400">
-                {scheduleText}
-              </p>
+
+              {/* Desktop: title + badges inline, date below */}
+              <div className="hidden sm:block">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    {event.title}
+                  </h1>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
+                    {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                  </span>
+                  {event.isPublic && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                      Public
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {scheduleText}
+                </p>
+              </div>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               <PermissionGuard permission="events.edit">
               <button
                 onClick={() => navigate(`/${event.eventType === 'service' ? 'services' : 'events'}/${id}/edit`)}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
+                className="hidden sm:flex px-3 py-2 sm:px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg items-center space-x-1 transition-colors"
               >
                 <Edit className="w-4 h-4" />
-                <span>Edit</span>
+                <span className="hidden sm:inline">Edit</span>
               </button>
               </PermissionGuard>
               <button
                 onClick={() => navigate(isServiceRoute ? '/attendance' : `/events/${id}/attendance`)}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
+                className="hidden sm:flex px-3 py-2 sm:px-4 text-sm sm:text-base bg-primary-600 hover:bg-primary-700 text-white rounded-lg items-center space-x-1 transition-colors"
               >
                 <span>Attendance</span>
                 <p>({attendance})</p>
@@ -373,10 +396,10 @@ const EventDetails: React.FC = () => {
               {event.registration?.enabled && (
                 <button
                   onClick={() => navigate(`/events/${id}/registrations`)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
+                  className="px-3 py-2 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center space-x-1 transition-colors"
                 >
                   <Users className="w-4 h-4" />
-                  <span>Registrations</span>
+                  <span className="hidden sm:inline">Registrations</span>
                 </button>
               )}
               <PermissionGuard permission="events.delete">
@@ -384,7 +407,7 @@ const EventDetails: React.FC = () => {
                 onClick={() => {
                   setShowDeleteModal(true);
                 }}
-                className="p-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                className="hidden sm:flex p-2.5 bg-red-600 hover:bg-red-700 rounded-lg items-center transition-colors"
               >
                 <Trash className="w-5 h-5 text-white dark:text-white" />
               </button>
@@ -394,16 +417,16 @@ const EventDetails: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Cover Image */}
             {event.coverImage?.url && (
               <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                 <img
                   src={event.coverImage.url}
                   alt={event.title}
-                  className="w-full h-96 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                  className="w-full h-48 sm:h-96 object-cover cursor-pointer hover:opacity-95 transition-opacity"
                   onClick={() => setSelectedImage(event.coverImage.url)}
                 />
               </div>
@@ -411,7 +434,7 @@ const EventDetails: React.FC = () => {
 
             {/* Description */}
             {event.description && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   About This Event
                 </h2>
@@ -423,7 +446,7 @@ const EventDetails: React.FC = () => {
 
             {/* Gallery */}
             {event.images && event.images.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
                   <ImageIcon className="w-5 h-5" />
                   <span>Event Gallery</span>
@@ -450,7 +473,7 @@ const EventDetails: React.FC = () => {
 
             {/* Hosts */}
             {event.hosts && event.hosts.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
                   <Users className="w-5 h-5" />
                   <span>Event Hosts</span>
@@ -501,7 +524,7 @@ const EventDetails: React.FC = () => {
 
             {/* Speakers */}
             {event.speakers && event.speakers.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
                   <Mic className="w-5 h-5" />
                   <span>Event Speakers</span>
@@ -559,7 +582,7 @@ const EventDetails: React.FC = () => {
 
             {/* Event Codes & Check-In Link (Recurring Events) */}
             {event.isRecurring && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
                     <Code className="w-5 h-5 text-primary-600" />
@@ -577,7 +600,56 @@ const EventDetails: React.FC = () => {
 
                 {allEventCodes.length > 0 ? (
                   <div className="space-y-4">
-                    <div>
+                    {/* Mobile Card List */}
+                    <div className="sm:hidden divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                      {allEventCodes.map((codeObj: any) => {
+                        const now = new Date();
+                        const validFrom = new Date(codeObj.validFrom);
+                        const validUntil = new Date(codeObj.validUntil);
+                        const isActive = now >= validFrom && now <= validUntil;
+                        const isPast = now > validUntil;
+
+                        return (
+                          <div key={codeObj._id} className="p-3 flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-mono font-bold text-gray-900 dark:text-gray-100">{codeObj.code}</p>
+                                {isActive ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                                    Active
+                                  </span>
+                                ) : isPast ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                    Expired
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-blue-300">
+                                    Upcoming
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                {format(new Date(codeObj.serviceDate), 'MMM d, yyyy')} · {format(validFrom, 'h:mm a')} - {format(validUntil, 'h:mm a')}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleCopyCode(codeObj.code)}
+                              className="p-2 bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 rounded-lg transition-colors flex-shrink-0"
+                              title="Copy code"
+                            >
+                              {copiedCode ? (
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              ) : (
+                                <Copy className="w-5 h-5 text-primary-600" />
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Desktop Table */}
+                    <div className="hidden sm:block">
                       <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
                           <thead>
@@ -597,7 +669,7 @@ const EventDetails: React.FC = () => {
                               const validUntil = new Date(codeObj.validUntil);
                               const isActive = now >= validFrom && now <= validUntil;
                               const isPast = now > validUntil;
-                              
+
                               return (
                                 <tr key={codeObj._id} className="border-b border-gray-200 dark:border-gray-700">
                                   <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{format(new Date(codeObj.serviceDate), 'MMM d, yyyy')}</td>
@@ -666,7 +738,7 @@ const EventDetails: React.FC = () => {
                 </div>
               </div>
             ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
               {/* SMS Automation Status Banner */}
               {smsAutomation?.enabled && smsAutomationStatus?.hasRunToday && (
                 <div className={`rounded-lg p-4 border mb-6 bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800`}>
@@ -850,7 +922,7 @@ const EventDetails: React.FC = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* QR Code */}
             {event.qrCode?.imageUrl && (
               <QRCodeDisplay
@@ -865,7 +937,7 @@ const EventDetails: React.FC = () => {
 
             {/* Registration URL */}
             {event.registration?.enabled && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
                   <Users className="w-5 h-5 mr-2" />
                   Event Registration
@@ -922,7 +994,7 @@ const EventDetails: React.FC = () => {
 
             {/* Date & Time */}
             {!event.isRecurring && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                   Date & Time
                 </h2>
@@ -1052,7 +1124,7 @@ const EventDetails: React.FC = () => {
 
             {/* Branch & Location */}
             {(event.branch || event.location?.venue || event.location?.address) && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center space-x-2">
                   <MapPin className="w-5 h-5" />
                   <span>Branch & Location</span>
@@ -1240,6 +1312,16 @@ const EventDetails: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Mobile: Floating Attendance Button */}
+      <button
+        onClick={() => navigate(isServiceRoute ? '/attendance' : `/events/${id}/attendance`)}
+        className="sm:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+        style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+        title={`Attendance (${attendance})`}
+      >
+        <UserCheck className="w-6 h-6" />
+      </button>
     </div>
   );
 };

@@ -252,9 +252,9 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <>
     <form onSubmit={handleSubmit} className="max-w-8xl">
-        <div className='flex gap-6'>
+        <div className='flex flex-col sm:flex-row gap-6'>
             {/* Logo Upload */}
-            <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-4 sm:mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Church Logo
                 </h3>
@@ -309,7 +309,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
             <div>
                 {/* Colors */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-4 sm:mb-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         Brand Colors
@@ -325,7 +325,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       </button>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Primary Color
@@ -371,7 +371,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
 
                 {/* Tagline */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-4 sm:mb-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                     Tagline
                     </h3>
@@ -393,7 +393,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
 
       {/* Login Screen Slides */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-4 sm:mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
@@ -478,7 +478,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+          className="w-full sm:w-auto justify-center px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
         >
           {loading && <Loader className="w-4 h-4 animate-spin" />}
           <span>{loading ? 'Saving...' : 'Save Changes'}</span>

@@ -90,6 +90,96 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, max, disa
   const days = buildCalendar(viewYear, viewMonth);
   const display = parsed ? `${String(parsed.d).padStart(2,'0')}/${String(parsed.m+1).padStart(2,'0')}/${parsed.y}` : '';
 
+  const calendarBody = (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          {MONTHS[viewMonth]} {viewYear}
+        </span>
+        <div className="flex items-center space-x-1">
+          <button
+            type="button"
+            onClick={prevMonth}
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+          >
+            <ChevronUp className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={nextMonth}
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Day headers */}
+      <div className="grid grid-cols-7 mb-1">
+        {DAY_LABELS.map((l, i) => (
+          <div key={i} className="h-8 flex items-center justify-center text-xs font-medium text-gray-400 dark:text-gray-500">
+            {l}
+          </div>
+        ))}
+      </div>
+
+      {/* Day grid */}
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {days.map((d, i) => {
+          const inMonth = d.getMonth() === viewMonth;
+          const disabled = isDisabled(d);
+          const selected = isSelected(d);
+          const todayMark = isToday(d);
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={disabled}
+              onClick={() => { onChange(toYMD(d.getFullYear(), d.getMonth(), d.getDate())); setOpen(false); }}
+              className={[
+                'h-8 w-full flex items-center justify-center text-sm rounded-lg transition-colors',
+                selected
+                  ? 'bg-primary-600 text-white font-semibold'
+                  : todayMark
+                    ? 'border border-primary-400 text-primary-600 dark:text-primary-400 font-medium'
+                    : inMonth
+                      ? 'text-gray-900 dark:text-gray-100'
+                      : 'text-gray-300 dark:text-gray-500',
+                !selected && !disabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : '',
+                disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
+              ].filter(Boolean).join(' ')}
+            >
+              {d.getDate()}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+        <button
+          type="button"
+          onClick={() => { onChange(''); setOpen(false); }}
+          className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline"
+        >
+          Clear
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const t = new Date();
+            onChange(toYMD(t.getFullYear(), t.getMonth(), t.getDate()));
+            setOpen(false);
+          }}
+          className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline"
+        >
+          Today
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
@@ -105,93 +195,25 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, max, disa
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl w-72 p-3">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              {MONTHS[viewMonth]} {viewYear}
-            </span>
-            <div className="flex items-center space-x-1">
-              <button
-                type="button"
-                onClick={prevMonth}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
-              >
-                <ChevronUp className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={nextMonth}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
-              >
-                <ChevronDown className="w-4 h-4" />
-              </button>
+        <>
+          {/* Mobile: centered fixed overlay, independent of trigger position */}
+          <div
+            className="sm:hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+            onClick={() => setOpen(false)}
+          >
+            <div
+              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl w-full max-w-xs p-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {calendarBody}
             </div>
           </div>
 
-          {/* Day headers */}
-          <div className="grid grid-cols-7 mb-1">
-            {DAY_LABELS.map((l, i) => (
-              <div key={i} className="h-8 flex items-center justify-center text-xs font-medium text-gray-400 dark:text-gray-500">
-                {l}
-              </div>
-            ))}
+          {/* Desktop: dropdown anchored under the trigger */}
+          <div className="hidden sm:block absolute z-50 mt-1 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl w-72 p-3">
+            {calendarBody}
           </div>
-
-          {/* Day grid */}
-          <div className="grid grid-cols-7 gap-y-0.5">
-            {days.map((d, i) => {
-              const inMonth = d.getMonth() === viewMonth;
-              const disabled = isDisabled(d);
-              const selected = isSelected(d);
-              const todayMark = isToday(d);
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => { onChange(toYMD(d.getFullYear(), d.getMonth(), d.getDate())); setOpen(false); }}
-                  className={[
-                    'h-8 w-full flex items-center justify-center text-sm rounded-lg transition-colors',
-                    selected
-                      ? 'bg-primary-600 text-white font-semibold'
-                      : todayMark
-                        ? 'border border-primary-400 text-primary-600 dark:text-primary-400 font-medium'
-                        : inMonth
-                          ? 'text-gray-900 dark:text-gray-100'
-                          : 'text-gray-300 dark:text-gray-500',
-                    !selected && !disabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : '',
-                    disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
-                  ].filter(Boolean).join(' ')}
-                >
-                  {d.getDate()}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={() => { onChange(''); setOpen(false); }}
-              className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline"
-            >
-              Clear
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const t = new Date();
-                onChange(toYMD(t.getFullYear(), t.getMonth(), t.getDate()));
-                setOpen(false);
-              }}
-              className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline"
-            >
-              Today
-            </button>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

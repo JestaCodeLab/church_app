@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GitBranch, ChevronDown, Check } from 'lucide-react';
+import { Church, ChevronDown, Check, Plus } from 'lucide-react';
 import { useBranch } from '../../context/BranchContext';
+import { useAuth } from '../../context/AuthContext';
+import { useResourceLimit } from '../../hooks/useResourceLimit';
+import { usePermission } from '../../hooks/usePermission';
 import ConfirmModal from '../modals/ConfirmModal';
+import QuickAddBranchModal from '../modals/QuickAddBranchModal';
+import LimitReachedModal from '../modals/LimitReachedModal';
 
 interface Branch {
   _id: string;
@@ -14,12 +19,34 @@ interface BranchSelectorProps {
 }
 
 const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
-  const { selectedBranch, setSelectedBranch, clearBranchContext, branches, loadingBranches, isLockedToBranch } = useBranch();
+  const { selectedBranch, setSelectedBranch, clearBranchContext, branches, loadingBranches, isLockedToBranch, refreshBranches } = useBranch();
+  const { user, fetchAndUpdateSubscription } = useAuth();
+  const branchLimit = useResourceLimit('branches');
+  const createPermission = usePermission('branches.create');
   const [isOpen, setIsOpen] = useState(false);
   const [pendingBranch, setPendingBranch] = useState<Branch | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSwitchingToAll, setIsSwitchingToAll] = useState(false);
+  const [showAddBranchModal, setShowAddBranchModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const canAddBranch = createPermission.hasPermission || createPermission.isSuperAdmin;
+
+  const handleAddBranchClick = () => {
+    setIsOpen(false);
+    if (!branchLimit.canCreate) {
+      setShowLimitModal(true);
+      return;
+    }
+    setShowAddBranchModal(true);
+  };
+
+  const handleAddBranchSuccess = async (branch: Branch) => {
+    setShowAddBranchModal(false);
+    await Promise.all([refreshBranches(), fetchAndUpdateSubscription()]);
+    setSelectedBranch(branch);
+  };
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -74,7 +101,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
   if (isLockedToBranch) {
     return (
       <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg max-w-[200px] ${className}`}>
-        <GitBranch className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+        <Church className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
         <span className="text-sm font-medium text-blue-700 dark:text-blue-300 truncate">
           {selectedBranch?.name || 'Branch'}
         </span>
@@ -82,7 +109,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
     );
   }
 
-  if (branches.length === 0 && !loadingBranches) return null;
+  if (branches.length === 0 && !loadingBranches && !canAddBranch) return null;
 
   const confirmTitle = isSwitchingToAll
     ? 'Switch to All Branches'
@@ -106,7 +133,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
             }
           `}
         >
-          <GitBranch className="w-4 h-4 shrink-0" />
+          <Church className="w-4 h-4 shrink-0" />
           <span className="truncate">
             {selectedBranch ? selectedBranch.name : 'All Branches'}
           </span>
@@ -143,7 +170,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
                   `}
                 >
                   <div className="flex items-center space-x-2 min-w-0">
-                    <GitBranch className="w-4 h-4 flex-shrink-0" />
+                    <Church className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">{branch.name}</span>
                     {branch.code && (
                       <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">({branch.code})</span>
@@ -152,6 +179,19 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
                   {selectedBranch?._id === branch._id && <Check className="w-4 h-4 flex-shrink-0" />}
                 </button>
               ))
+            )}
+
+            {canAddBranch && (
+              <>
+                <div className="border-t border-gray-100 dark:border-gray-700" />
+                <button
+                  onClick={handleAddBranchClick}
+                  className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+                >
+                  <Plus className="w-4 h-4 flex-shrink-0" />
+                  <span>Add Branch</span>
+                </button>
+              </>
             )}
           </div>
         )}
@@ -167,6 +207,23 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ className = '' }) => {
         confirmText={isSwitchingToAll ? 'View All Branches' : 'Switch Branch'}
         cancelText="Cancel"
         type="info"
+      />
+
+      {/* Add Branch Modal */}
+      <QuickAddBranchModal
+        isOpen={showAddBranchModal}
+        onClose={() => setShowAddBranchModal(false)}
+        onSuccess={handleAddBranchSuccess}
+      />
+
+      {/* Limit Reached Modal */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        resourceType="branches"
+        current={branchLimit.current}
+        limit={branchLimit.limit || 0}
+        planName={user?.merchant?.subscription?.plan || 'starter'}
       />
     </>
   );

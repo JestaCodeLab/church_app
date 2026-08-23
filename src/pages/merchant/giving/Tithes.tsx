@@ -300,6 +300,25 @@ const Tithes: React.FC = () => {
     }
   };
 
+  const handleEditClick = (tithe: Tithe) => {
+    setEditingId(tithe._id);
+    setFormData({
+      source: tithe.source,
+      amount: tithe.amount.toString(),
+      date: tithe.date.split('T')[0],
+      monthPaid: tithe.monthPaid || '',
+      description: tithe.description || '',
+      notes: tithe.notes || '',
+      paystackReference: tithe.paystackReference || '',
+    });
+    setPaymentMethod(tithe.paymentMethod === 'paystack' ? 'paystack' : 'cash');
+    if (tithe.member) {
+      setSelectedMemberId(tithe.member._id || tithe.member);
+      setSelectedMember(tithe.member);
+    }
+    setShowModal(true);
+  };
+
   const handleDeleteTithe = async () => {
     if (!deletingId) return;
     try {
@@ -498,7 +517,58 @@ const Tithes: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile Card List */}
+            <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-700">
+              {tithes.map((tithe) => (
+                <div key={tithe._id} className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {new Date(tithe.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{tithe.source}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex-shrink-0">
+                      {formatCurrency(tithe.amount, currency)}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        tithe.status === 'verified'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+                          : tithe.status === 'pending'
+                          ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+                      }`}>
+                        {tithe.status}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{tithe.paymentMethod || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleEditClick(tithe)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDeletingId(tithe._id);
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700">
@@ -541,24 +611,7 @@ const Tithes: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-sm space-x-2">
                         <button
-                          onClick={() => {
-                            setEditingId(tithe._id);
-                            setFormData({
-                              source: tithe.source,
-                              amount: tithe.amount.toString(),
-                              date: tithe.date.split('T')[0],
-                              monthPaid: tithe.monthPaid || '',
-                              description: tithe.description || '',
-                              notes: tithe.notes || '',
-                              paystackReference: tithe.paystackReference || '',
-                            });
-                            setPaymentMethod(tithe.paymentMethod === 'paystack' ? 'paystack' : 'cash');
-                            if (tithe.member) {
-                              setSelectedMemberId(tithe.member._id || tithe.member);
-                              setSelectedMember(tithe.member);
-                            }
-                            setShowModal(true);
-                          }}
+                          onClick={() => handleEditClick(tithe)}
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                         >
                           <Edit2 className="w-4 h-4 inline" />

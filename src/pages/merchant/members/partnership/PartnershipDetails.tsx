@@ -162,6 +162,15 @@ const PartnershipDetails = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'partners' | 'transactions' | 'messages'>('overview');
   const [showPublicLinks, setShowPublicLinks] = useState(false);
 
+  // Responsive chart sizing — keeps the shared TransactionBarChart's desktop default untouched
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth < 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  const chartHeight = isMobileView ? 240 : 400;
+
   // QR Code state
   const [qrModal, setQrModal] = useState<{
     isOpen: boolean;
@@ -1580,70 +1589,70 @@ const PartnershipDetails = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
             {/* Target Amount Card */}
-            <div className="relative overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+            <div className="relative overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 p-4 sm:p-6 hover:shadow-lg transition-all duration-300 group">
               <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-purple-200 dark:bg-purple-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
               <div className="relative z-10">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Target Amount</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Target Amount</p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                       {formatCurrency(programme.goal?.targetAmount || 0, programme.goal?.currency || merchantCurrency)}
                     </p>
                   </div>
-                  <div className="p-3 bg-primary-600/10 dark:bg-purple-500/10 rounded-lg">
-                    <Target className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                  <div className="p-2 sm:p-3 bg-primary-600/10 dark:bg-purple-500/10 rounded-lg flex-shrink-0">
+                    <Target className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Amount Raised Card */}
-            <div className="relative overflow-hidden rounded-xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+            <div className="relative overflow-hidden rounded-xl border border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 p-4 sm:p-6 hover:shadow-lg transition-all duration-300 group">
               <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-green-200 dark:bg-green-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
               <div className="relative z-10">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Amount Raised</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Amount Raised</p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                       {formatCurrency(filteredRaisedAmount, programme.goal?.currency || merchantCurrency)}
                     </p>
                   </div>
-                  <div className="p-3 bg-green-600/10 dark:bg-green-500/10 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="p-2 sm:p-3 bg-green-600/10 dark:bg-green-500/10 rounded-lg flex-shrink-0">
+                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Total Partners Card */}
-            <div className="relative overflow-hidden rounded-xl border border-primary-200 dark:border-primary-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+            <div className="relative overflow-hidden rounded-xl border border-primary-200 dark:border-primary-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 p-4 sm:p-6 hover:shadow-lg transition-all duration-300 group">
               <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-200 dark:bg-primary-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
               <div className="relative z-10">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Partners</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{filteredStats?.totalPartners || 0}</p>
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Partners</p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{filteredStats?.totalPartners || 0}</p>
                   </div>
-                  <div className="p-3 bg-primary-600/10 dark:bg-primary-500/10 rounded-lg">
-                    <Users className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                  <div className="p-2 sm:p-3 bg-primary-600/10 dark:bg-primary-500/10 rounded-lg flex-shrink-0">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Transactions Card */}
-            <div className="relative overflow-hidden rounded-xl border border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50 to-pink-100/50 dark:from-pink-900/20 dark:to-pink-800/10 p-6 hover:shadow-lg transition-all duration-300 group">
+            <div className="relative overflow-hidden rounded-xl border border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50 to-pink-100/50 dark:from-pink-900/20 dark:to-pink-800/10 p-4 sm:p-6 hover:shadow-lg transition-all duration-300 group">
               <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-pink-200 dark:bg-pink-900/30 opacity-20 group-hover:opacity-30 transition-opacity" />
               <div className="relative z-10">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Transactions</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{filteredStats?.totalTransactions || 0}</p>
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Transactions</p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{filteredStats?.totalTransactions || 0}</p>
                   </div>
-                  <div className="p-3 bg-pink-600/10 dark:bg-pink-500/10 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                  <div className="p-2 sm:p-3 bg-pink-600/10 dark:bg-pink-500/10 rounded-lg flex-shrink-0">
+                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-pink-600 dark:text-pink-400" />
                   </div>
                 </div>
               </div>
@@ -1651,15 +1660,15 @@ const PartnershipDetails = () => {
           </div>
 
           {/* Transaction Bar Chart */}
-          <div className="relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-all">
+          <div className="relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-3 sm:p-6 hover:shadow-lg transition-all">
             {/* <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-purple-600 to-purple-400" /> */}
             <TransactionBarChart
               transactions={allTransactions}
               currency={programme.goal?.currency || merchantCurrency}
               groupBy="day"
               title="Monthly Transaction Progress"
-              height={400}
-              showLegend={true}
+              height={chartHeight}
+              showLegend={!isMobileView}
               colors={{
                 completed: '#10b981',
                 pending: '#f59e0b',
@@ -1848,7 +1857,7 @@ const PartnershipDetails = () => {
                 </button>
                 <button
                   onClick={() => setShowAddPartnerModal(true)}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                  className="hidden sm:flex px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium items-center justify-center space-x-2"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Partner</span>
@@ -1857,8 +1866,97 @@ const PartnershipDetails = () => {
             </div>
           </div>
 
-          {/* Partners Table */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+          {/* Mobile: Partners Card List */}
+          <div className="sm:hidden bg-white dark:bg-gray-800 shadow rounded-lg divide-y divide-gray-200 dark:divide-gray-700">
+            {loading || loadingPartners ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {loading ? 'Loading partners...' : 'Updating partners...'}
+                </p>
+              </div>
+            ) : filteredPartners.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-16">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No Partners Yet</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 px-4">
+                  {partnerSearch || partnerTypeFilter !== 'all' ? 'No partners match your filters' : 'Partners will appear here once they register'}
+                </p>
+              </div>
+            ) : (
+              paginatedPartners.map((partner) => {
+                let name = 'N/A';
+                let phone = 'N/A';
+
+                if (partner.partnerType === 'member' && partner.member) {
+                  name = `${partner.member.firstName} ${partner.member.lastName}`;
+                  phone = partner.member.phone || 'N/A';
+                } else if (partner.partner) {
+                  name = `${partner.partner.firstName} ${partner.partner.lastName}`;
+                  phone = partner.partner.phone || 'N/A';
+                }
+
+                return (
+                  <div key={partner._id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{phone}</p>
+                          </div>
+                          <span className={`flex-shrink-0 inline-flex px-2 py-0.5 text-xs capitalize font-semibold rounded-full ${partner.partnerType === 'member'
+                            ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                            }`}>
+                            {partner.partnerType}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-600 dark:text-gray-400">
+                          <span>{partner.tier?.name}</span>
+                          <span>•</span>
+                          <span>{formatCurrency(partner.paymentStats?.totalAmount || 0, merchantCurrency)}</span>
+                          <span>•</span>
+                          <span>{partner.paymentStats?.totalCount || 0} payments</span>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-500">
+                            Registered {new Date(partner.registeredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => handleEditPartner(partner)}
+                              className="text-primary-600 dark:text-primary-400"
+                              title="Edit partner"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm(partner._id)}
+                              className="text-red-600 dark:text-red-400"
+                              title="Delete partner"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop: Partners Table */}
+          <div className="hidden sm:block bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
@@ -2020,6 +2118,18 @@ const PartnershipDetails = () => {
         </div>
       )}
 
+      {/* Mobile: Floating Add Partner Button */}
+      {activeTab === 'partners' && (
+        <button
+          onClick={() => setShowAddPartnerModal(true)}
+          className="sm:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+          title="Add Partner"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
+
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
         <div className="space-y-4">
@@ -2074,10 +2184,10 @@ const PartnershipDetails = () => {
                 </button>
               </div>
               <div className="flex gap-3 flex-shrink-0">
-               
+
                 <button
                   onClick={() => setShowAddTransactionModal(true)}
-                  className="inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium whitespace-nowrap"
+                  className="hidden sm:inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Transaction
@@ -2203,72 +2313,154 @@ const PartnershipDetails = () => {
 
           {/* Transactions Summary */}
           {transactions.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
               {/* Total Transactions Card */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-5 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Transactions</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{transactionsTotalCount}</p>
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Transactions</p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{transactionsTotalCount}</p>
                   </div>
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                    <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
+                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
               </div>
 
               {/* Total Amount Card */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-5 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Amount</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Amount</p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                       {formatCurrency(
                         transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0),
                         transactions[0]?.currency || programme.goal?.currency || merchantCurrency
                       )}
                     </p>
                   </div>
-                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                    <Coins className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
+                    <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
               </div>
 
               {/* Completed Card */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-5 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Completed</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Completed</p>
+                    <p className="text-lg sm:text-3xl font-bold text-green-600 dark:text-green-400">
                       {transactions.filter(tx => tx.status === 'completed').length}
                     </p>
                   </div>
-                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
+                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
               </div>
 
               {/* Pending Card */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-shadow">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-5 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Pending/Failed</p>
-                    <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Pending/Failed</p>
+                    <p className="text-lg sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
                       {transactions.filter(tx => tx.status !== 'completed').length}
                     </p>
                   </div>
-                  <div className="p-3 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
-                    <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                  <div className="p-2 sm:p-3 bg-amber-100 dark:bg-amber-900/20 rounded-lg flex-shrink-0">
+                    <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 dark:text-amber-400" />
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Transactions Table */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
+          {/* Mobile: Transactions Card List */}
+          <div className="sm:hidden bg-white dark:bg-gray-800 shadow rounded-lg divide-y divide-gray-200 dark:divide-gray-700">
+            {loadingTransactions ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Updating transactions...</p>
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-16">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                  <TrendingUp className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No Transactions Yet</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 px-4">
+                  {transactionStatusFilter !== 'all' ? 'No transactions match this status filter' : 'Partnership transactions will appear here'}
+                </p>
+              </div>
+            ) : (
+              transactions.map((transaction: any) => {
+                const isGuest = transaction.registration?.partnerType === 'guest';
+                const partnerData = isGuest
+                  ? transaction.registration?.partner
+                  : transaction.registration?.member;
+
+                const payerName = partnerData
+                  ? `${partnerData.firstName} ${partnerData.lastName}`
+                  : (transaction.payerName || 'Unknown');
+                const tierLabel = transaction.registration?.tier || transaction.tier;
+
+                return (
+                  <div key={transaction._id} className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{payerName}</p>
+                        <p className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                          {transaction.paymentReference || transaction.transactionCode || transaction._id?.substring(0, 8)}
+                        </p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex-shrink-0">
+                        {formatCurrency(transaction.amount, transaction.currency)}
+                      </p>
+                    </div>
+
+                    {tierLabel && (
+                      <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
+                        {typeof tierLabel === 'object' ? tierLabel?.name : tierLabel}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${transaction.status === 'completed'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                          : transaction.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                          }`}>
+                          {transaction.status?.toUpperCase()}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                          {transaction.paymentMethod?.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setShowDeleteConfirm(transaction._id)}
+                        className="text-red-600 dark:text-red-400"
+                        title="Delete transaction"
+                        disabled={isSubmitting}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                      {format(new Date(transaction.transactionDate), 'MMM dd, yyyy · HH:mm')}
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop: Transactions Table */}
+          <div className="hidden sm:block bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700 ">
                 <tr className='dark:text-white'>
@@ -2452,6 +2644,18 @@ const PartnershipDetails = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Mobile: Floating Add Transaction Button */}
+      {activeTab === 'transactions' && (
+        <button
+          onClick={() => setShowAddTransactionModal(true)}
+          className="sm:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+          title="Add Transaction"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
       )}
 
       {/* Messages Tab */}
@@ -2861,7 +3065,7 @@ const PartnershipDetails = () => {
       {/* Add Transaction Modal */}
       {showAddTransactionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add Transaction</h3>
               <button
@@ -3129,7 +3333,7 @@ const PartnershipDetails = () => {
                 </p>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2 sm:gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -3140,14 +3344,14 @@ const PartnershipDetails = () => {
                     setTransactionTab('member');
                   }}
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || (transactionTab === 'member' ? !selectedMember && !selectedPartnerForTransaction : !guestData.fullName || !guestData.phone) || !addTransactionData.amount}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

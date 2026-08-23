@@ -170,43 +170,43 @@ const TeamManagement = () => {
     <div className="space-y-6">
       {/* Usage Stats */}
       {user?.merchant?.subscription && (
-        <div className="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+        <div className="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-4 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2.5 sm:p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm flex-shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
                   Team Members
                 </h3>
                 <div className="flex items-baseline space-x-2 mt-1">
-                  <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {user.merchant.subscription.usage?.users || 0}
                   </span>
                   <span className="text-gray-500 dark:text-gray-400">/</span>
-                  <span className="text-lg font-medium text-gray-600 dark:text-gray-400">
-                    {user.merchant.subscription.limits?.users === null 
-                      ? 'Unlimited' 
+                  <span className="text-base sm:text-lg font-medium text-gray-600 dark:text-gray-400">
+                    {user.merchant.subscription.limits?.users === null
+                      ? 'Unlimited'
                       : user.merchant.subscription.limits?.users || 0}
                   </span>
                 </div>
               </div>
             </div>
             {user.merchant.subscription.limits?.users !== null && (
-              <div className="flex flex-col items-end">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <div className="flex flex-col items-end flex-shrink-0">
+                <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
                   {Math.round(
-                    ((user.merchant.subscription.usage?.users || 0) / 
+                    ((user.merchant.subscription.usage?.users || 0) /
                     (user.merchant.subscription.limits?.users || 1)) * 100
                   )}% used
                 </span>
-                <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
+                <div className="w-16 sm:w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-primary-500 to-purple-500 transition-all duration-300"
                     style={{
                       width: `${Math.min(
-                        ((user.merchant.subscription.usage?.users || 0) / 
+                        ((user.merchant.subscription.usage?.users || 0) /
                         (user.merchant.subscription.limits?.users || 1)) * 100,
                         100
                       )}%`
@@ -220,8 +220,8 @@ const TeamManagement = () => {
       )}
 
       {/* Search and Actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="relative w-full sm:flex-1 sm:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
@@ -239,16 +239,16 @@ const TeamManagement = () => {
           <PermissionGuard permission="settings.manageRoles">
           <button
             onClick={() => setShowManageRoles(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 sm:px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
           >
             <Shield className="w-5 h-5" />
-            <span>Manage Roles</span>
+            <span className="hidden sm:inline">Manage Roles</span>
           </button>
           </PermissionGuard>
           <PermissionGuard permission="settings.inviteTeamMember">
             <button
               onClick={handleInviteClick}
-              className="flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+              className="hidden sm:flex items-center space-x-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
             >
               <UserPlus className="w-5 h-5" />
               <span>Invite User</span>
@@ -256,6 +256,17 @@ const TeamManagement = () => {
           </PermissionGuard>
         </div>
       </div>
+
+      {/* Invite User FAB - mobile only */}
+      <PermissionGuard permission="settings.inviteTeamMember">
+        <button
+          onClick={handleInviteClick}
+          className="sm:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+        >
+          <UserPlus className="w-6 h-6" />
+        </button>
+      </PermissionGuard>
 
       {/* Team Table */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
@@ -269,100 +280,169 @@ const TeamManagement = () => {
           </div>
         ) : (
           <>
-            {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-              <div className="col-span-4 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Name
-              </div>
-              <div className="col-span-2 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Status
-              </div>
-              <div className="col-span-3 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Role
-              </div>
-              <div className="col-span-3 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider text-right">
-                Actions
-              </div>
-            </div>
-
-            {/* Table Body */}
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {/* Mobile Card List */}
+            <div className="sm:hidden divide-y divide-gray-200 dark:divide-gray-700">
               {members.map((member) => (
-                <div
-                  key={member._id}
-                  className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-                >
-                  {/* Name */}
-                  <div className="col-span-4 flex items-center space-x-3">
+                <div key={member._id} className="p-4 space-y-3">
+                  <div className="flex items-center gap-3">
                     {member.photo ? (
                       <img
                         src={member.photo}
                         alt={`${member.firstName} ${member.lastName}`}
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-gray-600 flex items-center justify-center text-primary-700 dark:text-gray-300 font-medium">
+                      <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-gray-600 flex items-center justify-center text-primary-700 dark:text-gray-300 font-medium flex-shrink-0">
                         {getInitials(member.firstName, member.lastName)}
                       </div>
                     )}
-                    <div>
-                      <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-gray-900 dark:text-gray-100 font-medium truncate">
                         {member.firstName} {member.lastName}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{member.email}</p>
-                      {member.status === 'pending' && (
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Invitation sent</p>
-                      )}
+                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{member.email}</p>
                     </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="col-span-2 flex items-center">
                     {getStatusBadge(member)}
                   </div>
 
-                  {/* Role */}
-                  <div className="col-span-3 flex items-center">
-                    <span className="text-gray-900 dark:text-gray-100 font-medium">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
                       {getRoleLabel(member.role)}
                     </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="col-span-3 flex items-center justify-end space-x-2">
-                    <button
-                      onClick={() => handleEditMember(member)}
-                      disabled={member.email === user?.email}
-                      className="p-2 text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={member.email === user?.email ? "You cannot edit yourself" : "Edit role and permissions"}
-                    >
-                      <Edit2 className="w-5 h-5" />
-                    </button>
-                    {member.status === 'pending' && (
+                    <div className="flex items-center gap-1">
                       <button
-                        onClick={() => handleResendInvitation(member._id)}
-                        disabled={resendingInvite === member._id}
-                        className="p-2 text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Resend invitation"
+                        onClick={() => handleEditMember(member)}
+                        disabled={member.email === user?.email}
+                        className="p-2 text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={member.email === user?.email ? "You cannot edit yourself" : "Edit role and permissions"}
                       >
-                        {resendingInvite === member._id ? (
-                          <Loader className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <Mail className="w-5 h-5" />
-                        )}
+                        <Edit2 className="w-4 h-4" />
                       </button>
-                    )}
-                    <button
-                      onClick={() => handleRemoveMember(member._id, `${member.firstName} ${member.lastName}`)}
-                      disabled={member.email === user?.email}
-                      className="p-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={member.email === user?.email ? "You cannot remove yourself" : "Remove member"}
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                      {member.status === 'pending' && (
+                        <button
+                          onClick={() => handleResendInvitation(member._id)}
+                          disabled={resendingInvite === member._id}
+                          className="p-2 text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Resend invitation"
+                        >
+                          {resendingInvite === member._id ? (
+                            <Loader className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Mail className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleRemoveMember(member._id, `${member.firstName} ${member.lastName}`)}
+                        disabled={member.email === user?.email}
+                        className="p-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={member.email === user?.email ? "You cannot remove yourself" : "Remove member"}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                <div className="col-span-4 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Name
+                </div>
+                <div className="col-span-2 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Status
+                </div>
+                <div className="col-span-3 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Role
+                </div>
+                <div className="col-span-3 text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider text-right">
+                  Actions
+                </div>
+              </div>
+
+              {/* Table Body */}
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {members.map((member) => (
+                  <div
+                    key={member._id}
+                    className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  >
+                    {/* Name */}
+                    <div className="col-span-4 flex items-center space-x-3">
+                      {member.photo ? (
+                        <img
+                          src={member.photo}
+                          alt={`${member.firstName} ${member.lastName}`}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-gray-600 flex items-center justify-center text-primary-700 dark:text-gray-300 font-medium">
+                          {getInitials(member.firstName, member.lastName)}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-gray-900 dark:text-gray-100 font-medium">
+                          {member.firstName} {member.lastName}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{member.email}</p>
+                        {member.status === 'pending' && (
+                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Invitation sent</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="col-span-2 flex items-center">
+                      {getStatusBadge(member)}
+                    </div>
+
+                    {/* Role */}
+                    <div className="col-span-3 flex items-center">
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">
+                        {getRoleLabel(member.role)}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="col-span-3 flex items-center justify-end space-x-2">
+                      <button
+                        onClick={() => handleEditMember(member)}
+                        disabled={member.email === user?.email}
+                        className="p-2 text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={member.email === user?.email ? "You cannot edit yourself" : "Edit role and permissions"}
+                      >
+                        <Edit2 className="w-5 h-5" />
+                      </button>
+                      {member.status === 'pending' && (
+                        <button
+                          onClick={() => handleResendInvitation(member._id)}
+                          disabled={resendingInvite === member._id}
+                          className="p-2 text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Resend invitation"
+                        >
+                          {resendingInvite === member._id ? (
+                            <Loader className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <Mail className="w-5 h-5" />
+                          )}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleRemoveMember(member._id, `${member.firstName} ${member.lastName}`)}
+                        disabled={member.email === user?.email}
+                        className="p-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={member.email === user?.email ? "You cannot remove yourself" : "Remove member"}
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -370,35 +450,37 @@ const TeamManagement = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-6 py-4 border border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between bg-white dark:bg-gray-800 rounded-xl px-4 py-3 sm:px-6 sm:py-4 border border-gray-200 dark:border-gray-700">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             Showing page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-                  currentPage === page
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            <div className="hidden sm:flex items-center space-x-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                    currentPage === page
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>

@@ -159,7 +159,7 @@ const AllEvents = ({ mode }: AllEventsProps) => {
           </p>
         </div>
         <PermissionGuard permission="events.create">
-        <div className="flex flex-col items-end space-y-2">
+        <div className="hidden md:flex flex-col items-end space-y-2">
           <button
             onClick={handleAddEventClick}
             className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center shadow-md"
@@ -243,8 +243,58 @@ const AllEvents = ({ mode }: AllEventsProps) => {
           </div>
         ) : (
           <>
-            {/* Table */}
-            <div className="overflow-x-auto">
+            {/* Mobile Card List */}
+            <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+              {events.map((event) => (
+                <div
+                  key={event._id}
+                  onClick={() => navigate(`/${isServices ? 'services' : 'events'}/${event._id}`)}
+                  className="p-3 active:bg-gray-50 dark:active:bg-gray-700 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-9 h-9 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                      <Calendar className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {event.title}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {event?.isRecurring ? formatEventDate(event.recurrence?.startDate) : formatEventDate(event.eventDate)}
+                        {' · '}
+                        {event?.isRecurring ? formatTime(event.recurrence?.baseTime || event.startTime) : formatTime(event.startTime)}
+                      </p>
+                      <span className={`inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium capitalize rounded-full ${getStatusBadge(event.status)}`}>
+                        {event.status}
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <PermissionGuard permission="events.edit">
+                        <button
+                          onClick={() => navigate(`/${isServices ? 'services' : 'events'}/${event._id}/edit`)}
+                          className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="events.delete">
+                        <button
+                          onClick={() => handleDelete(event)}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </PermissionGuard>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                   <tr>
@@ -380,23 +430,23 @@ const AllEvents = ({ mode }: AllEventsProps) => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="px-4 py-3 md:px-6 md:py-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-col md:flex-row items-center gap-3 md:gap-0 md:justify-between">
+                  <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                     Page {currentPage} of {totalPages}
                   </p>
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => currentPage > 1 && setPage(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg text-xs md:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Previous
                     </button>
                     <button
                       onClick={() => currentPage < totalPages && setPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg text-xs md:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Next
                     </button>
@@ -427,6 +477,18 @@ const AllEvents = ({ mode }: AllEventsProps) => {
         current={eventLimit?.current}
         limit={eventLimit?.limit || 0}
       />
+
+      {/* Mobile: Floating New Event/Service Button */}
+      <PermissionGuard permission="events.create">
+        <button
+          onClick={handleAddEventClick}
+          className="md:hidden fixed right-4 z-30 w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg flex items-center justify-center transition-colors"
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+          title={`New ${label}`}
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      </PermissionGuard>
     </div>
   );
 };

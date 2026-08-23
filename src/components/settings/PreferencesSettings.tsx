@@ -76,8 +76,8 @@ const PreferencesSettings = () => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+      <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
           Preferences
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -85,13 +85,13 @@ const PreferencesSettings = () => {
         </p>
       </div>
 
-      <div className="p-6 space-y-8">
+      <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
         {/* General Settings */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <h3 className="text-lg mb-1 font-semibold text-gray-900 dark:text-gray-100">General</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Set your language and theme preferences.</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
               <div className="relative">
@@ -148,17 +148,17 @@ const PreferencesSettings = () => {
         </div>
 
         {/* Notifications Settings */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Notifications</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Manage how you receive notifications.</p>
 
           {/* Email Notifications */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-            <div>
+          <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div className="min-w-0">
               <p className="font-medium text-gray-900 dark:text-gray-100">Email Notifications</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Receive updates and alerts directly to your inbox.</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center flex-shrink-0 cursor-pointer">
               <input
                 type="checkbox"
                 checked={notifications.email.enabled}
@@ -170,12 +170,12 @@ const PreferencesSettings = () => {
           </div>
 
           {/* In-app Notifications */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-            <div>
+          <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div className="min-w-0">
               <p className="font-medium text-gray-900 dark:text-gray-100">In-app Notifications</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Get notified within the application interface.</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center flex-shrink-0 cursor-pointer">
               <input
                 type="checkbox"
                 checked={notifications.inApp.enabled}
@@ -187,12 +187,12 @@ const PreferencesSettings = () => {
           </div>
 
           {/* Push Notifications */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-            <div>
+          <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div className="min-w-0">
               <p className="font-medium text-gray-900 dark:text-gray-100">Push Notifications</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Receive notifications on your desktop or mobile device.</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center flex-shrink-0 cursor-pointer">
               <input
                 type="checkbox"
                 checked={notifications.push.enabled}

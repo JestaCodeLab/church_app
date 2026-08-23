@@ -461,13 +461,76 @@ const BillingSettings = () => {
     return <div className="text-center p-8">Could not load subscription details.</div>;
   }
 
+  const renderTransactionCard = (transaction: any) => (
+    <div
+      key={transaction._id}
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center">
+          <FileText className="w-5 h-5 text-gray-400 mr-3" />
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {transaction.invoiceNumber}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {transaction.planName || transaction.plan}
+            </p>
+          </div>
+        </div>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          transaction.status === 'success'
+            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+            : transaction.status === 'pending'
+            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+        }`}>
+          {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+          <Calendar className="w-4 h-4 mr-2" />
+          {new Date(transaction.paymentDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })}
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {transaction.currency} {transaction.amount.toFixed(2)}
+          </p>
+          {transaction.discount && (
+            <p className="text-xs text-green-600 dark:text-green-400">
+              Saved {transaction.currency} {transaction.discount.amountSaved?.toFixed(2)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {transaction.status === 'success' && (
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => handleDownloadInvoice(transaction._id, transaction.invoiceNumber)}
+            className="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download Invoice
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
         {/* Current Plan Card */}
-        <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg border border-primary-200 dark:border-primary-800 p-6">
+        <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg border border-primary-200 dark:border-primary-800 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
                   <div className='flex gap-2'>
@@ -512,7 +575,7 @@ const BillingSettings = () => {
                         )}
                       </div>
                   </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+              <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1) || 'N/A'}
               </p>
             </div>
@@ -542,30 +605,30 @@ const BillingSettings = () => {
         </div>
 
         {/* Next Billing Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Next Billing</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Next Billing</span>
             <Calendar className="w-5 h-5 text-gray-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {subscription?.nextBillingDate 
+          <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {subscription?.nextBillingDate
               ? new Date(subscription.nextBillingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
               : 'N/A'}
           </p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-            {subscription?.nextBillingDate 
+            {subscription?.nextBillingDate
               ? `${Math.ceil((new Date(subscription.nextBillingDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days remaining`
               : 'No upcoming billing'}
           </p>
         </div>
 
         {/* Total Spent Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Spent</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Spent</span>
             <DollarSign className="w-5 h-5 text-gray-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
             GHS {calculateTotalSpent().toFixed(2)}
           </p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -577,10 +640,10 @@ const BillingSettings = () => {
       {/* Tab Navigation */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex -mb-px px-4">
+          <nav className="flex -mb-px px-4 overflow-x-auto">
             <button
               onClick={() => setActiveTab('plans')}
-              className={`px-8 py-4 text-base font-medium border-b-2 transition-colors ${
+              className={`px-4 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium border-b-2 whitespace-nowrap flex-shrink-0 transition-colors ${
                 activeTab === 'plans'
                   ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -590,7 +653,7 @@ const BillingSettings = () => {
             </button>
             <button
               onClick={() => setActiveTab('usage')}
-              className={`px-8 py-4 text-base font-medium border-b-2 transition-colors ${
+              className={`px-4 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium border-b-2 whitespace-nowrap flex-shrink-0 transition-colors ${
                 activeTab === 'usage'
                   ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -600,7 +663,7 @@ const BillingSettings = () => {
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`px-8 py-4 text-base font-medium border-b-2 transition-colors ${
+              className={`px-4 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium border-b-2 whitespace-nowrap flex-shrink-0 transition-colors ${
                 activeTab === 'history'
                   ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -617,7 +680,7 @@ const BillingSettings = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Plans Tab */}
           {activeTab === 'plans' && (
             <div>
@@ -628,14 +691,14 @@ const BillingSettings = () => {
                 Choose the plan that best fits your church's needs
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 {availablePlans?.map((plan: any) => {
                   const isCurrent = subscription.plan === plan.slug;
 
                   return (
-                    <div 
-                      key={plan.slug} 
-                      className={`rounded-xl border-2 p-6 transition-all ${
+                    <div
+                      key={plan.slug}
+                      className={`rounded-xl border-2 p-4 sm:p-6 transition-all ${
                         isCurrent 
                           ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10 shadow-md' 
                           : 'border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-lg'
@@ -690,7 +753,7 @@ const BillingSettings = () => {
       {activeTab === 'usage' && subscription.usage && (
         <div>
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                 Resource Usage
@@ -699,7 +762,7 @@ const BillingSettings = () => {
                 Monitor your resource consumption across all plan limits
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowAllMetrics(!showAllMetrics)}
@@ -715,23 +778,23 @@ const BillingSettings = () => {
           {(() => {
             const health = getOverallUsageHealth();
             return (
-              <div className={`mb-6 p-4 rounded-lg border-2 ${
-                health.status === 'critical' 
+              <div className={`mb-6 p-3 sm:p-4 rounded-lg border-2 ${
+                health.status === 'critical'
                   ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'
                   : health.status === 'warning'
                   ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800'
                   : 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
               }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
                     {health.status === 'critical' ? (
-                      <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                      <XCircle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" />
                     ) : health.status === 'warning' ? (
-                      <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                      <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
                     ) : (
-                      <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
                     )}
-                    <div>
+                    <div className="min-w-0">
                       <h4 className={`font-semibold ${
                         health.status === 'critical' 
                           ? 'text-red-900 dark:text-red-100'
@@ -754,9 +817,9 @@ const BillingSettings = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className={`text-3xl font-bold ${
-                      health.status === 'critical' 
+                  <div className="text-right flex-shrink-0">
+                    <div className={`text-xl sm:text-3xl font-bold ${
+                      health.status === 'critical'
                         ? 'text-red-600 dark:text-red-400'
                         : health.status === 'warning'
                         ? 'text-yellow-600 dark:text-yellow-400'
@@ -1074,6 +1137,13 @@ const BillingSettings = () => {
             </div>
           ) : (
             <>
+              {/* Mobile: always cards, regardless of the (desktop-only) table/cards toggle */}
+              <div className="sm:hidden grid grid-cols-1 gap-4">
+                {billingHistory.map((transaction: any) => renderTransactionCard(transaction))}
+              </div>
+
+              {/* Desktop: respects the Table/Cards toggle */}
+              <div className="hidden sm:block">
               {/* Table View */}
               {viewMode === 'table' ? (
                 <div className="overflow-x-auto">
@@ -1171,75 +1241,15 @@ const BillingSettings = () => {
               ) : (
                 /* Cards View */
                 <div className="grid grid-cols-1 gap-4">
-                  {billingHistory.map((transaction: any) => (
-                    <div
-                      key={transaction._id}
-                      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center">
-                          <FileText className="w-5 h-5 text-gray-400 mr-3" />
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                              {transaction.invoiceNumber}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                              {transaction.planName || transaction.plan}
-                            </p>
-                          </div>
-                        </div>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          transaction.status === 'success'
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                            : transaction.status === 'pending'
-                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
-                        }`}>
-                          {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          {new Date(transaction.paymentDate).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                            {transaction.currency} {transaction.amount.toFixed(2)}
-                          </p>
-                          {transaction.discount && (
-                            <p className="text-xs text-green-600 dark:text-green-400">
-                              Saved {transaction.currency} {transaction.discount.amountSaved?.toFixed(2)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {transaction.status === 'success' && (
-                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                          <button
-                            onClick={() => handleDownloadInvoice(transaction._id, transaction.invoiceNumber)}
-                            className="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            Download Invoice
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {billingHistory.map((transaction: any) => renderTransactionCard(transaction))}
                 </div>
               )}
+              </div>
 
               {/* Pagination */}
               {historyTotal > 10 && (
-                <div className="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="mt-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Showing {Math.min((historyPage - 1) * 10 + 1, historyTotal)} - {Math.min(historyPage * 10, historyTotal)} of {historyTotal} transactions
                   </p>
                   <div className="flex gap-2">
@@ -1284,8 +1294,8 @@ const BillingSettings = () => {
 
             {/* Modal */}
             <div className="relative inline-block w-full max-w-lg my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
-              <div className="p-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              <div className="p-4 sm:p-6">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   Upgrade to {selectedPlan.name}
                 </h3>
                 <p className="text-base text-gray-600 dark:text-gray-400 mb-6">
@@ -1365,9 +1375,9 @@ const BillingSettings = () => {
               }}
             />
 
-            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                   Choose Payment Method
                 </h3>
                 <button
